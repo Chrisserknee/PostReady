@@ -1,9 +1,33 @@
-import { createClient } from '@supabase/supabase-js';
+import { createClient, SupabaseClient } from '@supabase/supabase-js';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+// Lazy-loaded Supabase client
+let supabaseInstance: SupabaseClient | null = null;
 
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+export const getSupabaseClient = (): SupabaseClient => {
+  if (!supabaseInstance) {
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
+    const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
+    
+    // During build, use dummy values if env vars are missing
+    // This allows the build to succeed, but will fail at runtime if not configured
+    const finalUrl = supabaseUrl || 'https://placeholder.supabase.co';
+    const finalKey = supabaseAnonKey || 'placeholder-anon-key';
+    
+    supabaseInstance = createClient(finalUrl, finalKey, {
+      auth: {
+        persistSession: typeof window !== 'undefined', // Only persist on client
+      }
+    });
+  }
+  return supabaseInstance;
+};
+
+// Export for backwards compatibility - use Proxy for lazy initialization
+export const supabase = new Proxy({} as SupabaseClient, {
+  get(target, prop) {
+    return getSupabaseClient()[prop as keyof SupabaseClient];
+  }
+});
 
 // Database types
 export type UserProfile = {
