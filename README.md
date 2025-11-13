@@ -54,7 +54,13 @@ To enable sign up, sign in, and progress saving:
    NEXT_PUBLIC_SUPABASE_URL=your_supabase_url_here
    NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key_here
    ```
-5. Run the SQL setup script to create database tables
+5. **Run the SQL setup script to create database tables:**
+   - Go to your Supabase project dashboard
+   - Click on "SQL Editor" in the left sidebar
+   - Click "New Query"
+   - Copy and paste the contents of `supabase_tables.sql`
+   - Click "Run" to execute the SQL
+   - This creates the tables for saved businesses and post history
 
 📖 **Complete step-by-step guide**: See `SUPABASE_SETUP.md`
 
