@@ -962,10 +962,10 @@ export default function Home() {
               {currentStep === "principles" && strategy && strategy.keyPrinciples && strategy.contentIdeas && (
                 <div>
                   <div className="mb-8">
-                    <h2 className="text-4xl font-bold mb-3" style={{ color: '#1A1A1A' }}>
+                    <h2 className="text-4xl font-bold mb-3" style={{ color: 'var(--secondary)' }}>
                       Your {businessInfo.platform} Growth Strategy
                     </h2>
-                    <p className="text-lg" style={{ color: '#6B7280' }}>
+                    <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
                       Simple, actionable tactics that actually work
                     </p>
                   </div>
@@ -1286,17 +1286,20 @@ export default function Home() {
               {/* Step 4: Post Details */}
               {currentStep === "post-details" && (
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  <h2 className="text-3xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                     Your Post is Ready! 🎉
                   </h2>
-                  <p className="text-gray-600 mb-6">
+                  <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
                     Here's everything you need to post your video
                   </p>
 
                   {!postDetails ? (
                     <>
-                      <div className="bg-blue-50 border-l-4 border-blue-500 p-4 mb-6">
-                        <p className="text-blue-800">
+                      <div className="border-l-4 p-4 mb-6 rounded-lg" style={{ 
+                        backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                        borderColor: 'var(--primary)'
+                      }}>
+                        <p style={{ color: 'var(--text-primary)' }}>
                           Click the button below to generate your caption (with hashtags included) and best posting time!
                         </p>
                       </div>
@@ -1308,26 +1311,38 @@ export default function Home() {
                     <>
                       <div className="space-y-6">
                         {/* Best Times to Post */}
-                        <div className="bg-gradient-to-r from-yellow-50 to-orange-50 border-l-4 border-yellow-400 p-6 rounded-lg">
-                          <h3 className="text-lg font-bold text-gray-900 mb-3 flex items-center">
+                        <div className="border-l-4 p-6 rounded-lg" style={{ 
+                          backgroundColor: 'rgba(251, 191, 36, 0.1)',
+                          borderColor: '#F59E0B'
+                        }}>
+                          <h3 className="text-lg font-bold mb-3 flex items-center" style={{ color: 'var(--text-primary)' }}>
                             <span className="text-2xl mr-2">📅</span>
                             Best Times to Post
                           </h3>
-                          <p className="text-gray-700 mb-4">
+                          <p className="mb-4" style={{ color: 'var(--text-secondary)' }}>
                             Based on our analysis of the {businessInfo.location} market...
                           </p>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                            <div className="bg-white rounded-lg p-3 border border-yellow-200">
-                              <div className="font-bold text-blue-600">Morning</div>
-                              <div className="text-gray-800">8am - 10am</div>
+                            <div className="rounded-lg p-3 border" style={{ 
+                              backgroundColor: 'var(--card-bg)',
+                              borderColor: 'var(--card-border)'
+                            }}>
+                              <div className="font-bold" style={{ color: 'var(--primary)' }}>Morning</div>
+                              <div style={{ color: 'var(--text-primary)' }}>8am - 10am</div>
                             </div>
-                            <div className="bg-white rounded-lg p-3 border border-yellow-200">
-                              <div className="font-bold text-blue-600">Afternoon</div>
-                              <div className="text-gray-800">2pm - 5pm</div>
+                            <div className="rounded-lg p-3 border" style={{ 
+                              backgroundColor: 'var(--card-bg)',
+                              borderColor: 'var(--card-border)'
+                            }}>
+                              <div className="font-bold" style={{ color: 'var(--primary)' }}>Afternoon</div>
+                              <div style={{ color: 'var(--text-primary)' }}>2pm - 5pm</div>
                             </div>
-                            <div className="bg-white rounded-lg p-3 border border-yellow-200">
-                              <div className="font-bold text-blue-600">Evening</div>
-                              <div className="text-gray-800">7pm - 8pm</div>
+                            <div className="rounded-lg p-3 border" style={{ 
+                              backgroundColor: 'var(--card-bg)',
+                              borderColor: 'var(--card-border)'
+                            }}>
+                              <div className="font-bold" style={{ color: 'var(--primary)' }}>Evening</div>
+                              <div style={{ color: 'var(--text-primary)' }}>7pm - 8pm</div>
                             </div>
                           </div>
                         </div>
@@ -1335,7 +1350,7 @@ export default function Home() {
                         {/* Title */}
                         <div>
                           <div className="flex items-center justify-between mb-3">
-                            <h3 className="text-xl font-bold text-gray-900">
+                            <h3 className="text-xl font-bold" style={{ color: 'var(--secondary)' }}>
                               📝 Post Title
                             </h3>
                             <button
