@@ -254,6 +254,11 @@ export default function Home() {
       // Set strategy and move to next step after state updates
       setStrategy(researchResult);
       
+      // Save business for quick access later
+      if (user) {
+        saveBusinessForLater(businessInfo, researchResult);
+      }
+      
       setTimeout(() => {
         setCurrentStep("principles");
       }, 1200);
@@ -267,6 +272,11 @@ export default function Home() {
       setResearchProgress(100);
       setResearchStatus("Using backup strategy...");
       setStrategy(result);
+      
+      // Save business for quick access later
+      if (user) {
+        saveBusinessForLater(businessInfo, result);
+      }
       
       setTimeout(() => {
         setCurrentStep("principles");
@@ -336,11 +346,17 @@ export default function Home() {
       );
 
       // Use AI caption with hashtags already included
-      setPostDetails({
+      const newPostDetails = {
         ...result,
         caption: data.caption,
         hashtags: [], // Hashtags are now in the caption
-      });
+      };
+      setPostDetails(newPostDetails);
+      
+      // Save to history
+      if (user) {
+        saveCompletedPost(selectedIdea, newPostDetails);
+      }
     } catch (error) {
       console.error("Caption generation error:", error);
       // Fallback to simple generation
@@ -353,11 +369,17 @@ export default function Home() {
       
       // Add hashtags to caption for fallback
       const captionWithHashtags = `${result.caption}\n\n${result.hashtags.join(" ")}`;
-      setPostDetails({
+      const newPostDetails = {
         ...result,
         caption: captionWithHashtags,
         hashtags: [],
-      });
+      };
+      setPostDetails(newPostDetails);
+      
+      // Save to history
+      if (user) {
+        saveCompletedPost(selectedIdea, newPostDetails);
+      }
     }
   };
 
@@ -383,7 +405,9 @@ export default function Home() {
       "choose-idea": 2, 
       "record-video": 3, 
       "post-details": 4,
-      "premium": 0  // Premium page doesn't show step progress
+      "premium": 0,  // Premium page doesn't show step progress
+      "history": 0,  // History page doesn't show step progress
+      "businesses": 0  // Businesses page doesn't show step progress
     };
     return steps[currentStep] || 0;
   };
@@ -914,6 +938,192 @@ export default function Home() {
               )}
             </SectionCard>
           </div>
+        )}
+
+        {/* History Page - Shows completed posts */}
+        {currentStep === "history" && (
+          <SectionCard className="mb-10">
+            <div>
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-4xl font-bold text-gray-900 mb-2">
+                    📝 Your Post History
+                  </h2>
+                  <p className="text-gray-600">
+                    All the video ideas and posts you've created
+                  </p>
+                </div>
+                <button
+                  onClick={() => setCurrentStep("form")}
+                  className="text-indigo-600 hover:text-indigo-700 font-medium"
+                >
+                  ← Back to Home
+                </button>
+              </div>
+
+              {completedPosts.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="text-6xl mb-4">📭</div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    No posts yet
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Complete the full PostReady workflow to see your posts here
+                  </p>
+                  <button
+                    onClick={() => setCurrentStep("form")}
+                    className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-700 transition-all"
+                  >
+                    Create Your First Post
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-6">
+                  {completedPosts.map((post) => (
+                    <div
+                      key={post.id}
+                      className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-md transition-all"
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-900 mb-1">
+                            {post.videoIdea.title}
+                          </h3>
+                          <p className="text-sm text-gray-500 mb-2">
+                            {post.businessName} • {new Date(post.completedAt).toLocaleDateString()}
+                          </p>
+                          <Badge variant={post.videoIdea.angle}>
+                            {post.videoIdea.angle.replace(/_/g, " ")}
+                          </Badge>
+                        </div>
+                      </div>
+                      
+                      <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                        <h4 className="font-bold text-gray-900 mb-2">Caption:</h4>
+                        <p className="text-gray-700 whitespace-pre-wrap text-sm">
+                          {post.postDetails.caption}
+                        </p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                          <span className="font-bold text-gray-700">Title:</span>
+                          <p className="text-gray-600">{post.postDetails.title}</p>
+                        </div>
+                        <div>
+                          <span className="font-bold text-gray-700">Best Time:</span>
+                          <p className="text-gray-600">{post.postDetails.bestPostTime}</p>
+                        </div>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(post.postDetails.caption);
+                          alert("Caption copied to clipboard!");
+                        }}
+                        className="mt-4 w-full bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-all"
+                      >
+                        Copy Caption
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </SectionCard>
+        )}
+
+        {/* Businesses Page - Shows saved businesses for quick access */}
+        {currentStep === "businesses" && (
+          <SectionCard className="mb-10">
+            <div>
+              <div className="flex items-center justify-between mb-8">
+                <div>
+                  <h2 className="text-4xl font-bold text-gray-900 mb-2">
+                    🏢 My Businesses
+                  </h2>
+                  <p className="text-gray-600">
+                    Quickly generate more videos for your researched businesses
+                  </p>
+                </div>
+                <button
+                  onClick={() => setCurrentStep("form")}
+                  className="text-indigo-600 hover:text-indigo-700 font-medium"
+                >
+                  ← Back to Home
+                </button>
+              </div>
+
+              {savedBusinesses.length === 0 ? (
+                <div className="text-center py-16">
+                  <div className="text-6xl mb-4">🏢</div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    No businesses yet
+                  </h3>
+                  <p className="text-gray-600 mb-6">
+                    Research a business to save it for quick access later
+                  </p>
+                  <button
+                    onClick={() => setCurrentStep("form")}
+                    className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-700 transition-all"
+                  >
+                    Research Your First Business
+                  </button>
+                </div>
+              ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {savedBusinesses.map((business) => (
+                    <div
+                      key={business.id}
+                      className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-lg transition-all cursor-pointer"
+                      onClick={() => loadSavedBusiness(business)}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className="flex-1">
+                          <h3 className="text-2xl font-bold text-gray-900 mb-2">
+                            {business.businessInfo.businessName}
+                          </h3>
+                          <div className="flex flex-wrap gap-2 mb-3">
+                            <span className="inline-block bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-medium">
+                              {business.businessInfo.businessType}
+                            </span>
+                            <span className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
+                              {business.businessInfo.platform}
+                            </span>
+                            <span className="inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">
+                              📍 {business.businessInfo.location}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 mb-4">
+                        <h4 className="font-bold text-gray-900 mb-2 text-sm">Strategy Summary:</h4>
+                        <p className="text-gray-700 text-sm line-clamp-2">
+                          {business.strategy.headlineSummary}
+                        </p>
+                      </div>
+
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>
+                          Last used: {new Date(business.lastUsed).toLocaleDateString()}
+                        </span>
+                        <span className="font-medium text-indigo-600">
+                          {business.strategy.contentIdeas.length} video ideas →
+                        </span>
+                      </div>
+
+                      <div className="mt-4 text-center">
+                        <div className="text-indigo-600 font-bold text-sm">
+                          Click to generate more videos
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </SectionCard>
         )}
 
         {/* Premium Subscription Page - Accessible from any step */}
