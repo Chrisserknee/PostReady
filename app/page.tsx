@@ -38,6 +38,7 @@ export default function Home() {
   const [postDetails, setPostDetails] = useState<PostDetails | null>(null);
   const [rewriteCount, setRewriteCount] = useState<number>(0);
   const [isRewriting, setIsRewriting] = useState<boolean>(false);
+  const [regenerateCount, setRegenerateCount] = useState<number>(0);
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signup');
@@ -452,6 +453,40 @@ export default function Home() {
     }
   };
 
+  const handleRegenerateIdea = () => {
+    // Check if user has exceeded free regenerate limit
+    if (regenerateCount >= 2 && !isPro) {
+      if (window.confirm("You've used your free idea regenerations. Upgrade to PostReady Pro for unlimited regenerations?")) {
+        setCurrentStep("premium");
+      }
+      return;
+    }
+
+    if (!strategy || !strategy.contentIdeas || strategy.contentIdeas.length <= 1) {
+      alert("No other ideas available");
+      return;
+    }
+
+    // Get a different random idea
+    const availableIdeas = strategy.contentIdeas.filter(
+      idea => idea.title !== selectedIdea?.title
+    );
+    
+    if (availableIdeas.length === 0) {
+      alert("No other ideas available");
+      return;
+    }
+
+    const randomIndex = Math.floor(Math.random() * availableIdeas.length);
+    const newIdea = availableIdeas[randomIndex];
+    
+    setSelectedIdea(newIdea);
+    setPostDetails(null); // Reset post details so caption gets regenerated with new idea
+    setRegenerateCount(prev => prev + 1);
+    
+    alert(`New idea selected! "${newIdea.title}"`);
+  };
+
   const scrollToPostPlanner = () => {
     postPlannerRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -853,7 +888,7 @@ export default function Home() {
                   </h2>
                   
                   <div className="max-w-2xl mx-auto mb-8">
-                    <div className="bg-indigo-50 border-2 border-indigo-200 rounded-lg p-6 mb-6">
+                    <div className="bg-indigo-50 border-2 border-indigo-200 rounded-lg p-6 mb-4">
                       <h3 className="text-xl font-bold text-gray-900 mb-2">
                         Your Selected Idea:
                       </h3>
@@ -863,6 +898,32 @@ export default function Home() {
                       <p className="text-gray-700">
                         {selectedIdea.description}
                       </p>
+                    </div>
+
+                    {/* Regenerate Idea Button */}
+                    <div className="mb-6">
+                      <button
+                        onClick={handleRegenerateIdea}
+                        className={`w-full px-4 py-3 rounded-lg font-bold transition-all ${
+                          regenerateCount >= 2 && !isPro
+                            ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
+                            : "bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                        }`}
+                      >
+                        {regenerateCount >= 2 && !isPro
+                          ? "🔒 Pro: Unlimited Ideas"
+                          : "🔄 Regenerate Idea"}
+                      </button>
+                      {regenerateCount >= 2 && !isPro && (
+                        <p className="text-xs text-gray-600 text-center mt-2">
+                          You've used your 2 free regenerations
+                        </p>
+                      )}
+                      {regenerateCount > 0 && regenerateCount < 2 && !isPro && (
+                        <p className="text-xs text-gray-600 text-center mt-2">
+                          {2 - regenerateCount} free regeneration{2 - regenerateCount !== 1 ? 's' : ''} remaining
+                        </p>
+                      )}
                     </div>
 
                     {/* Recording Instructions */}
