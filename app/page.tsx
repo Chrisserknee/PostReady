@@ -906,11 +906,8 @@ export default function Home() {
                         return;
                       }
 
-                      // STRIPE TEMPORARILY DISABLED - Show coming soon message
-                      alert("🎉 Pro subscriptions launching soon!\n\nWe're currently setting up secure payment processing. Check back in a few days for the full Pro experience with unlimited video ideas, advanced insights, and priority support!");
-
-                      /* STRIPE CHECKOUT - Uncomment when ready
                       try {
+                        // Create Stripe checkout session
                         const response = await fetch("/api/create-checkout", {
                           method: "POST",
                           headers: {
@@ -923,28 +920,24 @@ export default function Home() {
                         });
 
                         if (!response.ok) {
-                          const data = await response.json();
-                          if (data.comingSoon) {
-                            alert(data.error);
-                            return;
-                          }
                           throw new Error("Failed to create checkout session");
                         }
 
                         const { url } = await response.json();
+                        
+                        // Redirect to Stripe checkout
                         window.location.href = url;
                       } catch (error) {
                         console.error("Checkout error:", error);
                         alert("Failed to start checkout. Please try again.");
                       }
-                      */
                     }}
                     className="w-full bg-white text-purple-600 rounded-lg px-6 py-4 font-bold text-lg hover:bg-gray-50 transition-all shadow-lg"
                   >
-                    Coming Soon - Pro Trial (2 Days Free)
+                    Start Your Pro Trial - 2 Days Free
                   </button>
                   <p className="text-center text-purple-100 text-sm mt-3">
-                    Payment processing launching soon
+                    Cancel anytime • Secure payment by Stripe
                   </p>
                 </div>
               </div>
