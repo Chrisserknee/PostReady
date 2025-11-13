@@ -504,7 +504,7 @@ export default function Home() {
       // Wait for fade out animation
       await new Promise(resolve => setTimeout(resolve, 300));
 
-      // Get intelligent caption from API
+      // Get intelligent caption from API, using current title as context
       const response = await fetch("/api/generate-caption", {
         method: "POST",
         headers: {
@@ -512,7 +512,10 @@ export default function Home() {
         },
         body: JSON.stringify({
           businessInfo,
-          selectedIdea,
+          selectedIdea: {
+            ...selectedIdea,
+            title: postDetails?.title || selectedIdea.title, // Use edited title if available
+          },
         }),
       });
 
