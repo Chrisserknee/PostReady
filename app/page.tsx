@@ -903,10 +903,25 @@ export default function Home() {
                     </div>
                   </div>
 
-                  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-8 max-w-2xl mx-auto">
+                  <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-6 max-w-2xl mx-auto">
                     <p className="text-gray-800">
                       <strong>👉 Go record your video now!</strong> When you're done, come back here and click "I'm Done Recording" to get your caption, hashtags, and best posting time.
                     </p>
+                  </div>
+
+                  {/* Tough Love Section */}
+                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-lg p-6 mb-8 max-w-2xl mx-auto">
+                    <div className="flex items-start">
+                      <span className="text-3xl mr-3">💪</span>
+                      <div>
+                        <p className="text-gray-800 font-medium mb-2">
+                          We know how hard it is to actually hit record — but this is your sign.
+                        </p>
+                        <p className="text-gray-700">
+                          <strong>Don't overthink it. Just film something.</strong> Every time you do it, it gets easier.
+                        </p>
+                      </div>
+                    </div>
                   </div>
 
                   <div className="flex gap-4 max-w-md mx-auto">
