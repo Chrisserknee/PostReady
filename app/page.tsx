@@ -933,48 +933,69 @@ export default function Home() {
               {/* Step 1: Key Strategies */}
               {currentStep === "principles" && strategy && strategy.keyPrinciples && strategy.contentIdeas && (
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
-                    Your {businessInfo.platform} Growth Strategy
-                  </h2>
-                  <p className="text-gray-600 mb-6">
-                    Simple, actionable tactics that actually work
-                  </p>
+                  <div className="mb-8">
+                    <h2 className="text-4xl font-bold mb-3" style={{ color: '#1A1A1A' }}>
+                      Your {businessInfo.platform} Growth Strategy
+                    </h2>
+                    <p className="text-lg" style={{ color: '#6B7280' }}>
+                      Simple, actionable tactics that actually work
+                    </p>
+                  </div>
 
-                  <div className="bg-gradient-to-r from-green-50 to-blue-50 border-l-4 border-green-500 p-6 mb-8 rounded-r-lg">
+                  <div className="rounded-2xl p-8 mb-8 border-l-4" style={{ 
+                    background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.08) 0%, rgba(111, 255, 210, 0.08) 100%)',
+                    borderColor: '#6FFFD2'
+                  }}>
                     <div className="flex items-start">
-                      <span className="text-4xl mr-4">🎯</span>
+                      <span className="text-5xl mr-5">🎯</span>
                       <div>
-                        <h3 className="font-bold text-lg text-gray-900 mb-2">The Key to Success</h3>
-                        <p className="text-gray-800 text-lg">{strategy.headlineSummary}</p>
+                        <h3 className="font-bold text-xl mb-3" style={{ color: '#1A1A1A' }}>The Key to Success</h3>
+                        <p className="text-lg leading-relaxed" style={{ color: '#374151' }}>{strategy.headlineSummary}</p>
                       </div>
                     </div>
                   </div>
 
-                  <div className="mb-8">
-                    <h3 className="text-2xl font-bold text-gray-900 mb-4 flex items-center">
-                      <span className="text-3xl mr-2">⚡</span>
+                  <div className="mb-10">
+                    <h3 className="text-2xl font-bold mb-6 flex items-center" style={{ color: '#1A1A1A' }}>
+                      <span className="text-3xl mr-3">⚡</span>
                       5 Strategies to Grow Your Audience
                     </h3>
-                    <div className="space-y-4">
+                    <div className="space-y-3">
                       {strategy.keyPrinciples.map((principle, index) => (
-                        <div key={index} className="bg-white p-5 rounded-lg border-2 border-gray-200 hover:border-indigo-400 transition-all shadow-sm hover:shadow-md">
-                          <div className="flex items-start">
-                            <div className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0">
+                        <div 
+                          key={index} 
+                          className="rounded-xl p-6 border transition-all hover:scale-[1.02] cursor-default"
+                          style={{
+                            backgroundColor: 'var(--card-bg)',
+                            borderColor: 'var(--card-border)',
+                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                          }}
+                        >
+                          <div className="flex items-start gap-4">
+                            <div 
+                              className="rounded-full w-10 h-10 flex items-center justify-center font-bold text-white flex-shrink-0 text-lg"
+                              style={{ 
+                                background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)'
+                              }}
+                            >
                               {index + 1}
                             </div>
-                            <p className="text-gray-800 text-lg leading-relaxed">{principle}</p>
+                            <p className="text-base leading-relaxed pt-1" style={{ color: 'var(--text-primary)' }}>{principle}</p>
                           </div>
                         </div>
                       ))}
                     </div>
                   </div>
 
-                  <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-6 mb-6">
-                    <div className="flex items-start">
-                      <span className="text-3xl mr-3">💡</span>
+                  <div className="rounded-xl p-6 mb-8 border-l-4" style={{ 
+                    backgroundColor: '#FEF3C7',
+                    borderColor: '#F59E0B'
+                  }}>
+                    <div className="flex items-start gap-4">
+                      <span className="text-3xl">💡</span>
                       <div>
-                        <h4 className="font-bold text-gray-900 mb-2">Remember:</h4>
-                        <p className="text-gray-700">
+                        <h4 className="font-bold text-lg mb-2" style={{ color: '#92400E' }}>Pro Tip</h4>
+                        <p style={{ color: '#78350F' }}>
                           Consistency beats perfection. Post regularly, engage authentically, and your audience will grow!
                         </p>
                       </div>
@@ -1026,7 +1047,7 @@ export default function Home() {
                     ))}
                   </div>
 
-                  {/* Generate More Ideas Button */}
+                  {/* Generate More Ideas Button - Floating */}
                   <div className="mb-6 flex justify-end">
                     <button
                       onClick={async () => {
@@ -1078,24 +1099,28 @@ export default function Home() {
                         }
                       }}
                       disabled={isRewriting}
-                      className={`px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-md hover:shadow-lg ${
+                      className={`px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg hover:shadow-xl hover:scale-105 ${
                         isRewriting
                           ? "bg-gray-400 text-white cursor-not-allowed"
-                          : isPro
-                          ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
-                          : "bg-gradient-to-r from-amber-500 to-blue-600 text-white hover:from-amber-600 hover:to-blue-700"
+                          : "text-white"
                       }`}
+                      style={!isRewriting ? { 
+                        backgroundColor: '#2979FF',
+                        border: '2px solid #6FFFD2'
+                      } : {}}
+                      onMouseEnter={(e) => !isRewriting && (e.currentTarget.style.backgroundColor = '#1e5dd9')}
+                      onMouseLeave={(e) => !isRewriting && (e.currentTarget.style.backgroundColor = '#2979FF')}
                     >
                       {isRewriting ? (
                         "Generating..."
                       ) : isPro ? (
                         <>
-                          <span className="mr-1">🎬</span>
+                          <span className="mr-2">🎬</span>
                           Generate More Ideas
                         </>
                       ) : (
                         <>
-                          <span className="mr-1">🔒</span>
+                          <span className="mr-2">🔒</span>
                           Pro: More Ideas
                         </>
                       )}
