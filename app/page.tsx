@@ -48,6 +48,7 @@ export default function Home() {
   const [isRewordingTitle, setIsRewordingTitle] = useState<boolean>(false);
   const [captionAnimation, setCaptionAnimation] = useState<'idle' | 'fadeOut' | 'typing'>('idle');
   const [titleAnimation, setTitleAnimation] = useState<'idle' | 'fadeOut' | 'fadeIn'>('idle');
+  const [ideasAnimation, setIdeasAnimation] = useState<'idle' | 'fadeOut' | 'fadeIn'>('idle');
   
   // Notification state
   const [notification, setNotification] = useState<{
@@ -1047,7 +1048,10 @@ export default function Home() {
                     Select one idea to create content for. You'll record the video next.
                   </p>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+                  <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 transition-all duration-300 ${
+                    ideasAnimation === 'fadeOut' ? 'animate-fade-out' : 
+                    ideasAnimation === 'fadeIn' ? 'animate-fade-in' : ''
+                  }`}>
                     {strategy.contentIdeas.map((idea, index) => (
                       <div
                         key={index}
@@ -1093,12 +1097,16 @@ export default function Home() {
                           return;
                         }
 
-                        // Pro users: Regenerate ideas with loading state
+                        // Pro users: Regenerate ideas with smooth animation
                         if (!businessInfo.businessName) return;
                         
                         setIsRewriting(true);
+                        setIdeasAnimation('fadeOut');
                         
                         try {
+                          // Wait for fade out animation
+                          await new Promise(resolve => setTimeout(resolve, 300));
+                          
                           const response = await fetch("/api/research-business", {
                             method: "POST",
                             headers: {
@@ -1113,15 +1121,24 @@ export default function Home() {
 
                           const data = await response.json();
                           
-                          // Update strategy and clear selection
-                          setStrategy(data);
+                          // Update strategy with new ideas
+                          setStrategy(data.research);
                           setSelectedIdea(null);
+                          
+                          // Start fade in animation
+                          setIdeasAnimation('fadeIn');
                           
                           // Show success notification
                           showNotification("New video ideas generated!", "success", "Success");
+                          
+                          // Reset animation after fade in completes
+                          setTimeout(() => {
+                            setIdeasAnimation('idle');
+                          }, 500);
                         } catch (error) {
                           console.error("Error generating more ideas:", error);
                           showNotification("Failed to generate more ideas. Please try again.", "error", "Error");
+                          setIdeasAnimation('idle');
                         } finally {
                           setIsRewriting(false);
                         }
