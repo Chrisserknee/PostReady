@@ -2,6 +2,67 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Text Animation Keyframes */
+@keyframes fadeOut {
+  from {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes typing {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes blink {
+  0%, 100% {
+    border-right-color: transparent;
+  }
+  50% {
+    border-right-color: #4f46e5;
+  }
+}
+
+/* Animation Classes */
+.animate-fade-out {
+  animation: fadeOut 0.3s ease-out forwards;
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.5s ease-out forwards;
+}
+
+.animate-typing {
+  overflow: hidden;
+  white-space: pre-wrap;
+  animation: typing 2s steps(40, end) forwards;
+}
+
+.typing-cursor {
+  border-right: 3px solid #4f46e5;
+  animation: blink 0.7s step-end infinite;
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

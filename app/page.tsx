@@ -15,6 +15,7 @@ import { AuthModal } from "@/components/AuthModal";
 import { Modal } from "@/components/Modal";
 import { useAuth } from "@/contexts/AuthContext";
 import { saveUserProgress, loadUserProgress } from "@/lib/userProgress";
+import { saveBusiness, loadSavedBusinesses, saveCompletedPost, loadPostHistory } from "@/lib/userHistory";
 
 type WizardStep = "form" | "researching" | "principles" | "choose-idea" | "record-video" | "post-details" | "premium" | "history" | "businesses";
 
@@ -42,6 +43,8 @@ export default function Home() {
   const [regenerateCount, setRegenerateCount] = useState<number>(0);
   const [rewordTitleCount, setRewordTitleCount] = useState<number>(0);
   const [isRewordingTitle, setIsRewordingTitle] = useState<boolean>(false);
+  const [captionAnimation, setCaptionAnimation] = useState<'idle' | 'fadeOut' | 'typing'>('idle');
+  const [titleAnimation, setTitleAnimation] = useState<'idle' | 'fadeOut' | 'fadeIn'>('idle');
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signup');
@@ -83,6 +86,7 @@ export default function Home() {
   useEffect(() => {
     if (user && !authLoading) {
       loadProgress();
+      loadHistoryData();
     }
   }, [user, authLoading]);
 
@@ -126,6 +130,27 @@ export default function Home() {
     }
   };
 
+  const loadHistoryData = async () => {
+    if (!user) return;
+
+    try {
+      const [businessesResult, postsResult] = await Promise.all([
+        loadSavedBusinesses(user.id),
+        loadPostHistory(user.id)
+      ]);
+
+      if (!businessesResult.error && businessesResult.data) {
+        setSavedBusinesses(businessesResult.data);
+      }
+
+      if (!postsResult.error && postsResult.data) {
+        setCompletedPosts(postsResult.data);
+      }
+    } catch (error) {
+      console.error('Error loading history:', error);
+    }
+  };
+
   const handleSignOut = async () => {
     await signOut();
     // Reset to initial state
@@ -147,49 +172,60 @@ export default function Home() {
   };
 
   // Save business for quick access later
-  const saveBusinessForLater = (info: BusinessInfo, strat: StrategyResult) => {
-    const businessId = `${info.businessName}-${Date.now()}`;
-    const newBusiness = {
-      id: businessId,
-      businessInfo: info,
-      strategy: strat,
-      lastUsed: new Date().toISOString(),
-    };
-    
-    setSavedBusinesses(prev => {
-      // Remove any existing entry for this business name
-      const filtered = prev.filter(b => b.businessInfo.businessName !== info.businessName);
-      return [newBusiness, ...filtered];
-    });
+  const saveBusinessForLater = async (info: BusinessInfo, strat: StrategyResult) => {
+    if (!user) return;
+
+    try {
+      // Save to Supabase
+      await saveBusiness(user.id, info, strat);
+      
+      // Reload the businesses list
+      const { data, error } = await loadSavedBusinesses(user.id);
+      if (!error && data) {
+        setSavedBusinesses(data);
+      }
+    } catch (error) {
+      console.error('Error saving business:', error);
+    }
   };
 
   // Save completed post to history
-  const saveCompletedPost = (idea: ContentIdea, details: PostDetails) => {
-    const postId = `${businessInfo.businessName}-${Date.now()}`;
-    const newPost = {
-      id: postId,
-      businessName: businessInfo.businessName,
-      videoIdea: idea,
-      postDetails: details,
-      completedAt: new Date().toISOString(),
-    };
-    
-    setCompletedPosts(prev => [newPost, ...prev]);
+  const saveCompletedPostToHistory = async (idea: ContentIdea, details: PostDetails) => {
+    if (!user) return;
+
+    try {
+      // Save to Supabase
+      await saveCompletedPost(user.id, businessInfo.businessName, idea, details);
+      
+      // Reload the post history
+      const { data, error } = await loadPostHistory(user.id);
+      if (!error && data) {
+        setCompletedPosts(data);
+      }
+    } catch (error) {
+      console.error('Error saving completed post:', error);
+    }
   };
 
   // Load saved business
-  const loadSavedBusiness = (business: typeof savedBusinesses[0]) => {
+  const loadSavedBusiness = async (business: typeof savedBusinesses[0]) => {
     setBusinessInfo(business.businessInfo);
     setStrategy(business.strategy);
     setCurrentStep("choose-idea");
-    // Update lastUsed
-    setSavedBusinesses(prev => 
-      prev.map(b => 
-        b.id === business.id 
-          ? { ...b, lastUsed: new Date().toISOString() }
-          : b
-      )
-    );
+    setSelectedIdea(null);
+    setPostDetails(null);
+    setRewriteCount(0);
+    setRegenerateCount(0);
+    
+    // Update lastUsed in Supabase
+    if (user) {
+      await saveBusiness(user.id, business.businessInfo, business.strategy);
+      // Reload businesses to get updated timestamp
+      const { data, error } = await loadSavedBusinesses(user.id);
+      if (!error && data) {
+        setSavedBusinesses(data);
+      }
+    }
   };
 
   const handleGenerateStrategy = async (e: React.FormEvent) => {
@@ -376,7 +412,7 @@ export default function Home() {
       
       // Save to history
       if (user) {
-        saveCompletedPost(selectedIdea, newPostDetails);
+        saveCompletedPostToHistory(selectedIdea, newPostDetails);
       }
     } catch (error) {
       console.error("Caption generation error:", error);
@@ -399,7 +435,7 @@ export default function Home() {
       
       // Save to history
       if (user) {
-        saveCompletedPost(selectedIdea, newPostDetails);
+        saveCompletedPostToHistory(selectedIdea, newPostDetails);
       }
     }
   };
@@ -425,8 +461,12 @@ export default function Home() {
     }
 
     setIsRewriting(true);
+    setCaptionAnimation('fadeOut');
 
     try {
+      // Wait for fade out animation
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       // Get intelligent caption from API
       const response = await fetch("/api/generate-caption", {
         method: "POST",
@@ -462,10 +502,19 @@ export default function Home() {
       setPostDetails(newPostDetails);
       setRewriteCount(prev => prev + 1);
       
+      // Start typing animation
+      setCaptionAnimation('typing');
+      
+      // Reset animation after typing completes
+      setTimeout(() => {
+        setCaptionAnimation('idle');
+      }, 2000);
+      
       alert("Caption rewritten successfully!");
     } catch (error) {
       console.error("Caption rewrite error:", error);
       alert("Failed to rewrite caption. Please try again.");
+      setCaptionAnimation('idle');
     } finally {
       setIsRewriting(false);
     }
@@ -520,8 +569,12 @@ export default function Home() {
     }
 
     setIsRewordingTitle(true);
+    setTitleAnimation('fadeOut');
 
     try {
+      // Wait for fade out animation
+      await new Promise(resolve => setTimeout(resolve, 300));
+
       // Call API to get AI-generated reworded title
       const response = await fetch("/api/reword-title", {
         method: "POST",
@@ -548,10 +601,19 @@ export default function Home() {
       });
       setRewordTitleCount(prev => prev + 1);
       
+      // Start fade in animation
+      setTitleAnimation('fadeIn');
+      
+      // Reset animation after fade in completes
+      setTimeout(() => {
+        setTitleAnimation('idle');
+      }, 500);
+      
       alert("Title reworded successfully!");
     } catch (error) {
       console.error("Title reword error:", error);
       alert("Failed to reword title. Please try again.");
+      setTitleAnimation('idle');
     } finally {
       setIsRewordingTitle(false);
     }
@@ -1150,7 +1212,12 @@ export default function Home() {
                             </p>
                           )}
                           <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
-                            <p className="text-lg font-medium text-gray-900">
+                            <p 
+                              className={`text-lg font-medium text-gray-900 transition-all duration-300 ${
+                                titleAnimation === 'fadeOut' ? 'animate-fade-out' : 
+                                titleAnimation === 'fadeIn' ? 'animate-fade-in' : ''
+                              }`}
+                            >
                               {postDetails.title}
                             </p>
                           </div>
@@ -1167,7 +1234,10 @@ export default function Home() {
                               setPostDetails({ ...postDetails, caption: e.target.value })
                             }
                             rows={12}
-                            className="border-2 border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-vertical font-sans"
+                            className={`border-2 border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-vertical font-sans transition-all duration-300 ${
+                              captionAnimation === 'fadeOut' ? 'animate-fade-out' : 
+                              captionAnimation === 'typing' ? 'animate-typing' : ''
+                            }`}
                             placeholder="Your caption with hashtags will appear here..."
                           />
                           
