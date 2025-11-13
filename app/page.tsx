@@ -1170,19 +1170,22 @@ export default function Home() {
               {currentStep === "record-video" && selectedIdea && (
                 <div className="text-center py-8">
                   <div className="text-6xl mb-6">🎥</div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                  <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
                     Time to Record Your Video!
                   </h2>
                   
                   <div className="max-w-2xl mx-auto mb-8">
-                    <div className="bg-indigo-50 border-2 border-indigo-200 rounded-lg p-6 mb-4">
-                      <h3 className="text-xl font-bold text-gray-900 mb-2">
+                    <div className="border-2 rounded-lg p-6 mb-4" style={{ 
+                      backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                      borderColor: 'rgba(99, 102, 241, 0.3)'
+                    }}>
+                      <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
                         Your Selected Idea:
                       </h3>
-                      <p className="text-lg font-medium text-indigo-700 mb-2">
+                      <p className="text-lg font-medium mb-2" style={{ color: 'var(--primary)' }}>
                         {selectedIdea.title}
                       </p>
-                      <p className="text-gray-700">
+                      <p style={{ color: 'var(--text-secondary)' }}>
                         {selectedIdea.description}
                       </p>
                     </div>
@@ -1372,21 +1375,25 @@ export default function Home() {
                             </button>
                           </div>
                           {rewordTitleCount > 0 && rewordTitleCount < 3 && !isPro && (
-                            <p className="text-xs text-gray-600 mb-2">
+                            <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>
                               {3 - rewordTitleCount} {3 - rewordTitleCount === 1 ? 'use' : 'uses'} left
                             </p>
                           )}
                           {rewordTitleCount >= 3 && !isPro && (
-                            <p className="text-xs text-gray-600 mb-2">
+                            <p className="text-xs mb-2" style={{ color: 'var(--text-secondary)' }}>
                               You've used your 3 free rewords
                             </p>
                           )}
-                          <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
+                          <div className="border-2 rounded-lg p-4" style={{ 
+                            backgroundColor: 'var(--card-bg)',
+                            borderColor: 'var(--card-border)'
+                          }}>
                             <p 
-                              className={`text-lg font-medium text-gray-900 transition-all duration-300 ${
+                              className={`text-lg font-medium transition-all duration-300 ${
                                 titleAnimation === 'fadeOut' ? 'animate-fade-out' : 
                                 titleAnimation === 'fadeIn' ? 'animate-fade-in' : ''
                               }`}
+                              style={{ color: 'var(--text-primary)' }}
                             >
                               {postDetails.title}
                             </p>
@@ -1395,7 +1402,7 @@ export default function Home() {
 
                         {/* Caption with Hashtags */}
                         <div>
-                          <h3 className="text-xl font-bold text-gray-900 mb-3">
+                          <h3 className="text-xl font-bold mb-3" style={{ color: 'var(--secondary)' }}>
                             ✍️ Caption (Editable)
                           </h3>
                           <textarea
@@ -1404,10 +1411,15 @@ export default function Home() {
                               setPostDetails({ ...postDetails, caption: e.target.value })
                             }
                             rows={12}
-                            className={`border-2 border-gray-300 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-vertical font-sans transition-all duration-300 ${
+                            className={`border-2 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 resize-vertical font-sans transition-all duration-300 ${
                               captionAnimation === 'fadeOut' ? 'animate-fade-out' : 
                               captionAnimation === 'typing' ? 'animate-typing' : ''
                             }`}
+                            style={{
+                              backgroundColor: 'var(--card-bg)',
+                              borderColor: 'var(--card-border)',
+                              color: 'var(--text-primary)'
+                            }}
                             placeholder="Your caption with hashtags will appear here..."
                           />
                           
@@ -1435,12 +1447,12 @@ export default function Home() {
                             </button>
                           </div>
                           {rewriteCount >= 2 && !isPro && (
-                            <p className="text-xs text-gray-600 text-center mt-2">
+                            <p className="text-xs text-center mt-2" style={{ color: 'var(--text-secondary)' }}>
                               You've used your 2 free rewrites
                             </p>
                           )}
                           {rewriteCount > 0 && rewriteCount < 2 && !isPro && (
-                            <p className="text-xs text-gray-600 text-center mt-2">
+                            <p className="text-xs text-center mt-2" style={{ color: 'var(--text-secondary)' }}>
                               {2 - rewriteCount} {2 - rewriteCount === 1 ? 'use' : 'uses'} left
                             </p>
                           )}
