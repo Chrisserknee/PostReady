@@ -1086,7 +1086,7 @@ export default function Home() {
                             Best Times to Post
                           </h3>
                           <p className="text-gray-700 mb-4">
-                            Based on our research on {businessInfo.location}
+                            Based on our analysis of the {businessInfo.location} market...
                           </p>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div className="bg-white rounded-lg p-3 border border-yellow-200">
