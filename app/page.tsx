@@ -1132,7 +1132,7 @@ export default function Home() {
                       ← Back
                     </SecondaryButton>
                     <PrimaryButton onClick={handleNextStep} className="flex-1">
-                      Next: Record Instructions →
+                      Next: Record Video →
                     </PrimaryButton>
                   </div>
                 </div>
