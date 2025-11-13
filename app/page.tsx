@@ -789,13 +789,13 @@ export default function Home() {
             }}
             className="text-6xl font-extrabold mb-3 cursor-pointer transition-all hover:scale-105"
             style={{ 
-              color: '#1A1A1A',
+              color: 'var(--secondary)',
               letterSpacing: '-0.02em'
             }}
           >
             PostReady
           </h1>
-          <p className="text-2xl font-medium tracking-wide" style={{ color: '#2979FF' }}>
+          <p className="text-2xl font-medium tracking-wide" style={{ color: 'var(--primary)' }}>
             Posting made easy.
           </p>
         </div>
@@ -803,7 +803,7 @@ export default function Home() {
         {/* Business Info Form */}
         {currentStep === "form" && (
           <SectionCard className="mb-10">
-            <h2 className="text-3xl font-bold mb-6" style={{ color: '#1A1A1A' }}>
+            <h2 className="text-3xl font-bold mb-6" style={{ color: 'var(--secondary)' }}>
               Tell Us About Your Business
             </h2>
             <form onSubmit={handleGenerateStrategy} className="space-y-4">
@@ -1804,14 +1804,15 @@ export default function Home() {
       {/* Floating Theme Toggle - Bottom Right */}
       <button
         onClick={toggleTheme}
-        className="fixed bottom-6 right-6 p-4 rounded-full shadow-2xl transition-all hover:scale-110 z-50"
+        className="fixed bottom-6 right-6 p-4 rounded-full shadow-2xl hover:scale-110 z-50"
         style={{ 
           backgroundColor: 'var(--card-bg)',
-          border: '3px solid var(--primary)'
+          border: '3px solid var(--primary)',
+          transition: 'all 0.3s ease, transform 0.2s ease'
         }}
         title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
       >
-        <span className="text-3xl">
+        <span className="text-3xl" style={{ transition: 'opacity 0.3s ease' }}>
           {theme === 'light' ? '🌙' : '☀️'}
         </span>
       </button>

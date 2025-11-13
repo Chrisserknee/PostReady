@@ -7,12 +7,28 @@ import { useRouter } from 'next/navigation';
 import { SectionCard } from '@/components/SectionCard';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SecondaryButton } from '@/components/SecondaryButton';
+import { Modal } from '@/components/Modal';
 
 export default function UserPortal() {
   const { user, isPro, signOut, loading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const [billingLoading, setBillingLoading] = useState(false);
+  
+  // Modal state
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'info' | 'confirm' | 'success' | 'error';
+    onConfirm?: () => void;
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info',
+  });
 
   useEffect(() => {
     if (!loading && !user) {
@@ -37,14 +53,20 @@ export default function UserPortal() {
       });
 
       if (!response.ok) {
-        throw new Error('Failed to create portal session');
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create portal session');
       }
 
       const { url } = await response.json();
       window.location.href = url;
-    } catch (error) {
+    } catch (error: any) {
       console.error('Portal error:', error);
-      alert('Failed to open billing portal. Please try again.');
+      setModalState({
+        isOpen: true,
+        title: 'Billing Portal Error',
+        message: error.message || 'Failed to open billing portal. Please make sure you have an active subscription.',
+        type: 'error',
+      });
     } finally {
       setBillingLoading(false);
     }
@@ -191,10 +213,17 @@ export default function UserPortal() {
 
             <button
               onClick={async () => {
-                if (confirm('Are you sure you want to sign out?')) {
-                  await signOut();
-                  router.push('/');
-                }
+                setModalState({
+                  isOpen: true,
+                  title: 'Sign Out',
+                  message: 'Are you sure you want to sign out?',
+                  type: 'confirm',
+                  onConfirm: async () => {
+                    await signOut();
+                    router.push('/');
+                  },
+                  confirmText: 'Sign Out'
+                });
               }}
               className="w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-105"
               style={{ 
@@ -217,17 +246,29 @@ export default function UserPortal() {
       {/* Floating Theme Toggle - Bottom Right */}
       <button
         onClick={toggleTheme}
-        className="fixed bottom-6 right-6 p-4 rounded-full shadow-2xl transition-all hover:scale-110 z-50"
+        className="fixed bottom-6 right-6 p-4 rounded-full shadow-2xl hover:scale-110 z-50"
         style={{ 
           backgroundColor: 'var(--card-bg)',
-          border: '3px solid var(--primary)'
+          border: '3px solid var(--primary)',
+          transition: 'all 0.3s ease, transform 0.2s ease'
         }}
         title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
       >
-        <span className="text-3xl">
+        <span className="text-3xl" style={{ transition: 'opacity 0.3s ease' }}>
           {theme === 'light' ? '🌙' : '☀️'}
         </span>
       </button>
+      
+      {/* Modal */}
+      <Modal
+        isOpen={modalState.isOpen}
+        title={modalState.title}
+        message={modalState.message}
+        type={modalState.type}
+        onClose={() => setModalState({ ...modalState, isOpen: false })}
+        onConfirm={modalState.onConfirm}
+        confirmText={modalState.confirmText}
+      />
     </div>
   );
 }
