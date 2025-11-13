@@ -380,9 +380,20 @@ export default function Home() {
         </div>
 
         <div className="text-center mb-12">
-          <h1 className="text-5xl font-bold text-gray-900 mb-3">
+          <h1 
+            onClick={() => {
+              setCurrentStep("form");
+              setStrategy(null);
+              setSelectedIdea(null);
+              setPostDetails(null);
+            }}
+            className="text-5xl font-bold text-gray-900 mb-3 cursor-pointer hover:text-indigo-600 transition-colors"
+          >
             PostReady
           </h1>
+          <p className="text-lg text-gray-700 font-medium mb-4">
+            We help you do the most important thing for your business: post.
+          </p>
           <p className="text-xl text-indigo-600 font-medium mb-2">
             Your personal social media manager.
           </p>
@@ -477,7 +488,7 @@ export default function Home() {
                   className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center whitespace-nowrap"
                 >
                   <span className="mr-2">⚡</span>
-                  View Pro Plans
+                  View Pro Plan
                 </button>
               </div>
             </div>
