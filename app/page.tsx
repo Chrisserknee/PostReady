@@ -522,18 +522,29 @@ export default function Home() {
     setIsRewordingTitle(true);
 
     try {
-      // Regenerate the title using the post details function
-      const result = generatePostDetails(
-        businessInfo,
-        selectedIdea.title,
-        selectedIdea.description,
-        strategy?.postingTimes || []
-      );
+      // Call API to get AI-generated reworded title
+      const response = await fetch("/api/reword-title", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          businessInfo,
+          selectedIdea,
+          currentTitle: postDetails.title,
+        }),
+      });
 
-      // Update just the title
+      if (!response.ok) {
+        throw new Error("Failed to reword title");
+      }
+
+      const data = await response.json();
+
+      // Update just the title with the new AI-generated title
       setPostDetails({
         ...postDetails,
-        title: result.title + " (Reworded)",
+        title: data.title,
       });
       setRewordTitleCount(prev => prev + 1);
       
