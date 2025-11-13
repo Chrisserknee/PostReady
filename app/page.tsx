@@ -1027,7 +1027,7 @@ export default function Home() {
                             Best Times to Post
                           </h3>
                           <p className="text-gray-700 mb-4">
-                            Based on {businessInfo.location} audience and {businessInfo.businessType} engagement patterns
+                            Based on our research on {businessInfo.location}
                           </p>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div className="bg-white rounded-lg p-3 border border-yellow-200">
@@ -1043,9 +1043,6 @@ export default function Home() {
                               <div className="text-gray-800">7pm - 8pm</div>
                             </div>
                           </div>
-                          <p className="text-sm text-gray-600 mt-4">
-                            💡 Post when you think is best for engagement, but these times typically perform well
-                          </p>
                         </div>
 
                         {/* Title */}
