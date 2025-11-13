@@ -1660,14 +1660,13 @@ export default function Home() {
               {/* Back Button */}
               <div className="text-center">
                 <button
-                  onClick={() => setCurrentStep("form")}
+                  onClick={handlePreviousStep}
                   className="text-gray-600 hover:text-gray-900 font-medium"
                 >
                   ← Back to Main Page
                 </button>
               </div>
-            </div>
-          </SectionCard>
+          </div>
         )}
 
         <div className="text-center text-gray-500 text-sm py-8">
