@@ -991,7 +991,7 @@ export default function Home() {
                   </div>
 
                   {/* Generate More Ideas Button */}
-                  <div className="mb-6">
+                  <div className="mb-6 flex justify-end">
                     <button
                       onClick={async () => {
                         if (!isPro) {
@@ -1001,8 +1001,10 @@ export default function Home() {
                           return;
                         }
 
-                        // Pro users: Regenerate ideas
+                        // Pro users: Regenerate ideas with loading state
                         if (!businessInfo.businessName) return;
+                        
+                        setIsRewriting(true); // Use existing loading state
                         
                         try {
                           const response = await fetch("/api/research-business", {
@@ -1018,36 +1020,50 @@ export default function Home() {
                           }
 
                           const data = await response.json();
+                          
+                          // Animate the update
+                          setCaptionAnimation('fadeOut');
+                          await new Promise(resolve => setTimeout(resolve, 300));
+                          
                           setStrategy(data);
-                          alert("New video ideas generated!");
+                          setSelectedIdea(null); // Clear selection so user picks new idea
+                          
+                          setCaptionAnimation('fadeIn');
+                          setTimeout(() => {
+                            setCaptionAnimation('idle');
+                          }, 500);
+                          
+                          alert("✨ New video ideas generated!");
                         } catch (error) {
                           console.error("Error generating more ideas:", error);
                           alert("Failed to generate more ideas. Please try again.");
+                        } finally {
+                          setIsRewriting(false);
                         }
                       }}
-                      className={`w-full px-6 py-4 rounded-lg font-bold text-lg transition-all shadow-lg hover:shadow-xl ${
-                        isPro
+                      disabled={isRewriting}
+                      className={`px-4 py-2 rounded-lg font-bold text-sm transition-all shadow-md hover:shadow-lg ${
+                        isRewriting
+                          ? "bg-gray-400 text-white cursor-not-allowed"
+                          : isPro
                           ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
                           : "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
                       }`}
                     >
-                      {isPro ? (
+                      {isRewriting ? (
+                        "Generating..."
+                      ) : isPro ? (
                         <>
-                          <span className="mr-2">🎬</span>
+                          <span className="mr-1">🎬</span>
                           Generate More Ideas
                         </>
                       ) : (
                         <>
-                          <span className="mr-2">🔒</span>
-                          Generate More Ideas (Pro Only)
+                          <span className="mr-1">🔒</span>
+                          Pro: More Ideas
                         </>
                       )}
                     </button>
-                    {!isPro && (
-                      <p className="text-xs text-gray-600 text-center mt-2">
-                        Upgrade to Pro for unlimited video idea generation
-                      </p>
-                    )}
                   </div>
 
                   <div className="flex gap-4">
