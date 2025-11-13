@@ -315,7 +315,15 @@ export default function Home() {
   };
 
   const getStepNumber = (): number => {
-    const steps = { form: 0, researching: 1, principles: 1, "choose-idea": 2, "record-video": 3, "post-details": 4 };
+    const steps: Record<string, number> = { 
+      form: 0, 
+      researching: 1, 
+      principles: 1, 
+      "choose-idea": 2, 
+      "record-video": 3, 
+      "post-details": 4,
+      "premium": 0  // Premium page doesn't show step progress
+    };
     return steps[currentStep] || 0;
   };
 
