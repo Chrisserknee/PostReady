@@ -88,12 +88,22 @@ export default function UserPortal() {
       <div className="max-w-4xl mx-auto px-4 py-10">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold" style={{ color: 'var(--text-primary)' }}>
+          <h1 className="text-4xl font-bold" style={{ color: 'var(--secondary)' }}>
             User Portal
           </h1>
-          <SecondaryButton onClick={() => router.push('/')}>
+          <button
+            onClick={() => router.push('/')}
+            className="px-5 py-2.5 rounded-lg font-medium transition-all hover:scale-105"
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              borderWidth: '2px',
+              borderStyle: 'solid',
+              borderColor: 'var(--card-border)',
+              color: 'var(--text-primary)'
+            }}
+          >
             ← Back to Home
-          </SecondaryButton>
+          </button>
         </div>
 
         {/* Account Overview */}
@@ -129,18 +139,29 @@ export default function UserPortal() {
 
         {/* Billing & Subscription */}
         <SectionCard className="mb-6">
-          <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-2xl font-bold mb-6" style={{ color: 'var(--secondary)' }}>
             Billing & Subscription
           </h2>
           
           {isPro ? (
             <div className="space-y-4">
-              <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--hover-bg)' }}>
-                <div className="flex items-center justify-between mb-2">
-                  <h3 className="font-bold text-lg" style={{ color: 'var(--text-primary)' }}>PostReady Pro</h3>
-                  <span className="text-sm font-medium" style={{ color: 'var(--primary)' }}>$10/month</span>
+              <div className="p-6 rounded-xl border-2" style={{ 
+                backgroundColor: 'var(--hover-bg)',
+                borderColor: 'var(--primary)'
+              }}>
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="font-bold text-xl flex items-center" style={{ color: 'var(--text-primary)' }}>
+                    <span className="mr-2">⚡</span>
+                    PostReady Pro
+                  </h3>
+                  <span className="text-lg font-bold px-3 py-1 rounded-lg" style={{ 
+                    color: 'var(--primary)',
+                    backgroundColor: 'var(--card-bg)'
+                  }}>
+                    $10/month
+                  </span>
                 </div>
-                <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
                   Unlimited video ideas, advanced insights, and priority support
                 </p>
                 <PrimaryButton 
@@ -150,22 +171,22 @@ export default function UserPortal() {
                 >
                   {billingLoading ? 'Loading...' : '⚙️ Manage Subscription'}
                 </PrimaryButton>
-                <p className="text-xs mt-2 text-center" style={{ color: 'var(--text-secondary)' }}>
+                <p className="text-xs mt-3 text-center" style={{ color: 'var(--text-secondary)' }}>
                   Update payment method, view invoices, or cancel subscription
                 </p>
               </div>
             </div>
           ) : (
-            <div className="text-center py-8">
-              <div className="text-5xl mb-4">⚡</div>
-              <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+            <div className="text-center py-10">
+              <div className="text-6xl mb-4">⚡</div>
+              <h3 className="text-2xl font-bold mb-3" style={{ color: 'var(--secondary)' }}>
                 Upgrade to PostReady Pro
               </h3>
-              <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
+              <p className="mb-6 text-lg" style={{ color: 'var(--text-secondary)' }}>
                 Get unlimited video ideas, advanced insights, and priority support for just $10/month
               </p>
               <PrimaryButton onClick={() => router.push('/?upgrade=true')}>
-                View Pro Plans
+                ⚡ View Pro Plans
               </PrimaryButton>
             </div>
           )}
@@ -173,7 +194,7 @@ export default function UserPortal() {
 
         {/* Account Actions */}
         <SectionCard>
-          <h2 className="text-2xl font-bold mb-4" style={{ color: 'var(--text-primary)' }}>
+          <h2 className="text-2xl font-bold mb-6" style={{ color: 'var(--secondary)' }}>
             Account Actions
           </h2>
           <div className="space-y-3">

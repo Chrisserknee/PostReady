@@ -705,40 +705,44 @@ export default function Home() {
                       setRegenerateCount(0);
                       window.scrollTo({ top: 0, behavior: 'smooth' });
                     }}
-                    className={`text-sm font-medium transition-colors ${
-                      currentStep === "form"
-                        ? "font-bold"
-                        : "text-gray-600 hover:text-gray-900"
-                    }`}
-                    style={currentStep === "form" ? { color: '#2979FF' } : {}}
+                    className="text-sm font-medium transition-colors"
+                    style={currentStep === "form" ? { 
+                      color: 'var(--primary)',
+                      fontWeight: 'bold'
+                    } : { 
+                      color: 'var(--text-secondary)' 
+                    }}
                   >
                     Home
                   </button>
                   <button
                     onClick={() => setCurrentStep("businesses")}
-                    className={`text-sm font-medium transition-colors ${
-                      currentStep === "businesses"
-                        ? "font-bold"
-                        : "text-gray-600 hover:text-gray-900"
-                    }`}
-                    style={currentStep === "businesses" ? { color: '#2979FF' } : {}}
+                    className="text-sm font-medium transition-colors"
+                    style={currentStep === "businesses" ? { 
+                      color: 'var(--primary)',
+                      fontWeight: 'bold'
+                    } : { 
+                      color: 'var(--text-secondary)' 
+                    }}
                   >
                     My Businesses
                   </button>
                   <button
                     onClick={() => setCurrentStep("history")}
-                    className={`text-sm font-medium transition-colors ${
-                      currentStep === "history"
-                        ? "font-bold"
-                        : "text-gray-600 hover:text-gray-900"
-                    }`}
-                    style={currentStep === "history" ? { color: '#2979FF' } : {}}
+                    className="text-sm font-medium transition-colors"
+                    style={currentStep === "history" ? { 
+                      color: 'var(--primary)',
+                      fontWeight: 'bold'
+                    } : { 
+                      color: 'var(--text-secondary)' 
+                    }}
                   >
                     History
                   </button>
                   <button
                     onClick={() => window.location.href = '/portal'}
-                    className="text-sm text-gray-600 hover:text-blue-600 transition-colors font-medium underline decoration-dotted"
+                    className="text-sm transition-colors font-medium underline decoration-dotted"
+                    style={{ color: 'var(--text-secondary)' }}
                   >
                     {user.email}
                   </button>
@@ -1447,16 +1451,23 @@ export default function Home() {
             <div>
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-4xl font-bold text-gray-900 mb-2">
+                  <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                     📝 Your Post History
                   </h2>
-                  <p className="text-gray-600">
+                  <p style={{ color: 'var(--text-secondary)' }}>
                     All the video ideas and posts you've created
                   </p>
                 </div>
                 <button
                   onClick={() => setCurrentStep("form")}
-                  className="text-blue-600 hover:text-indigo-700 font-medium"
+                  className="px-5 py-2.5 rounded-lg font-medium transition-all hover:scale-105"
+                  style={{
+                    backgroundColor: 'var(--card-bg)',
+                    borderWidth: '2px',
+                    borderStyle: 'solid',
+                    borderColor: 'var(--card-border)',
+                    color: 'var(--text-primary)'
+                  }}
                 >
                   ← Back to Home
                 </button>
@@ -1465,18 +1476,15 @@ export default function Home() {
               {completedPosts.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="text-6xl mb-4">📭</div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                     No posts yet
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
                     Complete the full PostReady workflow to see your posts here
                   </p>
-                  <button
-                    onClick={() => setCurrentStep("form")}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition-all"
-                  >
+                  <PrimaryButton onClick={() => setCurrentStep("form")}>
                     Create Your First Post
-                  </button>
+                  </PrimaryButton>
                 </div>
               ) : (
                 <div className="space-y-6">
@@ -1540,16 +1548,23 @@ export default function Home() {
             <div>
               <div className="flex items-center justify-between mb-8">
                 <div>
-                  <h2 className="text-4xl font-bold text-gray-900 mb-2">
+                  <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                     🏢 My Businesses
                   </h2>
-                  <p className="text-gray-600">
+                  <p style={{ color: 'var(--text-secondary)' }}>
                     Quickly generate more videos for your researched businesses
                   </p>
                 </div>
                 <button
                   onClick={() => setCurrentStep("form")}
-                  className="text-blue-600 hover:text-indigo-700 font-medium"
+                  className="px-5 py-2.5 rounded-lg font-medium transition-all hover:scale-105"
+                  style={{
+                    backgroundColor: 'var(--card-bg)',
+                    borderWidth: '2px',
+                    borderStyle: 'solid',
+                    borderColor: 'var(--card-border)',
+                    color: 'var(--text-primary)'
+                  }}
                 >
                   ← Back to Home
                 </button>
@@ -1558,18 +1573,15 @@ export default function Home() {
               {savedBusinesses.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="text-6xl mb-4">🏢</div>
-                  <h3 className="text-xl font-bold text-gray-900 mb-2">
+                  <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                     No businesses yet
                   </h3>
-                  <p className="text-gray-600 mb-6">
+                  <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
                     Research a business to save it for quick access later
                   </p>
-                  <button
-                    onClick={() => setCurrentStep("form")}
-                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition-all"
-                  >
+                  <PrimaryButton onClick={() => setCurrentStep("form")}>
                     Research Your First Business
-                  </button>
+                  </PrimaryButton>
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1674,13 +1686,6 @@ export default function Home() {
                         <p className="text-purple-100 text-sm">Find trending hashtags in your niche</p>
                       </div>
                     </div>
-                    <div className="flex items-start">
-                      <span className="text-2xl mr-3">✓</span>
-                      <div>
-                        <p className="font-bold text-lg">Deep Research Tool</p>
-                        <p className="text-purple-100 text-sm">Conduct in-depth analysis of your business, competitors, and market trends for comprehensive strategic insights</p>
-                      </div>
-                    </div>
                   </div>
 
                   <button
@@ -1732,26 +1737,53 @@ export default function Home() {
                 <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">
                   Free vs Pro Comparison
                 </h3>
-                <div className="bg-white rounded-lg border-2 border-gray-200 overflow-hidden">
-                  <div className="grid grid-cols-3 text-center border-b-2 border-gray-200">
-                    <div className="p-4 font-bold">Feature</div>
-                    <div className="p-4 font-bold bg-gray-50">Free</div>
-                    <div className="p-4 font-bold bg-blue-50 text-blue-600">Pro</div>
+                <div className="rounded-lg border-2 overflow-hidden" style={{ 
+                  backgroundColor: 'var(--card-bg)',
+                  borderColor: 'var(--card-border)'
+                }}>
+                  <div className="grid grid-cols-3 text-center border-b-2" style={{ borderColor: 'var(--card-border)' }}>
+                    <div className="p-4 font-bold" style={{ color: 'var(--text-primary)' }}>Feature</div>
+                    <div className="p-4 font-bold" style={{ 
+                      backgroundColor: 'var(--hover-bg)',
+                      color: 'var(--text-primary)'
+                    }}>Free</div>
+                    <div className="p-4 font-bold" style={{ 
+                      backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                      color: 'var(--primary)'
+                    }}>Pro</div>
                   </div>
-                  <div className="grid grid-cols-3 text-center border-b border-gray-200">
-                    <div className="p-4 text-left text-sm">Video Ideas</div>
-                    <div className="p-4 bg-gray-50">6</div>
-                    <div className="p-4 bg-blue-50 font-bold text-blue-600">Unlimited</div>
+                  <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
+                    <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Video Ideas</div>
+                    <div className="p-4" style={{ 
+                      backgroundColor: 'var(--hover-bg)',
+                      color: 'var(--text-primary)'
+                    }}>6</div>
+                    <div className="p-4 font-bold" style={{ 
+                      backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                      color: 'var(--primary)'
+                    }}>Unlimited</div>
                   </div>
-                  <div className="grid grid-cols-3 text-center border-b border-gray-200">
-                    <div className="p-4 text-left text-sm">Business Deep Research</div>
-                    <div className="p-4 bg-gray-50">Basic</div>
-                    <div className="p-4 bg-blue-50 font-bold text-blue-600">Advanced</div>
+                  <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
+                    <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Business Deep Research</div>
+                    <div className="p-4" style={{ 
+                      backgroundColor: 'var(--hover-bg)',
+                      color: 'var(--text-primary)'
+                    }}>Basic</div>
+                    <div className="p-4 font-bold" style={{ 
+                      backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                      color: 'var(--primary)'
+                    }}>Advanced</div>
                   </div>
                   <div className="grid grid-cols-3 text-center">
-                    <div className="p-4 text-left text-sm">Support</div>
-                    <div className="p-4 bg-gray-50">Email</div>
-                    <div className="p-4 bg-blue-50 font-bold text-blue-600">Priority</div>
+                    <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Support</div>
+                    <div className="p-4" style={{ 
+                      backgroundColor: 'var(--hover-bg)',
+                      color: 'var(--text-primary)'
+                    }}>Email</div>
+                    <div className="p-4 font-bold" style={{ 
+                      backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                      color: 'var(--primary)'
+                    }}>Priority</div>
                   </div>
                 </div>
               </div>
@@ -1760,7 +1792,8 @@ export default function Home() {
               <div className="text-center">
                 <button
                   onClick={handlePreviousStep}
-                  className="text-gray-600 hover:text-gray-900 font-medium"
+                  className="font-medium transition-colors hover:scale-105"
+                  style={{ color: 'var(--text-secondary)' }}
                 >
                   ← Back to Main Page
                 </button>
