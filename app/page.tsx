@@ -684,20 +684,7 @@ export default function Home() {
       <div className="max-w-5xl mx-auto px-4 py-10">
         {/* Header with Auth */}
         <div className="flex justify-between items-center mb-8">
-          {/* Theme Toggle on Left */}
-          <button
-            onClick={toggleTheme}
-            className="p-2 rounded-lg transition-all hover:scale-110"
-            style={{ 
-              backgroundColor: 'var(--card-bg)',
-              border: '2px solid var(--card-border)'
-            }}
-            title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-          >
-            <span className="text-2xl">
-              {theme === 'light' ? '🌙' : '☀️'}
-            </span>
-          </button>
+          <div className="flex-1"></div>
           
           {!authLoading && (
             <div className="flex items-center gap-3">
@@ -1813,6 +1800,21 @@ export default function Home() {
         type={notification.type}
         duration={3000}
       />
+
+      {/* Floating Theme Toggle - Bottom Right */}
+      <button
+        onClick={toggleTheme}
+        className="fixed bottom-6 right-6 p-4 rounded-full shadow-2xl transition-all hover:scale-110 z-50"
+        style={{ 
+          backgroundColor: 'var(--card-bg)',
+          border: '3px solid var(--primary)'
+        }}
+        title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+      >
+        <span className="text-3xl">
+          {theme === 'light' ? '🌙' : '☀️'}
+        </span>
+      </button>
     </div>
   );
 }

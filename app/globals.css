@@ -99,6 +99,11 @@
   --text-primary: #1A1A1A;
   --text-secondary: #6B7280;
   --hover-bg: rgba(41, 121, 255, 0.05);
+  --text-gray-900: #111827;
+  --text-gray-800: #1F2937;
+  --text-gray-700: #374151;
+  --text-gray-600: #4B5563;
+  --text-gray-500: #6B7280;
 }
 
 :root[data-theme="dark"] {
@@ -112,6 +117,11 @@
   --text-primary: #E7E9EA;
   --text-secondary: #9CA3AF;
   --hover-bg: rgba(41, 121, 255, 0.15);
+  --text-gray-900: #E7E9EA;
+  --text-gray-800: #D1D5DB;
+  --text-gray-700: #9CA3AF;
+  --text-gray-600: #6B7280;
+  --text-gray-500: #6B7280;
 }
 
 body {

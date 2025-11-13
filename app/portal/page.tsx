@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'next/navigation';
 import { SectionCard } from '@/components/SectionCard';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -9,6 +10,7 @@ import { SecondaryButton } from '@/components/SecondaryButton';
 
 export default function UserPortal() {
   const { user, isPro, signOut, loading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const [billingLoading, setBillingLoading] = useState(false);
 
@@ -211,6 +213,21 @@ export default function UserPortal() {
           </div>
         </SectionCard>
       </div>
+
+      {/* Floating Theme Toggle - Bottom Right */}
+      <button
+        onClick={toggleTheme}
+        className="fixed bottom-6 right-6 p-4 rounded-full shadow-2xl transition-all hover:scale-110 z-50"
+        style={{ 
+          backgroundColor: 'var(--card-bg)',
+          border: '3px solid var(--primary)'
+        }}
+        title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+      >
+        <span className="text-3xl">
+          {theme === 'light' ? '🌙' : '☀️'}
+        </span>
+      </button>
     </div>
   );
 }
