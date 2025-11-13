@@ -12,6 +12,7 @@ import { SelectField } from "@/components/SelectField";
 import { TextAreaField } from "@/components/TextAreaField";
 import { Badge } from "@/components/Badge";
 import { AuthModal } from "@/components/AuthModal";
+import { Modal } from "@/components/Modal";
 import { useAuth } from "@/contexts/AuthContext";
 import { saveUserProgress, loadUserProgress } from "@/lib/userProgress";
 
@@ -39,9 +40,26 @@ export default function Home() {
   const [rewriteCount, setRewriteCount] = useState<number>(0);
   const [isRewriting, setIsRewriting] = useState<boolean>(false);
   const [regenerateCount, setRegenerateCount] = useState<number>(0);
+  const [rewordTitleCount, setRewordTitleCount] = useState<number>(0);
+  const [isRewordingTitle, setIsRewordingTitle] = useState<boolean>(false);
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signup');
+
+  // Modal state
+  const [modalState, setModalState] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    type: 'info' | 'confirm' | 'success' | 'error';
+    onConfirm?: () => void;
+    confirmText?: string;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    type: 'info',
+  });
 
   // History and Businesses state
   const [savedBusinesses, setSavedBusinesses] = useState<Array<{
@@ -393,9 +411,9 @@ export default function Home() {
   };
 
   const handleRewriteCaption = async () => {
-    // Check if user has exceeded free rewrite limit
-    if (rewriteCount >= 1 && !isPro) {
-      if (window.confirm("You've used your free rewrite. Upgrade to PostReady Pro for unlimited rewrites?")) {
+    // Check if user has exceeded free rewrite limit (2 free rewrites)
+    if (rewriteCount >= 2 && !isPro) {
+      if (window.confirm("You've used your 2 free rewrites. Upgrade to PostReady Pro for unlimited rewrites?")) {
         setCurrentStep("premium");
       }
       return;
@@ -485,6 +503,47 @@ export default function Home() {
     setRegenerateCount(prev => prev + 1);
     
     alert(`New idea selected! "${newIdea.title}"`);
+  };
+
+  const handleRewordTitle = async () => {
+    // Check if user has exceeded free reword limit (3 free rewords)
+    if (rewordTitleCount >= 3 && !isPro) {
+      if (window.confirm("You've used your 3 free title rewords. Upgrade to PostReady Pro for unlimited rewords?")) {
+        setCurrentStep("premium");
+      }
+      return;
+    }
+
+    if (!postDetails || !selectedIdea) {
+      alert("Please generate a post first");
+      return;
+    }
+
+    setIsRewordingTitle(true);
+
+    try {
+      // Regenerate the title using the post details function
+      const result = generatePostDetails(
+        businessInfo,
+        selectedIdea.title,
+        selectedIdea.description,
+        strategy?.postingTimes || []
+      );
+
+      // Update just the title
+      setPostDetails({
+        ...postDetails,
+        title: result.title + " (Reworded)",
+      });
+      setRewordTitleCount(prev => prev + 1);
+      
+      alert("Title reworded successfully!");
+    } catch (error) {
+      console.error("Title reword error:", error);
+      alert("Failed to reword title. Please try again.");
+    } finally {
+      setIsRewordingTitle(false);
+    }
   };
 
   const scrollToPostPlanner = () => {
@@ -1047,9 +1106,38 @@ export default function Home() {
 
                         {/* Title */}
                         <div>
-                          <h3 className="text-xl font-bold text-gray-900 mb-3">
-                            📝 Post Title
-                          </h3>
+                          <div className="flex items-center justify-between mb-3">
+                            <h3 className="text-xl font-bold text-gray-900">
+                              📝 Post Title
+                            </h3>
+                            <button
+                              onClick={handleRewordTitle}
+                              disabled={isRewordingTitle}
+                              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all ${
+                                isRewordingTitle
+                                  ? "bg-gray-400 text-white cursor-not-allowed"
+                                  : rewordTitleCount >= 3 && !isPro
+                                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
+                                  : "bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                              }`}
+                            >
+                              {isRewordingTitle
+                                ? "Rewording..."
+                                : rewordTitleCount >= 3 && !isPro
+                                ? "🔒 Pro Only"
+                                : "🔄 Reword"}
+                            </button>
+                          </div>
+                          {rewordTitleCount > 0 && rewordTitleCount < 3 && !isPro && (
+                            <p className="text-xs text-gray-600 mb-2">
+                              {3 - rewordTitleCount} {3 - rewordTitleCount === 1 ? 'use' : 'uses'} left
+                            </p>
+                          )}
+                          {rewordTitleCount >= 3 && !isPro && (
+                            <p className="text-xs text-gray-600 mb-2">
+                              You've used your 3 free rewords
+                            </p>
+                          )}
                           <div className="bg-white border-2 border-gray-200 rounded-lg p-4">
                             <p className="text-lg font-medium text-gray-900">
                               {postDetails.title}
@@ -1083,21 +1171,26 @@ export default function Home() {
                               className={`w-full px-4 py-3 rounded-lg font-bold transition-all ${
                                 isRewriting
                                   ? "bg-gray-400 text-white cursor-not-allowed"
-                                  : rewriteCount >= 1 && !isPro
+                                  : rewriteCount >= 2 && !isPro
                                   ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
                                   : "bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50"
                               }`}
                             >
                               {isRewriting
                                 ? "Rewriting..."
-                                : rewriteCount >= 1 && !isPro
+                                : rewriteCount >= 2 && !isPro
                                 ? "🔒 Pro Only"
                                 : "🔄 Rewrite"}
                             </button>
                           </div>
-                          {rewriteCount >= 1 && !isPro && (
+                          {rewriteCount >= 2 && !isPro && (
                             <p className="text-xs text-gray-600 text-center mt-2">
-                              Upgrade to Pro for unlimited rewrites
+                              You've used your 2 free rewrites
+                            </p>
+                          )}
+                          {rewriteCount > 0 && rewriteCount < 2 && !isPro && (
+                            <p className="text-xs text-gray-600 text-center mt-2">
+                              {2 - rewriteCount} {2 - rewriteCount === 1 ? 'use' : 'uses'} left
                             </p>
                           )}
                         </div>
