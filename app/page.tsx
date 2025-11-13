@@ -362,7 +362,20 @@ export default function Home() {
       setCurrentStep("choose-idea");
     } else if (currentStep === "post-details") {
       setCurrentStep("record-video");
+    } else if (currentStep === "premium") {
+      setCurrentStep("form");
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 50);
     }
+  };
+
+  const scrollToPremium = () => {
+    setCurrentStep("premium");
+    // Smooth scroll to top after state update
+    setTimeout(() => {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, 50);
   };
 
   const handleSelectIdea = (idea: ContentIdea) => {
@@ -450,7 +463,7 @@ export default function Home() {
     // Check if user has exceeded free rewrite limit (2 free rewrites)
     if (rewriteCount >= 2 && !isPro) {
       if (window.confirm("You've used your 2 free rewrites. Upgrade to PostReady Pro for unlimited rewrites?")) {
-        setCurrentStep("premium");
+        scrollToPremium();
       }
       return;
     }
@@ -524,7 +537,7 @@ export default function Home() {
     // Check if user has exceeded free regenerate limit
     if (regenerateCount >= 2 && !isPro) {
       if (window.confirm("You've used your free idea regenerations. Upgrade to PostReady Pro for unlimited regenerations?")) {
-        setCurrentStep("premium");
+        scrollToPremium();
       }
       return;
     }
@@ -558,7 +571,7 @@ export default function Home() {
     // Check if user has exceeded free reword limit (3 free rewords)
     if (rewordTitleCount >= 3 && !isPro) {
       if (window.confirm("You've used your 3 free title rewords. Upgrade to PostReady Pro for unlimited rewords?")) {
-        setCurrentStep("premium");
+        scrollToPremium();
       }
       return;
     }
@@ -681,7 +694,7 @@ export default function Home() {
                   <span className="text-sm text-gray-600">{user.email}</span>
                   {!isPro && (
                     <button
-                      onClick={() => setCurrentStep("premium")}
+                      onClick={scrollToPremium}
                       className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:from-purple-700 hover:to-indigo-700 transition-all"
                     >
                       Upgrade to Pro
@@ -812,7 +825,7 @@ export default function Home() {
                   </p>
                 </div>
                 <button
-                  onClick={() => setCurrentStep("premium")}
+                  onClick={scrollToPremium}
                   className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center whitespace-nowrap"
                 >
                   <span className="mr-2">⚡</span>
@@ -977,26 +990,64 @@ export default function Home() {
                     ))}
                   </div>
 
-                  {/* Pro Upgrade Button */}
-                  <div className="mb-6 bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-lg p-6">
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                      <div>
-                        <h3 className="font-bold text-gray-900 text-lg mb-1 flex items-center">
-                          <span className="text-2xl mr-2">✨</span>
-                          Want More Creative Ideas?
-                        </h3>
-                        <p className="text-gray-600 text-sm">
-                          Get unlimited video ideas tailored to your business
-                        </p>
-                      </div>
-                      <button
-                        onClick={() => setCurrentStep("premium")}
-                        className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center whitespace-nowrap"
-                      >
-                        <span className="mr-2">⚡</span>
-                        Upgrade to Pro
-                      </button>
-                    </div>
+                  {/* Generate More Ideas Button */}
+                  <div className="mb-6">
+                    <button
+                      onClick={async () => {
+                        if (!isPro) {
+                          if (window.confirm("Generate More Ideas is a Pro feature. Upgrade to PostReady Pro for unlimited video ideas?")) {
+                            scrollToPremium();
+                          }
+                          return;
+                        }
+
+                        // Pro users: Regenerate ideas
+                        if (!businessInfo.businessName) return;
+                        
+                        try {
+                          const response = await fetch("/api/research-business", {
+                            method: "POST",
+                            headers: {
+                              "Content-Type": "application/json",
+                            },
+                            body: JSON.stringify({ businessInfo }),
+                          });
+
+                          if (!response.ok) {
+                            throw new Error("Failed to generate more ideas");
+                          }
+
+                          const data = await response.json();
+                          setStrategy(data);
+                          alert("New video ideas generated!");
+                        } catch (error) {
+                          console.error("Error generating more ideas:", error);
+                          alert("Failed to generate more ideas. Please try again.");
+                        }
+                      }}
+                      className={`w-full px-6 py-4 rounded-lg font-bold text-lg transition-all shadow-lg hover:shadow-xl ${
+                        isPro
+                          ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
+                          : "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
+                      }`}
+                    >
+                      {isPro ? (
+                        <>
+                          <span className="mr-2">🎬</span>
+                          Generate More Ideas
+                        </>
+                      ) : (
+                        <>
+                          <span className="mr-2">🔒</span>
+                          Generate More Ideas (Pro Only)
+                        </>
+                      )}
+                    </button>
+                    {!isPro && (
+                      <p className="text-xs text-gray-600 text-center mt-2">
+                        Upgrade to Pro for unlimited video idea generation
+                      </p>
+                    )}
                   </div>
 
                   <div className="flex gap-4">
@@ -1479,20 +1530,9 @@ export default function Home() {
 
         {/* Premium Subscription Page - Accessible from any step */}
         {currentStep === "premium" && (
-          <SectionCard className="mb-10">
-            <div>
-              <div className="text-center mb-8">
-                <div className="text-6xl mb-4">⚡</div>
-                <h2 className="text-4xl font-bold text-gray-900 mb-2">
-                  Upgrade to PostReady Pro
-                </h2>
-                <p className="text-gray-600 text-lg">
-                  Supercharge your social media strategy with unlimited powerful tools
-                </p>
-              </div>
-
-              {/* Pricing Card */}
-              <div className="max-w-2xl mx-auto mb-8">
+          <div className="animate-fade-in">
+            {/* Pricing Card - Main Focus */}
+            <div className="max-w-3xl mx-auto mb-10">
                 <div className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl p-8 text-white shadow-2xl">
                   <div className="text-center mb-6">
                     <div className="inline-block bg-white/20 rounded-full px-4 py-1 text-sm font-bold mb-4">
