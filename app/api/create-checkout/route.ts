@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
-
 export async function POST(request: NextRequest) {
   try {
     const { userId, userEmail } = await request.json();
@@ -20,6 +18,9 @@ export async function POST(request: NextRequest) {
         { status: 500 }
       );
     }
+
+    // Initialize Stripe client lazily (only when route is called)
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
     // Create a Stripe Checkout session
     const session = await stripe.checkout.sessions.create({
