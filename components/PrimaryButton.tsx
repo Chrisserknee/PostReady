@@ -20,7 +20,10 @@ export function PrimaryButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`bg-indigo-600 text-white rounded-md px-6 py-3 font-medium hover:bg-indigo-700 transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed ${className}`}
+      className={`text-white rounded-md px-6 py-3 font-medium transition-colors disabled:bg-gray-400 disabled:cursor-not-allowed ${className}`}
+      style={{ backgroundColor: disabled ? undefined : '#2979FF' }}
+      onMouseEnter={(e) => !disabled && (e.currentTarget.style.backgroundColor = '#1e5dd9')}
+      onMouseLeave={(e) => !disabled && (e.currentTarget.style.backgroundColor = '#2979FF')}
     >
       {children}
     </button>

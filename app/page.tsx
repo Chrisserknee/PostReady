@@ -656,7 +656,7 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50">
+    <div className="min-h-screen" style={{ backgroundColor: '#F5F6FA' }}>
       <div className="max-w-5xl mx-auto px-4 py-10">
         {/* Header with Auth */}
         <div className="flex justify-between items-center mb-8">
@@ -667,17 +667,37 @@ export default function Home() {
               {user ? (
                 <>
                   {isPro && (
-                    <span className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-3 py-1 rounded-full text-xs font-bold">
+                    <span style={{ background: 'linear-gradient(to right, #2979FF, #6FFFD2)' }} className="text-white px-3 py-1 rounded-full text-xs font-bold">
                       PRO
                     </span>
                   )}
                   <button
+                    onClick={() => {
+                      setCurrentStep("form");
+                      setStrategy(null);
+                      setSelectedIdea(null);
+                      setPostDetails(null);
+                      setRewriteCount(0);
+                      setRegenerateCount(0);
+                      window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }}
+                    className={`text-sm font-medium transition-colors ${
+                      currentStep === "form"
+                        ? "font-bold"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                    style={currentStep === "form" ? { color: '#2979FF' } : {}}
+                  >
+                    Home
+                  </button>
+                  <button
                     onClick={() => setCurrentStep("businesses")}
                     className={`text-sm font-medium transition-colors ${
                       currentStep === "businesses"
-                        ? "text-indigo-600 font-bold"
+                        ? "font-bold"
                         : "text-gray-600 hover:text-gray-900"
                     }`}
+                    style={currentStep === "businesses" ? { color: '#2979FF' } : {}}
                   >
                     My Businesses
                   </button>
@@ -685,9 +705,10 @@ export default function Home() {
                     onClick={() => setCurrentStep("history")}
                     className={`text-sm font-medium transition-colors ${
                       currentStep === "history"
-                        ? "text-indigo-600 font-bold"
+                        ? "font-bold"
                         : "text-gray-600 hover:text-gray-900"
                     }`}
+                    style={currentStep === "history" ? { color: '#2979FF' } : {}}
                   >
                     History
                   </button>
@@ -695,7 +716,8 @@ export default function Home() {
                   {!isPro && (
                     <button
                       onClick={scrollToPremium}
-                      className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:from-purple-700 hover:to-indigo-700 transition-all"
+                      className="text-white px-4 py-2 rounded-lg text-sm font-bold transition-all hover:opacity-90"
+                      style={{ background: 'linear-gradient(to right, #2979FF, #6FFFD2)' }}
                     >
                       Upgrade to Pro
                     </button>
@@ -717,7 +739,8 @@ export default function Home() {
                   </button>
                   <button
                     onClick={() => openAuthModal('signup')}
-                    className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-bold hover:bg-indigo-700 transition-all"
+                    className="text-white px-4 py-2 rounded-lg text-sm font-bold transition-all hover:opacity-90"
+                    style={{ backgroundColor: '#2979FF' }}
                   >
                     Sign Up
                   </button>
@@ -735,12 +758,13 @@ export default function Home() {
               setSelectedIdea(null);
               setPostDetails(null);
             }}
-            className="text-5xl font-bold text-gray-900 mb-4 cursor-pointer hover:text-indigo-600 transition-colors"
+            className="text-5xl font-bold mb-4 cursor-pointer transition-colors hover:opacity-80"
+            style={{ color: '#1A1A1A' }}
           >
             PostReady
           </h1>
-          <p className="text-xl text-indigo-600 font-semibold mb-6">
-            We help you do the most important thing for your business: post.
+          <p className="text-xl font-semibold mb-6" style={{ color: '#2979FF' }}>
+            Posting made easy.
           </p>
         </div>
 
@@ -813,7 +837,7 @@ export default function Home() {
             </form>
 
             {/* Pro Upgrade CTA */}
-            <div className="mt-8 bg-gradient-to-r from-purple-50 to-indigo-50 border-2 border-purple-200 rounded-xl p-6">
+            <div className="mt-8 bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-blue-200 rounded-xl p-6">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex-1">
                   <h3 className="font-bold text-gray-900 text-lg mb-1 flex items-center">
@@ -826,7 +850,7 @@ export default function Home() {
                 </div>
                 <button
                   onClick={scrollToPremium}
-                  className="bg-gradient-to-r from-purple-600 to-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:from-purple-700 hover:to-indigo-700 transition-all shadow-lg hover:shadow-xl flex items-center whitespace-nowrap"
+                  className="bg-gradient-to-r from-amber-500 to-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:from-amber-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center whitespace-nowrap"
                 >
                   <span className="mr-2">⚡</span>
                   View Pro Plan
@@ -854,13 +878,13 @@ export default function Home() {
                     <span className="text-gray-700 font-medium">
                       {researchStatus}
                     </span>
-                    <span className="text-indigo-600 font-bold">
+                    <span className="text-blue-600 font-bold">
                       {Math.round(researchProgress)}%
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-indigo-500 via-purple-500 to-pink-500 h-4 rounded-full transition-all duration-500"
+                      className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 h-4 rounded-full transition-all duration-500"
                       style={{ width: `${researchProgress}%` }}
                     >
                       <div className="h-full w-full bg-white/30 animate-pulse"></div>
@@ -888,7 +912,7 @@ export default function Home() {
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
-                    className="bg-indigo-600 h-2 rounded-full transition-all duration-500"
+                    className="bg-blue-600 h-2 rounded-full transition-all duration-500"
                     style={{ width: `${(Math.min(getStepNumber(), 4) / 4) * 100}%` }}
                   ></div>
                 </div>
@@ -923,7 +947,7 @@ export default function Home() {
                       {strategy.keyPrinciples.map((principle, index) => (
                         <div key={index} className="bg-white p-5 rounded-lg border-2 border-gray-200 hover:border-indigo-400 transition-all shadow-sm hover:shadow-md">
                           <div className="flex items-start">
-                            <div className="bg-indigo-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0">
+                            <div className="bg-blue-600 text-white rounded-full w-8 h-8 flex items-center justify-center font-bold mr-4 flex-shrink-0">
                               {index + 1}
                             </div>
                             <p className="text-gray-800 text-lg leading-relaxed">{principle}</p>
@@ -982,7 +1006,7 @@ export default function Home() {
                         </div>
                         <p className="text-sm text-gray-600">{idea.description}</p>
                         {selectedIdea?.title === idea.title && (
-                          <div className="mt-3 text-indigo-600 font-medium text-sm flex items-center">
+                          <div className="mt-3 text-blue-600 font-medium text-sm flex items-center">
                             <span className="mr-2">✓</span> Selected
                           </div>
                         )}
@@ -1047,7 +1071,7 @@ export default function Home() {
                           ? "bg-gray-400 text-white cursor-not-allowed"
                           : isPro
                           ? "bg-gradient-to-r from-green-600 to-emerald-600 text-white hover:from-green-700 hover:to-emerald-700"
-                          : "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
+                          : "bg-gradient-to-r from-amber-500 to-blue-600 text-white hover:from-amber-600 hover:to-blue-700"
                       }`}
                     >
                       {isRewriting ? (
@@ -1105,8 +1129,8 @@ export default function Home() {
                         onClick={handleRegenerateIdea}
                         className={`w-full px-4 py-3 rounded-lg font-bold transition-all ${
                           regenerateCount >= 2 && !isPro
-                            ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
-                            : "bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                            ? "bg-gradient-to-r from-amber-500 to-blue-600 text-white hover:from-amber-600 hover:to-blue-700"
+                            : "bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
                         }`}
                       >
                         {regenerateCount >= 2 && !isPro
@@ -1126,7 +1150,7 @@ export default function Home() {
                     </div>
 
                     {/* Recording Instructions */}
-                    <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
+                    <div className="bg-gradient-to-r from-blue-50 to-blue-50 border-2 border-blue-200 rounded-lg p-6 mb-6">
                       <div className="flex items-start">
                         <span className="text-3xl mr-3">📱</span>
                         <div>
@@ -1170,7 +1194,7 @@ export default function Home() {
                   </div>
 
                   {/* Tough Love Section */}
-                  <div className="bg-gradient-to-r from-indigo-50 to-purple-50 border-2 border-indigo-200 rounded-lg p-6 mb-8 max-w-2xl mx-auto">
+                  <div className="bg-gradient-to-r from-blue-50 to-purple-50 border-2 border-indigo-200 rounded-lg p-6 mb-8 max-w-2xl mx-auto">
                     <div className="flex items-start">
                       <span className="text-3xl mr-3">💪</span>
                       <div>
@@ -1230,15 +1254,15 @@ export default function Home() {
                           </p>
                           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <div className="bg-white rounded-lg p-3 border border-yellow-200">
-                              <div className="font-bold text-indigo-600">Morning</div>
+                              <div className="font-bold text-blue-600">Morning</div>
                               <div className="text-gray-800">8am - 10am</div>
                             </div>
                             <div className="bg-white rounded-lg p-3 border border-yellow-200">
-                              <div className="font-bold text-indigo-600">Afternoon</div>
+                              <div className="font-bold text-blue-600">Afternoon</div>
                               <div className="text-gray-800">2pm - 5pm</div>
                             </div>
                             <div className="bg-white rounded-lg p-3 border border-yellow-200">
-                              <div className="font-bold text-indigo-600">Evening</div>
+                              <div className="font-bold text-blue-600">Evening</div>
                               <div className="text-gray-800">7pm - 8pm</div>
                             </div>
                           </div>
@@ -1257,8 +1281,8 @@ export default function Home() {
                                 isRewordingTitle
                                   ? "bg-gray-400 text-white cursor-not-allowed"
                                   : rewordTitleCount >= 3 && !isPro
-                                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
-                                  : "bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                                  ? "bg-gradient-to-r from-blue-600 to-cyan-400 text-white hover:from-blue-700 hover:to-cyan-500"
+                                  : "bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
                               }`}
                             >
                               {isRewordingTitle
@@ -1320,8 +1344,8 @@ export default function Home() {
                                 isRewriting
                                   ? "bg-gray-400 text-white cursor-not-allowed"
                                   : rewriteCount >= 2 && !isPro
-                                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
-                                  : "bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                                  ? "bg-gradient-to-r from-blue-600 to-cyan-400 text-white hover:from-blue-700 hover:to-cyan-500"
+                                  : "bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
                               }`}
                             >
                               {isRewriting
@@ -1373,7 +1397,7 @@ export default function Home() {
                 </div>
                 <button
                   onClick={() => setCurrentStep("form")}
-                  className="text-indigo-600 hover:text-indigo-700 font-medium"
+                  className="text-blue-600 hover:text-indigo-700 font-medium"
                 >
                   ← Back to Home
                 </button>
@@ -1390,7 +1414,7 @@ export default function Home() {
                   </p>
                   <button
                     onClick={() => setCurrentStep("form")}
-                    className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-700 transition-all"
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition-all"
                   >
                     Create Your First Post
                   </button>
@@ -1439,7 +1463,7 @@ export default function Home() {
                           navigator.clipboard.writeText(post.postDetails.caption);
                           alert("Caption copied to clipboard!");
                         }}
-                        className="mt-4 w-full bg-indigo-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-indigo-700 transition-all"
+                        className="mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-all"
                       >
                         Copy Caption
                       </button>
@@ -1466,7 +1490,7 @@ export default function Home() {
                 </div>
                 <button
                   onClick={() => setCurrentStep("form")}
-                  className="text-indigo-600 hover:text-indigo-700 font-medium"
+                  className="text-blue-600 hover:text-indigo-700 font-medium"
                 >
                   ← Back to Home
                 </button>
@@ -1483,7 +1507,7 @@ export default function Home() {
                   </p>
                   <button
                     onClick={() => setCurrentStep("form")}
-                    className="bg-indigo-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-indigo-700 transition-all"
+                    className="bg-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:bg-blue-700 transition-all"
                   >
                     Research Your First Business
                   </button>
@@ -1515,7 +1539,7 @@ export default function Home() {
                         </div>
                       </div>
 
-                      <div className="bg-gradient-to-r from-indigo-50 to-purple-50 rounded-lg p-4 mb-4">
+                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 mb-4">
                         <h4 className="font-bold text-gray-900 mb-2 text-sm">Strategy Summary:</h4>
                         <p className="text-gray-700 text-sm line-clamp-2">
                           {business.strategy.headlineSummary}
@@ -1526,13 +1550,13 @@ export default function Home() {
                         <span>
                           Last used: {new Date(business.lastUsed).toLocaleDateString()}
                         </span>
-                        <span className="font-medium text-indigo-600">
+                        <span className="font-medium text-blue-600">
                           {business.strategy.contentIdeas.length} video ideas →
                         </span>
                       </div>
 
                       <div className="mt-4 text-center">
-                        <div className="text-indigo-600 font-bold text-sm">
+                        <div className="text-blue-600 font-bold text-sm">
                           Click to generate more videos
                         </div>
                       </div>
@@ -1549,7 +1573,7 @@ export default function Home() {
           <div className="animate-fade-in">
             {/* Pricing Card - Main Focus */}
             <div className="max-w-3xl mx-auto mb-10">
-                <div className="bg-gradient-to-br from-purple-600 to-indigo-600 rounded-2xl p-8 text-white shadow-2xl">
+                <div className="bg-gradient-to-br from-blue-600 to-cyan-400 rounded-2xl p-8 text-white shadow-2xl">
                   <div className="text-center mb-6">
                     <div className="inline-block bg-white/20 rounded-full px-4 py-1 text-sm font-bold mb-4">
                       MOST POPULAR
@@ -1634,7 +1658,7 @@ export default function Home() {
                         alert("Failed to start checkout. Please try again.");
                       }
                     }}
-                    className="w-full bg-white text-purple-600 rounded-lg px-6 py-4 font-bold text-lg hover:bg-gray-50 transition-all shadow-lg"
+                    className="w-full bg-white text-blue-600 rounded-lg px-6 py-4 font-bold text-lg hover:bg-gray-50 transition-all shadow-lg"
                   >
                     Subscribe to PostReady Pro - $10/month
                   </button>
@@ -1653,22 +1677,22 @@ export default function Home() {
                   <div className="grid grid-cols-3 text-center border-b-2 border-gray-200">
                     <div className="p-4 font-bold">Feature</div>
                     <div className="p-4 font-bold bg-gray-50">Free</div>
-                    <div className="p-4 font-bold bg-purple-50 text-purple-600">Pro</div>
+                    <div className="p-4 font-bold bg-blue-50 text-blue-600">Pro</div>
                   </div>
                   <div className="grid grid-cols-3 text-center border-b border-gray-200">
                     <div className="p-4 text-left text-sm">Video Ideas</div>
                     <div className="p-4 bg-gray-50">6</div>
-                    <div className="p-4 bg-purple-50 font-bold text-purple-600">Unlimited</div>
+                    <div className="p-4 bg-blue-50 font-bold text-blue-600">Unlimited</div>
                   </div>
                   <div className="grid grid-cols-3 text-center border-b border-gray-200">
                     <div className="p-4 text-left text-sm">Business Deep Research</div>
                     <div className="p-4 bg-gray-50">Basic</div>
-                    <div className="p-4 bg-purple-50 font-bold text-purple-600">Advanced</div>
+                    <div className="p-4 bg-blue-50 font-bold text-blue-600">Advanced</div>
                   </div>
                   <div className="grid grid-cols-3 text-center">
                     <div className="p-4 text-left text-sm">Support</div>
                     <div className="p-4 bg-gray-50">Email</div>
-                    <div className="p-4 bg-purple-50 font-bold text-purple-600">Priority</div>
+                    <div className="p-4 bg-blue-50 font-bold text-blue-600">Priority</div>
                   </div>
                 </div>
               </div>
