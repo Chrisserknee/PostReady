@@ -13,7 +13,9 @@ import { TextAreaField } from "@/components/TextAreaField";
 import { Badge } from "@/components/Badge";
 import { AuthModal } from "@/components/AuthModal";
 import { Modal } from "@/components/Modal";
+import { Notification } from "@/components/Notification";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { saveUserProgress, loadUserProgress } from "@/lib/userProgress";
 import { saveBusiness, loadSavedBusinesses, saveCompletedPost, loadPostHistory } from "@/lib/userHistory";
 
@@ -21,6 +23,7 @@ type WizardStep = "form" | "researching" | "principles" | "choose-idea" | "recor
 
 export default function Home() {
   const { user, isPro, signOut, upgradeToPro, loading: authLoading } = useAuth();
+  const { theme, toggleTheme } = useTheme();
   
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
     businessName: "",
@@ -45,6 +48,18 @@ export default function Home() {
   const [isRewordingTitle, setIsRewordingTitle] = useState<boolean>(false);
   const [captionAnimation, setCaptionAnimation] = useState<'idle' | 'fadeOut' | 'typing'>('idle');
   const [titleAnimation, setTitleAnimation] = useState<'idle' | 'fadeOut' | 'fadeIn'>('idle');
+  
+  // Notification state
+  const [notification, setNotification] = useState<{
+    isOpen: boolean;
+    title?: string;
+    message: string;
+    type: 'success' | 'error' | 'info' | 'warning';
+  }>({
+    isOpen: false,
+    message: '',
+    type: 'success',
+  });
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signup');
@@ -378,6 +393,15 @@ export default function Home() {
     }, 50);
   };
 
+  const showNotification = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success', title?: string) => {
+    setNotification({
+      isOpen: true,
+      message,
+      type,
+      title,
+    });
+  };
+
   const handleSelectIdea = (idea: ContentIdea) => {
     setSelectedIdea(idea);
   };
@@ -656,11 +680,24 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: '#F5F6FA' }}>
+    <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
       <div className="max-w-5xl mx-auto px-4 py-10">
         {/* Header with Auth */}
         <div className="flex justify-between items-center mb-8">
-          <div className="flex-1"></div>
+          {/* Theme Toggle on Left */}
+          <button
+            onClick={toggleTheme}
+            className="p-2 rounded-lg transition-all hover:scale-110"
+            style={{ 
+              backgroundColor: 'var(--card-bg)',
+              border: '2px solid var(--card-border)'
+            }}
+            title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+          >
+            <span className="text-2xl">
+              {theme === 'light' ? '🌙' : '☀️'}
+            </span>
+          </button>
           
           {!authLoading && (
             <div className="flex items-center gap-3">
@@ -1052,16 +1089,21 @@ export default function Home() {
                     <button
                       onClick={async () => {
                         if (!isPro) {
-                          if (window.confirm("Generate More Ideas is a Pro feature. Upgrade to PostReady Pro for unlimited video ideas?")) {
-                            scrollToPremium();
-                          }
+                          setModalState({
+                            isOpen: true,
+                            title: "Pro Feature",
+                            message: "Generate More Ideas is a Pro feature. Upgrade to PostReady Pro for unlimited video ideas?",
+                            type: 'confirm',
+                            onConfirm: scrollToPremium,
+                            confirmText: "Upgrade Now"
+                          });
                           return;
                         }
 
                         // Pro users: Regenerate ideas with loading state
                         if (!businessInfo.businessName) return;
                         
-                        setIsRewriting(true); // Use existing loading state
+                        setIsRewriting(true);
                         
                         try {
                           const response = await fetch("/api/research-business", {
@@ -1078,22 +1120,15 @@ export default function Home() {
 
                           const data = await response.json();
                           
-                          // Animate the update
-                          setCaptionAnimation('fadeOut');
-                          await new Promise(resolve => setTimeout(resolve, 300));
-                          
+                          // Update strategy and clear selection
                           setStrategy(data);
-                          setSelectedIdea(null); // Clear selection so user picks new idea
+                          setSelectedIdea(null);
                           
-                          setCaptionAnimation('fadeIn');
-                          setTimeout(() => {
-                            setCaptionAnimation('idle');
-                          }, 500);
-                          
-                          alert("✨ New video ideas generated!");
+                          // Show success notification
+                          showNotification("New video ideas generated!", "success", "Success");
                         } catch (error) {
                           console.error("Error generating more ideas:", error);
-                          alert("Failed to generate more ideas. Please try again.");
+                          showNotification("Failed to generate more ideas. Please try again.", "error", "Error");
                         } finally {
                           setIsRewriting(false);
                         }
@@ -1756,6 +1791,27 @@ export default function Home() {
         isOpen={authModalOpen}
         onClose={() => setAuthModalOpen(false)}
         mode={authModalMode}
+      />
+
+      {/* Custom Modal */}
+      <Modal
+        isOpen={modalState.isOpen}
+        title={modalState.title}
+        message={modalState.message}
+        type={modalState.type}
+        onClose={() => setModalState({ ...modalState, isOpen: false })}
+        onConfirm={modalState.onConfirm}
+        confirmText={modalState.confirmText}
+      />
+
+      {/* Notification */}
+      <Notification
+        isOpen={notification.isOpen}
+        onClose={() => setNotification({ ...notification, isOpen: false })}
+        title={notification.title}
+        message={notification.message}
+        type={notification.type}
+        duration={3000}
       />
     </div>
   );

@@ -63,6 +63,31 @@
   animation: blink 0.7s step-end infinite;
 }
 
+/* Notification Animations */
+@keyframes slideInRight {
+  from {
+    transform: translateX(400px);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes shrink {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+.animate-slide-in-right {
+  animation: slideInRight 0.3s ease-out;
+}
+
 :root[data-theme="light"] {
   --background: #F5F6FA;
   --foreground: #1A1A1A;
