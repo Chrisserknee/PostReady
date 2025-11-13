@@ -36,6 +36,8 @@ export default function Home() {
   const [videoDescription, setVideoDescription] = useState<string>("");
   const [postPlatform, setPostPlatform] = useState<string>("");
   const [postDetails, setPostDetails] = useState<PostDetails | null>(null);
+  const [rewriteCount, setRewriteCount] = useState<number>(0);
+  const [isRewriting, setIsRewriting] = useState<boolean>(false);
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signup');
@@ -387,6 +389,67 @@ export default function Home() {
     if (!postDetails) return;
     navigator.clipboard.writeText(postDetails.caption);
     alert("Caption copied to clipboard!");
+  };
+
+  const handleRewriteCaption = async () => {
+    // Check if user has exceeded free rewrite limit
+    if (rewriteCount >= 1 && !isPro) {
+      if (window.confirm("You've used your free rewrite. Upgrade to PostReady Pro for unlimited rewrites?")) {
+        setCurrentStep("premium");
+      }
+      return;
+    }
+
+    if (!strategy || !selectedIdea) {
+      alert("Please select a content idea first");
+      return;
+    }
+
+    setIsRewriting(true);
+
+    try {
+      // Get intelligent caption from API
+      const response = await fetch("/api/generate-caption", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          businessInfo,
+          selectedIdea,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate caption");
+      }
+
+      const data = await response.json();
+      
+      // Use fallback for title and time
+      const result = generatePostDetails(
+        businessInfo,
+        selectedIdea.title,
+        selectedIdea.description,
+        strategy.postingTimes
+      );
+
+      // Use AI caption with hashtags already included
+      const newPostDetails = {
+        ...result,
+        caption: data.caption,
+        hashtags: [], // Hashtags are now in the caption
+      };
+      setPostDetails(newPostDetails);
+      setRewriteCount(prev => prev + 1);
+      
+      alert("Caption rewritten successfully!");
+    } catch (error) {
+      console.error("Caption rewrite error:", error);
+      alert("Failed to rewrite caption. Please try again.");
+    } finally {
+      setIsRewriting(false);
+    }
   };
 
   const scrollToPostPlanner = () => {
@@ -887,9 +950,26 @@ export default function Home() {
                             <span className="text-2xl mr-2">📅</span>
                             Best Times to Post
                           </h3>
-                          <div className="text-gray-800 whitespace-pre-line leading-relaxed">
-                            {postDetails.bestPostTime}
+                          <p className="text-gray-700 mb-4">
+                            Based on {businessInfo.location} audience and {businessInfo.businessType} engagement patterns
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                            <div className="bg-white rounded-lg p-3 border border-yellow-200">
+                              <div className="font-bold text-indigo-600">Morning</div>
+                              <div className="text-gray-800">8am - 10am</div>
+                            </div>
+                            <div className="bg-white rounded-lg p-3 border border-yellow-200">
+                              <div className="font-bold text-indigo-600">Afternoon</div>
+                              <div className="text-gray-800">2pm - 5pm</div>
+                            </div>
+                            <div className="bg-white rounded-lg p-3 border border-yellow-200">
+                              <div className="font-bold text-indigo-600">Evening</div>
+                              <div className="text-gray-800">7pm - 8pm</div>
+                            </div>
                           </div>
+                          <p className="text-sm text-gray-600 mt-4">
+                            💡 Post when you think is best for engagement, but these times typically perform well
+                          </p>
                         </div>
 
                         {/* Title */}
@@ -919,10 +999,34 @@ export default function Home() {
                             placeholder="Your caption with hashtags will appear here..."
                           />
                           
-                          {/* Copy Button directly under caption */}
-                          <PrimaryButton onClick={handleCopyToClipboard} className="w-full mt-3">
-                            📋 Copy Caption
-                          </PrimaryButton>
+                          {/* Copy and Rewrite Buttons */}
+                          <div className="grid grid-cols-2 gap-3 mt-3">
+                            <PrimaryButton onClick={handleCopyToClipboard} className="w-full">
+                              📋 Copy Caption
+                            </PrimaryButton>
+                            <button
+                              onClick={handleRewriteCaption}
+                              disabled={isRewriting}
+                              className={`w-full px-4 py-3 rounded-lg font-bold transition-all ${
+                                isRewriting
+                                  ? "bg-gray-400 text-white cursor-not-allowed"
+                                  : rewriteCount >= 1 && !isPro
+                                  ? "bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700"
+                                  : "bg-white border-2 border-indigo-600 text-indigo-600 hover:bg-indigo-50"
+                              }`}
+                            >
+                              {isRewriting
+                                ? "Rewriting..."
+                                : rewriteCount >= 1 && !isPro
+                                ? "🔒 Pro Only"
+                                : "🔄 Rewrite"}
+                            </button>
+                          </div>
+                          {rewriteCount >= 1 && !isPro && (
+                            <p className="text-xs text-gray-600 text-center mt-2">
+                              Upgrade to Pro for unlimited rewrites
+                            </p>
+                          )}
                         </div>
 
                         {/* Back Button */}

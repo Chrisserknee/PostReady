@@ -73,25 +73,22 @@ YOUR TASK:
 Write a natural, engaging caption that feels like it's written by a real person who's passionate about their business.
 
 CAPTION REQUIREMENTS:
-1. **Length**: 150-250 words (substantial and detailed)
+1. **Length**: 50-100 words (short and punchy)
 2. **Tone**: Warm, authentic, conversational - like talking to a friend
 3. **Structure**:
    - Start with a hook that grabs attention
-   - Tell a mini-story or share context about the video
-   - Include personality and emotion
-   - End with a call-to-action (question, invitation, or request)
+   - Share ONE key detail or insight
+   - End with a call-to-action (question or invitation)
 
 4. **Content Elements to Include**:
-   - Why this matters to the local community
-   - Personal touch or behind-the-scenes insight
-   - Specific details (not generic statements)
-   - Emojis (2-4 strategically placed, not excessive)
-   - Line breaks for readability
+   - ONE specific detail (not generic statements)
+   - Emojis (2-3 strategically placed, not excessive)
+   - Line breaks for readability (2-3 short paragraphs max)
 
 5. **Avoid**:
    - Corporate/formal language
    - Clichés like "We're excited to share"
-   - Overused phrases
+   - Being too wordy or verbose
    - Feeling salesy or pushy
 
 6. **Platform-Specific**:
@@ -105,15 +102,13 @@ ${getPlatformGuidance(info.platform)}
    - Separate hashtags with spaces
 
 EXAMPLE STYLE (do NOT copy, just use as a tone reference):
-"You know that feeling when you discover something you didn't know you needed? That's exactly what happened when we found this vintage record player last week 🎵
+"Just found this vintage record player from a Monterey DJ in the 70s 🎵 Still has his initials carved in the side!
 
-It's got this amazing story - the original owner was a DJ in Monterey back in the 70s, and you can still see where he carved his initials into the side. These are the kinds of treasures that make thrift shopping so special. Not just buying something used, but giving new life to pieces with real history.
+These are the treasures that make thrift shopping special. Priced at $45 and it plays beautifully.
 
-We've got it priced at $45, and honestly? It still plays beautifully. Come check it out before someone else snatches it up! And while you're here, ask us about the story behind the vintage cameras we just got in... 📸
+What's the coolest thing YOU'VE found thrifting? 💬
 
-What's the coolest thrift find YOU'VE ever discovered? Drop a comment - we love hearing your stories!
-
-#${locationClean} #thriftstorefinds #vintagestyle #sustainable shopping #secondhandtreasure #${locationClean}thrift #supportlocal #thriftingcommunity #vintagerecords #montereyca"
+#${locationClean} #thriftstorefinds #vintagestyle #sustainableshopping #secondhandtreasure #supportlocal #thriftingcommunity #vintagerecords"
 
 NOW CREATE THE CAPTION:
 Make it feel real, specific to ${info.businessName}, and genuinely interesting to read.

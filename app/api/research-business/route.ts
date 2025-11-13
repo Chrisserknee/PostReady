@@ -242,10 +242,10 @@ BAD Examples (too generic):
 GOOD Examples (specific and actionable):
 
 For a BAKERY/CAFÉ:
-✅ "The 5 AM Morning: Watch Us Pull Fresh Croissants from the Oven"
+✅ "The 5 AM Morning: Watch the Baker Pull Fresh Croissants from the Oven"
 ✅ "Decorating a 3-Tier Wedding Cake from Start to Finish"
 ✅ "Customer Tries Our Best-Selling Cinnamon Roll for the First Time"
-✅ "How We Make Our Signature Sourdough (72-Hour Process in 60 Seconds)"
+✅ "How the Baker Makes Our Signature Sourdough (72-Hour Process in 60 Seconds)"
 ✅ "Guess the Secret Ingredient in Our Award-Winning Chocolate Chip Cookies"
 
 For a THRIFT STORE:
@@ -269,6 +269,7 @@ Generate 6 ideas that are:
 3. ENGAGING - hooks that make people want to watch
 4. DIVERSE angles: mix of educational, behind-the-scenes, testimonial, funny, offer
 5. REAL - not generic templates but actual video concepts
+6. ⚠️ DO NOT use specific people's names (like "John", "Sarah", "Mike") - use generic terms like "the baker", "our chef", "a customer", "the owner"
 
 Think about:
 - What specific processes happen at a ${actualBusinessType}?
