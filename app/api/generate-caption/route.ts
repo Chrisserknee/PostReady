@@ -90,6 +90,8 @@ CAPTION REQUIREMENTS:
    - Clichés like "We're excited to share"
    - Being too wordy or verbose
    - Feeling salesy or pushy
+   - DO NOT use specific people's names (e.g., "Meet Sarah", "John says") unless the business owner explicitly provides them
+   - Keep it generic and relatable to all customers
 
 6. **Platform-Specific**:
 ${getPlatformGuidance(info.platform)}
@@ -102,7 +104,7 @@ ${getPlatformGuidance(info.platform)}
    - Separate hashtags with spaces
 
 EXAMPLE STYLE (do NOT copy, just use as a tone reference):
-"Just found this vintage record player from a Monterey DJ in the 70s 🎵 Still has his initials carved in the side!
+"Just found this vintage record player from the 70s 🎵 Still has the original owner's initials carved in the side!
 
 These are the treasures that make thrift shopping special. Priced at $45 and it plays beautifully.
 

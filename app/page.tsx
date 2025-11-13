@@ -645,8 +645,6 @@ export default function Home() {
       setTimeout(() => {
         setTitleAnimation('idle');
       }, 500);
-      
-      alert("Title reworded successfully!");
     } catch (error) {
       console.error("Title reword error:", error);
       alert("Failed to reword title. Please try again.");
@@ -1384,20 +1382,23 @@ export default function Home() {
                               You've used your 3 free rewords
                             </p>
                           )}
-                          <div className="border-2 rounded-lg p-4" style={{ 
-                            backgroundColor: 'var(--card-bg)',
-                            borderColor: 'var(--card-border)'
-                          }}>
-                            <p 
-                              className={`text-lg font-medium transition-all duration-300 ${
-                                titleAnimation === 'fadeOut' ? 'animate-fade-out' : 
-                                titleAnimation === 'fadeIn' ? 'animate-fade-in' : ''
-                              }`}
-                              style={{ color: 'var(--text-primary)' }}
-                            >
-                              {postDetails.title}
-                            </p>
-                          </div>
+                          <input
+                            type="text"
+                            value={postDetails.title}
+                            onChange={(e) =>
+                              setPostDetails({ ...postDetails, title: e.target.value })
+                            }
+                            className={`border-2 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 text-lg font-medium transition-all duration-300 ${
+                              titleAnimation === 'fadeOut' ? 'animate-fade-out' : 
+                              titleAnimation === 'fadeIn' ? 'animate-fade-in' : ''
+                            }`}
+                            style={{
+                              backgroundColor: 'var(--card-bg)',
+                              borderColor: 'var(--card-border)',
+                              color: 'var(--text-primary)'
+                            }}
+                            placeholder="Post title..."
+                          />
                         </div>
 
                         {/* Caption with Hashtags */}
