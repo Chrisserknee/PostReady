@@ -49,6 +49,8 @@ export default function Home() {
   const [captionAnimation, setCaptionAnimation] = useState<'idle' | 'fadeOut' | 'typing'>('idle');
   const [titleAnimation, setTitleAnimation] = useState<'idle' | 'fadeOut' | 'fadeIn'>('idle');
   const [ideasAnimation, setIdeasAnimation] = useState<'idle' | 'fadeOut' | 'fadeIn'>('idle');
+  const [isGeneratingIdeas, setIsGeneratingIdeas] = useState<boolean>(false);
+  const [generateIdeasCount, setGenerateIdeasCount] = useState<number>(0);
   
   // Notification state
   const [notification, setNotification] = useState<{
@@ -1048,10 +1050,27 @@ export default function Home() {
                     Select one idea to create content for. You'll record the video next.
                   </p>
 
-                  <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 transition-all duration-300 ${
-                    ideasAnimation === 'fadeOut' ? 'animate-fade-out' : 
-                    ideasAnimation === 'fadeIn' ? 'animate-fade-in' : ''
-                  }`}>
+                  {/* Loading State - Beautiful Animated Emoji */}
+                  {isGeneratingIdeas && (
+                    <div className="flex flex-col items-center justify-center py-20 mb-6">
+                      <div className="text-8xl mb-6 animate-bounce">
+                        ✨
+                      </div>
+                      <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                        Generating Fresh Ideas...
+                      </h3>
+                      <p style={{ color: 'var(--text-secondary)' }}>
+                        Creating amazing video concepts just for you
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Video Ideas Grid */}
+                  {!isGeneratingIdeas && (
+                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 transition-all duration-300 ${
+                      ideasAnimation === 'fadeOut' ? 'animate-fade-out' : 
+                      ideasAnimation === 'fadeIn' ? 'animate-fade-in' : ''
+                    }`}>
                     {strategy.contentIdeas.map((idea, index) => (
                       <div
                         key={index}
@@ -1079,17 +1098,19 @@ export default function Home() {
                         )}
                       </div>
                     ))}
-                  </div>
+                    </div>
+                  )}
 
                   {/* Generate More Ideas Button - Floating */}
                   <div className="mb-6 flex justify-end">
                     <button
                       onClick={async () => {
-                        if (!isPro) {
+                        // Check if user has exceeded free limit (2 free generates)
+                        if (generateIdeasCount >= 2 && !isPro) {
                           setModalState({
                             isOpen: true,
                             title: "Pro Feature",
-                            message: "Generate More Ideas is a Pro feature. Upgrade to PostReady Pro for unlimited video ideas?",
+                            message: "You've used your 2 free idea generations. Upgrade to PostReady Pro for unlimited video ideas?",
                             type: 'confirm',
                             onConfirm: scrollToPremium,
                             confirmText: "Upgrade Now"
@@ -1097,7 +1118,7 @@ export default function Home() {
                           return;
                         }
 
-                        // Pro users: Regenerate ideas with smooth animation
+                        // Generate ideas with smooth animation
                         if (!businessInfo.businessName) return;
                         
                         setIsRewriting(true);
@@ -1106,6 +1127,9 @@ export default function Home() {
                         try {
                           // Wait for fade out animation
                           await new Promise(resolve => setTimeout(resolve, 300));
+                          
+                          // Show loading state
+                          setIsGeneratingIdeas(true);
                           
                           const response = await fetch("/api/research-business", {
                             method: "POST",
@@ -1121,9 +1145,17 @@ export default function Home() {
 
                           const data = await response.json();
                           
+                          // Hide loading state
+                          setIsGeneratingIdeas(false);
+                          
                           // Update strategy with new ideas
                           setStrategy(data.research);
                           setSelectedIdea(null);
+                          
+                          // Increment usage count for non-Pro users
+                          if (!isPro) {
+                            setGenerateIdeasCount(prev => prev + 1);
+                          }
                           
                           // Start fade in animation
                           setIdeasAnimation('fadeIn');
@@ -1139,6 +1171,7 @@ export default function Home() {
                           console.error("Error generating more ideas:", error);
                           showNotification("Failed to generate more ideas. Please try again.", "error", "Error");
                           setIdeasAnimation('idle');
+                          setIsGeneratingIdeas(false);
                         } finally {
                           setIsRewriting(false);
                         }
@@ -1158,6 +1191,11 @@ export default function Home() {
                     >
                       {isRewriting ? (
                         "Generating..."
+                      ) : generateIdeasCount >= 2 && !isPro ? (
+                        <>
+                          <span className="mr-2">🔒</span>
+                          Pro: Unlimited Ideas
+                        </>
                       ) : isPro ? (
                         <>
                           <span className="mr-2">🎬</span>
@@ -1165,12 +1203,28 @@ export default function Home() {
                         </>
                       ) : (
                         <>
-                          <span className="mr-2">🔒</span>
-                          Pro: More Ideas
+                          <span className="mr-2">🎬</span>
+                          Generate More Ideas
                         </>
                       )}
                     </button>
                   </div>
+                  
+                  {/* Usage counter for free users */}
+                  {!isPro && generateIdeasCount > 0 && generateIdeasCount < 2 && (
+                    <div className="text-center mb-4">
+                      <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        {2 - generateIdeasCount} free generation{2 - generateIdeasCount !== 1 ? 's' : ''} remaining
+                      </p>
+                    </div>
+                  )}
+                  {!isPro && generateIdeasCount >= 2 && (
+                    <div className="text-center mb-4">
+                      <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        You've used your 2 free generations
+                      </p>
+                    </div>
+                  )}
 
                   <div className="flex gap-4">
                     <SecondaryButton onClick={handlePreviousStep} className="flex-1">
