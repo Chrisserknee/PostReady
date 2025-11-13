@@ -46,10 +46,19 @@ export async function POST(request: NextRequest) {
         metadata: {
           userId: userId,
         },
+        description: "PostReady Pro Monthly Subscription",
       },
       customer_email: userEmail,
       metadata: {
         userId: userId,
+      },
+      consent_collection: {
+        terms_of_service: 'required',
+      },
+      custom_text: {
+        terms_of_service_acceptance: {
+          message: 'By subscribing, you authorize PostReady to charge you according to the terms until you cancel.',
+        },
       },
       success_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}?upgrade=success`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}?upgrade=cancelled`,
