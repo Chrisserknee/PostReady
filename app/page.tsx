@@ -15,7 +15,7 @@ import { AuthModal } from "@/components/AuthModal";
 import { useAuth } from "@/contexts/AuthContext";
 import { saveUserProgress, loadUserProgress } from "@/lib/userProgress";
 
-type WizardStep = "form" | "researching" | "principles" | "choose-idea" | "record-video" | "post-details" | "premium";
+type WizardStep = "form" | "researching" | "principles" | "choose-idea" | "record-video" | "post-details" | "premium" | "history" | "businesses";
 
 export default function Home() {
   const { user, isPro, signOut, upgradeToPro, loading: authLoading } = useAuth();
@@ -39,6 +39,21 @@ export default function Home() {
 
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authModalMode, setAuthModalMode] = useState<'signin' | 'signup'>('signup');
+
+  // History and Businesses state
+  const [savedBusinesses, setSavedBusinesses] = useState<Array<{
+    id: string;
+    businessInfo: BusinessInfo;
+    strategy: StrategyResult;
+    lastUsed: string;
+  }>>([]);
+  const [completedPosts, setCompletedPosts] = useState<Array<{
+    id: string;
+    businessName: string;
+    videoIdea: ContentIdea;
+    postDetails: PostDetails;
+    completedAt: string;
+  }>>([]);
 
   const strategyRef = useRef<HTMLDivElement>(null);
   const postPlannerRef = useRef<HTMLDivElement>(null);
@@ -108,6 +123,52 @@ export default function Home() {
   const openAuthModal = (mode: 'signin' | 'signup') => {
     setAuthModalMode(mode);
     setAuthModalOpen(true);
+  };
+
+  // Save business for quick access later
+  const saveBusinessForLater = (info: BusinessInfo, strat: StrategyResult) => {
+    const businessId = `${info.businessName}-${Date.now()}`;
+    const newBusiness = {
+      id: businessId,
+      businessInfo: info,
+      strategy: strat,
+      lastUsed: new Date().toISOString(),
+    };
+    
+    setSavedBusinesses(prev => {
+      // Remove any existing entry for this business name
+      const filtered = prev.filter(b => b.businessInfo.businessName !== info.businessName);
+      return [newBusiness, ...filtered];
+    });
+  };
+
+  // Save completed post to history
+  const saveCompletedPost = (idea: ContentIdea, details: PostDetails) => {
+    const postId = `${businessInfo.businessName}-${Date.now()}`;
+    const newPost = {
+      id: postId,
+      businessName: businessInfo.businessName,
+      videoIdea: idea,
+      postDetails: details,
+      completedAt: new Date().toISOString(),
+    };
+    
+    setCompletedPosts(prev => [newPost, ...prev]);
+  };
+
+  // Load saved business
+  const loadSavedBusiness = (business: typeof savedBusinesses[0]) => {
+    setBusinessInfo(business.businessInfo);
+    setStrategy(business.strategy);
+    setCurrentStep("choose-idea");
+    // Update lastUsed
+    setSavedBusinesses(prev => 
+      prev.map(b => 
+        b.id === business.id 
+          ? { ...b, lastUsed: new Date().toISOString() }
+          : b
+      )
+    );
   };
 
   const handleGenerateStrategy = async (e: React.FormEvent) => {
@@ -343,6 +404,26 @@ export default function Home() {
                       PRO
                     </span>
                   )}
+                  <button
+                    onClick={() => setCurrentStep("businesses")}
+                    className={`text-sm font-medium transition-colors ${
+                      currentStep === "businesses"
+                        ? "text-indigo-600 font-bold"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    My Businesses
+                  </button>
+                  <button
+                    onClick={() => setCurrentStep("history")}
+                    className={`text-sm font-medium transition-colors ${
+                      currentStep === "history"
+                        ? "text-indigo-600 font-bold"
+                        : "text-gray-600 hover:text-gray-900"
+                    }`}
+                  >
+                    History
+                  </button>
                   <span className="text-sm text-gray-600">{user.email}</span>
                   {!isPro && (
                     <button
@@ -387,19 +468,12 @@ export default function Home() {
               setSelectedIdea(null);
               setPostDetails(null);
             }}
-            className="text-5xl font-bold text-gray-900 mb-3 cursor-pointer hover:text-indigo-600 transition-colors"
+            className="text-5xl font-bold text-gray-900 mb-4 cursor-pointer hover:text-indigo-600 transition-colors"
           >
             PostReady
           </h1>
-          <p className="text-lg text-gray-700 font-medium mb-4">
+          <p className="text-xl text-indigo-600 font-semibold mb-6">
             We help you do the most important thing for your business: post.
-          </p>
-          <p className="text-xl text-indigo-600 font-medium mb-2">
-            Your personal social media manager.
-          </p>
-          <p className="text-gray-600 max-w-2xl mx-auto">
-            Get personalized content ideas, captions, tags, and posting times
-            based on your business and location.
           </p>
         </div>
 
@@ -532,7 +606,7 @@ export default function Home() {
         )}
 
         {/* Step-by-Step Strategy Wizard */}
-        {strategy && currentStep !== "form" && currentStep !== "researching" && (
+        {strategy && currentStep !== "form" && currentStep !== "researching" && currentStep !== "premium" && (
           <div ref={strategyRef} className="mb-10 scroll-mt-4">
             <SectionCard>
               {/* Progress Indicator */}
@@ -945,7 +1019,7 @@ export default function Home() {
                     }}
                     className="w-full bg-white text-purple-600 rounded-lg px-6 py-4 font-bold text-lg hover:bg-gray-50 transition-all shadow-lg"
                   >
-                    Start Your Pro Trial - 2 Days Free
+                    Subscribe to PostReady Pro - $10/month
                   </button>
                   <p className="text-center text-purple-100 text-sm mt-3">
                     Cancel anytime • Secure payment by Stripe

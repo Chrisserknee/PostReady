@@ -31,7 +31,7 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: "PostReady Pro",
+              name: "PostReady Pro - Monthly Subscription",
               description: "Unlimited video ideas, advanced insights, and priority support",
             },
             unit_amount: 1000, // $10.00 in cents
@@ -43,7 +43,6 @@ export async function POST(request: NextRequest) {
         },
       ],
       subscription_data: {
-        trial_period_days: 2, // 2-day free trial
         metadata: {
           userId: userId,
         },
