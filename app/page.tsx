@@ -712,7 +712,12 @@ export default function Home() {
                   >
                     History
                   </button>
-                  <span className="text-sm text-gray-600">{user.email}</span>
+                  <button
+                    onClick={() => window.location.href = '/portal'}
+                    className="text-sm text-gray-600 hover:text-blue-600 transition-colors font-medium underline decoration-dotted"
+                  >
+                    {user.email}
+                  </button>
                   {!isPro && (
                     <button
                       onClick={scrollToPremium}
@@ -750,7 +755,7 @@ export default function Home() {
           )}
         </div>
 
-        <div className="text-center mb-12">
+        <div className="text-center mb-16">
           <h1 
             onClick={() => {
               setCurrentStep("form");
@@ -758,12 +763,15 @@ export default function Home() {
               setSelectedIdea(null);
               setPostDetails(null);
             }}
-            className="text-5xl font-bold mb-4 cursor-pointer transition-colors hover:opacity-80"
-            style={{ color: '#1A1A1A' }}
+            className="text-6xl font-extrabold mb-3 cursor-pointer transition-all hover:scale-105"
+            style={{ 
+              color: '#1A1A1A',
+              letterSpacing: '-0.02em'
+            }}
           >
             PostReady
           </h1>
-          <p className="text-xl font-semibold mb-6" style={{ color: '#2979FF' }}>
+          <p className="text-2xl font-medium tracking-wide" style={{ color: '#2979FF' }}>
             Posting made easy.
           </p>
         </div>
@@ -771,7 +779,7 @@ export default function Home() {
         {/* Business Info Form */}
         {currentStep === "form" && (
           <SectionCard className="mb-10">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl font-bold mb-6" style={{ color: '#1A1A1A' }}>
               Tell Us About Your Business
             </h2>
             <form onSubmit={handleGenerateStrategy} className="space-y-4">
@@ -836,27 +844,31 @@ export default function Home() {
               </PrimaryButton>
             </form>
 
-            {/* Pro Upgrade CTA */}
-            <div className="mt-8 bg-gradient-to-r from-purple-50 to-blue-50 border-2 border-blue-200 rounded-xl p-6">
-              <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex-1">
-                  <h3 className="font-bold text-gray-900 text-lg mb-1 flex items-center">
-                    <span className="text-2xl mr-2">✨</span>
-                    Unlock PostReady Pro
-                  </h3>
-                  <p className="text-gray-600 text-sm">
-                    Get unlimited video ideas, advanced insights, and priority support
-                  </p>
+              {/* Pro Upgrade CTA */}
+              <div className="mt-8 rounded-2xl p-6 border-2" style={{ 
+                background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.05) 0%, rgba(111, 255, 210, 0.05) 100%)',
+                borderColor: '#2979FF40'
+              }}>
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                  <div className="flex-1">
+                    <h3 className="font-bold text-lg mb-1 flex items-center" style={{ color: '#1A1A1A' }}>
+                      <span className="text-2xl mr-2">✨</span>
+                      Unlock PostReady Pro
+                    </h3>
+                    <p className="text-gray-600 text-sm">
+                      Get unlimited video ideas, advanced insights, and priority support
+                    </p>
+                  </div>
+                  <button
+                    onClick={scrollToPremium}
+                    className="text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center whitespace-nowrap hover:scale-105"
+                    style={{ background: 'linear-gradient(to right, #2979FF, #6FFFD2)' }}
+                  >
+                    <span className="mr-2">⚡</span>
+                    View Pro Plan
+                  </button>
                 </div>
-                <button
-                  onClick={scrollToPremium}
-                  className="bg-gradient-to-r from-amber-500 to-blue-600 text-white px-6 py-3 rounded-lg font-bold hover:from-amber-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-xl flex items-center whitespace-nowrap"
-                >
-                  <span className="mr-2">⚡</span>
-                  View Pro Plan
-                </button>
               </div>
-            </div>
           </SectionCard>
         )}
 

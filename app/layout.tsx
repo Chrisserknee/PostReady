@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
 export const metadata: Metadata = {
   title: "PostReady - Your Personal Social Media Manager",
@@ -14,10 +15,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className="antialiased bg-gray-50">
-        <AuthProvider>
-          {children}
-        </AuthProvider>
+      <body className="antialiased">
+        <ThemeProvider>
+          <AuthProvider>
+            {children}
+          </AuthProvider>
+        </ThemeProvider>
       </body>
     </html>
   );

@@ -20,7 +20,13 @@ export function SecondaryButton({
       type={type}
       onClick={onClick}
       disabled={disabled}
-      className={`bg-white border-2 border-indigo-600 text-indigo-600 rounded-md px-6 py-3 font-medium hover:bg-indigo-50 transition-colors disabled:bg-gray-100 disabled:border-gray-300 disabled:text-gray-400 disabled:cursor-not-allowed ${className}`}
+      className={`bg-white border-2 rounded-xl px-6 py-3 font-bold transition-all disabled:bg-gray-100 disabled:border-gray-300 disabled:text-gray-400 disabled:cursor-not-allowed shadow-sm hover:shadow-md hover:scale-105 ${className}`}
+      style={{ 
+        borderColor: disabled ? undefined : '#2979FF',
+        color: disabled ? undefined : '#2979FF'
+      }}
+      onMouseEnter={(e) => !disabled && (e.currentTarget.style.backgroundColor = 'rgba(41, 121, 255, 0.05)')}
+      onMouseLeave={(e) => !disabled && (e.currentTarget.style.backgroundColor = 'white')}
     >
       {children}
     </button>

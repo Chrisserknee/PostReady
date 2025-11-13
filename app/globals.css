@@ -63,19 +63,30 @@
   animation: blink 0.7s step-end infinite;
 }
 
-:root {
+:root[data-theme="light"] {
   --background: #F5F6FA;
   --foreground: #1A1A1A;
   --primary: #2979FF;
   --secondary: #1A1A1A;
   --accent: #6FFFD2;
+  --card-bg: #FFFFFF;
+  --card-border: #E5E7EB;
+  --text-primary: #1A1A1A;
+  --text-secondary: #6B7280;
+  --hover-bg: rgba(41, 121, 255, 0.05);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #ffffff;
-    --foreground: #171717;
-  }
+:root[data-theme="dark"] {
+  --background: #0F1419;
+  --foreground: #E7E9EA;
+  --primary: #2979FF;
+  --secondary: #E7E9EA;
+  --accent: #6FFFD2;
+  --card-bg: #1A1F2E;
+  --card-border: #2D3748;
+  --text-primary: #E7E9EA;
+  --text-secondary: #9CA3AF;
+  --hover-bg: rgba(41, 121, 255, 0.15);
 }
 
 body {
