@@ -871,22 +871,22 @@ export default function Home() {
               {/* Pro Upgrade CTA */}
               <div className="mt-8 rounded-2xl p-6 border-2" style={{ 
                 background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.05) 0%, rgba(111, 255, 210, 0.05) 100%)',
-                borderColor: '#2979FF40'
+                borderColor: 'rgba(41, 121, 255, 0.25)'
               }}>
                 <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex-1">
-                    <h3 className="font-bold text-lg mb-1 flex items-center" style={{ color: '#1A1A1A' }}>
+                    <h3 className="font-bold text-lg mb-1 flex items-center" style={{ color: 'var(--secondary)' }}>
                       <span className="text-2xl mr-2">✨</span>
                       Unlock PostReady Pro
                     </h3>
-                    <p className="text-gray-600 text-sm">
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
                       Get unlimited video ideas, advanced insights, and priority support
                     </p>
                   </div>
                   <button
                     onClick={scrollToPremium}
                     className="text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center whitespace-nowrap hover:scale-105"
-                    style={{ background: 'linear-gradient(to right, #2979FF, #6FFFD2)' }}
+                    style={{ background: 'linear-gradient(to right, var(--primary), var(--accent))' }}
                   >
                     <span className="mr-2">⚡</span>
                     View Pro Plan
