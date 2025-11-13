@@ -906,19 +906,19 @@ export default function Home() {
             <SectionCard>
               <div className="text-center py-12">
                 <div className="text-6xl mb-6 animate-bounce">⚡</div>
-                <h2 className="text-3xl font-bold text-gray-900 mb-4">
+                <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
                   Creating Your Strategy...
                 </h2>
-                <p className="text-gray-600 mb-8">
+                <p className="mb-8" style={{ color: 'var(--text-secondary)' }}>
                   Finding the best tactics for {businessInfo.businessName} on {businessInfo.platform}
                 </p>
 
                 <div className="max-w-md mx-auto space-y-3">
                   <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-700 font-medium">
+                    <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
                       {researchStatus}
                     </span>
-                    <span className="text-blue-600 font-bold">
+                    <span className="font-bold" style={{ color: 'var(--primary)' }}>
                       {Math.round(researchProgress)}%
                     </span>
                   </div>
@@ -972,19 +972,19 @@ export default function Home() {
 
                   <div className="rounded-2xl p-8 mb-8 border-l-4" style={{ 
                     background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.08) 0%, rgba(111, 255, 210, 0.08) 100%)',
-                    borderColor: '#6FFFD2'
+                    borderColor: 'var(--accent)'
                   }}>
                     <div className="flex items-start">
                       <span className="text-5xl mr-5">🎯</span>
                       <div>
-                        <h3 className="font-bold text-xl mb-3" style={{ color: '#1A1A1A' }}>The Key to Success</h3>
-                        <p className="text-lg leading-relaxed" style={{ color: '#374151' }}>{strategy.headlineSummary}</p>
+                        <h3 className="font-bold text-xl mb-3" style={{ color: 'var(--secondary)' }}>The Key to Success</h3>
+                        <p className="text-lg leading-relaxed" style={{ color: 'var(--text-primary)' }}>{strategy.headlineSummary}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="mb-10">
-                    <h3 className="text-2xl font-bold mb-6 flex items-center" style={{ color: '#1A1A1A' }}>
+                    <h3 className="text-2xl font-bold mb-6 flex items-center" style={{ color: 'var(--secondary)' }}>
                       <span className="text-3xl mr-3">⚡</span>
                       5 Strategies to Grow Your Audience
                     </h3>
@@ -1039,10 +1039,10 @@ export default function Home() {
               {/* Step 2: Choose Video Idea */}
               {currentStep === "choose-idea" && strategy && strategy.contentIdeas && (
                 <div>
-                  <h2 className="text-3xl font-bold text-gray-900 mb-2">
+                  <h2 className="text-3xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                     Choose Your Video Idea
                   </h2>
-                  <p className="text-gray-600 mb-6">
+                  <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
                     Select one idea to create content for. You'll record the video next.
                   </p>
 
@@ -1051,23 +1051,24 @@ export default function Home() {
                       <div
                         key={index}
                         onClick={() => handleSelectIdea(idea)}
-                        className={`bg-white border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                          selectedIdea?.title === idea.title
-                            ? "border-indigo-500 bg-indigo-50 shadow-lg"
-                            : "border-gray-200 hover:border-indigo-300 hover:shadow-md"
-                        }`}
+                        className="border-2 rounded-xl p-5 cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                        style={{
+                          backgroundColor: selectedIdea?.title === idea.title ? 'var(--hover-bg)' : 'var(--card-bg)',
+                          borderColor: selectedIdea?.title === idea.title ? 'var(--primary)' : 'var(--card-border)',
+                          boxShadow: selectedIdea?.title === idea.title ? '0 4px 12px rgba(41, 121, 255, 0.15)' : '0 1px 3px rgba(0,0,0,0.05)'
+                        }}
                       >
                         <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-bold text-gray-900 flex-1">
+                          <h4 className="font-bold flex-1" style={{ color: 'var(--text-primary)' }}>
                             {idea.title}
                           </h4>
                           <Badge variant={idea.angle}>
                             {idea.angle.replace(/_/g, " ")}
                           </Badge>
                         </div>
-                        <p className="text-sm text-gray-600">{idea.description}</p>
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{idea.description}</p>
                         {selectedIdea?.title === idea.title && (
-                          <div className="mt-3 text-blue-600 font-medium text-sm flex items-center">
+                          <div className="mt-3 font-medium text-sm flex items-center" style={{ color: 'var(--primary)' }}>
                             <span className="mr-2">✓</span> Selected
                           </div>
                         )}
