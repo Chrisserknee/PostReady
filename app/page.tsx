@@ -1734,7 +1734,7 @@ export default function Home() {
 
               {/* Feature Comparison */}
               <div className="max-w-2xl mx-auto mb-8">
-                <h3 className="text-2xl font-bold text-gray-900 mb-4 text-center">
+                <h3 className="text-2xl font-bold mb-4 text-center" style={{ color: 'var(--secondary)' }}>
                   Free vs Pro Comparison
                 </h3>
                 <div className="rounded-lg border-2 overflow-hidden" style={{ 
