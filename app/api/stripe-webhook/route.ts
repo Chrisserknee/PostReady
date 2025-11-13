@@ -1,10 +1,24 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
-import { supabase } from "@/lib/supabase";
+
+// STRIPE DISABLED - Waiting for verification
+// This webhook will be activated once Stripe account is verified
 
 export async function POST(request: NextRequest) {
+  // Return placeholder response - Stripe not yet configured
+  return NextResponse.json(
+    { 
+      message: "Webhook endpoint disabled - Stripe not yet configured",
+      received: false 
+    },
+    { status: 503 } // Service Unavailable
+  );
+
+  /* STRIPE WEBHOOK CODE - Uncomment when verified
+  
+  import Stripe from "stripe";
+  import { supabase } from "@/lib/supabase";
+
   try {
-    // Check for required environment variables
     if (!process.env.STRIPE_SECRET_KEY || !process.env.STRIPE_WEBHOOK_SECRET) {
       return NextResponse.json(
         { error: "Stripe is not configured" },
@@ -12,7 +26,6 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize Stripe client lazily (only when route is called)
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
@@ -38,14 +51,12 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Handle the event
     switch (event.type) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
 
         if (userId) {
-          // Upgrade user to Pro in Supabase
           const { error } = await supabase
             .from("user_profiles")
             .update({ 
@@ -69,7 +80,6 @@ export async function POST(request: NextRequest) {
         const subscription = event.data.object as Stripe.Subscription;
         const customerId = subscription.customer as string;
 
-        // Find user by customer ID and downgrade them
         const { data: profiles } = await supabase
           .from("user_profiles")
           .select("id")
@@ -96,7 +106,6 @@ export async function POST(request: NextRequest) {
       case "invoice.payment_failed": {
         const invoice = event.data.object as Stripe.Invoice;
         console.log(`Payment failed for customer: ${invoice.customer}`);
-        // You could send an email notification here
         break;
       }
 
@@ -112,5 +121,6 @@ export async function POST(request: NextRequest) {
       { status: 500 }
     );
   }
+  */
 }
 

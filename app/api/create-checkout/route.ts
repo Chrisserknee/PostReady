@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import Stripe from "stripe";
+
+// STRIPE DISABLED - Waiting for verification
+// This endpoint will be activated once Stripe account is verified
 
 export async function POST(request: NextRequest) {
   try {
@@ -12,6 +14,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Return placeholder response - Stripe not yet configured
+    return NextResponse.json(
+      { 
+        error: "Pro subscriptions coming soon! We're currently setting up payment processing.",
+        comingSoon: true 
+      },
+      { status: 503 } // Service Unavailable
+    );
+
+    /* STRIPE CODE - Uncomment when verified
+    
     if (!process.env.STRIPE_SECRET_KEY) {
       return NextResponse.json(
         { error: "Stripe is not configured" },
@@ -19,10 +32,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Initialize Stripe client lazily (only when route is called)
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
-    // Create a Stripe Checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
       mode: "subscription",
@@ -34,7 +45,7 @@ export async function POST(request: NextRequest) {
               name: "PostReady Pro",
               description: "Unlimited video ideas, advanced insights, and priority support",
             },
-            unit_amount: 1000, // $10.00 in cents
+            unit_amount: 1000,
             recurring: {
               interval: "month",
             },
@@ -43,7 +54,7 @@ export async function POST(request: NextRequest) {
         },
       ],
       subscription_data: {
-        trial_period_days: 2, // 2-day free trial
+        trial_period_days: 2,
         metadata: {
           userId: userId,
         },
@@ -57,8 +68,9 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json({ sessionId: session.id, url: session.url });
+    */
   } catch (error: any) {
-    console.error("Stripe checkout error:", error);
+    console.error("Checkout error:", error);
     return NextResponse.json(
       { error: error.message || "Failed to create checkout session" },
       { status: 500 }
