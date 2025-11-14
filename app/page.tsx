@@ -1377,22 +1377,29 @@ function HomeContent() {
       {/* Tiny Glowing Stars Effect */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
         {/* Generate multiple small stars scattered across the screen */}
-        {[...Array(30)].map((_, i) => (
-          <div 
-            key={i}
-            className="absolute rounded-full"
-            style={{
-              width: `${Math.random() * 3 + 1}px`,
-              height: `${Math.random() * 3 + 1}px`,
-              top: `${Math.random() * 100}%`,
-              left: `${Math.random() * 100}%`,
-              backgroundColor: 'rgba(255, 255, 255, 0.4)',
-              boxShadow: '0 0 4px rgba(255, 255, 255, 0.6)',
-              animation: `twinkle ${Math.random() * 3 + 2}s ease-in-out infinite`,
-              animationDelay: `${Math.random() * 2}s`
-            }}
-          />
-        ))}
+        {[...Array(40)].map((_, i) => {
+          const size = Math.random() * 2.5 + 0.5; // Smaller range: 0.5-3px
+          const brightness = Math.random();
+          const opacity = brightness > 0.7 ? 0.6 : 0.3; // Brighter stars for some
+          const glowSize = brightness > 0.7 ? 6 : 3; // Bigger glow for brighter stars
+          
+          return (
+            <div 
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width: `${size}px`,
+                height: `${size}px`,
+                top: `${Math.random() * 100}%`,
+                left: `${Math.random() * 100}%`,
+                backgroundColor: `rgba(255, 255, 255, ${opacity})`,
+                boxShadow: `0 0 ${glowSize}px rgba(255, 255, 255, ${opacity + 0.2})`,
+                animation: `twinkle ${Math.random() * 3 + 2}s ease-in-out infinite`,
+                animationDelay: `${Math.random() * 2}s`
+              }}
+            />
+          );
+        })}
       </div>
       <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>
         {/* Header with Auth - Only for signed-in users */}
