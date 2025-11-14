@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
     const isShorterRequest = guidance && /shorter|fewer words|condense|brief/i.test(guidance);
     
     // Remove hashtags from current caption for length comparison (hashtags are added separately)
-    const captionWithoutHashtags = currentCaption ? currentCaption.split('\n\n').filter(line => !line.trim().startsWith('#')).join('\n\n').trim() : '';
+    const captionWithoutHashtags = currentCaption ? currentCaption.split('\n\n').filter((line: string) => !line.trim().startsWith('#')).join('\n\n').trim() : '';
     const currentCaptionLength = captionWithoutHashtags.length;
     
     const basePrompt = `You are a social media caption writer who creates natural, engaging, and authentic captions for small businesses.
