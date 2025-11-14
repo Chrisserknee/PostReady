@@ -1374,18 +1374,25 @@ function HomeContent() {
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--background)' }}>
-      {/* Background Star Effect - Visible to all users */}
+      {/* Tiny Glowing Stars Effect */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-        <div className="absolute top-0 right-0 w-96 h-96 rounded-full" style={{
-          background: 'radial-gradient(circle, rgba(41, 121, 255, 0.12) 0%, transparent 70%)',
-          filter: 'blur(60px)',
-          animation: 'float 20s ease-in-out infinite'
-        }}></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full" style={{
-          background: 'radial-gradient(circle, rgba(111, 255, 210, 0.12) 0%, transparent 70%)',
-          filter: 'blur(60px)',
-          animation: 'float 25s ease-in-out infinite reverse'
-        }}></div>
+        {/* Generate multiple small stars scattered across the screen */}
+        {[...Array(30)].map((_, i) => (
+          <div 
+            key={i}
+            className="absolute rounded-full"
+            style={{
+              width: `${Math.random() * 3 + 1}px`,
+              height: `${Math.random() * 3 + 1}px`,
+              top: `${Math.random() * 100}%`,
+              left: `${Math.random() * 100}%`,
+              backgroundColor: 'rgba(255, 255, 255, 0.4)',
+              boxShadow: '0 0 4px rgba(255, 255, 255, 0.6)',
+              animation: `twinkle ${Math.random() * 3 + 2}s ease-in-out infinite`,
+              animationDelay: `${Math.random() * 2}s`
+            }}
+          />
+        ))}
       </div>
       <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>
         {/* Header with Auth - Only for signed-in users */}
