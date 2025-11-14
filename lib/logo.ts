@@ -77,3 +77,4 @@ function getColorHex(colorsString: string, index: number): string {
   return colorMap[color.trim()] || "#3B82F6";
 }
 
+

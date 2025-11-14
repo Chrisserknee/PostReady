@@ -6,6 +6,9 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 export const metadata: Metadata = {
   title: "PostReady - Your Personal Social Media Manager",
   description: "Get personalized content ideas, captions, tags, and posting times based on your business and location.",
+  icons: {
+    icon: '/favicon.svg',
+  },
 };
 
 export default function RootLayout({

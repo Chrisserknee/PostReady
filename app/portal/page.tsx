@@ -15,6 +15,7 @@ export default function UserPortal() {
   const router = useRouter();
   const [billingLoading, setBillingLoading] = useState(false);
   
+  
   // Modal state
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
@@ -88,9 +89,17 @@ export default function UserPortal() {
       <div className="max-w-4xl mx-auto px-4 py-10">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
-          <h1 className="text-4xl font-bold" style={{ color: 'var(--secondary)' }}>
-            User Portal
-          </h1>
+          <div className="flex items-center gap-4">
+            <img 
+              src="/postready-logo.svg" 
+              alt="PostReady Logo" 
+              className="h-16 w-auto cursor-pointer transition-all hover:scale-105"
+              onClick={() => router.push('/')}
+            />
+            <h1 className="text-3xl font-bold" style={{ color: 'var(--secondary)' }}>
+              User Portal
+            </h1>
+          </div>
           <button
             onClick={() => router.push('/')}
             className="px-5 py-2.5 rounded-lg font-medium transition-all hover:scale-105"
@@ -185,7 +194,9 @@ export default function UserPortal() {
               <p className="mb-6 text-lg" style={{ color: 'var(--text-secondary)' }}>
                 Get unlimited video ideas, advanced insights, and priority support for just $10/month
               </p>
-              <PrimaryButton onClick={() => router.push('/?upgrade=true')}>
+              <PrimaryButton onClick={() => {
+                router.push('/?premium=true');
+              }}>
                 ⚡ View Pro Plans
               </PrimaryButton>
             </div>

@@ -1,149 +1,93 @@
-import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
-import { BusinessInfo, ContentIdea } from "@/types";
+import { NextRequest, NextResponse } from 'next/server';
+import OpenAI from 'openai';
+
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { businessInfo, selectedIdea } = body as {
-      businessInfo: BusinessInfo;
-      selectedIdea: ContentIdea;
-    };
+    const { businessInfo, ideaTitle, videoDescription, selectedIdea } = await request.json();
 
-    if (!businessInfo || !selectedIdea) {
+    if (!businessInfo) {
       return NextResponse.json(
-        { error: "Missing required information" },
+        { error: 'Business information is required' },
         { status: 400 }
       );
     }
 
-    if (!process.env.OPENAI_API_KEY) {
-      return NextResponse.json(
-        { error: "OpenAI API key not configured" },
-        { status: 500 }
-      );
-    }
+    console.log('🎨 Generating AI caption...');
 
-    // Initialize OpenAI client lazily (only when route is called)
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY,
-    });
+    // Use selectedIdea if provided, otherwise use ideaTitle/videoDescription
+    const title = selectedIdea?.title || ideaTitle;
+    const description = selectedIdea?.description || videoDescription;
 
-    const prompt = buildCaptionPrompt(businessInfo, selectedIdea);
+    const prompt = `You are a social media caption writer who creates natural, engaging, and authentic captions for small businesses.
+
+Business Details:
+- Business Name: ${businessInfo.businessName}
+- Type: ${businessInfo.businessType}
+- Location: ${businessInfo.location}
+- Platform: ${businessInfo.platform}
+${title ? `- Post Idea: ${title}` : ''}
+${description ? `- Video Description: ${description}` : ''}
+
+Write a natural, conversational caption that:
+1. Feels authentic and human (not overly promotional or corporate)
+2. Is 2-4 sentences long
+3. Includes a subtle call-to-action or question to encourage engagement
+4. References the location naturally if relevant
+5. Uses 1-2 emojis maximum (only where they feel natural)
+6. Sounds like something a real person would write, not an AI
+7. Is graceful and well-written but not overdone or flowery
+8. Connects with the local community
+
+DO NOT include hashtags - those will be added separately.
+DO NOT use excessive emojis or exclamation marks.
+DO NOT sound like marketing copy.
+
+Write the caption now:`;
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: 'gpt-4o-mini',
       messages: [
         {
-          role: "system",
-          content: "You are an expert social media copywriter who creates engaging, authentic, and high-converting captions for local businesses. Your writing feels natural, warm, and human - never robotic or formulaic."
+          role: 'system',
+          content: 'You are an expert social media caption writer who creates natural, authentic, and engaging captions for small businesses. Your captions feel human and conversational, never robotic or overly promotional.',
         },
         {
-          role: "user",
-          content: prompt
-        }
+          role: 'user',
+          content: prompt,
+        },
       ],
-      temperature: 0.9,
-      max_tokens: 800,
+      temperature: 0.8,
+      max_tokens: 200,
     });
 
-    const caption = completion.choices[0].message.content || "";
+    const caption = completion.choices[0]?.message?.content?.trim();
 
-    return NextResponse.json({ caption: caption.trim() });
+    if (!caption) {
+      throw new Error('No caption generated');
+    }
+
+    console.log('✅ AI caption generated successfully');
+
+    return NextResponse.json({ caption });
   } catch (error: any) {
-    console.error("Caption generation error:", error);
+    console.error('❌ Caption generation error:', error);
+    console.error('Error details:', {
+      message: error?.message,
+      status: error?.status,
+      code: error?.code,
+      type: error?.type,
+    });
+
     return NextResponse.json(
-      { error: error?.message || "Failed to generate caption" },
+      { 
+        error: 'Failed to generate caption',
+        details: error?.message || 'Unknown error'
+      },
       { status: 500 }
     );
   }
 }
-
-function buildCaptionPrompt(info: BusinessInfo, idea: ContentIdea): string {
-  const locationClean = info.location.toLowerCase().replace(/\s+/g, '').replace(/,/g, '');
-  
-  return `
-Create a compelling ${info.platform} caption for ${info.businessName}, a ${info.businessType} in ${info.location}.
-
-VIDEO CONTENT: "${idea.title}"
-Description: ${idea.description}
-Content Angle: ${idea.angle}
-
-YOUR TASK:
-Write a natural, engaging caption that feels like it's written by a real person who's passionate about their business.
-
-CAPTION REQUIREMENTS:
-1. **Length**: 50-100 words (short and punchy)
-2. **Tone**: Warm, authentic, conversational - like talking to a friend
-3. **Structure**:
-   - Start with a hook that grabs attention
-   - Share ONE key detail or insight
-   - End with a call-to-action (question or invitation)
-
-4. **Content Elements to Include**:
-   - ONE specific detail (not generic statements)
-   - Emojis (2-3 strategically placed, not excessive)
-   - Line breaks for readability (2-3 short paragraphs max)
-
-5. **Avoid**:
-   - Corporate/formal language
-   - Clichés like "We're excited to share"
-   - Being too wordy or verbose
-   - Feeling salesy or pushy
-   - DO NOT use specific people's names (e.g., "Meet Sarah", "John says") unless the business owner explicitly provides them
-   - Keep it generic and relatable to all customers
-
-6. **Platform-Specific**:
-${getPlatformGuidance(info.platform)}
-
-7. **Hashtags**: Include 8-12 relevant hashtags at the END of the caption
-   - Mix of: local (#${locationClean}, #${locationClean}business)
-   - Business type specific
-   - Platform-specific
-   - Community hashtags
-   - Separate hashtags with spaces
-
-EXAMPLE STYLE (do NOT copy, just use as a tone reference):
-"Just found this vintage record player from the 70s 🎵 Still has the original owner's initials carved in the side!
-
-These are the treasures that make thrift shopping special. Priced at $45 and it plays beautifully.
-
-What's the coolest thing YOU'VE found thrifting? 💬
-
-#${locationClean} #thriftstorefinds #vintagestyle #sustainableshopping #secondhandtreasure #supportlocal #thriftingcommunity #vintagerecords"
-
-NOW CREATE THE CAPTION:
-Make it feel real, specific to ${info.businessName}, and genuinely interesting to read.
-`;
-}
-
-function getPlatformGuidance(platform: string): string {
-  const guidance: Record<string, string> = {
-    "Instagram": `
-   - Instagram loves storytelling and visual descriptions
-   - Use line breaks strategically (every 2-3 lines)
-   - Ask engaging questions to boost comments
-   - Emojis work well but don't overdo it`,
-    
-    "TikTok": `
-   - TikTok captions can be shorter (100-150 words)
-   - More casual and trend-aware
-   - Call out viewers directly ("If you're in [location]...")
-   - Include trending language when appropriate`,
-    
-    "Facebook": `
-   - Facebook audiences appreciate longer, detailed stories
-   - Community-focused language works best
-   - Invite conversation and engagement
-   - Local references resonate strongly`,
-    
-    "YouTube Shorts": `
-   - Brief but descriptive
-   - Include timestamps if relevant
-   - Encourage viewers to subscribe
-   - Ask questions to boost comments`
-  };
-
-  return guidance[platform] || guidance["Instagram"];
-}
-

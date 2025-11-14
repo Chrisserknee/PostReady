@@ -32,7 +32,7 @@ export const Modal = ({
       case 'error':
         return '⚠️';
       case 'confirm':
-        return '❓';
+        return '⚡';
       default:
         return '💬';
     }
@@ -84,4 +84,5 @@ export const Modal = ({
     </div>
   );
 };
+
 

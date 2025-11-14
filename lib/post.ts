@@ -1,5 +1,51 @@
 import { BusinessInfo, PostingTime, PostDetails } from "@/types";
 
+export async function generatePostDetailsWithAI(
+  info: BusinessInfo,
+  ideaTitle: string | null,
+  videoDescription: string | null,
+  postingTimes: PostingTime[]
+): Promise<PostDetails> {
+  const title = generateTitle(info, ideaTitle, videoDescription);
+  const hashtags = generateHashtags(info);
+  const bestPostTime = selectBestPostTime(postingTimes, info.platform);
+
+  // Try to generate AI caption
+  let caption: string;
+  try {
+    const response = await fetch('/api/generate-caption', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        businessInfo: info,
+        ideaTitle,
+        videoDescription,
+      }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      caption = data.caption;
+      console.log('✅ Using AI-generated caption');
+    } else {
+      console.warn('⚠️ AI caption failed, using template');
+      caption = generateCaption(info, ideaTitle, videoDescription);
+    }
+  } catch (error) {
+    console.warn('⚠️ AI caption error, using template:', error);
+    caption = generateCaption(info, ideaTitle, videoDescription);
+  }
+
+  return {
+    title,
+    caption,
+    hashtags,
+    bestPostTime,
+  };
+}
+
 export function generatePostDetails(
   info: BusinessInfo,
   ideaTitle: string | null,
@@ -25,26 +71,47 @@ function generateTitle(
   videoDescription: string | null
 ): string {
   if (ideaTitle) {
-    return ideaTitle;
+    // Simplify overly long AI-generated titles
+    const title = ideaTitle;
+    
+    // If title is too long, simplify it
+    if (title.length > 60) {
+      // Remove extra descriptive phrases and parentheticals
+      let simplified = title
+        .replace(/\(.*?\)/g, '') // Remove parentheses content
+        .replace(/\s*[-–—:]\s*.*/g, '') // Remove everything after dash or colon
+        .trim();
+      
+      // If still too long, take first meaningful part
+      if (simplified.length > 60) {
+        const words = simplified.split(' ');
+        simplified = words.slice(0, 7).join(' ');
+        if (words.length > 7) simplified += '...';
+      }
+      
+      return simplified;
+    }
+    
+    return title;
   }
 
   if (videoDescription) {
     const desc = videoDescription.toLowerCase();
     
     if (desc.includes("behind") || desc.includes("making") || desc.includes("process")) {
-      return `Behind the Scenes at ${info.businessName}`;
+      return `Behind the Scenes`;
     } else if (desc.includes("customer") || desc.includes("review") || desc.includes("testimonial")) {
-      return `What Our Customers Are Saying`;
+      return `Customer Love`;
     } else if (desc.includes("new") || desc.includes("special") || desc.includes("offer")) {
-      return `Exciting News from ${info.businessName}!`;
+      return `Something Special`;
     } else if (desc.includes("tip") || desc.includes("how to") || desc.includes("learn")) {
-      return `Pro Tips from ${info.businessName}`;
+      return `Pro Tips`;
     } else {
-      return `A Day at ${info.businessName}`;
+      return `A Day With Us`;
     }
   }
 
-  return `Check Out ${info.businessName}!`;
+  return `Check This Out`;
 }
 
 function generateCaption(
@@ -54,16 +121,20 @@ function generateCaption(
 ): string {
   const location = info.location;
   const businessName = info.businessName;
-  const content = ideaTitle || videoDescription || "this amazing content";
-
+  
+  // More natural caption templates that work better with video titles
   const captionTemplates = [
-    `We're so excited to share ${content} with you! 🎉\n\nAt ${businessName}, we believe in creating memorable experiences for our ${location} community. Drop a ❤️ if you'd like to see more content like this!\n\n#LocalBusiness #${location.replace(/\s+/g, '')}`,
+    `Hope you enjoyed this! 😊 We love being part of the ${location} community.\n\nWhat would you like to see next? Drop a comment below!`,
     
-    `Here's a little peek at what makes ${businessName} special! ✨\n\nWe're proud to serve ${location} and bring you ${content}. Tag someone who needs to see this!\n\n#SupportLocal #SmallBusiness`,
+    `Thanks for watching! ✨ This is what we do every day here at ${businessName}.\n\nHave you visited us in ${location} yet? We'd love to see you!`,
     
-    `${content} 🙌\n\nServing ${location} with pride! Have you visited ${businessName} yet? We'd love to see you soon. Comment below if you have questions!\n\n#Local #Community`,
+    `A little behind-the-scenes for you! 🎥 This is how we do things at ${businessName}.\n\nTag someone who needs to see this!`,
     
-    `Loving every moment of bringing you ${content}! 💙\n\n${businessName} is here for the ${location} community. What would you like to see next? Let us know in the comments!\n\n#ShopLocal #SupportSmallBusiness`,
+    `Thought you might find this interesting! We're proud to serve the ${location} community.\n\nAny questions? Drop them below! 👇`,
+    
+    `This is what we love doing. 💙 Just another day at ${businessName} in ${location}.\n\nLet us know what you think in the comments!`,
+    
+    `Pretty cool, right? 😎 We put our heart into everything we do here.\n\nVisit us at ${businessName} in ${location}!`,
   ];
 
   const randomIndex = Math.floor(Math.random() * captionTemplates.length);
@@ -71,38 +142,89 @@ function generateCaption(
 }
 
 function generateHashtags(info: BusinessInfo): string[] {
-  const generalTags = ["#supportlocal", "#smallbusiness", "#shoplocal", "#localbusiness"];
-  
+  // Clean location for hashtags (remove spaces, commas, special chars)
   const locationClean = info.location.toLowerCase().replace(/\s+/g, '').replace(/,/g, '');
-  const locationTags = [
-    `#${locationClean}`,
-    `#${locationClean}business`,
+  
+  // Use detected business type if available for better accuracy
+  const actualBusinessType = (info as any).detectedBusinessType || info.businessType;
+  
+  // High-quality, specific hashtags by business type
+  const businessTypeTags: Record<string, string[]> = {
+    "Restaurant": [
+      "#foodie", "#restaurant", "#foodporn", "#instafood", "#yum",
+      "#delicious", "#foodstagram", "#dining", "#eatlocal", 
+      `#${locationClean}food`, `#${locationClean}eats`, "#localfood"
+    ],
+    "Cafe / Bakery": [
+      "#bakery", "#cafe", "#coffee", "#coffeeshop", "#pastrychef",
+      "#coffeelover", "#bakedgoods", "#freshbaked", "#coffeetime",
+      `#${locationClean}cafe`, `#${locationClean}coffee`, "#pastry"
+    ],
+    "Real Estate": [
+      "#realestate", "#realtor", "#homeforsale", "#realtorlife", "#homebuying",
+      "#dreamhome", "#property", "#househunting", "#realty",
+      `#${locationClean}realestate`, `#${locationClean}homes`, "#realestateagent"
+    ],
+    "Salon / Spa": [
+      "#salon", "#spa", "#beauty", "#hair", "#hairstyle",
+      "#beautysalon", "#haircare", "#skincare", "#wellness",
+      `#${locationClean}salon`, `#${locationClean}beauty`, "#selfcare"
+    ],
+    "Gym / Fitness": [
+      "#fitness", "#gym", "#workout", "#fitfam", "#training",
+      "#health", "#fitlife", "#exercise", "#motivation",
+      `#${locationClean}fitness`, `#${locationClean}gym`, "#healthylifestyle"
+    ],
+    "Retail Shop": [
+      "#retail", "#shopping", "#boutique", "#fashion", "#style",
+      "#shopsmall", "#boutiqueshopping", "#retailtherapy", "#shopaholic",
+      `#${locationClean}shopping`, `#${locationClean}boutique`, "#retailstore"
+    ],
+    "Thrift Store / Resale": [
+      "#thrifting", "#thriftstore", "#secondhand", "#vintage", "#thriftshop",
+      "#thriftfinds", "#resale", "#sustainable", "#vintagestyle",
+      `#${locationClean}thrift`, "#thriftstorefinds", "#thrifthaul"
+    ],
+    "Movie Theater": [
+      "#movies", "#cinema", "#theater", "#film", "#movienight",
+      "#movietime", "#theatre", "#entertainment", "#nowplaying",
+      `#${locationClean}movies`, "#movietheater", "#filmlovers"
+    ],
+    "Other": [
+      "#business", "#local", "#community", "#entrepreneur", "#shopsmall",
+      `#${locationClean}business`, "#supportsmallbusiness", "#localbiz"
+    ]
+  };
+
+  // General community tags (high engagement)
+  const communityTags = [
+    "#supportlocal", "#smallbusiness", "#shoplocal", "#localbusiness",
+    `#${locationClean}`, `#${locationClean}business`, "#local", "#community"
   ];
 
-  const businessTypeTags: Record<string, string[]> = {
-    Restaurant: ["#foodie", "#restaurant", "#localfood", `#${locationClean}food`, `#${locationClean}restaurant`, "#eats"],
-    "Real Estate": ["#realestate", "#realtor", "#homeforsale", `#${locationClean}realestate`, `#${locationClean}homes`, "#homebuying"],
-    "Salon / Spa": ["#salon", "#spa", "#beauty", "#hair", `#${locationClean}salon`, `#${locationClean}beauty`, "#selflove"],
-    "Café / Bakery": ["#cafe", "#coffee", "#bakery", "#coffeeshop", `#${locationClean}cafe`, `#${locationClean}coffee`, "#coffeelover"],
-    "Gym / Fitness": ["#fitness", "#gym", "#workout", "#health", `#${locationClean}fitness`, `#${locationClean}gym`, "#fitfam"],
-    "Retail Shop": ["#retail", "#shopping", "#boutique", "#style", `#${locationClean}shopping`, `#${locationClean}boutique`, "#fashion"],
-  };
-
-  const typeTags = businessTypeTags[info.businessType] || ["#business", "#local", "#community"];
-
+  // Platform-specific trending tags
   const platformTags: Record<string, string[]> = {
-    Instagram: ["#instadaily", "#instagood"],
-    TikTok: ["#fyp", "#foryou"],
-    Facebook: ["#localbusiness", "#community"],
-    "YouTube Shorts": ["#shorts", "#youtube"],
+    "Instagram": ["#instagood", "#instadaily", "#reels", "#reelsinstagram"],
+    "TikTok": ["#fyp", "#foryou", "#foryoupage", "#viral"],
+    "Facebook": ["#fbpost", "#facebookpost", "#socialmedia"],
+    "YouTube Shorts": ["#shorts", "#youtubeshorts", "#shortsvideo"],
   };
 
+  // Get business-specific tags
+  const typeTags = businessTypeTags[actualBusinessType] || businessTypeTags["Other"];
   const platTags = platformTags[info.platform] || [];
 
-  const allTags = [...generalTags, ...locationTags, ...typeTags, ...platTags];
+  // Combine all tags
+  const allTags = [...communityTags, ...typeTags, ...platTags];
   
-  const shuffled = allTags.sort(() => 0.5 - Math.random());
-  const count = Math.floor(Math.random() * 5) + 8;
+  // Remove duplicates by converting to Set and back to array
+  const uniqueTags = Array.from(new Set(allTags.map(tag => tag.toLowerCase())));
+  
+  // Shuffle for variety
+  const shuffled = uniqueTags.sort(() => 0.5 - Math.random());
+  
+  // Select 10-12 high-quality tags
+  const count = Math.floor(Math.random() * 3) + 10;
   
   return shuffled.slice(0, count);
 }

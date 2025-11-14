@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 export default function Error({
   error,
@@ -9,6 +10,8 @@ export default function Error({
   error: Error & { digest?: string };
   reset: () => void;
 }) {
+  const router = useRouter();
+
   useEffect(() => {
     // Log the error to console
     console.error('Application error:', error);
@@ -17,6 +20,13 @@ export default function Error({
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-indigo-50 flex items-center justify-center px-4">
       <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
+        <div className="flex justify-center mb-6">
+          <img 
+            src="/postready-logo.svg" 
+            alt="PostReady Logo" 
+            className="h-16 w-auto"
+          />
+        </div>
         <div className="text-6xl mb-4">⚠️</div>
         <h2 className="text-2xl font-bold text-gray-900 mb-4">
           Something went wrong!
@@ -32,7 +42,7 @@ export default function Error({
             Try Again
           </button>
           <button
-            onClick={() => window.location.href = '/'}
+            onClick={() => router.push('/')}
             className="w-full bg-gray-200 text-gray-700 rounded-lg px-6 py-3 font-medium hover:bg-gray-300 transition-all"
           >
             Go to Homepage
@@ -52,4 +62,5 @@ export default function Error({
     </div>
   );
 }
+
 

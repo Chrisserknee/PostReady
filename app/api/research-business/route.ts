@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 import { BusinessInfo } from "@/types";
+import { detectBusinessType } from "@/lib/detectBusinessType";
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,15 +27,18 @@ export async function POST(request: NextRequest) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    // CRITICAL: Detect actual business type from name BEFORE calling AI
-    const detectedType = detectBusinessTypeFromName(businessInfo.businessName);
-    const actualBusinessType = detectedType || businessInfo.businessType;
+    // CRITICAL: Use AI-powered detection to identify actual business type
+    const actualBusinessType = await detectBusinessType(
+      businessInfo.businessName,
+      businessInfo.location,
+      businessInfo.businessType,
+      process.env.OPENAI_API_KEY!
+    );
     
-    console.log("Business Detection:", {
-      name: businessInfo.businessName,
+    console.log("📊 Final Business Type Decision:", {
       userSelected: businessInfo.businessType,
-      detected: detectedType,
-      using: actualBusinessType
+      aiDetected: actualBusinessType,
+      usingForContent: actualBusinessType
     });
 
     // Generate simple, actionable strategy with CORRECTED business type
@@ -45,14 +49,14 @@ export async function POST(request: NextRequest) {
       messages: [
         {
           role: "system",
-          content: "You are a social media expert who gives simple, actionable advice. Focus on what works: consistency, engagement, and authentic content. Keep it practical and easy to implement. Always respond with valid JSON."
+          content: "You are a social media expert who gives simple, actionable advice. Focus on what works: consistency, engagement, and authentic content. Keep it practical and easy to implement. CRITICAL: You MUST generate business-specific, contextual video ideas that reflect the actual business type and location. NEVER use generic templates like 'Educational Tip' or 'Behind-the-Scenes Look'. Always be specific and filmable. Always respond with valid JSON."
         },
         {
           role: "user",
           content: researchPrompt
         }
       ],
-      temperature: 0.7,
+      temperature: 0.75,
       max_tokens: 2500,
       response_format: { type: "json_object" }
     });
@@ -68,14 +72,68 @@ export async function POST(request: NextRequest) {
       Array.isArray(research.contentIdeas) && research.contentIdeas.length >= 5;
 
     if (!isValid) {
-      console.error("Invalid research response structure:", research);
-      // Don't throw error, just log it and let frontend use fallback
+      console.error("❌ CRITICAL: Invalid research response structure:", research);
       console.log("Received:", JSON.stringify(research, null, 2));
+      
+      // NEVER return invalid data - throw error to force retry or proper error handling
+      throw new Error("AI generated incomplete research data. This should never use generic fallback templates.");
     }
 
-    return NextResponse.json({ research });
+    // Additional validation: ensure contentIdeas have proper structure
+    const hasValidIdeas = research.contentIdeas.every((idea: any) => 
+      idea.title && idea.description && idea.angle
+    );
+
+    if (!hasValidIdeas) {
+      console.error("❌ CRITICAL: Content ideas missing required fields");
+      throw new Error("Content ideas are malformed. Cannot use generic fallback.");
+    }
+
+    // CRITICAL: Check for generic template ideas - reject if found
+    const genericTemplates = [
+      "educational tip",
+      "team introduction",
+      "special offer",
+      "customer testimonial",
+      "behind-the-scenes look",
+      "product showcase",
+      "service showcase",
+      "community involvement",
+      "fun moment"
+    ];
+
+    const hasGenericIdeas = research.contentIdeas.some((idea: any) => {
+      const titleLower = idea.title.toLowerCase();
+      return genericTemplates.some(template => titleLower.includes(template));
+    });
+
+    if (hasGenericIdeas) {
+      console.error("❌ CRITICAL: AI generated generic template ideas instead of contextual ones");
+      console.error("Ideas received:", research.contentIdeas.map((i: any) => i.title));
+      throw new Error("AI generated generic ideas instead of business-specific contextual ideas. This is unacceptable.");
+    }
+
+    console.log("✅ Research data validated successfully:", {
+      headlineSummary: !!research.headlineSummary,
+      principlesCount: research.keyPrinciples.length,
+      timesCount: research.postingTimes.length,
+      ideasCount: research.contentIdeas.length,
+      businessType: actualBusinessType
+    });
+
+    return NextResponse.json({ 
+      research,
+      detectedBusinessType: actualBusinessType 
+    });
   } catch (error: any) {
-    console.error("Business research error:", error);
+    console.error("❌ Business research error:", error);
+    console.error("Error details:", {
+      message: error?.message,
+      status: error?.status,
+      code: error?.code,
+      type: error?.type,
+      stack: error?.stack
+    });
     
     if (error?.status === 401) {
       return NextResponse.json(
@@ -98,53 +156,6 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// FOOLPROOF BUSINESS TYPE DETECTION
-function detectBusinessTypeFromName(businessName: string): string | null {
-  const name = businessName.toLowerCase();
-  
-  // Thrift/Resale (check first - high priority)
-  if (name.includes('resale') || name.includes('thrift') || name.includes('secondhand') || 
-      name.includes('consignment') || name.includes('vintage store') || name.includes('used goods')) {
-    return "Thrift/Resale Store";
-  }
-  
-  // Food & Dining
-  if (name.includes('restaurant') || name.includes('cafe') || name.includes('café') || 
-      name.includes('bakery') || name.includes('bistro') || name.includes('eatery') || 
-      name.includes('diner') || name.includes('grill') || name.includes('kitchen') ||
-      name.includes('pizza') || name.includes('burger') || name.includes('taco') ||
-      name.includes('sushi') || name.includes('bar & grill')) {
-    return "Restaurant/Cafe";
-  }
-  
-  // Beauty & Wellness
-  if (name.includes('salon') || name.includes('spa') || name.includes('beauty') || 
-      name.includes('barbershop') || name.includes('barber') || name.includes('hair') ||
-      name.includes('nails') || name.includes('massage')) {
-    return "Salon/Spa";
-  }
-  
-  // Fitness
-  if (name.includes('gym') || name.includes('fitness') || name.includes('yoga') || 
-      name.includes('crossfit') || name.includes('training') || name.includes('pilates')) {
-    return "Gym/Fitness";
-  }
-  
-  // Real Estate
-  if (name.includes('real estate') || name.includes('realty') || name.includes('properties') || 
-      name.includes('realtor') || name.includes('homes') || name.includes('property group')) {
-    return "Real Estate";
-  }
-  
-  // Retail
-  if (name.includes('shop') || name.includes('store') || name.includes('boutique') || 
-      name.includes('mart') || name.includes('market')) {
-    return "Retail Shop";
-  }
-  
-  return null; // Use user-selected type
-}
-
 function buildActionableStrategyPrompt(info: BusinessInfo, actualBusinessType: string): string {
   return `
 🚨 MANDATORY: THIS BUSINESS TYPE HAS BEEN VERIFIED 🚨
@@ -158,13 +169,17 @@ CONFIRMED BUSINESS TYPE: "${actualBusinessType}"
 The business type "${actualBusinessType}" has been verified through name analysis.
 You MUST create content for a "${actualBusinessType}" business.
 
-If "${actualBusinessType}" = "Thrift/Resale Store":
-- This is NOT a restaurant, cafe, or food business
+If "${actualBusinessType}" = "Thrift Store / Resale":
+- This is NOT a restaurant, cafe, bakery, or food business
 - Focus on: diverse product finds (furniture, books, electronics, clothing, home decor, toys, etc.)
 
-If "${actualBusinessType}" = "Restaurant/Cafe":
-- This IS a food business
-- Focus on: food, dining, menu items, culinary experiences
+If "${actualBusinessType}" = "Restaurant":
+- This IS a restaurant/dining business
+- Focus on: full meals, dining experience, chef skills, kitchen operations
+
+If "${actualBusinessType}" = "Cafe / Bakery":
+- This IS a bakery/cafe business
+- Focus on: baking, pastries, coffee, morning routines, decorating
 
 NOW CREATE STRATEGY FOR: "${actualBusinessType}"
 
@@ -308,8 +323,9 @@ Keep it SIMPLE, ACTIONABLE, and MOTIVATING!
 
 FINAL VALIDATION:
 - Does your strategy match "${actualBusinessType}"?
-- If Thrift/Resale: NO food/dining mentions
-- If Restaurant: NO thrift/resale mentions
+- If Thrift Store / Resale: NO food/dining/baking mentions
+- If Restaurant: NO bakery/pastry mentions (unless it's a bakery-restaurant hybrid)
+- If Cafe / Bakery: Focus on BAKING and coffee, not full restaurant meals
 - Are you using "your", "you" (not "our", "we")?
 - These are instructions TO the business owner, not FROM the business
 - Stay consistent with the business type!
@@ -318,7 +334,7 @@ FINAL VALIDATION:
 
 function getBusinessTypeGuidance(businessType: string): string {
   const guidance: Record<string, string> = {
-    "Thrift/Resale Store": `
+    "Thrift Store / Resale": `
 This is a THRIFT/RESALE business.
 
 SPECIFIC VIDEO IDEAS SHOULD INCLUDE:
@@ -333,8 +349,8 @@ SPECIFIC VIDEO IDEAS SHOULD INCLUDE:
 
 Make ideas about treasure hunting, discovery, unique finds, sustainability`,
 
-    "Restaurant/Cafe": `
-This is a FOOD business.
+    "Restaurant": `
+This is a RESTAURANT business.
 
 SPECIFIC VIDEO IDEAS SHOULD INCLUDE:
 - "Making our signature [dish name] that customers wait 30 minutes for"
@@ -348,7 +364,22 @@ SPECIFIC VIDEO IDEAS SHOULD INCLUDE:
 
 Focus on actual dishes, cooking processes, kitchen action, taste tests`,
 
-    "Salon/Spa": `
+    "Cafe / Bakery": `
+This is a CAFÉ/BAKERY business.
+
+SPECIFIC VIDEO IDEAS SHOULD INCLUDE:
+- "Making [signature pastry] from scratch - [time] process in 60 seconds"
+- "[Time] AM: Pulling fresh [baked goods] from the oven"
+- "Decorating a [number]-tier [occasion] cake step-by-step"
+- "Customer's first bite of our [best-seller] - Pure joy"
+- "How we make [specific item]: The [specific technique] makes it special"
+- "Prepping [number] [item] for the weekend rush"
+- "Latte art challenge: Creating [design] in under [time]"
+- "Testing new [item] recipe - You decide if we add it to the menu"
+
+Focus on baking processes, decorating, morning routines, taste tests, coffee art`,
+
+    "Salon / Spa": `
 This is a BEAUTY/WELLNESS business.
 
 SPECIFIC VIDEO IDEAS SHOULD INCLUDE:
@@ -363,7 +394,7 @@ SPECIFIC VIDEO IDEAS SHOULD INCLUDE:
 
 Focus on transformations, techniques, before/after, client reactions`,
 
-    "Gym/Fitness": `
+    "Gym / Fitness": `
 This is a FITNESS business.
 
 SPECIFIC VIDEO IDEAS SHOULD INCLUDE:
@@ -408,20 +439,20 @@ SPECIFIC VIDEO IDEAS SHOULD INCLUDE:
 
 Focus on specific products, styling, restocks, trends, customer finds`,
 
-    "Café / Bakery": `
-This is a CAFÉ/BAKERY business.
+    "Movie Theater": `
+This is a MOVIE THEATER business.
 
 SPECIFIC VIDEO IDEAS SHOULD INCLUDE:
-- "Making [signature pastry] from scratch - [time] process in 60 seconds"
-- "[Time] AM: Pulling fresh [baked goods] from the oven"
-- "Decorating a [number]-tier [occasion] cake step-by-step"
-- "Customer's first bite of our [best-seller] - Pure joy"
-- "How we make [specific item]: The [specific technique] makes it special"
-- "Prepping [number] [item] for the weekend rush"
-- "Latte art challenge: Creating [design] in under [time]"
-- "Testing new [item] recipe - You decide if we add it to the menu"
+- "Setting up Theater [number] for tonight's premiere - Behind the scenes"
+- "Staff member tries every snack combo - Finding the best deal"
+- "Opening week's movie shipment - What's coming next"
+- "Cleaning and prepping all [number] theaters before opening"
+- "Customer reactions leaving [popular movie name]"
+- "How we make fresh popcorn - [number] pounds per day"
+- "Projectionist shows how movies are loaded and played"
+- "Our secret menu hacks that regulars know about"
 
-Focus on baking processes, decorating, morning routines, taste tests`
+Focus on behind-the-scenes, premiere events, concessions, customer experiences`
   };
 
   return guidance[businessType] || `

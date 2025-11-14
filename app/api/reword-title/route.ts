@@ -33,19 +33,19 @@ export async function POST(request: NextRequest) {
     const prompt = buildRewordPrompt(businessInfo, selectedIdea, currentTitle);
 
     const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
-          content: "You are an expert social media copywriter who creates engaging, attention-grabbing post titles. You specialize in creating multiple creative variations of the same concept."
+          content: "You are a skilled copywriter who refines social media titles with grace and precision. You keep the core meaning intact but make the wording more elegant, concise, and compelling. You never change the message - just polish the delivery."
         },
         {
           role: "user",
           content: prompt
         }
       ],
-      temperature: 1.0, // High creativity for variety
-      max_tokens: 100,
+      temperature: 0.7, // Balanced creativity for refinement
+      max_tokens: 80,
     });
 
     const newTitle = completion.choices[0].message.content?.trim() || currentTitle;
@@ -61,38 +61,58 @@ export async function POST(request: NextRequest) {
 }
 
 function buildRewordPrompt(info: BusinessInfo, idea: ContentIdea, currentTitle: string): string {
+  // Use detected business type if available, otherwise fall back to user selection
+  const actualBusinessType = info.detectedBusinessType || info.businessType;
+  
+  console.log("✏️ Title Reword:", {
+    businessName: info.businessName,
+    userSelected: info.businessType,
+    detected: info.detectedBusinessType,
+    usingForTitle: actualBusinessType
+  });
+  
   return `
-You are rewording a social media post title for ${info.businessName}, a ${info.businessType} in ${info.location}.
+Refine this social media post title for ${info.businessName}, a ${actualBusinessType} in ${info.location}.
 
 CURRENT TITLE:
 "${currentTitle}"
 
 VIDEO CONTENT:
 "${idea.title}"
-Description: ${idea.description}
+${idea.description}
 
 YOUR TASK:
-Create ONE completely new, fresh variation of this title that:
+Polish this title with MORE GRACEFUL wording while keeping the same core message. Think of this as editing, not rewriting.
 
-1. **Says the same thing differently** - Keep the core message but change the wording
-2. **Sounds natural and engaging** - Like a real person wrote it
-3. **Grabs attention** - Make people want to watch
-4. **Is concise** - Keep it under 80 characters if possible
-5. **Feels fresh** - Don't just rearrange words, actually rewrite it
+REFINEMENT PRINCIPLES:
+1. **Keep the essence** - Don't change what the title is about
+2. **Improve the flow** - Make it read more smoothly and naturally
+3. **Simplify if needed** - Remove unnecessary words or awkward phrasing
+4. **Add elegance** - Choose more refined, polished word choices
+5. **Stay concise** - Ideally under 60 characters
 
-EXAMPLES OF GOOD REWORDING:
+EXAMPLES OF GRACEFUL REFINEMENT:
 
 Original: "Watch Us Plate Tonight's Special: Seared Salmon with Lemon Butter"
-Reworded: "Behind the Scenes: Our Chef Prepares the Salmon Special"
+Refined: "Plating Our Signature Salmon Special"
 
-Original: "Meet Sarah: Why She's Been Coming Here for 10 Years"
-Reworded: "A Decade of Loyalty: One Customer's Story"
+Original: "A Quick Look at How We Make Our Famous Chocolate Cake"
+Refined: "How We Make Our Famous Chocolate Cake"
 
-Original: "Quick Tour of Our New Outdoor Patio Space"
-Reworded: "Check Out Where You'll Be Dining This Summer"
+Original: "Come See What's Inside Our Brand New Kitchen Space"
+Refined: "Inside Our New Kitchen"
 
-NOW CREATE YOUR REWORDED TITLE:
-Only return the new title, nothing else. No quotes, no explanations.
+Original: "Here's A Behind-the-Scenes Look at Our Morning Routine"
+Refined: "Behind the Scenes: Our Morning Routine"
+
+IMPORTANT:
+- Make small, intelligent adjustments
+- Keep the video subject clear
+- Don't drastically change the meaning
+- Just make it sound better
+
+Return ONLY the refined title. No quotes. No explanations.
 `;
 }
+
 

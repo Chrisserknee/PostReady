@@ -120,3 +120,4 @@ export const Notification = ({
 
 // Add these animations to your globals.css
 
+

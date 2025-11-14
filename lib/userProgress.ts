@@ -7,6 +7,10 @@ export type UserProgressData = {
   selectedIdea: ContentIdea | null;
   postDetails: PostDetails | null;
   currentStep: string;
+  generateIdeasCount?: number;
+  rewriteCount?: number;
+  regenerateCount?: number;
+  rewordTitleCount?: number;
 };
 
 export async function saveUserProgress(
@@ -22,6 +26,10 @@ export async function saveUserProgress(
         selected_idea: progress.selectedIdea,
         post_details: progress.postDetails,
         current_step: progress.currentStep,
+        generate_ideas_count: progress.generateIdeasCount ?? 0,
+        rewrite_count: progress.rewriteCount ?? 0,
+        regenerate_count: progress.regenerateCount ?? 0,
+        reword_title_count: progress.rewordTitleCount ?? 0,
         updated_at: new Date().toISOString(),
       },
       {
@@ -61,6 +69,10 @@ export async function loadUserProgress(userId: string): Promise<{
       selectedIdea: data.selected_idea,
       postDetails: data.post_details,
       currentStep: data.current_step || 'form',
+      generateIdeasCount: data.generate_ideas_count ?? 0,
+      rewriteCount: data.rewrite_count ?? 0,
+      regenerateCount: data.regenerate_count ?? 0,
+      rewordTitleCount: data.reword_title_count ?? 0,
     };
 
     return { data: progress, error: null };
@@ -83,4 +95,5 @@ export async function clearUserProgress(userId: string): Promise<{ error: any }>
     return { error };
   }
 }
+
 

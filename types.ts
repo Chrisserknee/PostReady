@@ -1,6 +1,14 @@
+/**
+ * PostReady - Social Media Management Platform
+ * 
+ * PostReady researches your business, analyzes your local market, and creates 
+ * tailored posts, captions, and growth strategies — automatically.
+ */
+
 export type BusinessInfo = {
   businessName: string;
   businessType: "Restaurant" | "Cafe / Bakery" | "Retail Shop" | "Thrift Store / Resale" | "Salon / Spa" | "Gym / Fitness" | "Real Estate" | "Movie Theater" | "Other";
+  detectedBusinessType?: string; // AI-detected actual business type (overrides businessType if present)
   location: string;
   platform: "Instagram" | "TikTok" | "Facebook" | "YouTube Shorts";
 };

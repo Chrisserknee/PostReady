@@ -81,6 +81,36 @@ export async function saveCompletedPost(
   postDetails: PostDetails
 ): Promise<{ error: any }> {
   try {
+    // Check if a post with the same video idea title already exists (within the last 5 minutes)
+    // This prevents duplicate saves when the same post is saved multiple times during the workflow
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    
+    const { data: existingPosts, error: checkError } = await supabase
+      .from('post_history')
+      .select('id, video_idea')
+      .eq('user_id', userId)
+      .eq('business_name', businessName)
+      .gte('completed_at', fiveMinutesAgo)
+      .order('completed_at', { ascending: false })
+      .limit(5);
+
+    if (checkError) {
+      console.error('Error checking for existing posts:', checkError);
+      // Continue with insert even if check fails
+    }
+
+    // Check if we have a very recent post with the same video idea
+    if (existingPosts && existingPosts.length > 0) {
+      for (const post of existingPosts) {
+        const existingVideoIdea = (post as any).video_idea;
+        if (existingVideoIdea?.title === videoIdea.title) {
+          console.log('📝 Post already saved recently, skipping duplicate save');
+          return { error: null };
+        }
+      }
+    }
+
+    // Insert new post
     const { error } = await supabase.from('post_history').insert({
       user_id: userId,
       business_name: businessName,
@@ -126,4 +156,5 @@ export async function loadPostHistory(userId: string): Promise<{
     return { data: [], error };
   }
 }
+
 

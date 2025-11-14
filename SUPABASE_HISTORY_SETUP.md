@@ -140,3 +140,4 @@ If you encounter any issues:
 2. Check the Supabase logs in your dashboard
 3. Verify all environment variables are set correctly
 
+
