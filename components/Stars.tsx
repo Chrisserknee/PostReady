@@ -20,14 +20,14 @@ export const Stars = () => {
     // Generate random stars
     const generateStars = () => {
       const newStars: Star[] = [];
-      const starCount = 50; // Number of stars
+      const starCount = 80; // Number of stars (increased)
       
       for (let i = 0; i < starCount; i++) {
         newStars.push({
           id: i,
           x: Math.random() * 100, // Random X position (0-100%)
           y: Math.random() * 100, // Random Y position (0-100%)
-          size: Math.random() * 2 + 1, // Random size (1-3px)
+          size: Math.random() * 3 + 1.5, // Random size (1.5-4.5px) - larger
           duration: Math.random() * 3 + 2, // Random animation duration (2-5s)
           delay: Math.random() * 5, // Random delay (0-5s)
         });
@@ -44,7 +44,7 @@ export const Stars = () => {
   }
 
   return (
-    <div className="fixed inset-0 pointer-events-none z-0 overflow-hidden">
+    <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 5 }}>
       {stars.map((star) => (
         <div
           key={star.id}
@@ -55,7 +55,7 @@ export const Stars = () => {
             width: `${star.size}px`,
             height: `${star.size}px`,
             backgroundColor: '#ffffff',
-            boxShadow: `0 0 ${star.size * 2}px ${star.size * 0.5}px rgba(255, 255, 255, 0.8)`,
+            boxShadow: `0 0 ${star.size * 3}px ${star.size}px rgba(255, 255, 255, 0.9), 0 0 ${star.size * 6}px ${star.size * 2}px rgba(255, 255, 255, 0.4)`,
             animation: `twinkle ${star.duration}s ease-in-out ${star.delay}s infinite`,
           }}
         />
