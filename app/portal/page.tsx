@@ -8,6 +8,8 @@ import { SectionCard } from '@/components/SectionCard';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SecondaryButton } from '@/components/SecondaryButton';
 import { Modal } from '@/components/Modal';
+import { ThemeToggle } from '@/components/ThemeToggle';
+import { Stars } from '@/components/Stars';
 
 export default function UserPortal() {
   const { user, isPro, signOut, loading } = useAuth();
@@ -275,21 +277,11 @@ export default function UserPortal() {
         </SectionCard>
       </div>
 
+      {/* Glimmering Stars for Dark Mode */}
+      <Stars />
+
       {/* Floating Theme Toggle - Bottom Right */}
-      <button
-        onClick={toggleTheme}
-        className="fixed bottom-6 right-6 p-4 rounded-full shadow-2xl hover:scale-110 z-50"
-        style={{ 
-          backgroundColor: 'var(--card-bg)',
-          border: '3px solid var(--primary)',
-          transition: 'all 0.3s ease, transform 0.2s ease'
-        }}
-        title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-      >
-        <span className="text-3xl" style={{ transition: 'opacity 0.3s ease' }}>
-          {theme === 'light' ? '🌙' : '☀️'}
-        </span>
-      </button>
+      <ThemeToggle />
       
       {/* Modal */}
       <Modal
