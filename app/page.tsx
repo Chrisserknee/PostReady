@@ -2039,6 +2039,29 @@ function HomeContent() {
                     </div>
                   </div>
 
+                  {/* Experimentation Message - Only for Creators */}
+                  {userType === 'creator' && (
+                    <div className="rounded-xl p-6 mb-8 border-l-4" style={{
+                      background: 'linear-gradient(135deg, rgba(218, 165, 32, 0.1) 0%, rgba(244, 208, 63, 0.1) 100%)',
+                      borderColor: '#DAA520'
+                    }}>
+                      <div className="flex items-start gap-4">
+                        <span className="text-4xl">🧪</span>
+                        <div>
+                          <h4 className="font-bold text-lg mb-2" style={{ color: '#DAA520' }}>
+                            The Power of Experimentation
+                          </h4>
+                          <p className="text-base leading-relaxed mb-3" style={{ color: 'var(--text-primary)' }}>
+                            Experimentation is often how creators reach new heights. By leveraging your unique creativity and trying new formats, styles, and approaches, you'll discover what truly resonates with your audience. Don't be afraid to break your own rules and test new ideas — that's where breakthrough content lives.
+                          </p>
+                          <p className="text-base leading-relaxed italic" style={{ color: 'var(--text-primary)', opacity: 0.9 }}>
+                            Remember: sometimes the most chaotic, unplanned moments create the most viral, memorable content. Embrace the unexpected — it's often your greatest creative asset.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   <div className="mb-10">
                     <h3 className="text-2xl font-bold mb-6 flex items-center transition-colors duration-500" style={{ 
                       color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
@@ -2176,9 +2199,11 @@ function HomeContent() {
                             {idea.angle.replace(/_/g, " ")}
                           </Badge>
                         </div>
-                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>{idea.description}</p>
+                        <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{idea.description}</p>
                         {selectedIdea?.title === idea.title && (
-                          <div className="mt-3 font-medium text-sm flex items-center" style={{ color: 'var(--primary)' }}>
+                          <div className="mt-3 font-medium text-sm flex items-center transition-colors duration-500" style={{ 
+                            color: userType === 'creator' ? '#DAA520' : 'var(--primary)' 
+                          }}>
                             <span className="mr-2">✓</span> Selected
                           </div>
                         )}
@@ -2338,12 +2363,31 @@ function HomeContent() {
                   </div>
 
                   <div className="flex gap-4">
-                    <SecondaryButton onClick={handlePreviousStep} className="flex-1">
+                    <button
+                      onClick={handlePreviousStep}
+                      className="flex-1 border-2 rounded-xl px-6 py-3 font-bold transition-all duration-500 shadow-sm hover:shadow-md hover:scale-105"
+                      style={{
+                        borderColor: userType === 'creator' ? '#DAA520' : 'var(--primary)',
+                        color: userType === 'creator' ? '#DAA520' : 'var(--primary)',
+                        backgroundColor: userType === 'creator' 
+                          ? 'rgba(218, 165, 32, 0.05)'
+                          : 'rgba(41, 121, 255, 0.05)'
+                      }}
+                    >
                       ← Back
-                    </SecondaryButton>
-                    <PrimaryButton onClick={handleNextStep} className="flex-1" isPro={isPro}>
-                      Next: Record Video →
-                    </PrimaryButton>
+                    </button>
+                    <button
+                      onClick={handleNextStep}
+                      className="flex-1 rounded-xl px-6 py-3 font-bold transition-all duration-500 shadow-md hover:shadow-lg hover:scale-105"
+                      style={{
+                        background: userType === 'creator'
+                          ? 'linear-gradient(to right, #DAA520, #F4D03F)'
+                          : 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                        color: userType === 'creator' ? '#1A1F2E' : 'white'
+                      }}
+                    >
+                      {userType === 'business' ? 'Next: Record Video →' : 'Next: Create Content →'}
+                    </button>
                   </div>
                 </div>
               )}
@@ -2430,7 +2474,7 @@ function HomeContent() {
                             <span className="text-xl">💪</span>
                             <span>{userType === 'business' 
                               ? "Don't overthink it — hit record and come back when you're done!"
-                              : "Create your content and come back when you're ready to optimize it!"
+                              : "Be yourself, create your content, and come back when you're ready to optimize it!"
                             }</span>
                           </p>
                         </div>
@@ -2439,12 +2483,31 @@ function HomeContent() {
                   </div>
 
                   <div className="flex gap-4 max-w-md mx-auto">
-                    <SecondaryButton onClick={handlePreviousStep} className="flex-1">
+                    <button
+                      onClick={handlePreviousStep}
+                      className="flex-1 border-2 rounded-xl px-6 py-3 font-bold transition-all duration-500 shadow-sm hover:shadow-md hover:scale-105"
+                      style={{
+                        borderColor: userType === 'creator' ? '#DAA520' : 'var(--primary)',
+                        color: userType === 'creator' ? '#DAA520' : 'var(--primary)',
+                        backgroundColor: userType === 'creator' 
+                          ? 'rgba(218, 165, 32, 0.05)'
+                          : 'rgba(41, 121, 255, 0.05)'
+                      }}
+                    >
                       ← Change Idea
-                    </SecondaryButton>
-                    <PrimaryButton onClick={handleNextStep} className="flex-1" isPro={isPro}>
-                      I'm Done Recording! →
-                    </PrimaryButton>
+                    </button>
+                    <button
+                      onClick={handleNextStep}
+                      className="flex-1 rounded-xl px-6 py-3 font-bold transition-all duration-500 shadow-md hover:shadow-lg hover:scale-105"
+                      style={{
+                        background: userType === 'creator'
+                          ? 'linear-gradient(to right, #DAA520, #F4D03F)'
+                          : 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                        color: userType === 'creator' ? '#1A1F2E' : 'white'
+                      }}
+                    >
+                      {userType === 'business' ? "I'm Done Recording! →" : "I'm Done Creating! →"}
+                    </button>
                   </div>
                 </div>
               )}
