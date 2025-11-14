@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("✅ OpenAI API key found, length:", process.env.OPENAI_API_KEY.length);
+    // Don't log API key information
 
     // Initialize OpenAI client lazily (only when route is called)
     const openai = new OpenAI({
@@ -45,11 +45,8 @@ export async function POST(request: NextRequest) {
         process.env.OPENAI_API_KEY!
       ) as string;
       
-      console.log("📊 Final Business Type Decision:", {
-        userSelected: businessInfo.businessType,
-        aiDetected: actualBusinessType,
-        usingForContent: actualBusinessType
-      });
+      // Log business type detection without sensitive data
+      console.log("Business type detection completed");
     } else {
       console.log("🎬 Creator strategy requested - skipping business type detection");
     }
@@ -134,13 +131,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log("✅ Research data validated successfully:", {
-      headlineSummary: !!research.headlineSummary,
-      principlesCount: research.keyPrinciples.length,
-      timesCount: research.postingTimes.length,
-      ideasCount: research.contentIdeas.length,
-      businessType: actualBusinessType
-    });
+    // Log validation success without sensitive data
+    console.log("Research data validated successfully");
 
     return NextResponse.json({ 
       research,

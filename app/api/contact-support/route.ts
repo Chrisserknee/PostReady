@@ -55,11 +55,8 @@ export async function POST(request: NextRequest) {
       throw new Error(`Failed to save message: ${error.message}`);
     }
 
-    console.log("✅ Contact message saved to Supabase:", {
-      id: data.id,
-      userEmail: sanitizedEmail,
-      timestamp: new Date().toISOString()
-    });
+    // Log success without sensitive user data
+    console.log("Contact message saved successfully");
 
     return NextResponse.json({ 
       success: true,

@@ -1,15 +1,29 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { supabase } from "@/lib/supabase";
+import { verifyUserOwnership } from "@/lib/auth-utils";
 
 export async function POST(request: NextRequest) {
   try {
     const { userId } = await request.json();
 
+    // Input validation
     if (!userId) {
       return NextResponse.json(
         { error: "Missing user ID" },
         { status: 400 }
+      );
+    }
+
+    // Sanitize input
+    const sanitizedUserId = String(userId).trim().substring(0, 100);
+
+    // SECURITY: Verify user is authenticated and owns this userId
+    const isAuthorized = await verifyUserOwnership(request, sanitizedUserId);
+    if (!isAuthorized) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
       );
     }
 
@@ -27,7 +41,7 @@ export async function POST(request: NextRequest) {
     const { data: profile, error } = await supabase
       .from("user_profiles")
       .select("stripe_customer_id")
-      .eq("id", userId)
+      .eq("id", sanitizedUserId)
       .single();
 
     if (error || !profile?.stripe_customer_id) {
@@ -45,9 +59,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ url: session.url });
   } catch (error: any) {
-    console.error("Portal session error:", error);
+    // Don't leak error details to client
+    console.error("Portal session error");
     return NextResponse.json(
-      { error: error.message || "Failed to create portal session" },
+      { error: "Failed to create portal session. Please try again." },
       { status: 500 }
     );
   }

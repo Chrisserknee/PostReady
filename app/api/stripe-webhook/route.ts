@@ -57,9 +57,9 @@ export async function POST(request: NextRequest) {
             .eq("id", userId);
 
           if (error) {
-            console.error("Error upgrading user:", error);
+            console.error("Error upgrading user");
           } else {
-            console.log(`User ${userId} upgraded to Pro`);
+            console.log("User upgraded to Pro");
           }
         }
         break;
@@ -85,17 +85,16 @@ export async function POST(request: NextRequest) {
             .eq("id", profiles[0].id);
 
           if (error) {
-            console.error("Error downgrading user:", error);
+            console.error("Error downgrading user");
           } else {
-            console.log(`User ${profiles[0].id} downgraded from Pro`);
+            console.log("User downgraded from Pro");
           }
         }
         break;
       }
 
       case "invoice.payment_failed": {
-        const invoice = event.data.object as Stripe.Invoice;
-        console.log(`Payment failed for customer: ${invoice.customer}`);
+        console.log("Payment failed for customer");
         // You could send an email notification here
         break;
       }

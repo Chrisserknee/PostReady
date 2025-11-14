@@ -1,14 +1,37 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
+import { verifyUserOwnership } from "@/lib/auth-utils";
 
 export async function POST(request: NextRequest) {
   try {
     const { userId, userEmail } = await request.json();
 
+    // Input validation
     if (!userId || !userEmail) {
       return NextResponse.json(
         { error: "Missing user information" },
         { status: 400 }
+      );
+    }
+
+    // Sanitize inputs
+    const sanitizedUserId = String(userId).trim().substring(0, 100);
+    const sanitizedEmail = String(userEmail).trim().substring(0, 255);
+
+    // Validate email format
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedEmail)) {
+      return NextResponse.json(
+        { error: "Invalid email format" },
+        { status: 400 }
+      );
+    }
+
+    // SECURITY: Verify user is authenticated and owns this userId
+    const isAuthorized = await verifyUserOwnership(request, sanitizedUserId);
+    if (!isAuthorized) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
       );
     }
 
@@ -44,13 +67,13 @@ export async function POST(request: NextRequest) {
       ],
       subscription_data: {
         metadata: {
-          userId: userId,
+          userId: sanitizedUserId,
         },
         description: "PostReady Pro Monthly Subscription",
       },
-      customer_email: userEmail,
+      customer_email: sanitizedEmail,
       metadata: {
-        userId: userId,
+        userId: sanitizedUserId,
       },
       consent_collection: {
         terms_of_service: 'required',
@@ -66,9 +89,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ sessionId: session.id, url: session.url });
   } catch (error: any) {
-    console.error("Stripe checkout error:", error);
+    // Don't leak error details to client
+    console.error("Stripe checkout error");
     return NextResponse.json(
-      { error: error.message || "Failed to create checkout session" },
+      { error: "Failed to create checkout session. Please try again." },
       { status: 500 }
     );
   }
