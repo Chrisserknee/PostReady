@@ -2400,22 +2400,38 @@ function HomeContent() {
                     </div>
 
                     {/* Recording Instructions - Simplified */}
-                    <div className="rounded-xl p-8 mb-8 border-2 transition-all text-center" style={{ 
-                      background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.05) 0%, rgba(111, 255, 210, 0.05) 100%)',
-                      borderColor: 'rgba(41, 121, 255, 0.2)'
+                    <div className="rounded-xl p-8 mb-8 border-2 transition-all duration-500 text-center" style={{
+                      background: userType === 'creator'
+                        ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.08) 0%, rgba(244, 208, 63, 0.08) 100%)'
+                        : 'linear-gradient(135deg, rgba(41, 121, 255, 0.05) 0%, rgba(111, 255, 210, 0.05) 100%)',
+                      borderColor: userType === 'creator' 
+                        ? 'rgba(218, 165, 32, 0.3)'
+                        : 'rgba(41, 121, 255, 0.2)'
                     }}>
                       <div className="flex flex-col items-center">
-                        <span className="text-5xl mb-4">📱</span>
-                        <h4 className="font-bold text-2xl mb-4" style={{ color: 'var(--secondary)' }}>
-                          Ready to Record?
+                        <span className="text-5xl mb-4">{userType === 'creator' ? '🎬' : '📱'}</span>
+                        <h4 className="font-bold text-2xl mb-4 transition-colors duration-500" style={{ 
+                          color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
+                        }}>
+                          {userType === 'business' ? 'Ready to Record?' : 'Ready to Create?'}
                         </h4>
                         <p className="text-lg mb-2 max-w-xl" style={{ color: 'var(--text-primary)' }}>
-                          Research shows that users prefer <span className="font-semibold" style={{ color: '#2979FF' }}>raw phone video</span> over heavily edited content.
+                          {userType === 'business' 
+                            ? <>Research shows that users prefer <span className="font-semibold" style={{ color: '#2979FF' }}>raw phone video</span> over heavily edited content.</>
+                            : <>Research repeatedly confirms that <span className="font-semibold transition-colors duration-500" style={{ color: userType === 'creator' ? '#DAA520' : '#2979FF' }}>authenticity drives engagement</span> faster than any other social media tactic.</>
+                          }
                         </p>
-                        <div className="mt-5 pt-5 border-t-2" style={{ borderColor: 'rgba(41, 121, 255, 0.15)' }}>
+                        <div className="mt-5 pt-5 border-t-2 transition-colors duration-500" style={{ 
+                          borderColor: userType === 'creator' 
+                            ? 'rgba(218, 165, 32, 0.2)'
+                            : 'rgba(41, 121, 255, 0.15)' 
+                        }}>
                           <p className="text-base flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
                             <span className="text-xl">💪</span>
-                            <span>Don't overthink it — hit record and come back when you're done!</span>
+                            <span>{userType === 'business' 
+                              ? "Don't overthink it — hit record and come back when you're done!"
+                              : "Create your content and come back when you're ready to optimize it!"
+                            }</span>
                           </p>
                         </div>
                       </div>
