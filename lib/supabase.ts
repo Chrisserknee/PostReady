@@ -13,9 +13,16 @@ export const getSupabaseClient = (): SupabaseClient => {
     const finalUrl = supabaseUrl || 'https://placeholder.supabase.co';
     const finalKey = supabaseAnonKey || 'placeholder-anon-key';
     
+    // Warn in browser if using placeholder values
+    if (typeof window !== 'undefined' && (!supabaseUrl || !supabaseAnonKey)) {
+      console.error('⚠️ Supabase is not configured! Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.');
+    }
+    
     supabaseInstance = createClient(finalUrl, finalKey, {
       auth: {
         persistSession: typeof window !== 'undefined', // Only persist on client
+        autoRefreshToken: true,
+        detectSessionInUrl: true,
       }
     });
   }

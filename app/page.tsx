@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect, Suspense } from "react";
+import React, { useState, useRef, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { BusinessInfo, StrategyResult, PostDetails, ContentIdea } from "@/types";
 import { generateStrategyAndIdeas } from "@/lib/strategy";
@@ -974,6 +974,10 @@ function HomeContent() {
     });
   };
 
+  const closeNotification = useCallback(() => {
+    setNotification(prev => ({ ...prev, isOpen: false }));
+  }, []);
+
   const handleSelectIdea = (idea: ContentIdea) => {
     setSelectedIdea(idea);
   };
@@ -1527,7 +1531,7 @@ function HomeContent() {
           </div>
         )}
 
-        <div className="text-center mb-16">
+        <div className={`text-center mb-16 ${currentStep !== "form" ? "hidden md:block" : ""}`}>
           <div 
             onClick={navigateHome}
             className="cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 mb-6 flex justify-center"
@@ -2937,7 +2941,7 @@ function HomeContent() {
       {/* Notification */}
       <Notification
         isOpen={notification.isOpen}
-        onClose={() => setNotification({ ...notification, isOpen: false })}
+        onClose={closeNotification}
         title={notification.title}
         message={notification.message}
         type={notification.type}
