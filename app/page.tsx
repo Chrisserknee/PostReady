@@ -2039,6 +2039,43 @@ function HomeContent() {
                     </div>
                   </div>
 
+                  {/* Value Creation Message - Only for Creators */}
+                  {userType === 'creator' && (
+                    <div className="rounded-2xl p-8 mb-8 border-2" style={{
+                      background: 'linear-gradient(135deg, rgba(218, 165, 32, 0.15) 0%, rgba(244, 208, 63, 0.15) 100%)',
+                      borderColor: '#DAA520',
+                      boxShadow: '0 4px 16px rgba(218, 165, 32, 0.2)'
+                    }}>
+                      <div className="flex items-start gap-5">
+                        <span className="text-6xl">💎</span>
+                        <div>
+                          <h4 className="font-bold text-2xl mb-4" style={{ color: '#DAA520' }}>
+                            The Golden Rule: Deliver Real Value
+                          </h4>
+                          <p className="text-lg leading-relaxed mb-4" style={{ color: 'var(--text-primary)' }}>
+                            Whether you entertain, educate, or inspire — <span className="font-bold" style={{ color: '#DAA520' }}>the more value you provide, the faster your channel grows</span>. Every video should answer: "What does my viewer gain from watching this?"
+                          </p>
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                            <div className="flex items-start gap-2">
+                              <span className="text-2xl">🎭</span>
+                              <div>
+                                <p className="font-semibold mb-1" style={{ color: '#DAA520' }}>Entertainment Value</p>
+                                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Make them laugh, feel, or escape reality</p>
+                              </div>
+                            </div>
+                            <div className="flex items-start gap-2">
+                              <span className="text-2xl">🎓</span>
+                              <div>
+                                <p className="font-semibold mb-1" style={{ color: '#DAA520' }}>Utility Value</p>
+                                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Teach them something useful or solve a problem</p>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Experimentation Message - Only for Creators */}
                   {userType === 'creator' && (
                     <div className="rounded-xl p-6 mb-8 border-l-4" style={{
@@ -2170,7 +2207,7 @@ function HomeContent() {
 
                   {/* Video Ideas Grid */}
                   {!isGeneratingIdeas && (
-                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-4 mb-6 transition-all duration-300 ${
+                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 transition-all duration-300 ${
                       ideasAnimation === 'fadeOut' ? 'animate-fade-out' : 
                       ideasAnimation === 'fadeIn' ? 'animate-fade-in' : ''
                     }`}>
@@ -2178,33 +2215,35 @@ function HomeContent() {
                       <div
                         key={index}
                         onClick={() => handleSelectIdea(idea)}
-                        className="border-2 rounded-xl p-5 cursor-pointer transition-all duration-500 hover:scale-[1.02]"
+                        className="relative border-2 rounded-2xl p-6 cursor-pointer transition-all duration-500 hover:scale-[1.03] hover:shadow-xl"
                         style={{
                           backgroundColor: selectedIdea?.title === idea.title 
-                            ? (userType === 'creator' ? 'rgba(218, 165, 32, 0.1)' : 'var(--hover-bg)')
+                            ? (userType === 'creator' ? 'rgba(218, 165, 32, 0.12)' : 'var(--hover-bg)')
                             : 'var(--card-bg)',
                           borderColor: selectedIdea?.title === idea.title 
                             ? (userType === 'creator' ? '#DAA520' : 'var(--primary)')
-                            : (userType === 'creator' ? 'rgba(218, 165, 32, 0.2)' : 'var(--card-border)'),
+                            : (userType === 'creator' ? 'rgba(218, 165, 32, 0.3)' : 'var(--card-border)'),
                           boxShadow: selectedIdea?.title === idea.title 
-                            ? (userType === 'creator' ? '0 4px 12px rgba(218, 165, 32, 0.25)' : '0 4px 12px rgba(41, 121, 255, 0.15)')
-                            : '0 1px 3px rgba(0,0,0,0.05)'
+                            ? (userType === 'creator' ? '0 8px 24px rgba(218, 165, 32, 0.3)' : '0 8px 24px rgba(41, 121, 255, 0.2)')
+                            : '0 2px 8px rgba(0,0,0,0.08)'
                         }}
                       >
-                        <div className="flex items-start justify-between mb-2">
-                          <h4 className="font-bold flex-1" style={{ color: 'var(--text-primary)' }}>
+                        <div className="flex items-start justify-between mb-3">
+                          <h4 className="font-bold text-lg flex-1 leading-tight" style={{ color: 'var(--text-primary)' }}>
                             {idea.title}
                           </h4>
                           <Badge variant={idea.angle}>
                             {idea.angle.replace(/_/g, " ")}
                           </Badge>
                         </div>
-                        <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>{idea.description}</p>
+                        <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--text-secondary)' }}>
+                          {idea.description}
+                        </p>
                         {selectedIdea?.title === idea.title && (
-                          <div className="mt-3 font-medium text-sm flex items-center transition-colors duration-500" style={{ 
-                            color: userType === 'creator' ? '#DAA520' : 'var(--primary)' 
+                          <div className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500" style={{ 
+                            backgroundColor: userType === 'creator' ? '#DAA520' : 'var(--primary)'
                           }}>
-                            <span className="mr-2">✓</span> Selected
+                            <span className="text-white text-lg">✓</span>
                           </div>
                         )}
                       </div>
