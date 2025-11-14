@@ -772,13 +772,17 @@ function HomeContent() {
     }, 100);
 
     try {
-      // Call research API
+      // Call research API with userType for proper content generation
       const response = await fetch("/api/research-business", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ businessInfo }),
+        body: JSON.stringify({ 
+          businessInfo,
+          userType,
+          creatorGoals: userType === 'creator' ? creatorGoals : undefined
+        }),
       });
 
       if (!response.ok) {
@@ -1985,8 +1989,13 @@ function HomeContent() {
                 </div>
                 <div className="w-full bg-gray-200 rounded-full h-2">
                   <div
-                    className="bg-blue-600 h-2 rounded-full transition-all duration-500"
-                    style={{ width: `${(Math.min(getStepNumber(), 4) / 4) * 100}%` }}
+                    className="h-2 rounded-full transition-all duration-500"
+                    style={{ 
+                      width: `${(Math.min(getStepNumber(), 4) / 4) * 100}%`,
+                      background: userType === 'creator' 
+                        ? 'linear-gradient(to right, #DAA520, #F4D03F)'
+                        : '#2979FF'
+                    }}
                   ></div>
                 </div>
               </div>
@@ -1995,48 +2004,73 @@ function HomeContent() {
               {currentStep === "principles" && strategy && strategy.keyPrinciples && strategy.contentIdeas && (
                 <div>
                   <div className="mb-8">
-                    <h2 className="text-4xl font-bold mb-3" style={{ color: 'var(--secondary)' }}>
-                      Your {businessInfo.platform} Growth Strategy
+                    <h2 className="text-4xl font-bold mb-3 transition-colors duration-500" style={{ 
+                      color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
+                    }}>
+                      {userType === 'business' 
+                        ? `Your ${businessInfo.platform} Growth Strategy`
+                        : `Your ${businessInfo.platform} Creator Strategy`
+                      }
                     </h2>
                     <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
-                      Simple, actionable tactics that actually work
+                      {userType === 'business'
+                        ? 'Simple, actionable tactics that actually work'
+                        : 'Expert insights to grow your channel and engage your audience'
+                      }
                     </p>
                   </div>
 
-                  <div className="rounded-2xl p-8 mb-8 border-l-4" style={{ 
-                    background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.08) 0%, rgba(111, 255, 210, 0.08) 100%)',
-                    borderColor: 'var(--accent)'
+                  <div className="rounded-2xl p-8 mb-8 border-l-4 transition-all duration-500" style={{ 
+                    background: userType === 'creator'
+                      ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.12) 0%, rgba(244, 208, 63, 0.12) 100%)'
+                      : 'linear-gradient(135deg, rgba(41, 121, 255, 0.08) 0%, rgba(111, 255, 210, 0.08) 100%)',
+                    borderColor: userType === 'creator' ? '#DAA520' : 'var(--accent)'
                   }}>
                     <div className="flex items-start">
                       <span className="text-5xl mr-5">🎯</span>
                       <div>
-                        <h3 className="font-bold text-xl mb-3" style={{ color: 'var(--secondary)' }}>The Key to Success</h3>
+                        <h3 className="font-bold text-xl mb-3 transition-colors duration-500" style={{ 
+                          color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
+                        }}>
+                          {userType === 'business' ? 'The Key to Success' : 'Your Creator Blueprint'}
+                        </h3>
                         <p className="text-lg leading-relaxed" style={{ color: 'var(--text-primary)' }}>{strategy.headlineSummary}</p>
                       </div>
                     </div>
                   </div>
 
                   <div className="mb-10">
-                    <h3 className="text-2xl font-bold mb-6 flex items-center" style={{ color: 'var(--secondary)' }}>
+                    <h3 className="text-2xl font-bold mb-6 flex items-center transition-colors duration-500" style={{ 
+                      color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
+                    }}>
                       <span className="text-3xl mr-3">⚡</span>
-                      5 Strategies to Grow Your Audience
+                      {userType === 'business' ? '5 Strategies to Grow Your Audience' : '5 Key Creator Strategies'}
                     </h3>
                     <div className="space-y-3">
                       {strategy.keyPrinciples.map((principle, index) => (
                         <div 
                           key={index} 
-                          className="rounded-xl p-6 border transition-all hover:scale-[1.02] cursor-default"
+                          className="rounded-xl p-6 border transition-all duration-500 hover:scale-[1.02] cursor-default"
                           style={{
-                            backgroundColor: 'var(--card-bg)',
-                            borderColor: 'var(--card-border)',
-                            boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                            backgroundColor: userType === 'creator' 
+                              ? 'rgba(218, 165, 32, 0.05)'
+                              : 'var(--card-bg)',
+                            borderColor: userType === 'creator'
+                              ? 'rgba(218, 165, 32, 0.2)'
+                              : 'var(--card-border)',
+                            boxShadow: userType === 'creator'
+                              ? '0 2px 8px rgba(218, 165, 32, 0.1)'
+                              : '0 1px 3px rgba(0,0,0,0.05)'
                           }}
                         >
                           <div className="flex items-start gap-4">
                             <div 
-                              className="rounded-full w-10 h-10 flex items-center justify-center font-bold text-white flex-shrink-0 text-lg"
-                              style={{ 
-                                background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)'
+                              className="rounded-full w-10 h-10 flex items-center justify-center font-bold flex-shrink-0 text-lg transition-all duration-500"
+                              style={{
+                                background: userType === 'creator' 
+                                  ? 'linear-gradient(135deg, #DAA520 0%, #F4D03F 100%)'
+                                  : 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)',
+                                color: userType === 'creator' ? '#1A1F2E' : 'white'
                               }}
                             >
                               {index + 1}
@@ -2063,20 +2097,37 @@ function HomeContent() {
                     </div>
                   </div>
 
-                  <PrimaryButton onClick={handleNextStep} className="w-full text-lg py-4" isPro={isPro}>
-                    Next: Choose Your Video Idea →
-                  </PrimaryButton>
+                  <button
+                    onClick={handleNextStep}
+                    className="w-full text-lg py-4 rounded-lg font-bold transition-all duration-500 hover:scale-105 active:scale-95 shadow-lg"
+                    style={{
+                      background: userType === 'creator'
+                        ? 'linear-gradient(to right, #DAA520, #F4D03F)'
+                        : 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                      color: userType === 'creator' ? '#1A1F2E' : 'white',
+                      boxShadow: userType === 'creator'
+                        ? '0 8px 20px rgba(218, 165, 32, 0.35)'
+                        : '0 8px 20px rgba(41, 121, 255, 0.3)'
+                    }}
+                  >
+                    {userType === 'business' ? 'Next: Choose Your Video Idea →' : 'Next: Pick Your Content →'}
+                  </button>
                 </div>
               )}
 
               {/* Step 2: Choose Video Idea */}
               {currentStep === "choose-idea" && strategy && strategy.contentIdeas && (
                 <div>
-                  <h2 className="text-3xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                    Choose Your Video Idea
+                  <h2 className="text-3xl font-bold mb-2 transition-colors duration-500" style={{ 
+                    color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
+                  }}>
+                    {userType === 'business' ? 'Choose Your Video Idea' : 'Pick Your Content Concept'}
                   </h2>
                   <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
-                    Select one idea to create content for. You'll record the video next.
+                    {userType === 'business'
+                      ? 'Select one idea to create content for. You\'ll record the video next.'
+                      : 'Choose a content idea that resonates with your goals. You\'ll craft your video next.'
+                    }
                   </p>
 
                   {/* Loading State - Beautiful Animated Emoji */}
@@ -2104,11 +2155,17 @@ function HomeContent() {
                       <div
                         key={index}
                         onClick={() => handleSelectIdea(idea)}
-                        className="border-2 rounded-xl p-5 cursor-pointer transition-all duration-200 hover:scale-[1.02]"
+                        className="border-2 rounded-xl p-5 cursor-pointer transition-all duration-500 hover:scale-[1.02]"
                         style={{
-                          backgroundColor: selectedIdea?.title === idea.title ? 'var(--hover-bg)' : 'var(--card-bg)',
-                          borderColor: selectedIdea?.title === idea.title ? 'var(--primary)' : 'var(--card-border)',
-                          boxShadow: selectedIdea?.title === idea.title ? '0 4px 12px rgba(41, 121, 255, 0.15)' : '0 1px 3px rgba(0,0,0,0.05)'
+                          backgroundColor: selectedIdea?.title === idea.title 
+                            ? (userType === 'creator' ? 'rgba(218, 165, 32, 0.1)' : 'var(--hover-bg)')
+                            : 'var(--card-bg)',
+                          borderColor: selectedIdea?.title === idea.title 
+                            ? (userType === 'creator' ? '#DAA520' : 'var(--primary)')
+                            : (userType === 'creator' ? 'rgba(218, 165, 32, 0.2)' : 'var(--card-border)'),
+                          boxShadow: selectedIdea?.title === idea.title 
+                            ? (userType === 'creator' ? '0 4px 12px rgba(218, 165, 32, 0.25)' : '0 4px 12px rgba(41, 121, 255, 0.15)')
+                            : '0 1px 3px rgba(0,0,0,0.05)'
                         }}
                       >
                         <div className="flex items-start justify-between mb-2">
