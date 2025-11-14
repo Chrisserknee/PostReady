@@ -15,6 +15,7 @@ import { Badge } from "@/components/Badge";
 import { AuthModal } from "@/components/AuthModal";
 import { Modal } from "@/components/Modal";
 import { Notification } from "@/components/Notification";
+import { ModeToggle } from "@/components/ModeToggle";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { saveUserProgress, loadUserProgress } from "@/lib/userProgress";
@@ -133,7 +134,7 @@ function LoadingProgress() {
 
 function HomeContent() {
   const { user, isPro, signOut, upgradeToPro, loading: authLoading } = useAuth();
-  const { theme, toggleTheme } = useTheme();
+  const { theme, toggleTheme, mode, setMode } = useTheme();
   const searchParams = useSearchParams();
   const router = useRouter();
   
@@ -241,6 +242,21 @@ function HomeContent() {
       initiateCheckout();
     }
   }, [user, redirectToCheckoutAfterAuth, authLoading]);
+
+  // Update businessType when mode changes
+  useEffect(() => {
+    if (mode === 'creator') {
+      setBusinessInfo(prev => ({
+        ...prev,
+        businessType: 'Lifestyle Vlogger' as BusinessInfo["businessType"]
+      }));
+    } else {
+      setBusinessInfo(prev => ({
+        ...prev,
+        businessType: 'Restaurant' as BusinessInfo["businessType"]
+      }));
+    }
+  }, [mode]);
 
   // Scroll to top when step changes (mobile optimization)
   useEffect(() => {
@@ -776,7 +792,7 @@ function HomeContent() {
         headers: {
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ businessInfo }),
+        body: JSON.stringify({ businessInfo, mode }),
       });
 
       if (!response.ok) {
@@ -1582,29 +1598,38 @@ function HomeContent() {
             Posting made easy.
           </p>
           <p className="text-lg mt-4 max-w-3xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
-            PostReady researches your business, analyzes your local market, and creates tailored posts, captions, and growth strategies — automatically.
+            {mode === 'creator' 
+              ? 'PostReady helps creators build their personal brand with tailored content strategies, captions, and growth tactics — automatically.'
+              : 'PostReady researches your business, analyzes your local market, and creates tailored posts, captions, and growth strategies — automatically.'
+            }
           </p>
         </div>
 
         {/* Business Info Form */}
         {currentStep === "form" && (
           <SectionCard className="mb-10" isPro={isPro}>
+            {/* Mode Toggle */}
+            <ModeToggle 
+              mode={mode} 
+              onChange={setMode}
+              className="mb-6"
+            />
             <h2 className="text-3xl font-bold mb-6" style={{ color: 'var(--secondary)' }}>
-              Tell Us About Your Business
+              {mode === 'creator' ? 'Tell Us About You' : 'Tell Us About Your Business'}
             </h2>
             <form onSubmit={handleGenerateStrategy} className="space-y-4">
               <InputField
-                label="Business Name"
+                label={mode === 'creator' ? 'Your Name / Creator Name' : 'Business Name'}
                 value={businessInfo.businessName}
                 onChange={(value) =>
                   setBusinessInfo({ ...businessInfo, businessName: value })
                 }
-                placeholder="Joe's Pizza"
+                placeholder={mode === 'creator' ? 'Alex Johnson' : 'Joe\'s Pizza'}
                 required
               />
 
               <SelectField
-                label="Business Type"
+                label={mode === 'creator' ? 'Content Type' : 'Business Type'}
                 value={businessInfo.businessType}
                 onChange={(value) =>
                   setBusinessInfo({
@@ -1612,17 +1637,32 @@ function HomeContent() {
                     businessType: value as BusinessInfo["businessType"],
                   })
                 }
-                options={[
-                  "Restaurant",
-                  "Cafe / Bakery",
-                  "Retail Shop",
-                  "Thrift Store / Resale",
-                  "Salon / Spa",
-                  "Gym / Fitness",
-                  "Real Estate",
-                  "Movie Theater",
-                  "Other",
-                ]}
+                options={
+                  mode === 'creator' 
+                    ? [
+                        "Lifestyle Vlogger",
+                        "Fitness / Wellness",
+                        "Food & Cooking",
+                        "Fashion / Beauty",
+                        "Tech Reviewer",
+                        "Travel Creator",
+                        "Gaming",
+                        "Education / Tutorial",
+                        "Comedy / Entertainment",
+                        "Other",
+                      ]
+                    : [
+                        "Restaurant",
+                        "Cafe / Bakery",
+                        "Retail Shop",
+                        "Thrift Store / Resale",
+                        "Salon / Spa",
+                        "Gym / Fitness",
+                        "Real Estate",
+                        "Movie Theater",
+                        "Other",
+                      ]
+                }
                 required
               />
 
@@ -1684,7 +1724,7 @@ function HomeContent() {
               />
 
               <PrimaryButton type="submit" className="w-full" isPro={isPro}>
-                Generate Social Media Strategy
+                {mode === 'creator' ? 'Generate Creator Strategy' : 'Generate Social Media Strategy'}
               </PrimaryButton>
             </form>
 
@@ -1994,7 +2034,7 @@ function HomeContent() {
                             headers: {
                               "Content-Type": "application/json",
                             },
-                            body: JSON.stringify({ businessInfo }),
+                            body: JSON.stringify({ businessInfo, mode }),
                           });
 
                           if (!response.ok) {

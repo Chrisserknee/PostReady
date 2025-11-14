@@ -6,7 +6,7 @@ import { detectBusinessType } from "@/lib/detectBusinessType";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { businessInfo } = body as { businessInfo: BusinessInfo };
+    const { businessInfo, mode = 'business' } = body as { businessInfo: BusinessInfo, mode?: 'business' | 'creator' };
 
     if (!businessInfo) {
       return NextResponse.json(
@@ -35,24 +35,28 @@ export async function POST(request: NextRequest) {
       businessInfo.businessName,
       businessInfo.location,
       businessInfo.businessType,
-      process.env.OPENAI_API_KEY!
+      process.env.OPENAI_API_KEY!,
+      mode
     );
     
-    console.log("📊 Final Business Type Decision:", {
+    console.log("📊 Final Type Decision:", {
+      mode,
       userSelected: businessInfo.businessType,
       aiDetected: actualBusinessType,
       usingForContent: actualBusinessType
     });
 
-    // Generate simple, actionable strategy with CORRECTED business type
-    const researchPrompt = buildActionableStrategyPrompt(businessInfo, actualBusinessType);
+    // Generate simple, actionable strategy with CORRECTED type
+    const researchPrompt = buildActionableStrategyPrompt(businessInfo, actualBusinessType, mode);
     
     const completion = await openai.chat.completions.create({
       model: "gpt-4-turbo-preview",
       messages: [
         {
           role: "system",
-          content: "You are a social media expert who gives simple, actionable advice. Focus on what works: consistency, engagement, and authentic content. Keep it practical and easy to implement. CRITICAL: You MUST generate business-specific, contextual video ideas that reflect the actual business type and location. NEVER use generic templates like 'Educational Tip' or 'Behind-the-Scenes Look'. Always be specific and filmable. Always respond with valid JSON."
+          content: mode === 'creator' 
+            ? "You are a social media expert who gives simple, actionable advice for content creators. Focus on what works: consistency, audience engagement, and authentic personal branding. Keep it practical and easy to implement. CRITICAL: You MUST generate creator-specific, contextual video ideas that reflect the creator's niche and style. NEVER use generic templates. Always be specific about what content to create. Always respond with valid JSON."
+            : "You are a social media expert who gives simple, actionable advice. Focus on what works: consistency, engagement, and authentic content. Keep it practical and easy to implement. CRITICAL: You MUST generate business-specific, contextual video ideas that reflect the actual business type and location. NEVER use generic templates like 'Educational Tip' or 'Behind-the-Scenes Look'. Always be specific and filmable. Always respond with valid JSON."
         },
         {
           role: "user",
@@ -166,7 +170,126 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function buildActionableStrategyPrompt(info: BusinessInfo, actualBusinessType: string): string {
+function buildActionableStrategyPrompt(info: BusinessInfo, actualBusinessType: string, mode: 'business' | 'creator' = 'business'): string {
+  if (mode === 'creator') {
+    return `
+🚨 MANDATORY: THIS IS A CONTENT CREATOR 🚨
+
+Creator Name: "${info.businessName}"
+Location: "${info.location}"
+Platform: "${info.platform}"
+CONTENT TYPE: "${actualBusinessType}"
+
+⛔ THIS IS FOR A CONTENT CREATOR, NOT A BUSINESS ⛔
+Create a strategy for a content creator who makes "${actualBusinessType}" content.
+Focus on personal branding, audience growth, and authentic creator content.
+
+THINK ABOUT "${info.businessName}" as a creator:
+- What makes THIS creator unique?
+- What's their content style and niche?
+- Who is their target audience?
+- What value do they provide to their followers?
+- How can they build their personal brand?
+
+Now create a comprehensive ${info.platform} strategy for this content creator.
+
+FOCUS ON WHAT WORKS FOR CREATORS:
+1. Post consistently to build audience trust
+2. Engage authentically with your community
+3. Show your personality and be yourself
+4. Create value-driven content
+5. Build genuine connections with followers
+
+YOUR TASK:
+Provide practical creator advice they can implement TODAY.
+
+PROVIDE:
+
+1. HEADLINE SUMMARY (1-2 sentences max)
+   - Keep it motivating and creator-focused
+   - Focus on building their personal brand through consistent, authentic content
+   - Mention the value they provide to their audience
+
+2. KEY STRATEGIES (Exactly 5 strategies)
+   - Make each one ACTIONABLE for creators
+   - Focus on audience growth and engagement tactics
+   - Keep language simple and direct
+   - **CRITICAL: Use second person ("your", "you") - these are instructions TO the creator**
+   - DO NOT use "our", "we", "us"
+   
+   **CRITICAL: ONE strategy MUST be platform-specific for ${info.platform}:**
+   ${getPlatformSpecificAdvice(info.platform)}
+
+3. POSTING TIMES (4 optimal times)
+   - When does ${info.platform} audience engage most?
+   - Consider when followers are most active
+   - Keep explanations brief and practical
+
+4. CONTENT IDEAS (Exactly 6 video ideas)
+   
+⚠️ CRITICAL: These ideas must be HYPER-SPECIFIC to "${info.businessName}" as a ${actualBusinessType} CREATOR!
+
+Generate creator-specific content ideas like:
+
+For LIFESTYLE VLOGGER:
+✅ "My Real Morning Routine (No Filter, No BS)"
+✅ "Day in the Life: Balancing Content Creation with Real Life"
+✅ "Things I Stopped Buying That Changed My Life"
+✅ "Why I Quit My 9-5 to Create Content Full-Time"
+✅ "Trying Viral Life Hacks for a Week - Here's What Actually Works"
+
+For FITNESS / WELLNESS:
+✅ "My 30-Day Transformation Challenge - Week 1 Results"
+✅ "5 Exercises I Do Every Morning (Takes 10 Minutes)"
+✅ "What I Actually Eat in a Day to Stay Fit"
+✅ "Responding to Your Fitness Questions While Working Out"
+✅ "Trying the Hardest Workout Challenge on YouTube"
+
+For FOOD & COOKING:
+✅ "Making My Grandma's Secret Recipe for the First Time"
+✅ "I Tried Cooking Like a Michelin Star Chef for a Week"
+✅ "Turning Your Recipe Requests into Reality"
+✅ "Budget Meal Prep: $50 for the Entire Week"
+✅ "Rating Viral TikTok Recipes - Which Ones Are Worth It?"
+
+YOUR TASK FOR "${info.businessName}":
+Generate 6 ideas that are:
+1. SPECIFIC to ${actualBusinessType} creators
+2. AUTHENTIC and personal - show the real creator
+3. ENGAGING - hooks that make people want to watch
+4. DIVERSE angles: mix of day-in-life, educational, challenges, Q&A, authentic moments
+5. REAL - actual creator content concepts, not generic templates
+
+RESPOND WITH VALID JSON:
+{
+  "headlineSummary": "1-2 sentence motivating summary for creators",
+  "keyPrinciples": [
+    "Actionable strategy 1",
+    "Actionable strategy 2",
+    "Actionable strategy 3",
+    "Actionable strategy 4",
+    "Actionable strategy 5"
+  ],
+  "postingTimes": [
+    {
+      "day": "Tuesday",
+      "timeRange": "6:00 PM - 8:00 PM",
+      "reason": "Brief, practical reason"
+    }
+  ],
+  "contentIdeas": [
+    {
+      "title": "Clear, actionable title",
+      "description": "Simple description of what to film",
+      "angle": "funny" (one of: funny, behind_the_scenes, educational, testimonial, offer)
+    }
+  ]
+}
+
+Keep it SIMPLE, ACTIONABLE, and MOTIVATING for CONTENT CREATORS!
+`;
+  }
+  
   return `
 🚨 MANDATORY: THIS BUSINESS TYPE HAS BEEN VERIFIED 🚨
 
@@ -178,10 +301,6 @@ CONFIRMED BUSINESS TYPE: "${actualBusinessType}"
 ⛔ DO NOT SECOND-GUESS THE BUSINESS TYPE ⛔
 The business type "${actualBusinessType}" has been verified through name analysis.
 You MUST create content for a "${actualBusinessType}" business.
-
-If "${actualBusinessType}" = "Thrift Store / Resale":
-- This is NOT a restaurant, cafe, bakery, or food business
-- Focus on: diverse product finds (furniture, books, electronics, clothing, home decor, toys, etc.)
 
 If "${actualBusinessType}" = "Restaurant":
 - This IS a restaurant/dining business

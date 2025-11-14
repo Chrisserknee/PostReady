@@ -3,16 +3,20 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 
 type Theme = 'light' | 'dark';
+type Mode = 'business' | 'creator';
 
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
+  mode: Mode;
+  setMode: (mode: Mode) => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
   const [theme, setTheme] = useState<Theme>('light');
+  const [mode, setMode] = useState<Mode>('business');
   const [mounted, setMounted] = useState(false);
 
   useEffect(() => {
@@ -26,6 +30,12 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
       const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
       setTheme(prefersDark ? 'dark' : 'light');
     }
+    
+    // Check localStorage for saved mode
+    const savedMode = localStorage.getItem('mode') as Mode;
+    if (savedMode) {
+      setMode(savedMode);
+    }
   }, []);
 
   useEffect(() => {
@@ -36,12 +46,20 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [theme, mounted]);
 
+  useEffect(() => {
+    if (mounted) {
+      localStorage.setItem('mode', mode);
+      // Apply mode to document
+      document.documentElement.setAttribute('data-mode', mode);
+    }
+  }, [mode, mounted]);
+
   const toggleTheme = () => {
     setTheme(prev => prev === 'light' ? 'dark' : 'light');
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, mode, setMode }}>
       {children}
     </ThemeContext.Provider>
   );

@@ -66,15 +66,23 @@ export async function detectBusinessType(
   businessName: string,
   location: string,
   userSelectedType: string,
-  openaiApiKey: string
+  openaiApiKey: string,
+  mode: 'business' | 'creator' = 'business'
 ): Promise<string> {
-  console.log("🔍 Business Type Detection Started:", {
-    businessName,
+  console.log("🔍 Type Detection Started:", {
+    mode,
+    name: businessName,
     location,
     userSelectedType
   });
 
-  // Step 1: Try fast keyword matching
+  // For creator mode, skip keyword detection and use the selected type
+  if (mode === 'creator') {
+    console.log("✅ Creator Mode: Using selected type:", userSelectedType);
+    return userSelectedType;
+  }
+
+  // Step 1: Try fast keyword matching (business mode only)
   const keywordDetection = detectBusinessTypeFromKeywords(businessName);
   
   if (keywordDetection) {
@@ -85,30 +93,13 @@ export async function detectBusinessType(
     return keywordDetection;
   }
 
-  // Step 2: Use GPT-4 for intelligent analysis
+  // Step 2: Use GPT-4 for intelligent analysis (business mode only)
   console.log("🤖 Using GPT-4 for intelligent detection (keywords inconclusive)...");
 
   try {
     const openai = new OpenAI({ apiKey: openaiApiKey });
 
-    const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
-      messages: [
-        {
-          role: "system",
-          content: "You are a business classification expert. Analyze business names and locations to determine their actual business type. Be precise and return ONLY the business type category, nothing else."
-        },
-        {
-          role: "user",
-          content: `
-Analyze this business and determine its ACTUAL type:
-
-Business Name: "${businessName}"
-Location: "${location}"
-User Selected: "${userSelectedType}"
-
-Available Business Types:
-- Restaurant
+    const businessTypes = `- Restaurant
 - Cafe / Bakery
 - Retail Shop
 - Thrift Store / Resale
@@ -116,16 +107,40 @@ Available Business Types:
 - Gym / Fitness
 - Real Estate
 - Movie Theater
-- Other
+- Other`;
+
+    const availableTypes = businessTypes;
+    const entityType = 'business';
+    const entityTypeCapitalized = 'Business';
+    const systemContent = "You are a business classification expert. Analyze business names and locations to determine their actual business type. Be precise and return ONLY the business type category, nothing else.";
+
+    const completion = await openai.chat.completions.create({
+      model: "gpt-4-turbo-preview",
+      messages: [
+        {
+          role: "system",
+          content: systemContent
+        },
+        {
+          role: "user",
+          content: `
+Analyze this ${entityType} and determine its ACTUAL type:
+
+${entityTypeCapitalized} Name: "${businessName}"
+Location: "${location}"
+User Selected: "${userSelectedType}"
+
+Available Types:
+${availableTypes}
 
 Instructions:
-1. Analyze the business name for clues about what they do
+1. Analyze the ${entityType} name for clues about what they do
 2. Consider the location context if helpful
 3. Ignore the user's selection - it may be wrong
-4. Return ONLY the exact business type from the list above
+4. Return ONLY the exact type from the list above
 5. If you're unsure, return "${userSelectedType}"
 
-What is the ACTUAL business type?
+What is the ACTUAL type?
 Return ONLY the type, no explanation.
 `
         }
