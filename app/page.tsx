@@ -1374,21 +1374,19 @@ function HomeContent() {
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--background)' }}>
-      {/* Premium Background Effect for Pro Users */}
-      {isPro && (
-        <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-          <div className="absolute top-0 right-0 w-96 h-96 rounded-full" style={{
-            background: 'radial-gradient(circle, rgba(41, 121, 255, 0.12) 0%, transparent 70%)',
-            filter: 'blur(60px)',
-            animation: 'float 20s ease-in-out infinite'
-          }}></div>
-          <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full" style={{
-            background: 'radial-gradient(circle, rgba(111, 255, 210, 0.12) 0%, transparent 70%)',
-            filter: 'blur(60px)',
-            animation: 'float 25s ease-in-out infinite reverse'
-          }}></div>
-        </div>
-      )}
+      {/* Background Star Effect - Visible to all users */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+        <div className="absolute top-0 right-0 w-96 h-96 rounded-full" style={{
+          background: 'radial-gradient(circle, rgba(41, 121, 255, 0.12) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+          animation: 'float 20s ease-in-out infinite'
+        }}></div>
+        <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full" style={{
+          background: 'radial-gradient(circle, rgba(111, 255, 210, 0.12) 0%, transparent 70%)',
+          filter: 'blur(60px)',
+          animation: 'float 25s ease-in-out infinite reverse'
+        }}></div>
+      </div>
       <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>
         {/* Header with Auth - Only for signed-in users */}
         {user && !authLoading && (
