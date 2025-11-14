@@ -1537,6 +1537,33 @@ function HomeContent() {
           </div>
         )}
 
+        {/* Mini PostReady Home Button - Mobile Only, Non-Homepage */}
+        {currentStep !== "form" && (
+          <div className="md:hidden mb-6 flex justify-center">
+            <button
+              onClick={navigateHome}
+              disabled={isNavigating}
+              className="flex items-center gap-2 px-4 py-2 rounded-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50"
+              style={{
+                backgroundColor: 'var(--card-bg)',
+                borderWidth: '2px',
+                borderStyle: 'solid',
+                borderColor: 'var(--primary)',
+                boxShadow: '0 2px 8px rgba(41, 121, 255, 0.15)'
+              }}
+            >
+              <img 
+                src="/postready-logo.svg" 
+                alt="PostReady" 
+                className="h-6 w-auto"
+              />
+              <span className="text-sm font-bold" style={{ color: 'var(--primary)' }}>
+                PostReady
+              </span>
+            </button>
+          </div>
+        )}
+
         <div className={`text-center mb-16 ${currentStep !== "form" ? "hidden md:block" : ""}`}>
           <div 
             onClick={navigateHome}
