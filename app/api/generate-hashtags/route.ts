@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     const existingTagsLower = existingTags.map((tag: string) => tag.toLowerCase());
 
     // Get caption text without hashtags for context
-    const captionText = caption ? caption.split('\n\n').filter(line => !line.trim().startsWith('#')).join('\n\n').trim() : '';
+    const captionText = caption ? caption.split('\n\n').filter((line: string) => !line.trim().startsWith('#')).join('\n\n').trim() : '';
     
     const title = selectedIdea?.title || '';
     const description = selectedIdea?.description || '';
