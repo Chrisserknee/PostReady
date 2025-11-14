@@ -144,6 +144,7 @@ function HomeContent() {
     location: "",
     platform: "Instagram",
   });
+  const [userType, setUserType] = useState<'business' | 'creator'>('business');
 
   const [strategy, setStrategy] = useState<StrategyResult | null>(null);
   const [currentStep, setCurrentStep] = useState<WizardStep>("form");
@@ -1601,22 +1602,59 @@ function HomeContent() {
         {/* Business Info Form */}
         {currentStep === "form" && (
           <SectionCard className="mb-10" isPro={isPro}>
-            <h2 className="text-3xl font-bold mb-6" style={{ color: 'var(--secondary)' }}>
-              Tell Us About Your Business
+            {/* Business/Creator Toggle Pill */}
+            <div className="flex justify-center mb-8">
+              <div className="relative inline-flex rounded-full p-1" style={{
+                backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                backdropFilter: 'blur(10px)'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setUserType('business')}
+                  className="relative px-8 py-3 rounded-full font-semibold transition-all duration-300"
+                  style={{
+                    backgroundColor: userType === 'business' ? '#2979FF' : 'transparent',
+                    color: userType === 'business' ? 'white' : 'var(--text-secondary)',
+                    boxShadow: userType === 'business' ? '0 4px 12px rgba(41, 121, 255, 0.4)' : 'none',
+                    transform: userType === 'business' ? 'scale(1.05)' : 'scale(1)'
+                  }}
+                >
+                  Businesses
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setUserType('creator')}
+                  className="relative px-8 py-3 rounded-full font-semibold transition-all duration-300"
+                  style={{
+                    backgroundColor: userType === 'creator' ? '#FFD700' : 'transparent',
+                    color: userType === 'creator' ? '#1A1F2E' : 'var(--text-secondary)',
+                    boxShadow: userType === 'creator' ? '0 4px 12px rgba(255, 215, 0, 0.4)' : 'none',
+                    transform: userType === 'creator' ? 'scale(1.05)' : 'scale(1)'
+                  }}
+                >
+                  Creators
+                </button>
+              </div>
+            </div>
+
+            <h2 className="text-3xl font-bold mb-6" style={{ 
+              color: userType === 'creator' ? '#FFD700' : 'var(--secondary)' 
+            }}>
+              {userType === 'business' ? 'Tell Us About Your Business' : 'Tell Us About Your Content'}
             </h2>
             <form onSubmit={handleGenerateStrategy} className="space-y-4">
               <InputField
-                label="Business Name"
+                label={userType === 'business' ? 'Business Name' : 'Creator / Channel Name'}
                 value={businessInfo.businessName}
                 onChange={(value) =>
                   setBusinessInfo({ ...businessInfo, businessName: value })
                 }
-                placeholder="Joe's Pizza"
+                placeholder={userType === 'business' ? "Joe's Pizza" : "Your Creator Name"}
                 required
               />
 
               <SelectField
-                label="Business Type"
+                label={userType === 'business' ? 'Business Type' : 'Content Category'}
                 value={businessInfo.businessType}
                 onChange={(value) =>
                   setBusinessInfo({
@@ -1624,17 +1662,32 @@ function HomeContent() {
                     businessType: value as BusinessInfo["businessType"],
                   })
                 }
-                options={[
-                  "Restaurant",
-                  "Cafe / Bakery",
-                  "Retail Shop",
-                  "Thrift Store / Resale",
-                  "Salon / Spa",
-                  "Gym / Fitness",
-                  "Real Estate",
-                  "Movie Theater",
-                  "Other",
-                ]}
+                options={
+                  userType === 'business' 
+                    ? [
+                        "Restaurant",
+                        "Cafe / Bakery",
+                        "Retail Shop",
+                        "Thrift Store / Resale",
+                        "Salon / Spa",
+                        "Gym / Fitness",
+                        "Real Estate",
+                        "Movie Theater",
+                        "Other",
+                      ]
+                    : [
+                        "Gaming",
+                        "Lifestyle / Vlog",
+                        "Beauty / Fashion",
+                        "Fitness / Health",
+                        "Food / Cooking",
+                        "Tech / Reviews",
+                        "Education / Tutorials",
+                        "Entertainment",
+                        "Music / Arts",
+                        "Other",
+                      ]
+                }
                 required
               />
 
@@ -1695,9 +1748,21 @@ function HomeContent() {
                 required
               />
 
-              <PrimaryButton type="submit" className="w-full" isPro={isPro}>
-                Generate Social Media Strategy
-              </PrimaryButton>
+              <button 
+                type="submit" 
+                className="w-full py-4 rounded-lg font-bold text-lg transition-all hover:scale-105 active:scale-95 shadow-lg relative overflow-hidden"
+                style={{
+                  background: userType === 'creator' 
+                    ? 'linear-gradient(to right, #FFD700, #FFA500)'
+                    : 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                  color: userType === 'creator' ? '#1A1F2E' : 'white',
+                  boxShadow: userType === 'creator'
+                    ? '0 8px 20px rgba(255, 215, 0, 0.4)'
+                    : '0 8px 20px rgba(41, 121, 255, 0.3)'
+                }}
+              >
+                {userType === 'business' ? 'Generate Social Media Strategy' : 'Generate Creator Strategy'}
+              </button>
             </form>
 
               {/* Pro Status Display */}
