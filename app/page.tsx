@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { BusinessInfo, StrategyResult, PostDetails, ContentIdea } from "@/types";
 import { generateStrategyAndIdeas } from "@/lib/strategy";
@@ -131,7 +131,7 @@ function LoadingProgress() {
   );
 }
 
-export default function Home() {
+function HomeContent() {
   const { user, isPro, signOut, upgradeToPro, loading: authLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const searchParams = useSearchParams();
@@ -2951,5 +2951,20 @@ export default function Home() {
         </span>
       </button>
     </div>
+  );
+}
+
+export default function Home() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--background)' }}>
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mb-4"></div>
+          <p style={{ color: 'var(--text)' }}>Loading PostReady...</p>
+        </div>
+      </div>
+    }>
+      <HomeContent />
+    </Suspense>
   );
 }
