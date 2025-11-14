@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       : "You are a social media expert who gives simple, actionable advice. Focus on what works: consistency, engagement, and authentic content. Keep it practical and easy to implement. CRITICAL: You MUST generate business-specific, contextual video ideas that reflect the actual business type and location. NEVER use generic templates like 'Educational Tip' or 'Behind-the-Scenes Look'. Always be specific and filmable. Always respond with valid JSON.";
     
     const completion = await openai.chat.completions.create({
-      model: "gpt-4-turbo-preview",
+      model: "gpt-4o",
       messages: [
         {
           role: "system",
@@ -78,7 +78,16 @@ export async function POST(request: NextRequest) {
     });
 
     const researchText = completion.choices[0].message.content || "{}";
-    const research = JSON.parse(researchText);
+    
+    // Better error handling for JSON parsing
+    let research;
+    try {
+      research = JSON.parse(researchText);
+    } catch (parseError) {
+      console.error("❌ JSON parsing error:", parseError);
+      console.error("Raw response:", researchText);
+      throw new Error(`Failed to parse AI response as JSON. Response: ${researchText.substring(0, 200)}...`);
+    }
 
     // Validate the research response has all required fields (be flexible with counts)
     const isValid = research && 
@@ -164,12 +173,24 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Return detailed error message for debugging
+    // Check for model not found or unavailable errors
+    if (error?.status === 404 || error?.code === 'model_not_found' || error?.message?.includes('model')) {
+      return NextResponse.json(
+        { error: "AI model unavailable. Please contact support if this issue persists." },
+        { status: 500 }
+      );
+    }
+
+    // Return detailed error message for debugging (but sanitize for production)
+    const errorMessage = process.env.NODE_ENV === 'production' 
+      ? "Failed to generate strategy. Please try again."
+      : error?.message || "Failed to research business";
+    
     return NextResponse.json(
       { 
-        error: error?.message || "Failed to research business",
-        details: `${error?.name}: ${error?.message}`,
-        code: error?.code
+        error: errorMessage,
+        details: process.env.NODE_ENV === 'production' ? undefined : `${error?.name}: ${error?.message}`,
+        code: process.env.NODE_ENV === 'production' ? undefined : error?.code
       },
       { status: 500 }
     );
