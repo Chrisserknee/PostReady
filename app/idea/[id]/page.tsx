@@ -1,5 +1,6 @@
 "use client";
 
+// Video Idea Detail Page
 import React, { useState, useEffect, Suspense } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
