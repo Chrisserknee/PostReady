@@ -1378,12 +1378,12 @@ function HomeContent() {
       {isPro && (
         <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
           <div className="absolute top-0 right-0 w-96 h-96 rounded-full opacity-5" style={{
-            background: 'radial-gradient(circle, rgba(41, 121, 255, 0.4) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(41, 121, 255, 0.15) 0%, transparent 70%)',
             filter: 'blur(60px)',
             animation: 'float 20s ease-in-out infinite'
           }}></div>
           <div className="absolute bottom-0 left-0 w-96 h-96 rounded-full opacity-5" style={{
-            background: 'radial-gradient(circle, rgba(111, 255, 210, 0.4) 0%, transparent 70%)',
+            background: 'radial-gradient(circle, rgba(111, 255, 210, 0.15) 0%, transparent 70%)',
             filter: 'blur(60px)',
             animation: 'float 25s ease-in-out infinite reverse'
           }}></div>
