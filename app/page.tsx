@@ -145,6 +145,7 @@ function HomeContent() {
     platform: "Instagram",
   });
   const [userType, setUserType] = useState<'business' | 'creator'>('business');
+  const [creatorGoals, setCreatorGoals] = useState<string>("");
 
   const [strategy, setStrategy] = useState<StrategyResult | null>(null);
   const [currentStep, setCurrentStep] = useState<WizardStep>("form");
@@ -1773,6 +1774,36 @@ function HomeContent() {
                 required
               />
 
+              {/* Goals Field - Only for Creators */}
+              {userType === 'creator' && (
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                    Your Goals
+                  </label>
+                  <textarea
+                    value={creatorGoals}
+                    onChange={(e) => setCreatorGoals(e.target.value)}
+                    placeholder="What are your goals? (e.g., grow followers, increase engagement, monetize content...)"
+                    className="w-full px-4 py-3 rounded-lg border transition-all"
+                    rows={3}
+                    style={{
+                      backgroundColor: 'var(--card-bg)',
+                      borderColor: 'rgba(218, 165, 32, 0.3)',
+                      color: 'var(--text-primary)',
+                      outline: 'none'
+                    }}
+                    onFocus={(e) => {
+                      e.target.style.borderColor = '#DAA520';
+                      e.target.style.boxShadow = '0 0 0 3px rgba(218, 165, 32, 0.1)';
+                    }}
+                    onBlur={(e) => {
+                      e.target.style.borderColor = 'rgba(218, 165, 32, 0.3)';
+                      e.target.style.boxShadow = 'none';
+                    }}
+                  />
+                </div>
+              )}
+
               <button 
                 type="submit" 
                 className="w-full py-4 rounded-lg font-bold text-lg transition-all duration-500 hover:scale-105 active:scale-95 shadow-lg relative overflow-hidden"
@@ -1867,14 +1898,32 @@ function HomeContent() {
         {/* Researching State */}
         {currentStep === "researching" && (
           <div ref={strategyRef} className="mb-10 scroll-mt-4">
-            <SectionCard isPro={isPro}>
+            <div 
+              className="rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500"
+              style={{
+                backgroundColor: userType === 'creator' 
+                  ? 'rgba(218, 165, 32, 0.08)'
+                  : 'var(--card-bg)',
+                borderColor: userType === 'creator'
+                  ? 'rgba(218, 165, 32, 0.3)'
+                  : 'var(--card-border)',
+                boxShadow: userType === 'creator'
+                  ? '0 10px 40px rgba(218, 165, 32, 0.15)'
+                  : undefined
+              }}
+            >
               <div className="text-center py-12">
                 <div className="text-6xl mb-6 animate-bounce">⚡</div>
-                <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
-                  Creating Your Strategy...
+                <h2 className="text-3xl font-bold mb-4 transition-colors duration-500" style={{ 
+                  color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
+                }}>
+                  {userType === 'business' ? 'Creating Your Strategy...' : 'Researching Creator Insights...'}
                 </h2>
                 <p className="mb-8" style={{ color: 'var(--text-secondary)' }}>
-                  Finding the best tactics for {businessInfo.businessName} on {businessInfo.platform}
+                  {userType === 'business' 
+                    ? `Finding the best tactics for ${businessInfo.businessName} on ${businessInfo.platform}`
+                    : `Analyzing ${businessInfo.businessType} trends and building your content strategy...`
+                  }
                 </p>
 
                 <div className="max-w-md mx-auto space-y-3">
@@ -1882,28 +1931,48 @@ function HomeContent() {
                     <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
                       {researchStatus}
                     </span>
-                    <span className="font-bold" style={{ color: 'var(--primary)' }}>
+                    <span className="font-bold transition-colors duration-500" style={{ 
+                      color: userType === 'creator' ? '#DAA520' : 'var(--primary)' 
+                    }}>
                       {Math.round(researchProgress)}%
                     </span>
                   </div>
                   <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
                     <div
-                      className="bg-gradient-to-r from-blue-500 via-purple-500 to-pink-500 h-4 rounded-full transition-all duration-500"
-                      style={{ width: `${researchProgress}%` }}
+                      className="h-4 rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${researchProgress}%`,
+                        background: userType === 'creator'
+                          ? 'linear-gradient(to right, #DAA520, #F4D03F)'
+                          : 'linear-gradient(to r, #2979FF, #9F7AEA, #EC4899)'
+                      }}
                     >
                       <div className="h-full w-full bg-white/30 animate-pulse"></div>
                     </div>
                   </div>
                 </div>
               </div>
-            </SectionCard>
+            </div>
           </div>
         )}
 
         {/* Step-by-Step Strategy Wizard */}
         {strategy && currentStep !== "form" && currentStep !== "researching" && currentStep !== "premium" && currentStep !== "history" && currentStep !== "businesses" && (
           <div ref={strategyRef} className="mb-10 scroll-mt-4">
-            <SectionCard isPro={isPro}>
+            <div 
+              className="rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500"
+              style={{
+                backgroundColor: userType === 'creator' 
+                  ? 'rgba(218, 165, 32, 0.08)'
+                  : 'var(--card-bg)',
+                borderColor: userType === 'creator'
+                  ? 'rgba(218, 165, 32, 0.3)'
+                  : 'var(--card-border)',
+                boxShadow: userType === 'creator'
+                  ? '0 10px 40px rgba(218, 165, 32, 0.15)'
+                  : undefined
+              }}
+            >
               {/* Progress Indicator */}
               <div className="mb-6">
                 <div className="flex items-center justify-between mb-2">
@@ -2640,7 +2709,7 @@ function HomeContent() {
                   )}
                 </div>
               )}
-            </SectionCard>
+            </div>
           </div>
         )}
 
