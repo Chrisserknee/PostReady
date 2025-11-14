@@ -2215,35 +2215,45 @@ function HomeContent() {
                       <div
                         key={index}
                         onClick={() => handleSelectIdea(idea)}
-                        className="relative border-2 rounded-2xl p-6 cursor-pointer transition-all duration-500 hover:scale-[1.03] hover:shadow-xl"
+                        className="group relative border-2 rounded-2xl p-6 cursor-pointer transition-all duration-500 hover:scale-[1.02] active:scale-[0.98]"
                         style={{
                           backgroundColor: selectedIdea?.title === idea.title 
-                            ? (userType === 'creator' ? 'rgba(218, 165, 32, 0.12)' : 'var(--hover-bg)')
+                            ? (userType === 'creator' ? 'rgba(218, 165, 32, 0.15)' : 'rgba(41, 121, 255, 0.08)')
                             : 'var(--card-bg)',
                           borderColor: selectedIdea?.title === idea.title 
                             ? (userType === 'creator' ? '#DAA520' : 'var(--primary)')
-                            : (userType === 'creator' ? 'rgba(218, 165, 32, 0.3)' : 'var(--card-border)'),
+                            : (userType === 'creator' ? 'rgba(218, 165, 32, 0.4)' : 'var(--card-border)'),
                           boxShadow: selectedIdea?.title === idea.title 
-                            ? (userType === 'creator' ? '0 8px 24px rgba(218, 165, 32, 0.3)' : '0 8px 24px rgba(41, 121, 255, 0.2)')
-                            : '0 2px 8px rgba(0,0,0,0.08)'
+                            ? (userType === 'creator' ? '0 10px 30px rgba(218, 165, 32, 0.35), 0 0 0 1px rgba(218, 165, 32, 0.5)' : '0 10px 30px rgba(41, 121, 255, 0.25)')
+                            : '0 4px 12px rgba(0,0,0,0.12)',
+                          transform: selectedIdea?.title === idea.title ? 'translateY(-2px)' : 'none'
                         }}
                       >
-                        <div className="flex items-start justify-between mb-3">
-                          <h4 className="font-bold text-lg flex-1 leading-tight" style={{ color: 'var(--text-primary)' }}>
+                        <div className="flex items-start gap-3 mb-4">
+                          <h4 className="font-bold text-lg flex-1 leading-tight transition-colors duration-500" style={{ 
+                            color: selectedIdea?.title === idea.title 
+                              ? (userType === 'creator' ? '#DAA520' : 'var(--primary)')
+                              : 'var(--text-primary)' 
+                          }}>
                             {idea.title}
                           </h4>
                           <Badge variant={idea.angle}>
                             {idea.angle.replace(/_/g, " ")}
                           </Badge>
                         </div>
-                        <p className="text-sm leading-relaxed mb-3" style={{ color: 'var(--text-secondary)' }}>
+                        <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
                           {idea.description}
                         </p>
                         {selectedIdea?.title === idea.title && (
-                          <div className="absolute top-4 right-4 w-8 h-8 rounded-full flex items-center justify-center transition-all duration-500" style={{ 
-                            backgroundColor: userType === 'creator' ? '#DAA520' : 'var(--primary)'
+                          <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 shadow-lg" style={{ 
+                            background: userType === 'creator' 
+                              ? 'linear-gradient(135deg, #DAA520, #F4D03F)'
+                              : 'linear-gradient(135deg, #2979FF, #4A9FFF)',
+                            boxShadow: userType === 'creator'
+                              ? '0 4px 12px rgba(218, 165, 32, 0.5)'
+                              : '0 4px 12px rgba(41, 121, 255, 0.5)'
                           }}>
-                            <span className="text-white text-lg">✓</span>
+                            <span className="text-white text-xl font-bold">✓</span>
                           </div>
                         )}
                       </div>
