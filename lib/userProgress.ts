@@ -11,6 +11,8 @@ export type UserProgressData = {
   rewriteCount?: number;
   regenerateCount?: number;
   rewordTitleCount?: number;
+  hashtagCount?: number;
+  guideAICount?: number;
 };
 
 export async function saveUserProgress(
@@ -30,6 +32,8 @@ export async function saveUserProgress(
         rewrite_count: progress.rewriteCount ?? 0,
         regenerate_count: progress.regenerateCount ?? 0,
         reword_title_count: progress.rewordTitleCount ?? 0,
+        hashtag_count: progress.hashtagCount ?? 0,
+        guide_ai_count: progress.guideAICount ?? 0,
         updated_at: new Date().toISOString(),
       },
       {
@@ -73,6 +77,8 @@ export async function loadUserProgress(userId: string): Promise<{
       rewriteCount: data.rewrite_count ?? 0,
       regenerateCount: data.regenerate_count ?? 0,
       rewordTitleCount: data.reword_title_count ?? 0,
+      hashtagCount: data.hashtag_count ?? 0,
+      guideAICount: data.guide_ai_count ?? 0,
     };
 
     return { data: progress, error: null };

@@ -141,7 +141,7 @@
 }
 
 :root[data-theme="light"] {
-  --background: #F5F6FA;
+  --background: #E0E6ED;
   --foreground: #1A1A1A;
   --primary: #2979FF;
   --secondary: #1A1A1A;

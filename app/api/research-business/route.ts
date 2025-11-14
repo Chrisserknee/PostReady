@@ -34,19 +34,25 @@ export async function POST(request: NextRequest) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    // CRITICAL: Use AI-powered detection to identify actual business type
-    const actualBusinessType = await detectBusinessType(
-      businessInfo.businessName,
-      businessInfo.location,
-      businessInfo.businessType,
-      process.env.OPENAI_API_KEY!
-    );
-    
-    console.log("📊 Final Business Type Decision:", {
-      userSelected: businessInfo.businessType,
-      aiDetected: actualBusinessType,
-      usingForContent: actualBusinessType
-    });
+    // Only detect business type for business users, not creators
+    let actualBusinessType: string = businessInfo.businessType;
+    if (userType !== 'creator') {
+      // CRITICAL: Use AI-powered detection to identify actual business type
+      actualBusinessType = await detectBusinessType(
+        businessInfo.businessName,
+        businessInfo.location,
+        businessInfo.businessType,
+        process.env.OPENAI_API_KEY!
+      ) as string;
+      
+      console.log("📊 Final Business Type Decision:", {
+        userSelected: businessInfo.businessType,
+        aiDetected: actualBusinessType,
+        usingForContent: actualBusinessType
+      });
+    } else {
+      console.log("🎬 Creator strategy requested - skipping business type detection");
+    }
 
     // Generate strategy based on user type (business or creator)
     const researchPrompt = userType === 'creator'
@@ -102,28 +108,30 @@ export async function POST(request: NextRequest) {
       throw new Error("Content ideas are malformed. Cannot use generic fallback.");
     }
 
-    // CRITICAL: Check for generic template ideas - reject if found
-    const genericTemplates = [
-      "educational tip",
-      "team introduction",
-      "special offer",
-      "customer testimonial",
-      "behind-the-scenes look",
-      "product showcase",
-      "service showcase",
-      "community involvement",
-      "fun moment"
-    ];
+    // CRITICAL: Check for generic template ideas - only for business users, not creators
+    if (userType !== 'creator') {
+      const genericTemplates = [
+        "educational tip",
+        "team introduction",
+        "special offer",
+        "customer testimonial",
+        "behind-the-scenes look",
+        "product showcase",
+        "service showcase",
+        "community involvement",
+        "fun moment"
+      ];
 
-    const hasGenericIdeas = research.contentIdeas.some((idea: any) => {
-      const titleLower = idea.title.toLowerCase();
-      return genericTemplates.some(template => titleLower.includes(template));
-    });
+      const hasGenericIdeas = research.contentIdeas.some((idea: any) => {
+        const titleLower = idea.title.toLowerCase();
+        return genericTemplates.some(template => titleLower.includes(template));
+      });
 
-    if (hasGenericIdeas) {
-      console.error("❌ CRITICAL: AI generated generic template ideas instead of contextual ones");
-      console.error("Ideas received:", research.contentIdeas.map((i: any) => i.title));
-      throw new Error("AI generated generic ideas instead of business-specific contextual ideas. This is unacceptable.");
+      if (hasGenericIdeas) {
+        console.error("❌ CRITICAL: AI generated generic template ideas instead of contextual ones");
+        console.error("Ideas received:", research.contentIdeas.map((i: any) => i.title));
+        throw new Error("AI generated generic ideas instead of business-specific contextual ideas. This is unacceptable.");
+      }
     }
 
     console.log("✅ Research data validated successfully:", {

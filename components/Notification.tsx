@@ -104,33 +104,34 @@ export const Notification = ({
   return (
     <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
       <div
-        className="rounded-2xl shadow-2xl overflow-hidden max-w-md"
+        className="rounded-xl shadow-lg overflow-hidden max-w-xs"
         style={{
           background: colors.bg,
-          border: `2px solid ${colors.border}`,
+          border: `1px solid ${colors.border}`,
           animation: 'slideInRight 0.3s ease-out',
         }}
       >
-        <div className="p-5 flex items-start gap-4">
-          <span className="text-3xl">{getIcon()}</span>
-          <div className="flex-1">
+        <div className="px-3 py-2.5 flex items-center gap-2.5">
+          <span className="text-lg flex-shrink-0">{getIcon()}</span>
+          <div className="flex-1 min-w-0">
             {title && (
-              <h3 className="font-bold text-white text-lg mb-1">{title}</h3>
+              <h3 className="font-semibold text-white text-xs mb-0.5 leading-tight">{title}</h3>
             )}
-            <p className="text-white text-sm leading-relaxed">{message}</p>
+            <p className="text-white text-xs leading-snug">{message}</p>
           </div>
           <button
             onClick={onClose}
-            className="text-white hover:bg-white/20 rounded-full w-8 h-8 flex items-center justify-center transition-all flex-shrink-0"
+            className="text-white/80 hover:text-white hover:bg-white/20 rounded-full w-5 h-5 flex items-center justify-center transition-all flex-shrink-0 text-xs"
+            style={{ fontSize: '14px' }}
           >
             ✕
           </button>
         </div>
         {/* Progress bar */}
         {duration > 0 && (
-          <div className="h-1 bg-white/30">
+          <div className="h-0.5 bg-white/20">
             <div
-              className="h-full bg-white transition-all"
+              className="h-full bg-white/60 transition-all"
               style={{
                 animation: `shrink ${duration}ms linear`,
               }}

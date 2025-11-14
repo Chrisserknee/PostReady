@@ -16,6 +16,14 @@ export interface CompletedPost {
   completedAt: string;
 }
 
+export interface SavedVideoIdea {
+  id: string;
+  businessName: string;
+  businessInfo: BusinessInfo;
+  videoIdea: ContentIdea;
+  savedAt: string;
+}
+
 // Save a business for quick access
 export async function saveBusiness(
   userId: string,
@@ -154,6 +162,96 @@ export async function loadPostHistory(userId: string): Promise<{
   } catch (error) {
     console.error('Error loading post history:', error);
     return { data: [], error };
+  }
+}
+
+// Save a video idea to saved ideas
+export async function saveVideoIdea(
+  userId: string,
+  businessInfo: BusinessInfo,
+  videoIdea: ContentIdea
+): Promise<{ error: any }> {
+  try {
+    // Check if this exact idea is already saved (prevent duplicates)
+    const { data: existing, error: checkError } = await supabase
+      .from('saved_video_ideas')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('business_name', businessInfo.businessName)
+      .eq('video_idea->>title', videoIdea.title)
+      .limit(1);
+
+    if (checkError) {
+      console.error('Error checking for existing saved idea:', checkError);
+    }
+
+    if (existing && existing.length > 0) {
+      console.log('📝 Video idea already saved, skipping duplicate');
+      return { error: null };
+    }
+
+    const { error } = await supabase.from('saved_video_ideas').insert({
+      user_id: userId,
+      business_name: businessInfo.businessName,
+      business_info: businessInfo,
+      video_idea: videoIdea,
+      saved_at: new Date().toISOString(),
+    });
+
+    return { error };
+  } catch (error) {
+    console.error('Error saving video idea:', error);
+    return { error };
+  }
+}
+
+// Load all saved video ideas for a user
+export async function loadSavedVideoIdeas(userId: string): Promise<{
+  data: SavedVideoIdea[];
+  error: any;
+}> {
+  try {
+    const { data, error } = await supabase
+      .from('saved_video_ideas')
+      .select('*')
+      .eq('user_id', userId)
+      .order('saved_at', { ascending: false });
+
+    if (error) {
+      return { data: [], error };
+    }
+
+    const ideas: SavedVideoIdea[] = (data || []).map((row: any) => ({
+      id: row.id,
+      businessName: row.business_name,
+      businessInfo: row.business_info,
+      videoIdea: row.video_idea,
+      savedAt: row.saved_at,
+    }));
+
+    return { data: ideas, error: null };
+  } catch (error) {
+    console.error('Error loading saved video ideas:', error);
+    return { data: [], error };
+  }
+}
+
+// Delete a saved video idea
+export async function deleteSavedVideoIdea(
+  userId: string,
+  ideaId: string
+): Promise<{ error: any }> {
+  try {
+    const { error } = await supabase
+      .from('saved_video_ideas')
+      .delete()
+      .eq('id', ideaId)
+      .eq('user_id', userId);
+
+    return { error };
+  } catch (error) {
+    console.error('Error deleting saved video idea:', error);
+    return { error };
   }
 }
 

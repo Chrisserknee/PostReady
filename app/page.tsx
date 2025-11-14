@@ -18,7 +18,7 @@ import { Notification } from "@/components/Notification";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { saveUserProgress, loadUserProgress } from "@/lib/userProgress";
-import { saveBusiness, loadSavedBusinesses, saveCompletedPost, loadPostHistory } from "@/lib/userHistory";
+import { saveBusiness, loadSavedBusinesses, saveCompletedPost, loadPostHistory, saveVideoIdea, loadSavedVideoIdeas, deleteSavedVideoIdea, SavedVideoIdea } from "@/lib/userHistory";
 
 type WizardStep = "form" | "researching" | "principles" | "choose-idea" | "record-video" | "generating-caption" | "post-details" | "premium" | "history" | "businesses";
 
@@ -137,6 +137,23 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
+  // Dev mode state - load from localStorage on mount
+  const [devMode, setDevMode] = useState<'none' | 'regular' | 'pro' | 'creator'>(() => {
+    if (typeof window !== 'undefined') {
+      const stored = localStorage.getItem('devMode') as 'none' | 'regular' | 'pro' | 'creator' | null;
+      return stored || 'none';
+    }
+    return 'none';
+  });
+  
+  // Persist dev mode to localStorage so portal page can access it
+  useEffect(() => {
+    if (devMode !== 'none') {
+      localStorage.setItem('devMode', devMode);
+    } else {
+      localStorage.removeItem('devMode');
+    }
+  }, [devMode]);
   
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
     businessName: "",
@@ -146,6 +163,21 @@ function HomeContent() {
   });
   const [userType, setUserType] = useState<'business' | 'creator'>('business');
   const [creatorGoals, setCreatorGoals] = useState<string>("");
+  const [planType, setPlanType] = useState<'pro' | 'creator'>('pro');
+  const [isPlanTransitioning, setIsPlanTransitioning] = useState<boolean>(false);
+  
+  // Dev mode overrides
+  const devUser = devMode !== 'none' ? { id: 'dev-user', email: devMode === 'pro' ? 'pro@test.com' : devMode === 'creator' ? 'creator@test.com' : 'user@test.com' } : null;
+  const effectiveUser = devMode !== 'none' ? devUser : user;
+  const effectiveIsPro = devMode === 'pro' || devMode === 'creator' ? true : devMode !== 'none' ? false : isPro;
+  
+  // When dev mode is 'creator', also set userType to creator
+  useEffect(() => {
+    if (devMode === 'creator') {
+      setUserType('creator');
+    }
+  }, [devMode]);
+  
 
   const [strategy, setStrategy] = useState<StrategyResult | null>(null);
   const [currentStep, setCurrentStep] = useState<WizardStep>("form");
@@ -161,6 +193,26 @@ function HomeContent() {
   const [regenerateCount, setRegenerateCount] = useState<number>(0);
   const [rewordTitleCount, setRewordTitleCount] = useState<number>(0);
   const [isRewordingTitle, setIsRewordingTitle] = useState<boolean>(false);
+  const [showGuideAI, setShowGuideAI] = useState<boolean>(false);
+  const [aiGuidance, setAiGuidance] = useState<string>("");
+  const [isGeneratingHashtags, setIsGeneratingHashtags] = useState<boolean>(false);
+  const [hashtagCount, setHashtagCount] = useState<number>(0);
+  const [guideAICount, setGuideAICount] = useState<number>(0);
+  
+  // Close Guide AI bubble when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showGuideAI && !target.closest('.guide-ai-container')) {
+        setShowGuideAI(false);
+      }
+    };
+    
+    if (showGuideAI) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showGuideAI]);
   const [captionAnimation, setCaptionAnimation] = useState<'idle' | 'fadeOut' | 'typing'>('idle');
   const [titleAnimation, setTitleAnimation] = useState<'idle' | 'fadeOut' | 'fadeIn'>('idle');
   const [ideasAnimation, setIdeasAnimation] = useState<'idle' | 'fadeOut' | 'fadeIn'>('idle');
@@ -216,17 +268,23 @@ function HomeContent() {
     postDetails: PostDetails;
     completedAt: string;
   }>>([]);
+  const [savedVideoIdeas, setSavedVideoIdeas] = useState<SavedVideoIdea[]>([]);
 
   const strategyRef = useRef<HTMLDivElement>(null);
   const postPlannerRef = useRef<HTMLDivElement>(null);
 
-  // Load user progress when user signs in
+  // Load user progress when user signs in OR when dev mode is active
   useEffect(() => {
-    if (user && !authLoading) {
-      loadProgress();
-      loadHistoryData();
+    if (!authLoading) {
+      if (user) {
+        loadProgress();
+        loadHistoryData();
+      } else if (devMode !== 'none' && effectiveUser) {
+        // Load history for dev mode users
+        loadHistoryData();
+      }
     }
-  }, [user, authLoading]);
+  }, [user, authLoading, devMode, effectiveUser]);
 
   // Auto-save progress when data changes (but not for navigation pages)
   useEffect(() => {
@@ -262,7 +320,7 @@ function HomeContent() {
     if (view === 'history') {
       setCurrentStep('history');
       // Reload history data when navigating to history page
-      if (user) {
+      if (effectiveUser) {
         loadHistoryData();
       }
       // Clear URL params after navigation
@@ -270,7 +328,7 @@ function HomeContent() {
     } else if (view === 'businesses') {
       setCurrentStep('businesses');
       // Reload businesses data when navigating to businesses page
-      if (user) {
+      if (effectiveUser) {
         loadHistoryData();
       }
       // Clear URL params after navigation
@@ -363,15 +421,90 @@ function HomeContent() {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [generateIdeasCount, rewriteCount, regenerateCount, rewordTitleCount, user, authLoading]);
+  }, [generateIdeasCount, rewriteCount, regenerateCount, rewordTitleCount, hashtagCount, guideAICount, user, authLoading]);
 
-  // Save post to history when reaching post-details step (ensures post is saved even if caption generation had issues)
+  // Save video idea to history when reaching post-details step (for all signed-in users: regular, pro, creator)
+  // This runs immediately when the step changes, not waiting for postDetails
   useEffect(() => {
+    if (currentStep === "post-details" && selectedIdea && businessInfo.businessName) {
+      // Skip if no user at all (not signed in and not dev mode)
+      if (!effectiveUser) {
+        console.log('⚠️ No user - video ideas cannot be saved. Sign in or use dev mode to save history.');
+        return;
+      }
+      
+      // Save the video idea to saved ideas
+      const saveIdeaToHistory = async () => {
+        try {
+          if (devMode !== 'none') {
+            // Dev mode: Save to localStorage
+            console.log('💾 Saving video idea to localStorage (dev mode)...', {
+              devMode,
+              ideaTitle: selectedIdea.title,
+              businessName: businessInfo.businessName
+            });
+            
+            const devIdeasKey = `dev_video_ideas_${devMode}`;
+            const existingIdeasJson = localStorage.getItem(devIdeasKey);
+            const existingIdeas: SavedVideoIdea[] = existingIdeasJson ? JSON.parse(existingIdeasJson) : [];
+            
+            // Check for duplicates
+            const isDuplicate = existingIdeas.some(
+              saved => saved.videoIdea.title === selectedIdea.title && saved.businessName === businessInfo.businessName
+            );
+            
+            if (!isDuplicate) {
+              const newIdea: SavedVideoIdea = {
+                id: `dev-${Date.now()}-${Math.random()}`,
+                businessName: businessInfo.businessName,
+                businessInfo: businessInfo,
+                videoIdea: selectedIdea,
+                savedAt: new Date().toISOString()
+              };
+              
+              existingIdeas.unshift(newIdea); // Add to beginning
+              localStorage.setItem(devIdeasKey, JSON.stringify(existingIdeas));
+              
+              // Update state
+              setSavedVideoIdeas(existingIdeas);
+              console.log('✅ Video idea saved to localStorage (dev mode)');
+            } else {
+              console.log('ℹ️ Video idea already saved (dev mode), skipping duplicate');
+            }
+          } else if (user && user.id) {
+            // Real user: Save to Supabase
+            console.log('💾 Saving video idea to Supabase...', {
+              userId: user.id,
+              ideaTitle: selectedIdea.title,
+              businessName: businessInfo.businessName
+            });
+            
+            const result = await saveVideoIdea(user.id, businessInfo, selectedIdea);
+            if (!result.error) {
+              // Reload saved ideas to update state
+              const updatedIdeasResult = await loadSavedVideoIdeas(user.id);
+              if (!updatedIdeasResult.error && updatedIdeasResult.data) {
+                setSavedVideoIdeas(updatedIdeasResult.data);
+              }
+              console.log('✅ Video idea saved to Supabase successfully');
+            } else {
+              console.error('❌ Error saving video idea:', result.error);
+            }
+          }
+        } catch (error) {
+          console.error('❌ Error saving video idea:', error);
+        }
+      };
+      
+      saveIdeaToHistory();
+    }
+    
+    // Save completed post to history when postDetails is available
     if (currentStep === "post-details" && user && selectedIdea && postDetails) {
       console.log('📝 Post-details step reached - ensuring post is saved to history');
       saveCompletedPostToHistory(selectedIdea, postDetails);
     }
-  }, [currentStep, user, selectedIdea, postDetails]);
+  }, [currentStep, effectiveUser, user, selectedIdea, postDetails, businessInfo, devMode]);
 
   const loadProgress = async () => {
     if (!user) return;
@@ -385,6 +518,8 @@ function HomeContent() {
         if (data.rewriteCount !== undefined) setRewriteCount(data.rewriteCount);
         if (data.regenerateCount !== undefined) setRegenerateCount(data.regenerateCount);
         if (data.rewordTitleCount !== undefined) setRewordTitleCount(data.rewordTitleCount);
+        if (data.hashtagCount !== undefined) setHashtagCount(data.hashtagCount);
+        if (data.guideAICount !== undefined) setGuideAICount(data.guideAICount);
         
         console.log('✅ Usage counts loaded from database (workflow state NOT restored)');
       }
@@ -411,6 +546,8 @@ function HomeContent() {
         currentStep: stepToSave,
         generateIdeasCount,
         rewriteCount,
+        hashtagCount,
+        guideAICount,
         regenerateCount,
         rewordTitleCount,
       });
@@ -420,31 +557,57 @@ function HomeContent() {
   };
 
   const loadHistoryData = async () => {
-    if (!user) return;
+    // Skip if no user at all
+    if (!effectiveUser) return;
 
-    console.log('📂 Loading history data for user:', user.id);
+    console.log('📂 Loading history data...', { devMode, hasRealUser: !!user });
     
     try {
-      const [businessesResult, postsResult] = await Promise.all([
-        loadSavedBusinesses(user.id),
-        loadPostHistory(user.id)
-      ]);
+      if (devMode !== 'none') {
+        // Dev mode: Load from localStorage
+        console.log('📂 Loading dev mode history from localStorage...');
+        const devIdeasKey = `dev_video_ideas_${devMode}`;
+        const devIdeasJson = localStorage.getItem(devIdeasKey);
+        const devIdeas: SavedVideoIdea[] = devIdeasJson ? JSON.parse(devIdeasJson) : [];
+        
+        console.log('✅ Loaded dev mode video ideas:', devIdeas.length);
+        setSavedVideoIdeas(devIdeas);
+        setSavedBusinesses([]); // Dev mode doesn't save businesses
+        setCompletedPosts([]); // Dev mode doesn't save completed posts
+      } else if (user && user.id) {
+        // Real user: Load from Supabase
+        console.log('📂 Loading history data from Supabase for user:', user.id);
+        
+        const [businessesResult, postsResult, ideasResult] = await Promise.all([
+          loadSavedBusinesses(user.id),
+          loadPostHistory(user.id),
+          loadSavedVideoIdeas(user.id)
+        ]);
 
-      console.log('📂 Businesses result:', businessesResult);
-      console.log('📂 Posts result:', postsResult);
+        console.log('📂 Businesses result:', businessesResult);
+        console.log('📂 Posts result:', postsResult);
+        console.log('📂 Saved ideas result:', ideasResult);
 
-      if (!businessesResult.error && businessesResult.data) {
-        console.log('✅ Setting saved businesses:', businessesResult.data.length, 'businesses');
-        setSavedBusinesses(businessesResult.data);
-      } else if (businessesResult.error) {
-        console.error('❌ Error loading businesses:', businessesResult.error);
-      }
+        if (!businessesResult.error && businessesResult.data) {
+          console.log('✅ Setting saved businesses:', businessesResult.data.length, 'businesses');
+          setSavedBusinesses(businessesResult.data);
+        } else if (businessesResult.error) {
+          console.error('❌ Error loading businesses:', businessesResult.error);
+        }
 
-      if (!postsResult.error && postsResult.data) {
-        console.log('✅ Setting completed posts:', postsResult.data.length, 'posts');
-        setCompletedPosts(postsResult.data);
-      } else if (postsResult.error) {
-        console.error('❌ Error loading posts:', postsResult.error);
+        if (!postsResult.error && postsResult.data) {
+          console.log('✅ Setting completed posts:', postsResult.data.length, 'posts');
+          setCompletedPosts(postsResult.data);
+        } else if (postsResult.error) {
+          console.error('❌ Error loading posts:', postsResult.error);
+        }
+
+        if (!ideasResult.error && ideasResult.data) {
+          console.log('✅ Setting saved video ideas:', ideasResult.data.length, 'ideas');
+          setSavedVideoIdeas(ideasResult.data);
+        } else if (ideasResult.error) {
+          console.error('❌ Error loading saved ideas:', ideasResult.error);
+        }
       }
     } catch (error) {
       console.error('❌ Error loading history:', error);
@@ -527,21 +690,26 @@ function HomeContent() {
     setRegenerateCount(0);
     setGenerateIdeasCount(0);
     setRewordTitleCount(0);
+    setHashtagCount(0);
+    setGuideAICount(0);
     
     // Allow navigation again after animation completes
     setTimeout(() => setIsNavigating(false), 100);
   };
 
   const navigateToPortal = () => {
-    if (isNavigating) return; // Prevent multiple clicks during animation
+    console.log('navigateToPortal called', { isNavigating, effectiveUser, devMode });
     
-    setIsNavigating(true);
+    // Only navigate if user is logged in (or in dev mode)
+    if (!effectiveUser && devMode === 'none') {
+      console.log('No user found, opening auth modal');
+      openAuthModal('signin');
+      return;
+    }
     
+    console.log('Navigating to /portal');
     // Use Next.js router for client-side navigation
     router.push('/portal');
-    
-    // Allow navigation again after a short delay
-    setTimeout(() => setIsNavigating(false), 500);
   };
 
   const detectUserLocation = async () => {
@@ -940,6 +1108,10 @@ function HomeContent() {
   };
 
   const scrollToPremium = () => {
+    // Set plan type to 'pro' if coming from business section
+    if (userType === 'business') {
+      setPlanType('pro');
+    }
     setCurrentStep("premium");
     // Elegant scroll to show both pricing card and comparison table
     // Wait longer to ensure content is fully rendered
@@ -1115,16 +1287,98 @@ function HomeContent() {
     showNotification("Caption copied to clipboard!", "success", "Copied!");
   };
 
-  const handleRewriteCaption = async () => {
-    // Check if user has exceeded free rewrite limit (2 free rewrites)
-    if (rewriteCount >= 2 && !isPro) {
+  const handleMoreHashtags = async () => {
+    if (!postDetails || !selectedIdea) return;
+
+    // Check if user has exceeded free limit (3 free hashtag generations)
+    if (hashtagCount >= 3 && !effectiveIsPro) {
       setModalState({
         isOpen: true,
-        title: "Upgrade to PostReady Pro",
-        message: "You've used your 2 free rewrites. Upgrade to PostReady Pro for unlimited rewrites and more features!",
+        title: userType === 'creator' ? "Upgrade to Creator" : "Upgrade to PostReady Pro",
+        message: userType === 'creator' 
+          ? "You've used your 3 free hashtag generations. Upgrade to Creator for unlimited hashtag generation and more features!"
+          : "You've used your 3 free hashtag generations. Upgrade to PostReady Pro for unlimited hashtag generation and more features!",
         type: 'confirm',
         onConfirm: scrollToPremium,
-        confirmText: "View Pro Plan"
+        confirmText: userType === 'creator' ? "View Creator Plan" : "View Pro Plan"
+      });
+      return;
+    }
+
+    setIsGeneratingHashtags(true);
+
+    try {
+      // Extract existing hashtags from caption
+      const captionLines = postDetails.caption.split('\n\n');
+      const captionText = captionLines.filter(line => !line.trim().startsWith('#')).join('\n\n').trim();
+      const existingHashtags = captionLines
+        .filter(line => line.trim().startsWith('#'))
+        .flatMap(line => line.trim().split(/\s+/).filter(tag => tag.startsWith('#')));
+
+      const response = await fetch("/api/generate-hashtags", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          businessInfo,
+          caption: postDetails.caption,
+          selectedIdea,
+          existingHashtags,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to generate hashtags");
+      }
+
+      const data = await response.json();
+      
+      // Combine existing and new hashtags
+      const allHashtags = [...existingHashtags, ...data.hashtags];
+      const uniqueHashtags = Array.from(new Set(allHashtags.map(tag => tag.toLowerCase())));
+      
+      // Update caption with new hashtags
+      const updatedCaption = `${captionText}\n\n${uniqueHashtags.join(" ")}`;
+      
+      const updatedPostDetails = {
+        ...postDetails,
+        caption: updatedCaption,
+      };
+      
+      setPostDetails(updatedPostDetails);
+      
+      // Increment usage count for non-Pro users
+      if (!effectiveIsPro) {
+        setHashtagCount(prev => prev + 1);
+      }
+      
+      // Save updated post to history
+      if (user && selectedIdea) {
+        await saveCompletedPostToHistory(selectedIdea, updatedPostDetails);
+      }
+      
+      showNotification(`Added ${data.hashtags.length} new hashtags!`, "success", "Hashtags Added");
+    } catch (error) {
+      console.error("Error generating hashtags:", error);
+      showNotification("Failed to generate hashtags. Please try again.", "error", "Error");
+    } finally {
+      setIsGeneratingHashtags(false);
+    }
+  };
+
+  const handleRewriteCaption = async (guidance?: string) => {
+    // Check if user has exceeded free rewrite limit (2 free rewrites)
+    if (rewriteCount >= 2 && !effectiveIsPro) {
+      setModalState({
+        isOpen: true,
+        title: userType === 'creator' ? "Upgrade to Creator" : "Upgrade to PostReady Pro",
+        message: userType === 'creator' 
+          ? "You've used your 2 free rewrites. Upgrade to Creator for unlimited rewrites and more features!"
+          : "You've used your 2 free rewrites. Upgrade to PostReady Pro for unlimited rewrites and more features!",
+        type: 'confirm',
+        onConfirm: scrollToPremium,
+        confirmText: userType === 'creator' ? "View Creator Plan" : "View Pro Plan"
       });
       return;
     }
@@ -1142,6 +1396,10 @@ function HomeContent() {
 
     setIsRewriting(true);
     setCaptionAnimation('fadeOut');
+    setShowGuideAI(false); // Close the guide AI bubble
+    if (guidance) {
+      setAiGuidance(""); // Clear guidance after applying
+    }
 
     try {
       // Wait for fade out animation
@@ -1162,6 +1420,8 @@ function HomeContent() {
             ...selectedIdea,
             title: postDetails?.title || selectedIdea.title, // Use edited title if available
           },
+          guidance: guidance || undefined, // Include user guidance if provided
+          currentCaption: postDetails?.caption || undefined, // Include current caption for length comparison
         }),
         signal: controller.signal,
       });
@@ -1225,14 +1485,16 @@ function HomeContent() {
 
   const handleRegenerateIdea = () => {
     // Check if user has exceeded free regenerate limit
-    if (regenerateCount >= 2 && !isPro) {
+    if (regenerateCount >= 2 && !effectiveIsPro) {
       setModalState({
         isOpen: true,
-        title: "Upgrade to PostReady Pro",
-        message: "You've used your free idea regenerations. Upgrade to PostReady Pro for unlimited regenerations and more features!",
+        title: userType === 'creator' ? "Upgrade to Creator" : "Upgrade to PostReady Pro",
+        message: userType === 'creator' 
+          ? "You've used your free idea regenerations. Upgrade to Creator for unlimited regenerations and more features!"
+          : "You've used your free idea regenerations. Upgrade to PostReady Pro for unlimited regenerations and more features!",
         type: 'confirm',
         onConfirm: scrollToPremium,
-        confirmText: "View Pro Plan"
+        confirmText: userType === 'creator' ? "View Creator Plan" : "View Pro Plan"
       });
       return;
     }
@@ -1276,7 +1538,7 @@ function HomeContent() {
 
   const handleRewordTitle = async () => {
     // Check if user has exceeded free reword limit (3 free rewords)
-    if (rewordTitleCount >= 3 && !isPro) {
+    if (rewordTitleCount >= 3 && !effectiveIsPro) {
       setModalState({
         isOpen: true,
         title: "Upgrade to PostReady Pro",
@@ -1409,10 +1671,10 @@ function HomeContent() {
       </div>
       <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>
         {/* Header with Auth - Only for signed-in users */}
-        {user && !authLoading && (
+        {effectiveUser && !authLoading && (
           <div className="flex justify-end items-center mb-8">
             <div className="flex items-center gap-3">
-              {isPro && (
+              {effectiveIsPro && (
                 <span 
                   className="text-white px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden"
                   style={{ 
@@ -1426,6 +1688,23 @@ function HomeContent() {
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                     PRO
+                  </span>
+                </span>
+              )}
+              {devMode === 'creator' && !effectiveIsPro && (
+                <span 
+                  className="text-white px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden"
+                  style={{ 
+                    background: 'linear-gradient(to right, #DAA520, #F4D03F)',
+                    boxShadow: '0 0 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)',
+                    animation: 'shimmer 3s ease-in-out infinite'
+                  }}
+                >
+                  <span className="relative z-10 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    CREATOR
                   </span>
                 </span>
               )}
@@ -1460,12 +1739,12 @@ function HomeContent() {
                 My Businesses
               </button>
               <button
-                onClick={() => {
-                  setCurrentStep("history");
-                  if (user) {
-                    loadHistoryData();
-                  }
-                }}
+                    onClick={() => {
+                      setCurrentStep("history");
+                      if (effectiveUser) {
+                        loadHistoryData();
+                      }
+                    }}
                 className="text-sm font-medium transition-colors"
                 style={currentStep === "history" ? { 
                   color: 'var(--primary)',
@@ -1477,14 +1756,18 @@ function HomeContent() {
                 History
               </button>
               <button
-                onClick={navigateToPortal}
-                disabled={isNavigating}
-                className="text-sm transition-all font-medium underline decoration-dotted hover:opacity-70 disabled:opacity-50"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  navigateToPortal();
+                }}
+                className="text-sm transition-all font-medium underline decoration-dotted hover:opacity-70 cursor-pointer"
                 style={{ color: 'var(--text-secondary)' }}
+                title="Go to User Portal"
               >
-                {user?.email || 'dev@test.com'}
+                {effectiveUser?.email || 'dev@test.com'}
               </button>
-              {!isPro && (
+              {!effectiveIsPro && devMode !== 'creator' && (
                 <button
                   onClick={scrollToPremium}
                   className="text-white px-4 py-2 rounded-lg text-sm font-bold transition-all hover:opacity-90"
@@ -1504,7 +1787,7 @@ function HomeContent() {
         )}
 
         {/* Sign Up CTA Banner for Non-Signed-Up Users */}
-        {!user && (
+        {!effectiveUser && (
           <div className="mb-8">
             <div className="rounded-xl p-5 border-2 shadow-sm" style={{
               background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.04) 0%, rgba(111, 255, 210, 0.04) 100%)',
@@ -1575,9 +1858,6 @@ function HomeContent() {
                 alt="PostReady" 
                 className="h-6 w-auto"
               />
-              <span className="text-sm font-bold" style={{ color: 'var(--primary)' }}>
-                PostReady
-              </span>
             </button>
           </div>
         )}
@@ -1600,7 +1880,7 @@ function HomeContent() {
             Posting made easy.
           </p>
           <p className="text-lg mt-4 max-w-3xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
-            PostReady researches your business, analyzes your local market, and creates tailored posts, captions, and growth strategies — automatically.
+            PostReady builds your posts, captions, strategies, and ideas — and it pushes you to do what matters most: actually post.
           </p>
         </div>
 
@@ -1610,14 +1890,24 @@ function HomeContent() {
             className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500"
             style={{
               backgroundColor: userType === 'creator' 
-                ? 'rgba(218, 165, 32, 0.08)' // Light shimmery gold
-                : 'var(--card-bg)',
+                ? theme === 'light'
+                  ? '#FFFFFF' // Clean white background in light mode
+                  : 'rgba(218, 165, 32, 0.08)' // Light shimmery gold in dark mode
+                : theme === 'dark'
+                  ? 'rgba(30, 37, 50, 0.85)' // More see-through background in dark mode
+                  : 'var(--card-bg)',
               borderColor: userType === 'creator'
-                ? 'rgba(218, 165, 32, 0.3)'
+                ? theme === 'light'
+                  ? 'rgba(218, 165, 32, 0.25)' // Subtle gold border in light mode
+                  : 'rgba(218, 165, 32, 0.3)'
                 : 'var(--card-border)',
               boxShadow: userType === 'creator'
-                ? '0 10px 40px rgba(218, 165, 32, 0.15)'
-                : undefined
+                ? theme === 'light'
+                  ? '0 4px 20px rgba(218, 165, 32, 0.12), 0 0 0 1px rgba(218, 165, 32, 0.08)'
+                  : '0 10px 40px rgba(218, 165, 32, 0.15)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)' // Subtle blue glow in dark mode
+                  : undefined
             }}
           >
             {/* Business/Creator Toggle Pill with Slider */}
@@ -1659,7 +1949,11 @@ function HomeContent() {
                   type="button"
                   className="relative px-8 py-3 rounded-full font-semibold transition-all duration-300 z-10 flex-1"
                   style={{
-                    color: userType === 'creator' ? '#1A1F2E' : 'var(--text-secondary)'
+                    color: userType === 'creator' 
+                      ? theme === 'light' 
+                        ? '#1A1A1A' // Darker text for better contrast in light mode
+                        : '#1A1F2E' 
+                      : 'var(--text-secondary)'
                   }}
                 >
                   Creators
@@ -1668,7 +1962,11 @@ function HomeContent() {
             </div>
 
             <h2 className="text-3xl font-bold mb-6 transition-colors duration-500" style={{ 
-              color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
+              color: userType === 'creator' 
+                ? theme === 'light' 
+                  ? '#D97706' // Rich amber-gold for better contrast in light mode
+                  : '#DAA520' 
+                : 'var(--secondary)' 
             }}>
               {userType === 'business' ? 'Tell Us About Your Business' : 'Tell Us About Your Content'}
             </h2>
@@ -1791,17 +2089,23 @@ function HomeContent() {
                     className="w-full px-4 py-3 rounded-lg border transition-all"
                     rows={3}
                     style={{
-                      backgroundColor: 'var(--card-bg)',
-                      borderColor: 'rgba(218, 165, 32, 0.3)',
+                      backgroundColor: theme === 'light' ? '#FAFAFA' : 'var(--card-bg)',
+                      borderColor: theme === 'light' 
+                        ? 'rgba(218, 165, 32, 0.25)' 
+                        : 'rgba(218, 165, 32, 0.3)',
                       color: 'var(--text-primary)',
                       outline: 'none'
                     }}
                     onFocus={(e) => {
-                      e.target.style.borderColor = '#DAA520';
-                      e.target.style.boxShadow = '0 0 0 3px rgba(218, 165, 32, 0.1)';
+                      e.target.style.borderColor = theme === 'light' ? '#D97706' : '#DAA520';
+                      e.target.style.boxShadow = theme === 'light' 
+                        ? '0 0 0 3px rgba(217, 119, 6, 0.12)' 
+                        : '0 0 0 3px rgba(218, 165, 32, 0.1)';
                     }}
                     onBlur={(e) => {
-                      e.target.style.borderColor = 'rgba(218, 165, 32, 0.3)';
+                      e.target.style.borderColor = theme === 'light' 
+                        ? 'rgba(218, 165, 32, 0.25)' 
+                        : 'rgba(218, 165, 32, 0.3)';
                       e.target.style.boxShadow = 'none';
                     }}
                   />
@@ -1813,11 +2117,17 @@ function HomeContent() {
                 className="w-full py-4 rounded-lg font-bold text-lg transition-all duration-500 hover:scale-105 active:scale-95 shadow-lg relative overflow-hidden"
                 style={{
                   background: userType === 'creator' 
-                    ? 'linear-gradient(to right, #DAA520, #F4D03F)' // Softer shimmery gold
+                    ? theme === 'light'
+                      ? 'linear-gradient(to right, #D97706, #F59E0B)' // Rich amber-gold gradient for light mode
+                      : 'linear-gradient(to right, #DAA520, #F4D03F)' // Softer shimmery gold for dark mode
                     : 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  color: userType === 'creator' ? '#1A1F2E' : 'white',
+                  color: userType === 'creator' 
+                    ? 'white' // White text for both modes
+                    : 'white',
                   boxShadow: userType === 'creator'
-                    ? '0 8px 20px rgba(218, 165, 32, 0.35)'
+                    ? theme === 'light'
+                      ? '0 6px 20px rgba(217, 119, 6, 0.3)'
+                      : '0 8px 20px rgba(218, 165, 32, 0.35)'
                     : '0 8px 20px rgba(41, 121, 255, 0.3)'
                 }}
               >
@@ -1826,7 +2136,7 @@ function HomeContent() {
             </form>
 
               {/* Pro Status Display */}
-              {!isPro ? (
+              {!effectiveIsPro ? (
                 <div className="mt-8 rounded-2xl p-6 border-2" style={{ 
                   background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.05) 0%, rgba(111, 255, 210, 0.05) 100%)',
                   borderColor: 'rgba(41, 121, 255, 0.25)'
@@ -1941,14 +2251,14 @@ function HomeContent() {
                       {Math.round(researchProgress)}%
                     </span>
                   </div>
-                  <div className="w-full bg-gray-200 rounded-full h-4 overflow-hidden">
+                  <div className="w-full rounded-full h-4 overflow-hidden" style={{ backgroundColor: 'var(--card-border)' }}>
                     <div
                       className="h-4 rounded-full transition-all duration-500"
                       style={{ 
                         width: `${researchProgress}%`,
                         background: userType === 'creator'
                           ? 'linear-gradient(to right, #DAA520, #F4D03F)'
-                          : 'linear-gradient(to r, #2979FF, #9F7AEA, #EC4899)'
+                          : 'linear-gradient(to right, #2979FF, #9F7AEA, #EC4899)'
                       }}
                     >
                       <div className="h-full w-full bg-white/30 animate-pulse"></div>
@@ -2215,7 +2525,7 @@ function HomeContent() {
                       <div
                         key={index}
                         onClick={() => handleSelectIdea(idea)}
-                        className="group relative border-2 rounded-2xl p-6 cursor-pointer transition-all duration-500 hover:scale-[1.02] active:scale-[0.98]"
+                        className="group relative border-2 rounded-2xl cursor-pointer transition-all duration-500 hover:scale-[1.02] active:scale-[0.98]"
                         style={{
                           backgroundColor: selectedIdea?.title === idea.title 
                             ? (userType === 'creator' ? 'rgba(218, 165, 32, 0.15)' : 'rgba(41, 121, 255, 0.08)')
@@ -2226,24 +2536,48 @@ function HomeContent() {
                           boxShadow: selectedIdea?.title === idea.title 
                             ? (userType === 'creator' ? '0 10px 30px rgba(218, 165, 32, 0.35), 0 0 0 1px rgba(218, 165, 32, 0.5)' : '0 10px 30px rgba(41, 121, 255, 0.25)')
                             : '0 4px 12px rgba(0,0,0,0.12)',
-                          transform: selectedIdea?.title === idea.title ? 'translateY(-2px)' : 'none'
+                          transform: selectedIdea?.title === idea.title ? 'translateY(-2px)' : 'none',
+                          padding: '1.5rem'
                         }}
                       >
-                        <div className="flex items-start gap-3 mb-4">
-                          <h4 className="font-bold text-lg flex-1 leading-tight transition-colors duration-500" style={{ 
-                            color: selectedIdea?.title === idea.title 
-                              ? (userType === 'creator' ? '#DAA520' : 'var(--primary)')
-                              : 'var(--text-primary)' 
-                          }}>
-                            {idea.title}
-                          </h4>
+                        {/* Badge positioned at top right */}
+                        <div className="flex justify-end mb-4">
                           <Badge variant={idea.angle}>
                             {idea.angle.replace(/_/g, " ")}
                           </Badge>
                         </div>
-                        <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                        
+                        {/* Title - matching business card style */}
+                        <h4 
+                          className="font-bold mb-4 transition-colors duration-500" 
+                          style={{ 
+                            color: selectedIdea?.title === idea.title 
+                              ? (userType === 'creator' ? '#DAA520' : 'var(--primary)')
+                              : 'var(--text-primary)',
+                            fontSize: '1.125rem',
+                            lineHeight: '1.4',
+                            letterSpacing: '0',
+                            fontWeight: '700'
+                          }}
+                        >
+                          {idea.title}
+                        </h4>
+                        
+                        {/* Description - matching business card style */}
+                        <p 
+                          className="leading-relaxed" 
+                          style={{ 
+                            color: 'var(--text-secondary)',
+                            fontSize: '0.875rem',
+                            lineHeight: '1.5',
+                            letterSpacing: '0',
+                            margin: 0
+                          }}
+                        >
                           {idea.description}
                         </p>
+                        
+                        {/* Selected indicator */}
                         {selectedIdea?.title === idea.title && (
                           <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 shadow-lg" style={{ 
                             background: userType === 'creator' 
@@ -2266,7 +2600,7 @@ function HomeContent() {
                     <button
                       onClick={async () => {
                         // Check if user has exceeded free limit (2 free generates)
-                        if (generateIdeasCount >= 2 && !isPro) {
+                        if (generateIdeasCount >= 2 && !effectiveIsPro) {
                           setModalState({
                             isOpen: true,
                             title: "Pro Feature",
@@ -2329,7 +2663,7 @@ function HomeContent() {
                           setSelectedIdea(null);
                           
                           // Increment usage count for non-Pro users
-                          if (!isPro) {
+                          if (!effectiveIsPro) {
                             setGenerateIdeasCount(prev => prev + 1);
                           }
                           
@@ -2367,12 +2701,12 @@ function HomeContent() {
                     >
                       {isRewriting ? (
                         "Generating..."
-                      ) : generateIdeasCount >= 2 && !isPro ? (
+                      ) : generateIdeasCount >= 2 && !effectiveIsPro ? (
                         <>
                           <span className="mr-2">🔒</span>
                           Pro: Unlimited Ideas
                         </>
-                      ) : isPro ? (
+                      ) : effectiveIsPro ? (
                         <>
                           <span className="mr-2">🎬</span>
                           Generate More Ideas
@@ -2386,14 +2720,14 @@ function HomeContent() {
                     </button>
                     
                     {/* Usage counter inline - to the right of button */}
-                    {!isPro && generateIdeasCount < 2 && (
+                    {!effectiveIsPro && generateIdeasCount < 2 && (
                       <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                         {2 - generateIdeasCount} use{2 - generateIdeasCount !== 1 ? 's' : ''} left
                       </span>
                     )}
                     
                     {/* Compact Go Pro Callout - Floating next to button */}
-                    {!isPro && (
+                    {!effectiveIsPro && (
                       <div className="relative">
                         <button
                           onClick={scrollToPremium}
@@ -2452,13 +2786,19 @@ function HomeContent() {
                   
                   <div className="max-w-2xl mx-auto mb-8">
                     <div className="border-2 rounded-lg p-6 mb-4" style={{ 
-                      backgroundColor: 'rgba(99, 102, 241, 0.1)',
-                      borderColor: 'rgba(99, 102, 241, 0.3)'
+                      backgroundColor: userType === 'creator' 
+                        ? 'rgba(218, 165, 32, 0.1)'
+                        : 'rgba(99, 102, 241, 0.1)',
+                      borderColor: userType === 'creator'
+                        ? 'rgba(218, 165, 32, 0.3)'
+                        : 'rgba(99, 102, 241, 0.3)'
                     }}>
                       <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
                         Your Selected Idea:
                       </h3>
-                      <p className="text-lg font-medium mb-2" style={{ color: 'var(--primary)' }}>
+                      <p className="text-lg font-medium mb-2" style={{ 
+                        color: userType === 'creator' ? '#DAA520' : 'var(--primary)'
+                      }}>
                         {selectedIdea.title}
                       </p>
                       <p style={{ color: 'var(--text-secondary)' }}>
@@ -2470,22 +2810,38 @@ function HomeContent() {
                     <div className="mb-6">
                       <button
                         onClick={handleRegenerateIdea}
-                        className={`w-full px-4 py-3 rounded-lg font-bold transition-all ${
-                          regenerateCount >= 2 && !isPro
-                            ? "bg-gradient-to-r from-amber-500 to-blue-600 text-white hover:from-amber-600 hover:to-blue-700"
-                            : "bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50"
+                        className={`w-full px-4 py-3 rounded-lg font-bold transition-all shadow-sm hover:shadow-md hover:scale-105 ${
+                          regenerateCount >= 2 && !effectiveIsPro
+                            ? userType === 'creator'
+                              ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600"
+                              : "bg-gradient-to-r from-amber-500 to-blue-600 text-white hover:from-amber-600 hover:to-blue-700"
+                            : ""
                         }`}
+                        style={regenerateCount < 2 || effectiveIsPro ? {
+                          borderWidth: '2px',
+                          borderStyle: 'solid',
+                          borderColor: userType === 'creator' ? '#DAA520' : '#2563eb',
+                          color: userType === 'creator' ? '#DAA520' : '#2563eb',
+                          backgroundColor: userType === 'creator' 
+                            ? 'rgba(218, 165, 32, 0.05)'
+                            : 'rgba(37, 99, 235, 0.05)'
+                        } : {}}
                       >
-                        {regenerateCount >= 2 && !isPro
+                        {regenerateCount >= 2 && !effectiveIsPro
                           ? "🔒 Pro: Unlimited Ideas"
-                          : "🔄 Regenerate Idea"}
+                          : <span className="flex items-center justify-center gap-2">
+                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                              </svg>
+                              Regenerate Idea
+                            </span>}
                       </button>
-                      {regenerateCount >= 2 && !isPro && (
+                      {regenerateCount >= 2 && !effectiveIsPro && (
                         <p className="text-xs text-gray-600 text-center mt-2">
                           You've used your 2 free regenerations
                         </p>
                       )}
-                      {regenerateCount > 0 && regenerateCount < 2 && !isPro && (
+                      {regenerateCount > 0 && regenerateCount < 2 && !effectiveIsPro && (
                         <p className="text-xs text-gray-600 text-center mt-2">
                           {2 - regenerateCount} free regeneration{2 - regenerateCount !== 1 ? 's' : ''} remaining
                         </p>
@@ -2509,21 +2865,21 @@ function HomeContent() {
                           {userType === 'business' ? 'Ready to Record?' : 'Ready to Create?'}
                         </h4>
                         <p className="text-lg mb-2 max-w-xl" style={{ color: 'var(--text-primary)' }}>
-                          {userType === 'business' 
+                          {userType === 'business'
                             ? <>Research shows that users prefer <span className="font-semibold" style={{ color: '#2979FF' }}>raw phone video</span> over heavily edited content.</>
                             : <>Research repeatedly confirms that <span className="font-semibold transition-colors duration-500" style={{ color: userType === 'creator' ? '#DAA520' : '#2979FF' }}>authenticity drives engagement</span> faster than any other social media tactic.</>
                           }
                         </p>
-                        <div className="mt-5 pt-5 border-t-2 transition-colors duration-500" style={{ 
-                          borderColor: userType === 'creator' 
+                        <div className="mt-5 pt-5 border-t-2 transition-colors duration-500" style={{
+                          borderColor: userType === 'creator'
                             ? 'rgba(218, 165, 32, 0.2)'
-                            : 'rgba(41, 121, 255, 0.15)' 
+                            : 'rgba(41, 121, 255, 0.15)'
                         }}>
                           <p className="text-base flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
                             <span className="text-xl">💪</span>
-                            <span>{userType === 'business' 
+                            <span>{userType === 'business'
                               ? "Don't overthink it — hit record and come back when you're done!"
-                              : "Be yourself, create your content, and come back when you're ready to optimize it!"
+                              : "Go record your video, then come back to this page"
                             }</span>
                           </p>
                         </div>
@@ -2591,8 +2947,8 @@ function HomeContent() {
                     <div className="text-center py-12">
                       <div className="inline-block mb-6">
                         <div className="w-16 h-16 border-4 rounded-full animate-spin" style={{ 
-                          borderColor: 'rgba(41, 121, 255, 0.2)',
-                          borderTopColor: '#2979FF'
+                          borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.2)' : 'rgba(41, 121, 255, 0.2)',
+                          borderTopColor: userType === 'creator' ? '#DAA520' : '#2979FF'
                         }}></div>
                       </div>
                       <p style={{ color: 'var(--text-secondary)' }}>
@@ -2607,8 +2963,10 @@ function HomeContent() {
                       }}>
                         {/* Best Times to Post */}
                         <div className="rounded-xl p-5 border-2" style={{ 
-                          background: 'linear-gradient(135deg, rgba(251, 191, 36, 0.05) 0%, rgba(251, 146, 60, 0.05) 100%)',
-                          borderColor: 'rgba(251, 191, 36, 0.3)',
+                          background: userType === 'creator'
+                            ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.08) 0%, rgba(244, 208, 63, 0.08) 100%)'
+                            : 'linear-gradient(135deg, rgba(41, 121, 255, 0.05) 0%, rgba(111, 255, 210, 0.05) 100%)',
+                          borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.2)',
                           animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
                           opacity: 0
                         }}>
@@ -2623,10 +2981,10 @@ function HomeContent() {
                             {/* Morning */}
                             <div className="relative group">
                               <div className="rounded-lg p-3 text-center transition-all hover:scale-105 cursor-help" style={{ 
-                                background: 'rgba(41, 121, 255, 0.08)',
-                                border: '1px solid rgba(41, 121, 255, 0.2)'
+                                background: userType === 'creator' ? 'rgba(218, 165, 32, 0.08)' : 'rgba(41, 121, 255, 0.08)',
+                                border: `1px solid ${userType === 'creator' ? 'rgba(218, 165, 32, 0.2)' : 'rgba(41, 121, 255, 0.2)'}`
                               }}>
-                                <div className="font-bold text-sm mb-1" style={{ color: '#2979FF' }}>Morning</div>
+                                <div className="font-bold text-sm mb-1" style={{ color: userType === 'creator' ? '#DAA520' : '#2979FF' }}>Morning</div>
                                 <div className="text-sm" style={{ color: 'var(--text-primary)' }}>8am - 10am</div>
                               </div>
                               {/* Tooltip */}
@@ -2644,10 +3002,10 @@ function HomeContent() {
                             {/* Afternoon */}
                             <div className="relative group">
                               <div className="rounded-lg p-3 text-center transition-all hover:scale-105 cursor-help" style={{ 
-                                background: 'rgba(41, 121, 255, 0.08)',
-                                border: '1px solid rgba(41, 121, 255, 0.2)'
+                                background: userType === 'creator' ? 'rgba(218, 165, 32, 0.08)' : 'rgba(41, 121, 255, 0.08)',
+                                border: `1px solid ${userType === 'creator' ? 'rgba(218, 165, 32, 0.2)' : 'rgba(41, 121, 255, 0.2)'}`
                               }}>
-                                <div className="font-bold text-sm mb-1" style={{ color: '#2979FF' }}>Afternoon</div>
+                                <div className="font-bold text-sm mb-1" style={{ color: userType === 'creator' ? '#DAA520' : '#2979FF' }}>Afternoon</div>
                                 <div className="text-sm" style={{ color: 'var(--text-primary)' }}>2pm - 5pm</div>
                               </div>
                               {/* Tooltip */}
@@ -2665,10 +3023,10 @@ function HomeContent() {
                             {/* Evening */}
                             <div className="relative group">
                               <div className="rounded-lg p-3 text-center transition-all hover:scale-105 cursor-help" style={{ 
-                                background: 'rgba(41, 121, 255, 0.08)',
-                                border: '1px solid rgba(41, 121, 255, 0.2)'
+                                background: userType === 'creator' ? 'rgba(218, 165, 32, 0.08)' : 'rgba(41, 121, 255, 0.08)',
+                                border: `1px solid ${userType === 'creator' ? 'rgba(218, 165, 32, 0.2)' : 'rgba(41, 121, 255, 0.2)'}`
                               }}>
-                                <div className="font-bold text-sm mb-1" style={{ color: '#2979FF' }}>Evening</div>
+                                <div className="font-bold text-sm mb-1" style={{ color: userType === 'creator' ? '#DAA520' : '#2979FF' }}>Evening</div>
                                 <div className="text-sm" style={{ color: 'var(--text-primary)' }}>7pm - 8pm</div>
                               </div>
                               {/* Tooltip */}
@@ -2687,11 +3045,13 @@ function HomeContent() {
 
                         {/* Title */}
                         <div className="rounded-xl p-6 border-2 shadow-sm" style={{ 
-                          background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.04) 0%, rgba(111, 255, 210, 0.04) 100%)',
-                          borderColor: 'rgba(41, 121, 255, 0.2)'
+                          background: userType === 'creator'
+                            ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.08) 0%, rgba(244, 208, 63, 0.08) 100%)'
+                            : 'linear-gradient(135deg, rgba(41, 121, 255, 0.04) 0%, rgba(111, 255, 210, 0.04) 100%)',
+                          borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.2)'
                         }}>
                           <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-bold flex items-center text-lg" style={{ color: 'var(--secondary)' }}>
+                            <h3 className="font-bold flex items-center text-lg" style={{ color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' }}>
                               <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
                               </svg>
@@ -2703,12 +3063,14 @@ function HomeContent() {
                               className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 flex items-center gap-2 shadow-sm ${
                                 isRewordingTitle
                                   ? "bg-gray-400 text-white cursor-not-allowed"
-                                  : rewordTitleCount >= 3 && !isPro
+                                  : rewordTitleCount >= 3 && !effectiveIsPro
                                   ? "text-white"
                                   : "text-white"
                               }`}
                               style={!isRewordingTitle ? {
-                                backgroundColor: rewordTitleCount >= 3 && !isPro ? '#94a3b8' : '#2979FF'
+                                backgroundColor: rewordTitleCount >= 3 && !effectiveIsPro 
+                                  ? '#94a3b8' 
+                                  : userType === 'creator' ? '#DAA520' : '#2979FF'
                               } : {}}
                             >
                               {isRewordingTitle ? (
@@ -2719,7 +3081,7 @@ function HomeContent() {
                                   </svg>
                                   Rewording...
                                 </>
-                              ) : rewordTitleCount >= 3 && !isPro ? (
+                              ) : rewordTitleCount >= 3 && !effectiveIsPro ? (
                                 <>
                                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
@@ -2736,7 +3098,7 @@ function HomeContent() {
                               )}
                             </button>
                           </div>
-                          {!isPro && (
+                          {!effectiveIsPro && (
                             <p className="text-xs mb-3 flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
                               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
@@ -2775,10 +3137,12 @@ function HomeContent() {
 
                         {/* Caption with Hashtags */}
                         <div className="rounded-xl p-6 border-2 shadow-sm" style={{ 
-                          background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.04) 0%, rgba(111, 255, 210, 0.04) 100%)',
-                          borderColor: 'rgba(41, 121, 255, 0.2)'
+                          background: userType === 'creator'
+                            ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.08) 0%, rgba(244, 208, 63, 0.08) 100%)'
+                            : 'linear-gradient(135deg, rgba(41, 121, 255, 0.04) 0%, rgba(111, 255, 210, 0.04) 100%)',
+                          borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.2)'
                         }}>
-                          <h3 className="font-bold mb-4 flex items-center text-lg" style={{ color: 'var(--secondary)' }}>
+                          <h3 className="font-bold mb-4 flex items-center text-lg" style={{ color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' }}>
                             <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
                             </svg>
@@ -2790,50 +3154,188 @@ function HomeContent() {
                               const updatedDetails = { ...postDetails, caption: e.target.value };
                               setPostDetails(updatedDetails);
                             }}
-                            onBlur={async () => {
+                            onBlur={async (e) => {
+                              // Remove focus ring
+                              e.target.style.boxShadow = 'none';
                               // Auto-save when user finishes editing
                               if (user && selectedIdea && postDetails) {
                                 await saveCompletedPostToHistory(selectedIdea, postDetails);
                               }
                             }}
                             rows={8}
-                            className={`border-2 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-vertical transition-all duration-300 ${
+                            className={`border-2 rounded-lg px-4 py-3 w-full focus:outline-none resize-vertical transition-all duration-300 ${
                               captionAnimation === 'fadeOut' ? 'animate-fade-out' : 
                               captionAnimation === 'typing' ? 'animate-typing' : ''
                             }`}
                             style={{
                               backgroundColor: 'white',
-                              borderColor: 'rgba(41, 121, 255, 0.25)',
+                              borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)',
                               color: '#1a1a1a',
                               fontSize: '14.5px',
                               lineHeight: '1.6'
                             }}
+                            onFocus={(e) => {
+                              e.target.style.boxShadow = userType === 'creator' 
+                                ? '0 0 0 2px rgba(218, 165, 32, 0.5)' 
+                                : '0 0 0 2px rgba(41, 121, 255, 0.5)';
+                            }}
                             placeholder="Your caption with hashtags will appear here..."
                           />
                           
-                          {/* Copy and Rewrite Buttons */}
-                          <div className="grid grid-cols-2 gap-3 mt-4">
+                          {/* Action Buttons - Clean Compact Layout */}
+                          <div className="flex flex-wrap gap-2 mt-4 justify-center">
                             <button
                               onClick={handleCopyToClipboard}
-                              className="px-4 py-3 rounded-lg font-semibold text-sm transition-all hover:scale-105 text-white flex items-center justify-center gap-2 shadow-sm"
-                              style={{ backgroundColor: '#2979FF' }}
+                              className="px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105 text-white flex items-center gap-2"
+                              style={{ backgroundColor: userType === 'creator' ? '#DAA520' : '#2979FF' }}
                             >
                               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
                               </svg>
-                              Copy Caption
+                              Copy
                             </button>
+                            
+                            <div className="relative guide-ai-container">
+                              <button
+                                onClick={() => {
+                                  if (guideAICount >= 2 && !effectiveIsPro) {
+                                    setModalState({
+                                      isOpen: true,
+                                      title: userType === 'creator' ? "Upgrade to Creator" : "Upgrade to PostReady Pro",
+                                      message: userType === 'creator' 
+                                        ? "You've used your 2 free Guide AI uses. Upgrade to Creator for unlimited Guide AI and more features!"
+                                        : "You've used your 2 free Guide AI uses. Upgrade to PostReady Pro for unlimited Guide AI and more features!",
+                                      type: 'confirm',
+                                      onConfirm: scrollToPremium,
+                                      confirmText: userType === 'creator' ? "View Creator Plan" : "View Pro Plan"
+                                    });
+                                    return;
+                                  }
+                                  setShowGuideAI(!showGuideAI);
+                                }}
+                                disabled={guideAICount >= 2 && !effectiveIsPro}
+                                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                                  guideAICount >= 2 && !effectiveIsPro ? '' : ''
+                                }`}
+                                style={guideAICount >= 2 && !effectiveIsPro ? {
+                                  backgroundColor: 'transparent',
+                                  borderColor: '#94a3b8',
+                                  color: '#94a3b8'
+                                } : { 
+                                  backgroundColor: 'transparent',
+                                  borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
+                                  color: userType === 'creator' ? '#DAA520' : '#2979FF'
+                                }}
+                                title={!effectiveIsPro && guideAICount < 2 ? `${2 - guideAICount} Guide AI uses left` : ''}
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                                </svg>
+                                Guide AI
+                                {!effectiveIsPro && guideAICount < 2 && (
+                                  <span className="text-xs px-1.5 py-0.5 rounded" style={{ 
+                                    backgroundColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.15)' : 'rgba(41, 121, 255, 0.15)',
+                                    color: userType === 'creator' ? '#DAA520' : '#2979FF'
+                                  }}>
+                                    {2 - guideAICount}
+                                  </span>
+                                )}
+                              </button>
+                              {showGuideAI && (
+                                <div 
+                                  className="absolute bottom-full left-0 mb-2 w-80 rounded-lg shadow-2xl border-2 p-4 z-50 guide-ai-container"
+                                  style={{
+                                    backgroundColor: 'var(--card-bg)',
+                                    borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.3)',
+                                    boxShadow: userType === 'creator' 
+                                      ? '0 10px 40px rgba(218, 165, 32, 0.2)' 
+                                      : '0 10px 40px rgba(41, 121, 255, 0.2)'
+                                  }}
+                                >
+                                  <div className="mb-3">
+                                    <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                                      Tell the AI how to adjust the caption:
+                                    </label>
+                                    <textarea
+                                      value={aiGuidance}
+                                      onChange={(e) => setAiGuidance(e.target.value)}
+                                      onKeyDown={(e) => {
+                                        if (e.key === 'Enter' && !e.shiftKey) {
+                                          e.preventDefault();
+                                          if (aiGuidance.trim() && !isRewriting) {
+                                            handleRewriteCaption(aiGuidance.trim());
+                                          }
+                                        }
+                                      }}
+                                      placeholder="e.g., 'Make it more casual', 'Add more emojis', 'Make it shorter', 'Focus on gaming'"
+                                      rows={3}
+                                      className="w-full px-3 py-2 rounded-lg border-2 resize-none focus:outline-none text-sm"
+                                      style={{
+                                        backgroundColor: 'white',
+                                        borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)',
+                                        color: '#1a1a1a'
+                                      }}
+                                      onFocus={(e) => {
+                                        e.target.style.boxShadow = userType === 'creator' 
+                                          ? '0 0 0 2px rgba(218, 165, 32, 0.5)' 
+                                          : '0 0 0 2px rgba(41, 121, 255, 0.5)';
+                                      }}
+                                      onBlur={(e) => {
+                                        e.target.style.boxShadow = 'none';
+                                      }}
+                                    />
+                                  </div>
+                                  <div className="flex gap-2">
+                                    <button
+                                      onClick={() => {
+                                        if (aiGuidance.trim()) {
+                                          if (!effectiveIsPro) {
+                                            setGuideAICount(prev => prev + 1);
+                                          }
+                                          handleRewriteCaption(aiGuidance.trim());
+                                        }
+                                      }}
+                                      disabled={!aiGuidance.trim() || isRewriting}
+                                      className="flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                                      style={{ 
+                                        backgroundColor: userType === 'creator' ? '#DAA520' : '#2979FF'
+                                      }}
+                                    >
+                                      Apply & Rewrite
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setShowGuideAI(false);
+                                        setAiGuidance("");
+                                      }}
+                                      className="px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2"
+                                      style={{
+                                        borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
+                                        color: userType === 'creator' ? '#DAA520' : '#2979FF',
+                                        backgroundColor: 'transparent'
+                                      }}
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            
                             <button
-                              onClick={handleRewriteCaption}
+                              onClick={() => handleRewriteCaption()}
                               disabled={isRewriting}
-                              className={`px-4 py-3 rounded-lg font-semibold text-sm transition-all hover:scale-105 flex items-center justify-center gap-2 shadow-sm ${
+                              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105 flex items-center gap-2 ${
                                 isRewriting
                                   ? "bg-gray-400 text-white cursor-not-allowed"
                                   : "text-white"
                               }`}
                               style={!isRewriting ? {
-                                backgroundColor: rewriteCount >= 2 && !isPro ? '#94a3b8' : '#2979FF'
+                                backgroundColor: rewriteCount >= 2 && !effectiveIsPro 
+                                  ? '#94a3b8' 
+                                  : userType === 'creator' ? '#DAA520' : '#2979FF'
                               } : {}}
+                              title={!effectiveIsPro && rewriteCount < 2 ? `${2 - rewriteCount} rewrites left` : ''}
                             >
                               {isRewriting ? (
                                 <>
@@ -2843,7 +3345,7 @@ function HomeContent() {
                                   </svg>
                                   Rewriting...
                                 </>
-                              ) : rewriteCount >= 2 && !isPro ? (
+                              ) : rewriteCount >= 2 && !effectiveIsPro ? (
                                 <>
                                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
@@ -2856,20 +3358,63 @@ function HomeContent() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                   </svg>
                                   Rewrite
+                                  {!effectiveIsPro && rewriteCount < 2 && (
+                                    <span className="text-xs px-1.5 py-0.5 rounded bg-white/20">
+                                      {2 - rewriteCount}
+                                    </span>
+                                  )}
+                                </>
+                              )}
+                            </button>
+                            
+                            <button
+                              onClick={handleMoreHashtags}
+                              disabled={isGeneratingHashtags || (hashtagCount >= 3 && !effectiveIsPro)}
+                              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed`}
+                              style={hashtagCount >= 3 && !effectiveIsPro ? {
+                                backgroundColor: 'transparent',
+                                borderColor: '#94a3b8',
+                                color: '#94a3b8'
+                              } : {
+                                backgroundColor: 'transparent',
+                                borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
+                                color: userType === 'creator' ? '#DAA520' : '#2979FF'
+                              }}
+                              title={!effectiveIsPro && hashtagCount < 3 ? `${3 - hashtagCount} hashtag generations left` : ''}
+                            >
+                              {isGeneratingHashtags ? (
+                                <>
+                                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  Generating...
+                                </>
+                              ) : hashtagCount >= 3 && !effectiveIsPro ? (
+                                <>
+                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
+                                  </svg>
+                                  Pro Only
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
+                                  </svg>
+                                  More Hashtags
+                                  {!effectiveIsPro && hashtagCount < 3 && (
+                                    <span className="text-xs px-1.5 py-0.5 rounded" style={{ 
+                                      backgroundColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.15)' : 'rgba(41, 121, 255, 0.15)',
+                                      color: userType === 'creator' ? '#DAA520' : '#2979FF'
+                                    }}>
+                                      {3 - hashtagCount}
+                                    </span>
+                                  )}
                                 </>
                               )}
                             </button>
                           </div>
-                          {!isPro && (
-                            <p className="text-xs text-center mt-3 flex items-center justify-center gap-1" style={{ color: 'var(--text-secondary)' }}>
-                              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                              </svg>
-                              {rewriteCount >= 2
-                                ? "You've used your 2 free rewrites"
-                                : `${2 - rewriteCount} ${2 - rewriteCount === 1 ? 'use' : 'uses'} left`}
-                            </p>
-                          )}
                         </div>
 
                         {/* Back Button */}
@@ -2898,17 +3443,17 @@ function HomeContent() {
           </div>
         )}
 
-        {/* History Page - Shows completed posts */}
+        {/* History Page - Shows completed posts and saved video ideas */}
         {currentStep === "history" && (
           <SectionCard className="mb-10" isPro={isPro}>
             <div>
               <div className="flex items-center justify-between mb-8">
                 <div>
                   <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                    📝 Your Post History
+                    📝 Your History
                   </h2>
                   <p style={{ color: 'var(--text-secondary)' }}>
-                    All the video ideas and posts you've created
+                    All your saved video ideas and completed posts
                   </p>
                 </div>
                 <button
@@ -2927,69 +3472,159 @@ function HomeContent() {
                 </button>
               </div>
 
-              {completedPosts.length === 0 ? (
+              {completedPosts.length === 0 && savedVideoIdeas.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="text-6xl mb-4">📭</div>
                   <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                    No posts yet
+                    No history yet
                   </h3>
                   <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
-                    Complete the full PostReady workflow to see your posts here
+                    Save video ideas or complete posts to see them here
                   </p>
                   <PrimaryButton onClick={navigateHome} isPro={isPro}>
-                    Create Your First Post
+                    Get Started
                   </PrimaryButton>
                 </div>
               ) : (
-                <div className="space-y-6">
-                  {completedPosts.map((post) => (
-                    <div
-                      key={post.id}
-                      className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-md transition-all"
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-xl font-bold text-gray-900 mb-1">
-                            {post.videoIdea.title}
-                          </h3>
-                          <p className="text-sm text-gray-500 mb-2">
-                            {post.businessName} • {new Date(post.completedAt).toLocaleDateString()}
-                          </p>
-                          <Badge variant={post.videoIdea.angle}>
-                            {post.videoIdea.angle.replace(/_/g, " ")}
-                          </Badge>
-                        </div>
+                <div className="space-y-8">
+                  {/* Saved Video Ideas Section - List View */}
+                  {savedVideoIdeas.length > 0 && (
+                    <div>
+                      <h3 className="text-2xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
+                        💡 Saved Video Ideas ({savedVideoIdeas.length})
+                      </h3>
+                      <div className="space-y-2 mb-8">
+                        {savedVideoIdeas.map((savedIdea) => (
+                          <div
+                            key={savedIdea.id}
+                            onClick={() => router.push(`/idea/${savedIdea.id}`)}
+                            className="border-2 rounded-lg p-4 transition-all hover:shadow-md cursor-pointer group"
+                            style={{
+                              backgroundColor: 'var(--card-bg)',
+                              borderColor: 'var(--card-border)'
+                            }}
+                          >
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-start gap-3">
+                                  <div className="flex-1 min-w-0">
+                                    <h4 className="font-bold mb-1 group-hover:opacity-80 transition-opacity" style={{ color: 'var(--text-primary)' }}>
+                                      {savedIdea.videoIdea.title}
+                                    </h4>
+                                    <p className="text-xs mb-2 truncate" style={{ color: 'var(--text-secondary)' }}>
+                                      {savedIdea.businessName} • {new Date(savedIdea.savedAt).toLocaleString()}
+                                    </p>
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                      <Badge variant={savedIdea.videoIdea.angle}>
+                                        {savedIdea.videoIdea.angle.replace(/_/g, " ")}
+                                      </Badge>
+                                    </div>
+                                  </div>
+                                  <svg 
+                                    className="w-5 h-5 flex-shrink-0 opacity-0 group-hover:opacity-70 transition-opacity" 
+                                    fill="none" 
+                                    stroke="currentColor" 
+                                    viewBox="0 0 24 24"
+                                    style={{ color: 'var(--text-secondary)' }}
+                                  >
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                                  </svg>
+                                </div>
+                              </div>
+                              <button
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (!effectiveUser) return;
+                                  
+                                  if (devMode !== 'none') {
+                                    // Dev mode: Remove from localStorage
+                                    const devIdeasKey = `dev_video_ideas_${devMode}`;
+                                    const updatedIdeas = savedVideoIdeas.filter(s => s.id !== savedIdea.id);
+                                    localStorage.setItem(devIdeasKey, JSON.stringify(updatedIdeas));
+                                    setSavedVideoIdeas(updatedIdeas);
+                                    showNotification("Idea removed", "success", "Removed");
+                                  } else if (user && user.id) {
+                                    // Real user: Remove from Supabase
+                                    const result = await deleteSavedVideoIdea(user.id, savedIdea.id);
+                                    if (!result.error) {
+                                      setSavedVideoIdeas(prev => prev.filter(s => s.id !== savedIdea.id));
+                                      showNotification("Idea removed", "success", "Removed");
+                                    }
+                                  }
+                                }}
+                                className="p-1.5 rounded hover:bg-gray-100 transition-colors ml-2 flex-shrink-0"
+                                style={{ color: 'var(--text-secondary)' }}
+                                title="Remove from saved"
+                              >
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          </div>
+                        ))}
                       </div>
-                      
-                      <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                        <h4 className="font-bold text-gray-900 mb-2">Caption:</h4>
-                        <p className="text-gray-700 whitespace-pre-wrap text-sm">
-                          {post.postDetails.caption}
-                        </p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-4 text-sm">
-                        <div>
-                          <span className="font-bold text-gray-700">Title:</span>
-                          <p className="text-gray-600">{post.postDetails.title}</p>
-                        </div>
-                        <div>
-                          <span className="font-bold text-gray-700">Best Time:</span>
-                          <p className="text-gray-600">{post.postDetails.bestPostTime}</p>
-                        </div>
-                      </div>
-
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(post.postDetails.caption);
-                          showNotification("Caption copied to clipboard!", "success", "Copied!");
-                        }}
-                        className="mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-all"
-                      >
-                        Copy Caption
-                      </button>
                     </div>
-                  ))}
+                  )}
+
+                  {/* Completed Posts Section */}
+                  {completedPosts.length > 0 && (
+                    <div>
+                      <h3 className="text-2xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
+                        ✅ Completed Posts ({completedPosts.length})
+                      </h3>
+                      <div className="space-y-6">
+                        {completedPosts.map((post) => (
+                          <div
+                            key={post.id}
+                            className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-md transition-all"
+                          >
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex-1">
+                                <h3 className="text-xl font-bold text-gray-900 mb-1">
+                                  {post.videoIdea.title}
+                                </h3>
+                                <p className="text-sm text-gray-500 mb-2">
+                                  {post.businessName} • {new Date(post.completedAt).toLocaleDateString()}
+                                </p>
+                                <Badge variant={post.videoIdea.angle}>
+                                  {post.videoIdea.angle.replace(/_/g, " ")}
+                                </Badge>
+                              </div>
+                            </div>
+                            
+                            <div className="bg-gray-50 rounded-lg p-4 mb-4">
+                              <h4 className="font-bold text-gray-900 mb-2">Caption:</h4>
+                              <p className="text-gray-700 whitespace-pre-wrap text-sm">
+                                {post.postDetails.caption}
+                              </p>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                              <div>
+                                <span className="font-bold text-gray-700">Title:</span>
+                                <p className="text-gray-600">{post.postDetails.title}</p>
+                              </div>
+                              <div>
+                                <span className="font-bold text-gray-700">Best Time:</span>
+                                <p className="text-gray-600">{post.postDetails.bestPostTime}</p>
+                              </div>
+                            </div>
+
+                            <button
+                              onClick={() => {
+                                navigator.clipboard.writeText(post.postDetails.caption);
+                                showNotification("Caption copied to clipboard!", "success", "Copied!");
+                              }}
+                              className="mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-all"
+                            >
+                              Copy Caption
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -3181,14 +3816,106 @@ function HomeContent() {
             ) : (
               /* Non-Pro User Pricing Card */
               <div className="max-w-3xl mx-auto mb-10">
-                <div className="bg-gradient-to-br from-blue-600 to-cyan-400 rounded-2xl p-8 text-white shadow-2xl">
+                {/* Plan Type Toggle Pill */}
+                <div className="flex justify-center mb-6">
+                  <div className="relative inline-flex rounded-full p-1" style={{
+                    backgroundColor: 'var(--card-bg)',
+                    border: '2px solid var(--card-border)'
+                  }}>
+                    <button
+                      onClick={() => {
+                        if (planType !== 'pro') {
+                          setIsPlanTransitioning(true);
+                          setTimeout(() => {
+                            setPlanType('pro');
+                            setTimeout(() => setIsPlanTransitioning(false), 50);
+                          }, 250);
+                        }
+                      }}
+                      className={`px-6 py-2 rounded-full font-bold text-sm transition-all duration-300 ${
+                        planType === 'pro' ? 'text-white' : ''
+                      }`}
+                      style={{
+                        backgroundColor: planType === 'pro' ? '#2979FF' : 'transparent',
+                        color: planType === 'pro' ? 'white' : 'var(--text-primary)',
+                        transform: isPlanTransitioning && planType === 'pro' ? 'scale(0.95)' : 'scale(1)'
+                      }}
+                    >
+                      Pro Plan
+                    </button>
+                    <button
+                      onClick={() => {
+                        if (planType !== 'creator') {
+                          setIsPlanTransitioning(true);
+                          setTimeout(() => {
+                            setPlanType('creator');
+                            setTimeout(() => setIsPlanTransitioning(false), 50);
+                          }, 250);
+                        }
+                      }}
+                      className={`px-6 py-2 rounded-full font-bold text-sm transition-all duration-300 ${
+                        planType === 'creator' ? 'text-white' : ''
+                      }`}
+                      style={{
+                        backgroundColor: planType === 'creator' ? '#DAA520' : 'transparent',
+                        color: planType === 'creator' ? 'white' : 'var(--text-primary)',
+                        transform: isPlanTransitioning && planType === 'creator' ? 'scale(0.95)' : 'scale(1)'
+                      }}
+                    >
+                      Creator Plan
+                    </button>
+                  </div>
+                </div>
+
+                <div 
+                  className="rounded-2xl p-8 text-white shadow-2xl transition-all duration-500 ease-in-out"
+                  style={{
+                    background: planType === 'creator' 
+                      ? 'linear-gradient(135deg, #DAA520 0%, #FFD700 100%)'
+                      : 'linear-gradient(135deg, #2563eb 0%, #06b6d4 100%)',
+                    boxShadow: isPlanTransitioning
+                      ? planType === 'creator'
+                        ? '0 0 40px rgba(255, 215, 0, 0.6), 0 0 80px rgba(255, 215, 0, 0.4), 0 20px 60px rgba(218, 165, 32, 0.5), 0 0 0 2px rgba(255, 215, 0, 0.5)'
+                        : '0 0 40px rgba(37, 99, 235, 0.6), 0 0 80px rgba(37, 99, 235, 0.4), 0 20px 60px rgba(37, 99, 235, 0.5), 0 0 0 2px rgba(37, 99, 235, 0.5)'
+                      : planType === 'creator'
+                        ? '0 20px 60px rgba(218, 165, 32, 0.4), 0 0 0 1px rgba(255, 215, 0, 0.3)'
+                        : '0 20px 60px rgba(37, 99, 235, 0.3)',
+                    opacity: isPlanTransitioning ? 0.85 : 1,
+                    transform: isPlanTransitioning ? 'scale(0.98) translateY(4px)' : 'scale(1) translateY(0)',
+                    transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
+                    filter: isPlanTransitioning ? 'brightness(1.1)' : 'brightness(1)'
+                  }}
+                >
                   <div className="text-center mb-6">
-                    <h3 className="text-3xl font-bold mb-2">Pro Plan</h3>
+                    <h3 
+                      className="text-3xl font-bold mb-2 transition-all duration-500"
+                      style={{
+                        opacity: isPlanTransitioning ? 0.5 : 1,
+                        transform: isPlanTransitioning ? 'translateY(-4px)' : 'translateY(0)'
+                      }}
+                    >
+                      {planType === 'creator' ? 'Creator Plan' : 'Pro Plan'}
+                    </h3>
                     <div className="flex items-end justify-center gap-2">
-                      <span className="text-5xl font-bold">$10</span>
+                      <span 
+                        className="text-5xl font-bold transition-all duration-500"
+                        style={{
+                          opacity: isPlanTransitioning ? 0.5 : 1
+                        }}
+                      >
+                        $10
+                      </span>
                       <span className="text-xl mb-2 opacity-80">/month</span>
                     </div>
-                    <p className="text-purple-100 mt-2">Everything you need to grow your business</p>
+                    <p 
+                      className="mt-2 opacity-90 transition-all duration-500"
+                      style={{
+                        opacity: isPlanTransitioning ? 0.4 : 0.9,
+                        transform: isPlanTransitioning ? 'translateY(4px)' : 'translateY(0)'
+                      }}
+                    >
+                      Everything you need to grow your page
+                    </p>
                   </div>
 
                   <div className="space-y-4 mb-8">
@@ -3196,39 +3923,47 @@ function HomeContent() {
                       <span className="text-2xl mr-3">✓</span>
                       <div>
                         <p className="font-bold text-lg">Unlimited Video Ideas</p>
-                        <p className="text-purple-100 text-sm">Generate endless content ideas instantly</p>
+                        <p className="text-sm opacity-85">Generate endless content ideas instantly</p>
                       </div>
                     </div>
                     <div className="flex items-start">
                       <span className="text-2xl mr-3">✓</span>
                       <div>
                         <p className="font-bold text-lg">Advanced Strategy Insights</p>
-                        <p className="text-purple-100 text-sm">Get deeper analysis and competitor research</p>
+                        <p className="text-sm opacity-85">Get deeper analysis to grow your social media</p>
                       </div>
                     </div>
                     <div className="flex items-start">
                       <span className="text-2xl mr-3">✓</span>
                       <div>
                         <p className="font-bold text-lg">Priority Support</p>
-                        <p className="text-purple-100 text-sm">Get help when you need it most</p>
+                        <p className="text-sm opacity-85">Get help when you need it most</p>
                       </div>
                     </div>
                     <div className="flex items-start">
                       <span className="text-2xl mr-3">✓</span>
                       <div>
                         <p className="font-bold text-lg">Hashtag Research Tool</p>
-                        <p className="text-purple-100 text-sm">Find trending hashtags in your niche</p>
+                        <p className="text-sm opacity-85">Find trending hashtags in your niche</p>
                       </div>
                     </div>
                   </div>
 
                   <button
                     onClick={initiateCheckout}
-                    className="w-full bg-white text-blue-600 rounded-lg px-6 py-4 font-bold text-lg hover:bg-gray-50 transition-all shadow-lg"
+                    className="w-full bg-white rounded-lg px-6 py-4 font-bold text-lg hover:bg-gray-50 transition-all shadow-lg"
+                    style={{
+                      color: planType === 'creator' ? '#DAA520' : '#2563eb',
+                      opacity: isPlanTransitioning ? 0.6 : 1,
+                      transform: isPlanTransitioning ? 'scale(0.98)' : 'scale(1)',
+                      transition: 'all 0.5s ease-in-out'
+                    }}
                   >
-                    {user ? 'Subscribe to PostReady Pro - $10/month' : 'Sign Up & Subscribe - $10/month'}
+                    {effectiveUser 
+                      ? `Subscribe to PostReady ${planType === 'creator' ? 'Creator' : 'Pro'} - $10/month` 
+                      : `Sign Up & Subscribe - $10/month`}
                   </button>
-                  <p className="text-center text-purple-100 text-sm mt-3">
+                  <p className="text-center text-sm mt-3 opacity-85">
                     Cancel anytime • Secure payment by Stripe
                   </p>
                 </div>
@@ -3253,7 +3988,7 @@ function HomeContent() {
                     <div className="p-4 font-bold" style={{ 
                       backgroundColor: 'rgba(41, 121, 255, 0.1)',
                       color: 'var(--primary)'
-                    }}>Pro</div>
+                    }}>Pro/Creator</div>
                   </div>
                   <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
                     <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Video Ideas</div>
@@ -3304,8 +4039,35 @@ function HomeContent() {
           </div>
         )}
 
-        <div className="text-center text-gray-500 text-sm py-8">
-          <p>© 2025 PostReady. Built to help local businesses thrive.</p>
+        <div className="text-center py-8 space-y-2">
+          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+            © 2025 PostReady. Built to help local businesses thrive.
+          </p>
+          <div className="flex flex-wrap justify-center gap-4 text-sm">
+            <a
+              href="/privacy"
+              className="transition-colors hover:opacity-70 underline decoration-dotted"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              Privacy Policy
+            </a>
+            <span style={{ color: 'var(--text-secondary)' }}>•</span>
+            <a
+              href="/terms"
+              className="transition-colors hover:opacity-70 underline decoration-dotted"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              Terms of Service
+            </a>
+            <span style={{ color: 'var(--text-secondary)' }}>•</span>
+            <a
+              href="/refund"
+              className="transition-colors hover:opacity-70 underline decoration-dotted"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              Refund Policy
+            </a>
+          </div>
         </div>
       </div>
 
@@ -3325,6 +4087,7 @@ function HomeContent() {
         onClose={() => setModalState({ ...modalState, isOpen: false })}
         onConfirm={modalState.onConfirm}
         confirmText={modalState.confirmText}
+        isCreator={userType === 'creator'}
       />
 
       {/* Notification */}
@@ -3352,6 +4115,58 @@ function HomeContent() {
           {theme === 'light' ? '🌙' : '☀️'}
         </span>
       </button>
+
+      {/* Dev Buttons - Top Left */}
+      <div className="fixed top-6 left-6 z-50 flex flex-col gap-2">
+        <button
+          onClick={() => setDevMode('none')}
+          className="px-4 py-2 rounded-lg shadow-lg hover:scale-105 text-xs font-bold transition-all"
+          style={{ 
+            backgroundColor: devMode === 'none' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 0, 0, 0.1)',
+            border: '2px solid rgba(255, 0, 0, 0.5)',
+            color: 'rgba(255, 0, 0, 0.9)'
+          }}
+          title="Not Signed In"
+        >
+          Not Signed In
+        </button>
+        <button
+          onClick={() => setDevMode('regular')}
+          className="px-4 py-2 rounded-lg shadow-lg hover:scale-105 text-xs font-bold transition-all"
+          style={{ 
+            backgroundColor: devMode === 'regular' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 0, 0, 0.1)',
+            border: '2px solid rgba(255, 0, 0, 0.5)',
+            color: 'rgba(255, 0, 0, 0.9)'
+          }}
+          title="Regular User"
+        >
+          Regular User
+        </button>
+        <button
+          onClick={() => setDevMode('pro')}
+          className="px-4 py-2 rounded-lg shadow-lg hover:scale-105 text-xs font-bold transition-all"
+          style={{ 
+            backgroundColor: devMode === 'pro' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 0, 0, 0.1)',
+            border: '2px solid rgba(255, 0, 0, 0.5)',
+            color: 'rgba(255, 0, 0, 0.9)'
+          }}
+          title="Pro User"
+        >
+          Pro User
+        </button>
+        <button
+          onClick={() => setDevMode('creator')}
+          className="px-4 py-2 rounded-lg shadow-lg hover:scale-105 text-xs font-bold transition-all"
+          style={{ 
+            backgroundColor: devMode === 'creator' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 0, 0, 0.1)',
+            border: '2px solid rgba(255, 0, 0, 0.5)',
+            color: 'rgba(255, 0, 0, 0.9)'
+          }}
+          title="Creator User"
+        >
+          Creator User
+        </button>
+      </div>
     </div>
   );
 }

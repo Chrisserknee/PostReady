@@ -78,6 +78,8 @@ CREATE TABLE IF NOT EXISTS user_progress (
   rewrite_count INTEGER DEFAULT 0,
   regenerate_count INTEGER DEFAULT 0,
   reword_title_count INTEGER DEFAULT 0,
+  hashtag_count INTEGER DEFAULT 0,
+  guide_ai_count INTEGER DEFAULT 0,
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   UNIQUE(user_id)
@@ -104,4 +106,69 @@ CREATE POLICY "Users can update their own progress"
 
 CREATE POLICY "Users can delete their own progress"
   ON user_progress FOR DELETE
+  USING (auth.uid() = user_id);
+
+-- Create contact_messages table for support inquiries
+CREATE TABLE IF NOT EXISTS contact_messages (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES auth.users(id) ON DELETE SET NULL,
+  user_email TEXT NOT NULL,
+  subject TEXT NOT NULL,
+  message TEXT NOT NULL,
+  status TEXT DEFAULT 'new' CHECK (status IN ('new', 'in_progress', 'resolved', 'closed')),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index for faster queries
+CREATE INDEX IF NOT EXISTS idx_contact_messages_user_id ON contact_messages(user_id);
+CREATE INDEX IF NOT EXISTS idx_contact_messages_status ON contact_messages(status);
+CREATE INDEX IF NOT EXISTS idx_contact_messages_created_at ON contact_messages(created_at DESC);
+
+-- Enable Row Level Security
+ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
+
+-- Create policy for users to view their own messages
+CREATE POLICY "Users can view their own messages"
+  ON contact_messages FOR SELECT
+  USING (auth.uid() = user_id OR auth.uid() IS NULL);
+
+-- Create policy for anyone to insert messages (for anonymous users)
+CREATE POLICY "Anyone can insert contact messages"
+  ON contact_messages FOR INSERT
+  WITH CHECK (true);
+
+-- Create saved_video_ideas table for saving video ideas
+CREATE TABLE IF NOT EXISTS saved_video_ideas (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  business_name TEXT NOT NULL,
+  business_info JSONB NOT NULL,
+  video_idea JSONB NOT NULL,
+  strategy_id UUID, -- Optional reference to strategy if available
+  saved_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Create index for faster queries
+CREATE INDEX IF NOT EXISTS idx_saved_video_ideas_user_id ON saved_video_ideas(user_id);
+CREATE INDEX IF NOT EXISTS idx_saved_video_ideas_saved_at ON saved_video_ideas(saved_at DESC);
+CREATE INDEX IF NOT EXISTS idx_saved_video_ideas_business_name ON saved_video_ideas(business_name);
+
+-- Enable Row Level Security
+ALTER TABLE saved_video_ideas ENABLE ROW LEVEL SECURITY;
+
+-- Create policy for users to view their own saved ideas
+CREATE POLICY "Users can view their own saved ideas"
+  ON saved_video_ideas FOR SELECT
+  USING (auth.uid() = user_id);
+
+-- Create policy for users to insert their own saved ideas
+CREATE POLICY "Users can insert their own saved ideas"
+  ON saved_video_ideas FOR INSERT
+  WITH CHECK (auth.uid() = user_id);
+
+-- Create policy for users to delete their own saved ideas
+CREATE POLICY "Users can delete their own saved ideas"
+  ON saved_video_ideas FOR DELETE
   USING (auth.uid() = user_id);
