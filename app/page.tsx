@@ -4115,58 +4115,6 @@ function HomeContent() {
           {theme === 'light' ? '🌙' : '☀️'}
         </span>
       </button>
-
-      {/* Dev Buttons - Top Left */}
-      <div className="fixed top-6 left-6 z-50 flex flex-col gap-2">
-        <button
-          onClick={() => setDevMode('none')}
-          className="px-4 py-2 rounded-lg shadow-lg hover:scale-105 text-xs font-bold transition-all"
-          style={{ 
-            backgroundColor: devMode === 'none' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 0, 0, 0.1)',
-            border: '2px solid rgba(255, 0, 0, 0.5)',
-            color: 'rgba(255, 0, 0, 0.9)'
-          }}
-          title="Not Signed In"
-        >
-          Not Signed In
-        </button>
-        <button
-          onClick={() => setDevMode('regular')}
-          className="px-4 py-2 rounded-lg shadow-lg hover:scale-105 text-xs font-bold transition-all"
-          style={{ 
-            backgroundColor: devMode === 'regular' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 0, 0, 0.1)',
-            border: '2px solid rgba(255, 0, 0, 0.5)',
-            color: 'rgba(255, 0, 0, 0.9)'
-          }}
-          title="Regular User"
-        >
-          Regular User
-        </button>
-        <button
-          onClick={() => setDevMode('pro')}
-          className="px-4 py-2 rounded-lg shadow-lg hover:scale-105 text-xs font-bold transition-all"
-          style={{ 
-            backgroundColor: devMode === 'pro' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 0, 0, 0.1)',
-            border: '2px solid rgba(255, 0, 0, 0.5)',
-            color: 'rgba(255, 0, 0, 0.9)'
-          }}
-          title="Pro User"
-        >
-          Pro User
-        </button>
-        <button
-          onClick={() => setDevMode('creator')}
-          className="px-4 py-2 rounded-lg shadow-lg hover:scale-105 text-xs font-bold transition-all"
-          style={{ 
-            backgroundColor: devMode === 'creator' ? 'rgba(255, 0, 0, 0.2)' : 'rgba(255, 0, 0, 0.1)',
-            border: '2px solid rgba(255, 0, 0, 0.5)',
-            color: 'rgba(255, 0, 0, 0.9)'
-          }}
-          title="Creator User"
-        >
-          Creator User
-        </button>
-      </div>
     </div>
   );
 }
