@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 
 interface NotificationProps {
   isOpen: boolean;
@@ -19,14 +19,38 @@ export const Notification = ({
   type = 'success',
   duration = 3000,
 }: NotificationProps) => {
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
+  const onCloseRef = useRef(onClose);
+
+  // Keep onClose reference up to date without triggering effect
   useEffect(() => {
-    if (isOpen && duration > 0) {
-      const timer = setTimeout(() => {
-        onClose();
-      }, duration);
-      return () => clearTimeout(timer);
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
+  useEffect(() => {
+    // Clear any existing timer
+    if (timerRef.current) {
+      clearTimeout(timerRef.current);
+      timerRef.current = null;
     }
-  }, [isOpen, duration, onClose]);
+
+    if (isOpen && duration > 0) {
+      // Use requestAnimationFrame to ensure timer starts after render
+      // This helps with iOS Safari timing issues
+      requestAnimationFrame(() => {
+        timerRef.current = setTimeout(() => {
+          onCloseRef.current();
+        }, duration);
+      });
+    }
+
+    return () => {
+      if (timerRef.current) {
+        clearTimeout(timerRef.current);
+        timerRef.current = null;
+      }
+    };
+  }, [isOpen, duration]);
 
   if (!isOpen) return null;
 

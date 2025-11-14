@@ -121,6 +121,12 @@
 
 .animate-slide-in-right {
   animation: slideInRight 0.3s ease-out;
+  /* Force hardware acceleration on iOS */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  will-change: transform, opacity;
 }
 
 :root[data-theme="light"] {
