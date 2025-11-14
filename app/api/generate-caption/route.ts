@@ -1,10 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
-
 export async function POST(request: NextRequest) {
   try {
     const { businessInfo, ideaTitle, videoDescription, selectedIdea } = await request.json();
@@ -15,6 +11,18 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       );
     }
+
+    if (!process.env.OPENAI_API_KEY) {
+      return NextResponse.json(
+        { error: 'OpenAI API key not configured' },
+        { status: 500 }
+      );
+    }
+
+    // Initialize OpenAI client lazily (only when route is called)
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY,
+    });
 
     console.log('🎨 Generating AI caption...');
 
