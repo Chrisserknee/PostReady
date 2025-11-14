@@ -1601,35 +1601,60 @@ function HomeContent() {
 
         {/* Business Info Form */}
         {currentStep === "form" && (
-          <SectionCard className="mb-10" isPro={isPro}>
-            {/* Business/Creator Toggle Pill */}
+          <div 
+            className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500"
+            style={{
+              backgroundColor: userType === 'creator' 
+                ? 'rgba(218, 165, 32, 0.08)' // Light shimmery gold
+                : 'var(--card-bg)',
+              borderColor: userType === 'creator'
+                ? 'rgba(218, 165, 32, 0.3)'
+                : 'var(--card-border)',
+              boxShadow: userType === 'creator'
+                ? '0 10px 40px rgba(218, 165, 32, 0.15)'
+                : undefined
+            }}
+          >
+            {/* Business/Creator Toggle Pill with Slider */}
             <div className="flex justify-center mb-8">
-              <div className="relative inline-flex rounded-full p-1" style={{
-                backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                backdropFilter: 'blur(10px)'
-              }}>
+              <div 
+                className="relative inline-flex rounded-full p-1 cursor-pointer"
+                style={{
+                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
+                  backdropFilter: 'blur(10px)',
+                  width: '340px'
+                }}
+                onClick={() => setUserType(userType === 'business' ? 'creator' : 'business')}
+              >
+                {/* Sliding background indicator */}
+                <div 
+                  className="absolute top-1 bottom-1 rounded-full transition-all duration-500 ease-in-out"
+                  style={{
+                    left: userType === 'business' ? '4px' : 'calc(50% - 4px)',
+                    width: 'calc(50% + 4px)',
+                    background: userType === 'business' 
+                      ? 'linear-gradient(to right, #2979FF, #4A9FFF)'
+                      : 'linear-gradient(to right, #DAA520, #F4D03F)', // Softer gold
+                    boxShadow: userType === 'business'
+                      ? '0 4px 12px rgba(41, 121, 255, 0.4)'
+                      : '0 4px 12px rgba(218, 165, 32, 0.4)'
+                  }}
+                />
+                
                 <button
                   type="button"
-                  onClick={() => setUserType('business')}
-                  className="relative px-8 py-3 rounded-full font-semibold transition-all duration-300"
+                  className="relative px-8 py-3 rounded-full font-semibold transition-all duration-300 z-10 flex-1"
                   style={{
-                    backgroundColor: userType === 'business' ? '#2979FF' : 'transparent',
-                    color: userType === 'business' ? 'white' : 'var(--text-secondary)',
-                    boxShadow: userType === 'business' ? '0 4px 12px rgba(41, 121, 255, 0.4)' : 'none',
-                    transform: userType === 'business' ? 'scale(1.05)' : 'scale(1)'
+                    color: userType === 'business' ? 'white' : 'var(--text-secondary)'
                   }}
                 >
                   Businesses
                 </button>
                 <button
                   type="button"
-                  onClick={() => setUserType('creator')}
-                  className="relative px-8 py-3 rounded-full font-semibold transition-all duration-300"
+                  className="relative px-8 py-3 rounded-full font-semibold transition-all duration-300 z-10 flex-1"
                   style={{
-                    backgroundColor: userType === 'creator' ? '#FFD700' : 'transparent',
-                    color: userType === 'creator' ? '#1A1F2E' : 'var(--text-secondary)',
-                    boxShadow: userType === 'creator' ? '0 4px 12px rgba(255, 215, 0, 0.4)' : 'none',
-                    transform: userType === 'creator' ? 'scale(1.05)' : 'scale(1)'
+                    color: userType === 'creator' ? '#1A1F2E' : 'var(--text-secondary)'
                   }}
                 >
                   Creators
@@ -1637,8 +1662,8 @@ function HomeContent() {
               </div>
             </div>
 
-            <h2 className="text-3xl font-bold mb-6" style={{ 
-              color: userType === 'creator' ? '#FFD700' : 'var(--secondary)' 
+            <h2 className="text-3xl font-bold mb-6 transition-colors duration-500" style={{ 
+              color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
             }}>
               {userType === 'business' ? 'Tell Us About Your Business' : 'Tell Us About Your Content'}
             </h2>
@@ -1750,14 +1775,14 @@ function HomeContent() {
 
               <button 
                 type="submit" 
-                className="w-full py-4 rounded-lg font-bold text-lg transition-all hover:scale-105 active:scale-95 shadow-lg relative overflow-hidden"
+                className="w-full py-4 rounded-lg font-bold text-lg transition-all duration-500 hover:scale-105 active:scale-95 shadow-lg relative overflow-hidden"
                 style={{
                   background: userType === 'creator' 
-                    ? 'linear-gradient(to right, #FFD700, #FFA500)'
+                    ? 'linear-gradient(to right, #DAA520, #F4D03F)' // Softer shimmery gold
                     : 'linear-gradient(to right, #2979FF, #6FFFD2)',
                   color: userType === 'creator' ? '#1A1F2E' : 'white',
                   boxShadow: userType === 'creator'
-                    ? '0 8px 20px rgba(255, 215, 0, 0.4)'
+                    ? '0 8px 20px rgba(218, 165, 32, 0.35)'
                     : '0 8px 20px rgba(41, 121, 255, 0.3)'
                 }}
               >
@@ -1836,7 +1861,7 @@ function HomeContent() {
                   </div>
                 </div>
               )}
-          </SectionCard>
+          </div>
         )}
 
         {/* Researching State */}
