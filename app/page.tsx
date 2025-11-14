@@ -242,6 +242,15 @@ function HomeContent() {
     }
   }, [user, redirectToCheckoutAfterAuth, authLoading]);
 
+  // Scroll to top when step changes (mobile optimization)
+  useEffect(() => {
+    // Smooth scroll to top on step changes
+    window.scrollTo({
+      top: 0,
+      behavior: 'smooth'
+    });
+  }, [currentStep]);
+
   // Handle URL parameters for navigation from portal
   useEffect(() => {
     const view = searchParams.get('view');
@@ -1638,7 +1647,7 @@ function HomeContent() {
               />
 
               <PrimaryButton type="submit" className="w-full" isPro={isPro}>
-                Research My Business and Generate a Social Media Strategy
+                Generate Social Media Strategy
               </PrimaryButton>
             </form>
 

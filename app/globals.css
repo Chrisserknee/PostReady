@@ -210,3 +210,49 @@ textarea::placeholder {
   }
 }
 
+/* Mobile Optimizations */
+@media (max-width: 768px) {
+  /* Ensure smooth scrolling on mobile */
+  html {
+    scroll-behavior: smooth;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Prevent horizontal scroll */
+  body {
+    overflow-x: hidden;
+    width: 100%;
+  }
+  
+  /* Better touch targets for mobile */
+  button,
+  a,
+  input,
+  textarea,
+  select {
+    min-height: 44px; /* iOS recommended touch target size */
+  }
+  
+  /* Improve text readability on mobile */
+  body {
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+  
+  /* Fix viewport issues on mobile */
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+}
+
+/* Prevent zoom on input focus (iOS) */
+@media (max-width: 768px) {
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  textarea,
+  select {
+    font-size: 16px !important; /* Prevents zoom on iOS */
+  }
+}
+
