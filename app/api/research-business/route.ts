@@ -16,11 +16,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (!process.env.OPENAI_API_KEY) {
+      console.error("❌ OPENAI_API_KEY is not set in environment variables");
       return NextResponse.json(
-        { error: "OpenAI API key not configured" },
+        { error: "OpenAI API key not configured. Please add OPENAI_API_KEY to your environment variables." },
         { status: 500 }
       );
     }
+
+    console.log("✅ OpenAI API key found, length:", process.env.OPENAI_API_KEY.length);
 
     // Initialize OpenAI client lazily (only when route is called)
     const openai = new OpenAI({
@@ -132,12 +135,14 @@ export async function POST(request: NextRequest) {
       status: error?.status,
       code: error?.code,
       type: error?.type,
-      stack: error?.stack
+      stack: error?.stack,
+      name: error?.name
     });
     
-    if (error?.status === 401) {
+    // Check if it's an OpenAI API authentication error
+    if (error?.status === 401 || error?.code === 'invalid_api_key') {
       return NextResponse.json(
-        { error: "Invalid OpenAI API key" },
+        { error: "Invalid OpenAI API key. Please check your OPENAI_API_KEY environment variable." },
         { status: 401 }
       );
     }
@@ -149,8 +154,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Return detailed error message for debugging
     return NextResponse.json(
-      { error: error?.message || "Failed to research business" },
+      { 
+        error: error?.message || "Failed to research business",
+        details: `${error?.name}: ${error?.message}`,
+        code: error?.code
+      },
       { status: 500 }
     );
   }
