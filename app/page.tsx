@@ -940,22 +940,28 @@ function HomeContent() {
     setTimeout(() => {
       const viewportHeight = window.innerHeight;
       const docHeight = document.documentElement.scrollHeight;
+      const isMobile = window.innerWidth < 768; // md breakpoint
       
-      // Scroll down to show the premium section nicely
-      // We want to scroll just enough to see both the pricing and comparison
-      // If the page is tall enough, scroll to 25% of the page
-      // Otherwise, scroll to a position that shows content without too much white space
       let targetScroll;
       
-      if (docHeight > viewportHeight * 1.5) {
-        // Page is tall enough, scroll to show premium section
-        targetScroll = Math.min(
-          docHeight - viewportHeight, // Don't scroll past the bottom
-          Math.max(200, docHeight * 0.25) // Scroll to 25% or at least 200px
-        );
+      if (isMobile) {
+        // On mobile, scroll to top to show the premium card properly centered
+        targetScroll = 0;
       } else {
-        // Page is shorter, scroll less aggressively
-        targetScroll = Math.max(0, (docHeight - viewportHeight) * 0.5);
+        // Desktop: Scroll down to show the premium section nicely
+        // We want to scroll just enough to see both the pricing and comparison
+        // If the page is tall enough, scroll to 25% of the page
+        // Otherwise, scroll to a position that shows content without too much white space
+        if (docHeight > viewportHeight * 1.5) {
+          // Page is tall enough, scroll to show premium section
+          targetScroll = Math.min(
+            docHeight - viewportHeight, // Don't scroll past the bottom
+            Math.max(200, docHeight * 0.25) // Scroll to 25% or at least 200px
+          );
+        } else {
+          // Page is shorter, scroll less aggressively
+          targetScroll = Math.max(0, (docHeight - viewportHeight) * 0.5);
+        }
       }
       
       window.scrollTo({ 
