@@ -552,17 +552,25 @@ PROVIDE:
    - Brief, practical explanations
 
 4. CONTENT IDEAS (Exactly 6 video ideas)
-   - SPECIFIC to ${info.businessType} content creation
-   - Focus on trending formats and viral potential
-   - Include storytelling angles
-   - Make them filmable and engaging
-   - Examples for ${info.businessType}:
-     * "Day in the Life" showing creator routine
-     * "Reaction" or "Commentary" on trending topics
-     * "Tutorial" or "How-To" in their niche
-     * "Challenge" or "Trend" participation
-     * "Storytime" with personal experiences
-     * "Collaboration" or "Duet" concepts
+   - GENERAL and FLEXIBLE content ideas that work for most ${info.businessType} creators
+   - Focus on proven formats that consistently get engagement
+   - Make them adaptable to different styles and approaches
+   - Keep titles broad and appealing
+   - Include a mix of evergreen and trendy content types
+   
+   Examples of GOOD general ideas:
+   ✅ "Quick Tips for [Topic]" - Share 3-5 quick actionable tips
+   ✅ "Common Mistakes to Avoid" - Help viewers avoid pitfalls
+   ✅ "My [Time Period] Journey" - Personal progress/story content
+   ✅ "Trying [Trending Thing]" - Participate in trends
+   ✅ "Beginner's Guide to [Topic]" - Educational evergreen content
+   ✅ "Things I Wish I Knew About [Topic]" - Relatable experience sharing
+   
+   BAD (too specific):
+   ❌ "Recreating My Favorite Level from Mario 64" - too narrow
+   ❌ "Building a PC with Only Used Parts from eBay" - too specific
+   
+   Make ideas that 80% of ${info.businessType} creators could use!
 
 RESPONSE FORMAT (MUST be valid JSON):
 {
