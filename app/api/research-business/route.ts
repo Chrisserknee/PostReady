@@ -6,7 +6,11 @@ import { detectBusinessType } from "@/lib/detectBusinessType";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { businessInfo } = body as { businessInfo: BusinessInfo };
+    const { businessInfo, userType, creatorGoals } = body as { 
+      businessInfo: BusinessInfo;
+      userType?: 'business' | 'creator';
+      creatorGoals?: string;
+    };
 
     if (!businessInfo) {
       return NextResponse.json(
@@ -44,15 +48,21 @@ export async function POST(request: NextRequest) {
       usingForContent: actualBusinessType
     });
 
-    // Generate simple, actionable strategy with CORRECTED business type
-    const researchPrompt = buildActionableStrategyPrompt(businessInfo, actualBusinessType);
+    // Generate strategy based on user type (business or creator)
+    const researchPrompt = userType === 'creator'
+      ? buildCreatorStrategyPrompt(businessInfo, creatorGoals)
+      : buildActionableStrategyPrompt(businessInfo, actualBusinessType);
+    
+    const systemMessage = userType === 'creator'
+      ? "You are a content creator expert who helps creators grow their audience and engagement. Focus on viral trends, audience retention, storytelling techniques, and content optimization. Be specific to their content category and goals. Always respond with valid JSON."
+      : "You are a social media expert who gives simple, actionable advice. Focus on what works: consistency, engagement, and authentic content. Keep it practical and easy to implement. CRITICAL: You MUST generate business-specific, contextual video ideas that reflect the actual business type and location. NEVER use generic templates like 'Educational Tip' or 'Behind-the-Scenes Look'. Always be specific and filmable. Always respond with valid JSON.";
     
     const completion = await openai.chat.completions.create({
       model: "gpt-4-turbo-preview",
       messages: [
         {
           role: "system",
-          content: "You are a social media expert who gives simple, actionable advice. Focus on what works: consistency, engagement, and authentic content. Keep it practical and easy to implement. CRITICAL: You MUST generate business-specific, contextual video ideas that reflect the actual business type and location. NEVER use generic templates like 'Educational Tip' or 'Behind-the-Scenes Look'. Always be specific and filmable. Always respond with valid JSON."
+          content: systemMessage
         },
         {
           role: "user",
@@ -498,4 +508,79 @@ function getPlatformSpecificAdvice(platform: string): string {
   };
 
   return platformAdvice[platform] || platformAdvice["Instagram"];
+}
+
+function buildCreatorStrategyPrompt(info: BusinessInfo, goals?: string): string {
+  const goalsSection = goals ? `\nCreator Goals: "${goals}"` : "";
+  
+  return `
+🎬 CREATOR STRATEGY REQUEST 🎬
+
+Creator Name: "${info.businessName}"
+Content Category: "${info.businessType}"
+Platform: "${info.platform}"
+Location: "${info.location}"${goalsSection}
+
+YOUR TASK:
+Create a comprehensive content strategy for this ${info.platform} creator focusing on ${info.businessType} content.
+
+IMPORTANT: This is for a CONTENT CREATOR, not a business. Focus on:
+- Viral content trends in ${info.businessType}
+- Audience retention and engagement techniques
+- Storytelling and content structure
+- Platform-specific optimization for ${info.platform}
+- Building a loyal community
+${goals ? `- Helping achieve their goals: ${goals}` : ''}
+
+PROVIDE:
+
+1. HEADLINE SUMMARY (1-2 sentences)
+   - Motivating message about growing as a ${info.businessType} creator
+   - Focus on authenticity, consistency, and audience connection
+
+2. KEY STRATEGIES (Exactly 5 strategies)
+   - Focus on content creation, not business operations
+   - Include trending formats and techniques
+   - Platform-specific algorithm tips
+   - Audience engagement tactics
+   - Content quality and production tips
+   - Use "your" and "you" (advice TO the creator)
+
+3. POSTING TIMES (4 optimal times)
+   - When does ${info.platform} audience for ${info.businessType} content engage most?
+   - Consider creator audience demographics
+   - Brief, practical explanations
+
+4. CONTENT IDEAS (Exactly 6 video ideas)
+   - SPECIFIC to ${info.businessType} content creation
+   - Focus on trending formats and viral potential
+   - Include storytelling angles
+   - Make them filmable and engaging
+   - Examples for ${info.businessType}:
+     * "Day in the Life" showing creator routine
+     * "Reaction" or "Commentary" on trending topics
+     * "Tutorial" or "How-To" in their niche
+     * "Challenge" or "Trend" participation
+     * "Storytime" with personal experiences
+     * "Collaboration" or "Duet" concepts
+
+RESPONSE FORMAT (MUST be valid JSON):
+{
+  "headlineSummary": "string",
+  "keyPrinciples": ["strategy1", "strategy2", "strategy3", "strategy4", "strategy5"],
+  "postingTimes": [
+    {"day": "string", "timeRange": "string", "reason": "string"},
+    {"day": "string", "timeRange": "string", "reason": "string"},
+    {"day": "string", "timeRange": "string", "reason": "string"},
+    {"day": "string", "timeRange": "string", "reason": "string"}
+  ],
+  "contentIdeas": [
+    {"title": "string", "description": "string", "angle": "string"},
+    {"title": "string", "description": "string", "angle": "string"},
+    {"title": "string", "description": "string", "angle": "string"},
+    {"title": "string", "description": "string", "angle": "string"},
+    {"title": "string", "description": "string", "angle": "string"},
+    {"title": "string", "description": "string", "angle": "string"}
+  ]
+}`;
 }
