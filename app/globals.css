@@ -176,6 +176,43 @@
   --text-gray-500: #6B7280;
 }
 
+/* Creator Mode - Gold Theme */
+:root[data-theme="light"][data-mode="creator"] {
+  --background: #FFFDF7;
+  --foreground: #1A1A1A;
+  --primary: #DAA520;
+  --secondary: #1A1A1A;
+  --accent: #FFD700;
+  --card-bg: #FFFFFF;
+  --card-border: #F4E4C1;
+  --text-primary: #1A1A1A;
+  --text-secondary: #8B7355;
+  --hover-bg: rgba(218, 165, 32, 0.05);
+  --text-gray-900: #111827;
+  --text-gray-800: #1F2937;
+  --text-gray-700: #374151;
+  --text-gray-600: #4B5563;
+  --text-gray-500: #6B7280;
+}
+
+:root[data-theme="dark"][data-mode="creator"] {
+  --background: #1A1510;
+  --foreground: #F4E4C1;
+  --primary: #DAA520;
+  --secondary: #F4E4C1;
+  --accent: #FFD700;
+  --card-bg: #2A2318;
+  --card-border: #4A3F2F;
+  --text-primary: #F4E4C1;
+  --text-secondary: #B8A080;
+  --hover-bg: rgba(218, 165, 32, 0.15);
+  --text-gray-900: #F4E4C1;
+  --text-gray-800: #E5D4B4;
+  --text-gray-700: #C4B494;
+  --text-gray-600: #A49474;
+  --text-gray-500: #8B7355;
+}
+
 body {
   color: var(--foreground);
   background: var(--background);
