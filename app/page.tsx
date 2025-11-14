@@ -19,6 +19,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { saveUserProgress, loadUserProgress } from "@/lib/userProgress";
 import { saveBusiness, loadSavedBusinesses, saveCompletedPost, loadPostHistory } from "@/lib/userHistory";
+import { ThemeToggle } from "@/components/ThemeToggle";
+import { Stars } from "@/components/Stars";
 
 type WizardStep = "form" | "researching" | "principles" | "choose-idea" | "record-video" | "generating-caption" | "post-details" | "premium" | "history" | "businesses";
 
@@ -2981,21 +2983,11 @@ function HomeContent() {
         duration={3000}
       />
 
+      {/* Glimmering Stars for Dark Mode */}
+      <Stars />
+
       {/* Floating Theme Toggle - Bottom Right */}
-      <button
-        onClick={toggleTheme}
-        className="fixed bottom-6 right-6 p-4 rounded-full shadow-2xl hover:scale-110 z-50"
-        style={{ 
-          backgroundColor: 'var(--card-bg)',
-          border: '3px solid var(--primary)',
-          transition: 'all 0.3s ease, transform 0.2s ease'
-        }}
-        title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-      >
-        <span className="text-3xl" style={{ transition: 'opacity 0.3s ease' }}>
-          {theme === 'light' ? '🌙' : '☀️'}
-        </span>
-      </button>
+      <ThemeToggle />
     </div>
   );
 }

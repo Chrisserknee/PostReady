@@ -78,6 +78,17 @@
   }
 }
 
+@keyframes twinkle {
+  0%, 100% {
+    opacity: 0;
+    transform: scale(0);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
 /* Animation Classes */
 .animate-fade-out {
   animation: fadeOut 0.3s ease-out forwards;
