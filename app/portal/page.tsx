@@ -468,17 +468,17 @@ export default function UserPortal() {
             </button>
 
             <button
-              onClick={async () => {
+              onClick={() => {
                 // Prevent multiple clicks
                 if (isSigningOut) return;
                 
                 setIsSigningOut(true);
-                try {
-                  console.log('Signing out...');
-                  await signOut();
-                  // Force reload to clear all state
+                console.log('Signing out...');
+                
+                // Sign out and immediately redirect without waiting
+                supabase.auth.signOut().then(() => {
                   window.location.href = '/';
-                } catch (error) {
+                }).catch((error) => {
                   console.error('Sign out error:', error);
                   setIsSigningOut(false);
                   setModalState({
@@ -487,7 +487,7 @@ export default function UserPortal() {
                     message: 'Failed to sign out. Please try again.',
                     type: 'error'
                   });
-                }
+                });
               }}
               disabled={isSigningOut}
               className="w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"

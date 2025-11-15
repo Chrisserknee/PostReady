@@ -636,22 +636,21 @@ function HomeContent() {
     }
   };
 
-  const handleSignOut = async () => {
+  const handleSignOut = () => {
     // Prevent multiple clicks
     if (isSigningOut) return;
     
-    try {
-      setIsSigningOut(true);
-      console.log('Signing out...');
-      await signOut();
-      
-      // Force immediate redirect - don't wait for state updates
+    setIsSigningOut(true);
+    console.log('Signing out...');
+    
+    // Sign out and immediately redirect without waiting
+    supabase.auth.signOut().then(() => {
       window.location.href = '/';
-    } catch (error) {
+    }).catch((error) => {
       console.error('Sign out error:', error);
       setIsSigningOut(false);
       showNotification('Failed to sign out. Please try again.', 'error', 'Error');
-    }
+    });
   };
 
   const handleManageBilling = async () => {
