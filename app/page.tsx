@@ -1823,20 +1823,181 @@ function HomeContent() {
       <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>
         {/* Header with Auth - Only for signed-in users */}
         {effectiveUser && !authLoading && (
-          <div className="flex flex-col sm:flex-row justify-between sm:justify-end items-center gap-3 sm:gap-4 mb-8">
-            {/* Row 1: Badges and main navigation - wraps on mobile */}
-            <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto">
+          <div className="mb-8">
+            {/* Mobile: Stacked layout */}
+            <div className="flex sm:hidden flex-col gap-3 w-full">
+              {/* Pro Badge on its own row */}
+              {(isCreator || effectiveIsPro) && (
+                <div className="flex justify-center">
+                  {isCreator ? (
+                    <span 
+                      className="text-white px-4 py-2 rounded-full text-sm font-bold relative overflow-hidden flex-shrink-0"
+                      style={{ 
+                        background: 'linear-gradient(to right, #DAA520, #F4D03F)',
+                        boxShadow: '0 0 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)'
+                      }}
+                    >
+                      <span className="relative z-10 flex items-center gap-1.5">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        CREATOR
+                      </span>
+                    </span>
+                  ) : (
+                    <span 
+                      className="text-white px-4 py-2 rounded-full text-sm font-bold relative overflow-hidden flex-shrink-0"
+                      style={{ 
+                        background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                        boxShadow: '0 0 20px rgba(41, 121, 255, 0.4), 0 0 40px rgba(111, 255, 210, 0.2)'
+                      }}
+                    >
+                      <span className="relative z-10 flex items-center gap-1.5">
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        PRO
+                      </span>
+                    </span>
+                  )}
+                </div>
+              )}
+              {/* Navigation buttons */}
+              <div className="grid grid-cols-3 gap-2 w-full">
+                <button
+                  onClick={navigateHome}
+                  disabled={isNavigating}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 whitespace-nowrap shadow-sm"
+                  style={currentStep === "form" ? { 
+                    color: 'white',
+                    fontWeight: 'bold',
+                    background: 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 100%)',
+                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)'
+                  } : { 
+                    color: 'var(--text-secondary)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                    border: '1px solid rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  Home
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentStep("businesses");
+                    if (user) {
+                      loadHistoryData();
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap shadow-sm"
+                  style={currentStep === "businesses" ? { 
+                    color: 'white',
+                    fontWeight: 'bold',
+                    background: 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 100%)',
+                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)'
+                  } : { 
+                    color: 'var(--text-secondary)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                    border: '1px solid rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  Businesses
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrentStep("history");
+                    if (user) {
+                      loadHistoryData();
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap shadow-sm"
+                  style={currentStep === "history" ? { 
+                    color: 'white',
+                    fontWeight: 'bold',
+                    background: 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 100%)',
+                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)'
+                  } : { 
+                    color: 'var(--text-secondary)',
+                    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                    border: '1px solid rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  History
+                </button>
+              </div>
+              {/* User actions */}
+              <div className="flex gap-2 w-full">
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('Username button clicked', { user });
+                    navigateToPortal();
+                  }}
+                  type="button"
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer truncate shadow-sm"
+                  style={{ 
+                    color: 'var(--text-secondary)', 
+                    pointerEvents: 'auto',
+                    backgroundColor: 'rgba(255, 255, 255, 0.5)',
+                    border: '1px solid rgba(0, 0, 0, 0.1)'
+                  }}
+                  title="Go to User Portal"
+                >
+                  {effectiveUser?.email?.split('@')[0]}
+                </button>
+                {!effectiveIsPro ? (
+                  <button
+                    onClick={scrollToPremium}
+                    className="flex-1 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap shadow-lg"
+                    style={{ 
+                      background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)',
+                      boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
+                    }}
+                  >
+                    Upgrade
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleSignOut}
+                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all shadow-sm"
+                    style={{ 
+                      color: '#dc2626',
+                      backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                      border: '1px solid rgba(220, 38, 38, 0.2)'
+                    }}
+                  >
+                    Sign Out
+                  </button>
+                )}
+              </div>
+              {!effectiveIsPro && (
+                <button
+                  onClick={handleSignOut}
+                  className="w-full px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all shadow-sm"
+                  style={{ 
+                    color: '#dc2626',
+                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
+                    border: '1px solid rgba(220, 38, 38, 0.2)'
+                  }}
+                >
+                  Sign Out
+                </button>
+              )}
+            </div>
+            
+            {/* Desktop: Horizontal layout */}
+            <div className="hidden sm:flex justify-end items-center gap-3">
               {/* Show CREATOR badge for creator users */}
               {isCreator && (
                 <span 
-                  className="text-white px-3 sm:px-3 py-2 sm:py-1 rounded-full text-sm sm:text-xs font-bold relative overflow-hidden flex-shrink-0"
+                  className="text-white px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden flex-shrink-0"
                   style={{ 
                     background: 'linear-gradient(to right, #DAA520, #F4D03F)',
                     boxShadow: '0 0 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)'
                   }}
                 >
                   <span className="relative z-10 flex items-center gap-1">
-                    <svg className="w-4 sm:w-3 h-4 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                     CREATOR
@@ -1846,14 +2007,14 @@ function HomeContent() {
               {/* Show PRO badge for pro users (but not creators) */}
               {effectiveIsPro && !isCreator && (
                 <span 
-                  className="text-white px-3 sm:px-3 py-2 sm:py-1 rounded-full text-sm sm:text-xs font-bold relative overflow-hidden flex-shrink-0"
+                  className="text-white px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden flex-shrink-0"
                   style={{ 
                     background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
                     boxShadow: '0 0 20px rgba(41, 121, 255, 0.4), 0 0 40px rgba(111, 255, 210, 0.2)'
                   }}
                 >
                   <span className="relative z-10 flex items-center gap-1">
-                    <svg className="w-4 sm:w-3 h-4 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                     PRO
@@ -1863,14 +2024,12 @@ function HomeContent() {
               <button
                 onClick={navigateHome}
                 disabled={isNavigating}
-                className="px-4 py-2.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-none text-sm sm:text-sm font-semibold sm:font-medium transition-all disabled:opacity-50 whitespace-nowrap hover:scale-105 sm:hover:scale-100 active:scale-95"
+                className="px-3 py-1.5 text-sm font-medium transition-all disabled:opacity-50 whitespace-nowrap hover:opacity-80"
                 style={currentStep === "form" ? { 
                   color: 'var(--primary)',
-                  fontWeight: 'bold',
-                  backgroundColor: 'rgba(41, 121, 255, 0.1)'
+                  fontWeight: 'bold'
                 } : { 
-                  color: 'var(--text-secondary)',
-                  backgroundColor: 'rgba(0, 0, 0, 0.05)'
+                  color: 'var(--text-secondary)'
                 }}
               >
                 Home
@@ -1882,33 +2041,29 @@ function HomeContent() {
                     loadHistoryData();
                   }
                 }}
-                className="px-4 py-2.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-none text-sm sm:text-sm font-semibold sm:font-medium transition-all whitespace-nowrap hover:scale-105 sm:hover:scale-100 active:scale-95"
+                className="px-3 py-1.5 text-sm font-medium transition-all whitespace-nowrap hover:opacity-80"
                 style={currentStep === "businesses" ? { 
                   color: 'var(--primary)',
-                  fontWeight: 'bold',
-                  backgroundColor: 'rgba(41, 121, 255, 0.1)'
+                  fontWeight: 'bold'
                 } : { 
-                  color: 'var(--text-secondary)',
-                  backgroundColor: 'rgba(0, 0, 0, 0.05)'
+                  color: 'var(--text-secondary)'
                 }}
               >
                 Businesses
               </button>
               <button
-                    onClick={() => {
-                      setCurrentStep("history");
-                      if (user) {
-                        loadHistoryData();
-                      }
-                    }}
-                className="px-4 py-2.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-none text-sm sm:text-sm font-semibold sm:font-medium transition-all whitespace-nowrap hover:scale-105 sm:hover:scale-100 active:scale-95"
+                onClick={() => {
+                  setCurrentStep("history");
+                  if (user) {
+                    loadHistoryData();
+                  }
+                }}
+                className="px-3 py-1.5 text-sm font-medium transition-all whitespace-nowrap hover:opacity-80"
                 style={currentStep === "history" ? { 
                   color: 'var(--primary)',
-                  fontWeight: 'bold',
-                  backgroundColor: 'rgba(41, 121, 255, 0.1)'
+                  fontWeight: 'bold'
                 } : { 
-                  color: 'var(--text-secondary)',
-                  backgroundColor: 'rgba(0, 0, 0, 0.05)'
+                  color: 'var(--text-secondary)'
                 }}
               >
                 History
@@ -1921,12 +2076,8 @@ function HomeContent() {
                   navigateToPortal();
                 }}
                 type="button"
-                className="px-4 py-2.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-none text-sm sm:text-sm font-semibold sm:font-medium transition-all hover:scale-105 sm:hover:scale-100 active:scale-95 cursor-pointer truncate max-w-[180px] sm:max-w-none underline decoration-dotted"
-                style={{ 
-                  color: 'var(--text-secondary)', 
-                  pointerEvents: 'auto',
-                  backgroundColor: 'rgba(0, 0, 0, 0.05)'
-                }}
+                className="px-3 py-1.5 text-sm font-medium transition-all hover:opacity-80 cursor-pointer underline decoration-dotted"
+                style={{ color: 'var(--text-secondary)', pointerEvents: 'auto' }}
                 title="Go to User Portal"
               >
                 {effectiveUser?.email}
@@ -1934,7 +2085,7 @@ function HomeContent() {
               {!effectiveIsPro && (
                 <button
                   onClick={scrollToPremium}
-                  className="text-white px-4 sm:px-4 py-2.5 sm:py-2 rounded-lg text-sm sm:text-sm font-bold transition-all hover:scale-105 sm:hover:opacity-90 active:scale-95 whitespace-nowrap flex-shrink-0"
+                  className="text-white px-4 py-2 rounded-lg text-sm font-bold transition-all hover:opacity-90 whitespace-nowrap flex-shrink-0"
                   style={{ background: 'linear-gradient(to right, #2979FF, #6FFFD2)' }}
                 >
                   Upgrade
@@ -1942,11 +2093,7 @@ function HomeContent() {
               )}
               <button
                 onClick={handleSignOut}
-                className="px-4 py-2.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-none text-sm sm:text-sm font-semibold sm:font-medium whitespace-nowrap hover:scale-105 sm:hover:scale-100 active:scale-95 transition-all"
-                style={{ 
-                  color: '#dc2626',
-                  backgroundColor: 'rgba(220, 38, 38, 0.1)'
-                }}
+                className="text-gray-600 hover:text-gray-900 text-sm font-medium whitespace-nowrap"
               >
                 Sign Out
               </button>
