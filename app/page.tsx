@@ -1753,14 +1753,14 @@ function HomeContent() {
               {/* Show CREATOR badge for creator users */}
               {isCreator && (
                 <span 
-                  className="text-white px-2 sm:px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden flex-shrink-0"
+                  className="text-white px-3 sm:px-3 py-2 sm:py-1 rounded-full text-sm sm:text-xs font-bold relative overflow-hidden flex-shrink-0"
                   style={{ 
                     background: 'linear-gradient(to right, #DAA520, #F4D03F)',
                     boxShadow: '0 0 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)'
                   }}
                 >
                   <span className="relative z-10 flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-4 sm:w-3 h-4 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                     CREATOR
@@ -1770,14 +1770,14 @@ function HomeContent() {
               {/* Show PRO badge for pro users (but not creators) */}
               {isPro && !isCreator && (
                 <span 
-                  className="text-white px-2 sm:px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden flex-shrink-0"
+                  className="text-white px-3 sm:px-3 py-2 sm:py-1 rounded-full text-sm sm:text-xs font-bold relative overflow-hidden flex-shrink-0"
                   style={{ 
                     background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
                     boxShadow: '0 0 20px rgba(41, 121, 255, 0.4), 0 0 40px rgba(111, 255, 210, 0.2)'
                   }}
                 >
                   <span className="relative z-10 flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                    <svg className="w-4 sm:w-3 h-4 sm:h-3" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                     PRO
@@ -1787,12 +1787,14 @@ function HomeContent() {
               <button
                 onClick={navigateHome}
                 disabled={isNavigating}
-                className="text-xs sm:text-sm font-medium transition-all disabled:opacity-50 whitespace-nowrap"
+                className="px-4 py-2.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-none text-sm sm:text-sm font-semibold sm:font-medium transition-all disabled:opacity-50 whitespace-nowrap hover:scale-105 sm:hover:scale-100 active:scale-95"
                 style={currentStep === "form" ? { 
                   color: 'var(--primary)',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  backgroundColor: 'rgba(41, 121, 255, 0.1)'
                 } : { 
-                  color: 'var(--text-secondary)' 
+                  color: 'var(--text-secondary)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.05)'
                 }}
               >
                 Home
@@ -1804,12 +1806,14 @@ function HomeContent() {
                     loadHistoryData();
                   }
                 }}
-                className="text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
+                className="px-4 py-2.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-none text-sm sm:text-sm font-semibold sm:font-medium transition-all whitespace-nowrap hover:scale-105 sm:hover:scale-100 active:scale-95"
                 style={currentStep === "businesses" ? { 
                   color: 'var(--primary)',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  backgroundColor: 'rgba(41, 121, 255, 0.1)'
                 } : { 
-                  color: 'var(--text-secondary)' 
+                  color: 'var(--text-secondary)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.05)'
                 }}
               >
                 Businesses
@@ -1821,12 +1825,14 @@ function HomeContent() {
                         loadHistoryData();
                       }
                     }}
-                className="text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
+                className="px-4 py-2.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-none text-sm sm:text-sm font-semibold sm:font-medium transition-all whitespace-nowrap hover:scale-105 sm:hover:scale-100 active:scale-95"
                 style={currentStep === "history" ? { 
                   color: 'var(--primary)',
-                  fontWeight: 'bold'
+                  fontWeight: 'bold',
+                  backgroundColor: 'rgba(41, 121, 255, 0.1)'
                 } : { 
-                  color: 'var(--text-secondary)' 
+                  color: 'var(--text-secondary)',
+                  backgroundColor: 'rgba(0, 0, 0, 0.05)'
                 }}
               >
                 History
@@ -1839,8 +1845,12 @@ function HomeContent() {
                   navigateToPortal();
                 }}
                 type="button"
-                className="text-xs sm:text-sm transition-all font-medium underline decoration-dotted hover:opacity-70 cursor-pointer truncate max-w-[120px] sm:max-w-none"
-                style={{ color: 'var(--text-secondary)', pointerEvents: 'auto' }}
+                className="px-4 py-2.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-none text-sm sm:text-sm font-semibold sm:font-medium transition-all hover:scale-105 sm:hover:scale-100 active:scale-95 cursor-pointer truncate max-w-[180px] sm:max-w-none underline decoration-dotted"
+                style={{ 
+                  color: 'var(--text-secondary)', 
+                  pointerEvents: 'auto',
+                  backgroundColor: 'rgba(0, 0, 0, 0.05)'
+                }}
                 title="Go to User Portal"
               >
                 {user?.email}
@@ -1848,7 +1858,7 @@ function HomeContent() {
               {!isPro && (
                 <button
                   onClick={scrollToPremium}
-                  className="text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all hover:opacity-90 whitespace-nowrap flex-shrink-0"
+                  className="text-white px-4 sm:px-4 py-2.5 sm:py-2 rounded-lg text-sm sm:text-sm font-bold transition-all hover:scale-105 sm:hover:opacity-90 active:scale-95 whitespace-nowrap flex-shrink-0"
                   style={{ background: 'linear-gradient(to right, #2979FF, #6FFFD2)' }}
                 >
                   Upgrade
@@ -1856,7 +1866,11 @@ function HomeContent() {
               )}
               <button
                 onClick={handleSignOut}
-                className="text-gray-600 hover:text-gray-900 text-xs sm:text-sm font-medium whitespace-nowrap"
+                className="px-4 py-2.5 sm:px-2 sm:py-1 rounded-lg sm:rounded-none text-sm sm:text-sm font-semibold sm:font-medium whitespace-nowrap hover:scale-105 sm:hover:scale-100 active:scale-95 transition-all"
+                style={{ 
+                  color: '#dc2626',
+                  backgroundColor: 'rgba(220, 38, 38, 0.1)'
+                }}
               >
                 Sign Out
               </button>
