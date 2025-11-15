@@ -48,8 +48,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     });
 
-    return () => subscription.unsubscribe();
-  }, []);
+    // Periodically check subscription status (every 2 minutes)
+    // This ensures cancelled/expired subscriptions are detected automatically
+    const statusCheckInterval = setInterval(() => {
+      if (user) {
+        checkProStatus(user.id);
+      }
+    }, 120000); // 2 minutes
+
+    return () => {
+      subscription.unsubscribe();
+      clearInterval(statusCheckInterval);
+    };
+  }, [user]);
 
   const checkProStatus = async (userId: string) => {
     try {
