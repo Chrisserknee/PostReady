@@ -48,13 +48,22 @@ export const Modal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50">
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
+      style={{
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+        backdropFilter: 'blur(4px)',
+        WebkitBackdropFilter: 'blur(4px)'
+      }}
+    >
       <div 
-        className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200"
+        className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scale-in"
         style={isCreator && type === 'confirm' ? {
           border: '2px solid rgba(218, 165, 32, 0.3)',
           boxShadow: '0 20px 60px rgba(218, 165, 32, 0.3), 0 0 0 1px rgba(218, 165, 32, 0.1)'
-        } : {}}
+        } : {
+          boxShadow: '0 20px 60px rgba(0, 0, 0, 0.3)'
+        }}
       >
         <div className="p-6">
           <div className="flex items-start">

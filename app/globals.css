@@ -2,7 +2,15 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Text Animation Keyframes */
+/* Smooth Easing Variables */
+:root {
+  --ease-in-out-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --ease-out-smooth: cubic-bezier(0.0, 0, 0.2, 1);
+  --ease-in-smooth: cubic-bezier(0.4, 0, 1, 1);
+  --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+/* Enhanced Animation Keyframes */
 @keyframes fadeOut {
   from {
     opacity: 1;
@@ -17,11 +25,44 @@
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(10px) scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes scaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slideInLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
@@ -89,13 +130,36 @@
   }
 }
 
-/* Animation Classes */
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.8;
+    transform: scale(1.05);
+  }
+}
+
+/* Enhanced Animation Classes */
 .animate-fade-out {
-  animation: fadeOut 0.3s ease-out forwards;
+  animation: fadeOut 0.3s var(--ease-out-smooth) forwards;
 }
 
 .animate-fade-in {
-  animation: fadeIn 0.5s ease-out forwards;
+  animation: fadeIn 0.4s var(--ease-out-smooth) forwards;
+}
+
+.animate-fade-in-down {
+  animation: fadeInDown 0.4s var(--ease-out-smooth) forwards;
+}
+
+.animate-scale-in {
+  animation: scaleIn 0.3s var(--ease-out-smooth) forwards;
+}
+
+.animate-slide-in-left {
+  animation: slideInLeft 0.4s var(--ease-out-smooth) forwards;
 }
 
 .animate-typing {
@@ -131,13 +195,27 @@
 }
 
 .animate-slide-in-right {
-  animation: slideInRight 0.3s ease-out;
-  /* Force hardware acceleration on iOS */
+  animation: slideInRight 0.35s var(--ease-out-smooth);
+  /* Force hardware acceleration */
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
   -webkit-backface-visibility: hidden;
   backface-visibility: hidden;
   will-change: transform, opacity;
+}
+
+/* Smooth Hover Effects */
+.smooth-hover {
+  transition: all 0.25s var(--ease-out-smooth);
+  will-change: transform;
+}
+
+.smooth-hover:hover {
+  transform: translateY(-2px);
+}
+
+.smooth-hover:active {
+  transform: translateY(0);
 }
 
 :root[data-theme="light"] {
@@ -180,29 +258,37 @@ body {
   color: var(--foreground);
   background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
-  transition: background-color 0.6s ease, color 0.6s ease;
+  transition: background-color 0.5s var(--ease-out-smooth), 
+              color 0.5s var(--ease-out-smooth);
+  /* Hardware acceleration */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 /* Smooth theme transitions for specific elements */
 body,
 .section-card,
 [data-theme] {
-  transition: background-color 0.6s ease, 
-              color 0.6s ease, 
-              border-color 0.6s ease;
+  transition: background-color 0.5s var(--ease-out-smooth), 
+              color 0.5s var(--ease-out-smooth), 
+              border-color 0.5s var(--ease-out-smooth);
 }
 
-/* Prevent unwanted transitions on interactive elements */
+/* Enhanced interactive element transitions */
 button,
 input,
 textarea,
 select {
-  transition: background-color 0.2s ease, 
-              color 0.2s ease, 
-              border-color 0.2s ease,
-              box-shadow 0.2s ease,
-              transform 0.2s ease,
-              opacity 0.2s ease !important;
+  transition: background-color 0.2s var(--ease-out-smooth), 
+              color 0.2s var(--ease-out-smooth), 
+              border-color 0.2s var(--ease-out-smooth),
+              box-shadow 0.25s var(--ease-out-smooth),
+              transform 0.2s var(--ease-out-smooth),
+              opacity 0.2s var(--ease-out-smooth) !important;
+  /* Hardware acceleration */
+  will-change: transform;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
 
 /* Prevent text selection on buttons */
