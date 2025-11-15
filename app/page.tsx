@@ -637,7 +637,7 @@ function HomeContent() {
     }
   };
 
-  const handleSignOut = useCallback(() => {
+  const handleSignOut = useCallback(async () => {
     // Prevent multiple clicks using ref (instant check, no re-render needed)
     if (signingOutRef.current) {
       console.log('⚠️ Sign out already in progress, ignoring click');
@@ -648,13 +648,15 @@ function HomeContent() {
     setIsSigningOut(true);
     console.log('🚪 Signing out...');
     
-    // Sign out from Supabase (don't wait for response, just redirect)
-    supabase.auth.signOut();
+    // Sign out from Supabase and wait for it to complete
+    await supabase.auth.signOut();
+    console.log('✅ Signed out successfully');
     
-    // Redirect immediately - don't wait for anything
-    setTimeout(() => {
-      window.location.href = '/';
-    }, 100);
+    // Clear all local storage
+    localStorage.clear();
+    
+    // Redirect
+    window.location.href = '/';
   }, []);
 
   const handleManageBilling = async () => {
@@ -1822,34 +1824,48 @@ function HomeContent() {
     return steps[currentStep] || 0;
   };
 
+  // Generate star data once and memoize it to prevent re-rendering
+  const stars = React.useMemo(() => {
+    return [...Array(40)].map((_, i) => {
+      const size = Math.random() * 2.5 + 0.5;
+      const brightness = Math.random();
+      const opacity = brightness > 0.7 ? 0.6 : 0.3;
+      const glowSize = brightness > 0.7 ? 6 : 3;
+      
+      return {
+        id: i,
+        size,
+        top: Math.random() * 100,
+        left: Math.random() * 100,
+        opacity,
+        glowSize,
+        duration: Math.random() * 4 + 3, // Slower: 3-7s instead of 2-5s
+        delay: Math.random() * 2
+      };
+    });
+  }, []); // Empty deps = only generate once
+
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--background)' }}>
       {/* Tiny Glowing Stars Effect */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
         {/* Generate multiple small stars scattered across the screen */}
-        {[...Array(40)].map((_, i) => {
-          const size = Math.random() * 2.5 + 0.5; // Smaller range: 0.5-3px
-          const brightness = Math.random();
-          const opacity = brightness > 0.7 ? 0.6 : 0.3; // Brighter stars for some
-          const glowSize = brightness > 0.7 ? 6 : 3; // Bigger glow for brighter stars
-          
-          return (
-            <div 
-              key={i}
-              className="absolute rounded-full"
-              style={{
-                width: `${size}px`,
-                height: `${size}px`,
-                top: `${Math.random() * 100}%`,
-                left: `${Math.random() * 100}%`,
-                backgroundColor: `rgba(255, 255, 255, ${opacity})`,
-                boxShadow: `0 0 ${glowSize}px rgba(255, 255, 255, ${opacity + 0.2})`,
-                animation: `twinkle ${Math.random() * 3 + 2}s ease-in-out infinite`,
-                animationDelay: `${Math.random() * 2}s`
-              }}
-            />
-          );
-        })}
+        {stars.map((star) => (
+          <div 
+            key={star.id}
+            className="absolute rounded-full"
+            style={{
+              width: `${star.size}px`,
+              height: `${star.size}px`,
+              top: `${star.top}%`,
+              left: `${star.left}%`,
+              backgroundColor: `rgba(255, 255, 255, ${star.opacity})`,
+              boxShadow: `0 0 ${star.glowSize}px rgba(255, 255, 255, ${star.opacity + 0.2})`,
+              animation: `twinkle ${star.duration}s ease-in-out infinite`,
+              animationDelay: `${star.delay}s`
+            }}
+          />
+        ))}
       </div>
       <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>
         {/* Header with Auth - Only for signed-in users */}

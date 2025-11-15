@@ -469,7 +469,7 @@ export default function UserPortal() {
             </button>
 
             <button
-              onClick={() => {
+              onClick={async () => {
                 // Prevent multiple clicks using ref (instant check, no re-render needed)
                 if (signingOutRef.current) {
                   console.log('⚠️ Sign out already in progress, ignoring click');
@@ -480,13 +480,15 @@ export default function UserPortal() {
                 setIsSigningOut(true);
                 console.log('🚪 Signing out...');
                 
-                // Sign out from Supabase (don't wait for response, just redirect)
-                supabase.auth.signOut();
+                // Sign out from Supabase and wait for it to complete
+                await supabase.auth.signOut();
+                console.log('✅ Signed out successfully');
                 
-                // Redirect immediately - don't wait for anything
-                setTimeout(() => {
-                  window.location.href = '/';
-                }, 100);
+                // Clear all local storage
+                localStorage.clear();
+                
+                // Redirect
+                window.location.href = '/';
               }}
               disabled={isSigningOut}
               className="w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
