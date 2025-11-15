@@ -6,10 +6,11 @@ import { detectBusinessType } from "@/lib/detectBusinessType";
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { businessInfo, userType, creatorGoals } = body as { 
+    const { businessInfo, userType, creatorGoals, guidance } = body as { 
       businessInfo: BusinessInfo;
       userType?: 'business' | 'creator';
       creatorGoals?: string;
+      guidance?: string;
     };
 
     if (!businessInfo) {
@@ -52,13 +53,21 @@ export async function POST(request: NextRequest) {
     }
 
     // Generate strategy based on user type (business or creator)
+    // If guidance is provided, incorporate it into the prompt
     const researchPrompt = userType === 'creator'
-      ? buildCreatorStrategyPrompt(businessInfo, creatorGoals)
-      : buildActionableStrategyPrompt(businessInfo, actualBusinessType);
+      ? buildCreatorStrategyPrompt(businessInfo, creatorGoals, guidance)
+      : buildActionableStrategyPrompt(businessInfo, actualBusinessType, guidance);
     
     const systemMessage = userType === 'creator'
-      ? "You are a content creator expert who helps creators grow their audience and engagement. Focus on viral trends, audience retention, storytelling techniques, and content optimization. Be specific to their content category and goals. Always respond with valid JSON."
-      : "You are a social media expert who gives simple, actionable advice. Focus on what works: consistency, engagement, and authentic content. Keep it practical and easy to implement. CRITICAL: You MUST generate business-specific, contextual video ideas that reflect the actual business type and location. NEVER use generic templates like 'Educational Tip' or 'Behind-the-Scenes Look'. Always be specific and filmable. Always respond with valid JSON.";
+      ? guidance 
+        ? "You are a content creator expert who helps creators grow their audience and engagement. Focus on viral trends, audience retention, storytelling techniques, and content optimization. Be specific to their content category and goals. CRITICAL: When the user provides guidance on how to adjust video ideas, you MUST prioritize their guidance above all else and incorporate it into every single idea. Always respond with valid JSON."
+        : "You are a content creator expert who helps creators grow their audience and engagement. Focus on viral trends, audience retention, storytelling techniques, and content optimization. Be specific to their content category and goals. Always respond with valid JSON."
+      : guidance
+        ? "You are a social media expert who gives simple, actionable advice. Focus on what works: consistency, engagement, and authentic content. Keep it practical and easy to implement. CRITICAL: When the user provides guidance on how to adjust video ideas, you MUST prioritize their guidance above all else and incorporate it into every single idea. The user's guidance takes priority over generic simplicity requirements. Still keep ideas relevant to the business type. Always respond with valid JSON."
+        : "You are a social media expert who gives simple, actionable advice. Focus on what works: consistency, engagement, and authentic content. Keep it practical and easy to implement. CRITICAL: Generate SIMPLE, GENERIC video ideas that are EASY TO EXECUTE - don't overthink it! Ideas should be flexible and adaptable, not requiring specific items or complicated setups. Make ideas that can be filmed anytime with simple actions like 'walk through', 'show', 'tour', 'share tips'. Still keep them relevant to the business type. Always respond with valid JSON.";
+    
+    // Increase temperature when guidance is provided to allow more variation and creativity
+    const temperature = guidance ? 0.85 : 0.75;
     
     const completion = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -72,7 +81,7 @@ export async function POST(request: NextRequest) {
           content: researchPrompt
         }
       ],
-      temperature: 0.75,
+      temperature: temperature,
       max_tokens: 2500,
       response_format: { type: "json_object" }
     });
@@ -197,7 +206,7 @@ export async function POST(request: NextRequest) {
   }
 }
 
-function buildActionableStrategyPrompt(info: BusinessInfo, actualBusinessType: string): string {
+function buildActionableStrategyPrompt(info: BusinessInfo, actualBusinessType: string, guidance?: string): string {
   return `
 🚨 MANDATORY: THIS BUSINESS TYPE HAS BEEN VERIFIED 🚨
 
@@ -285,54 +294,63 @@ PROVIDE:
 
 4. CONTENT IDEAS (Exactly 6 video ideas)
    
-⚠️ CRITICAL: These ideas must be HYPER-SPECIFIC to "${info.businessName}" as a ${actualBusinessType}!
+⚠️ CRITICAL: Create SIMPLE, GENERIC ideas that are EASY TO EXECUTE!
 
-DO NOT give generic templates like "Behind-the-Scenes Look" or "Customer Testimonial"
-INSTEAD give SPECIFIC, ACTIONABLE ideas like:
+The goal is to make it EASY for the business owner to create content - don't overthink it!
+Ideas should be flexible and adaptable, not requiring specific items or complicated setups.
 
-BAD Examples (too generic):
-❌ "Behind-the-Scenes Look - Show what happens behind the scenes"
-❌ "Educational Tip - Share valuable knowledge"
-❌ "Product Showcase - Highlight what makes your offering special"
+BAD Examples (too specific/complicated):
+❌ "Found a 1970s Vintage Camera for $12 - Let's Test It Out!" (requires finding specific item)
+❌ "Transforming This $5 Chair with a Quick Paint Job" (requires specific furniture)
+❌ "Customer Finds Designer Jeans with Tags Still On - Paid $8!" (requires specific customer interaction)
+❌ "Making Our Famous Signature Dish That Sells Out Every Day" (requires specific dish)
+❌ "Decorating a 3-Tier Wedding Cake from Start to Finish" (requires specific order)
 
-GOOD Examples (specific and actionable):
+GOOD Examples (simple, generic, easy to execute):
 
-For a BAKERY/CAFÉ:
-✅ "The 5 AM Morning: Watch the Baker Pull Fresh Croissants from the Oven"
-✅ "Decorating a 3-Tier Wedding Cake from Start to Finish"
-✅ "Customer Tries Our Best-Selling Cinnamon Roll for the First Time"
-✅ "How the Baker Makes Our Signature Sourdough (72-Hour Process in 60 Seconds)"
-✅ "Guess the Secret Ingredient in Our Award-Winning Chocolate Chip Cookies"
-
-For a THRIFT STORE:
-✅ "Found a 1970s Vintage Camera for $12 - Let's Test It Out!"
-✅ "Transforming This $5 Chair with a Quick Paint Job"
-✅ "Customer Finds Designer Jeans with Tags Still On - Paid $8!"
-✅ "Tour Our New Furniture Section - Everything Under $100"
-✅ "Opening Mystery Donation Boxes - You Won't Believe What's Inside"
+For a THRIFT STORE / RESALE SHOP:
+✅ "Walk through the store and show items that catch your eye - post to your story or feed"
+✅ "Quick tour of different sections - furniture, clothing, accessories"
+✅ "Show a few unique finds from today's inventory"
+✅ "Before and after: Quick styling tips using items from the store"
+✅ "Share what makes thrift shopping sustainable and fun"
+✅ "Quick tips for finding great deals at thrift stores"
 
 For a RESTAURANT:
-✅ "Chef's Knife Skills: Chopping 50 Onions in 5 Minutes"
-✅ "Making Our Famous [Signature Dish Name] That Sells Out Every Day"
-✅ "Customer Ordered Our Spiciest Dish - Watch Their Reaction"
-✅ "Friday Night Rush Hour in the Kitchen - Controlled Chaos"
-✅ "How We Prepare 100 Steaks for Saturday Night Service"
+✅ "Show what's cooking in the kitchen right now"
+✅ "Quick tour of the menu - what's popular today"
+✅ "Behind the scenes: What happens during prep time"
+✅ "Share a simple cooking tip or technique"
+✅ "Show the atmosphere - what makes dining here special"
+✅ "Quick look at today's specials or fresh ingredients"
+
+For a BAKERY/CAFÉ:
+✅ "Show what's fresh out of the oven today"
+✅ "Quick tour of the display case - what's available"
+✅ "Behind the counter: What happens during morning prep"
+✅ "Share a simple baking tip or coffee fact"
+✅ "Show the cozy atmosphere - what makes this place special"
+✅ "Quick look at today's specials or new items"
 
 YOUR TASK FOR "${info.businessName}":
 Generate 6 ideas that are:
-1. SPECIFIC to ${actualBusinessType} - mention actual activities, products, or processes
-2. VISUAL and filmable - someone can immediately imagine what to record
-3. ENGAGING - hooks that make people want to watch
-4. DIVERSE angles: mix of educational, behind-the-scenes, testimonial, funny, offer
-5. REAL - not generic templates but actual video concepts
-6. ⚠️ DO NOT use specific people's names (like "John", "Sarah", "Mike") - use generic terms like "the baker", "our chef", "a customer", "the owner"
+1. SIMPLE and GENERIC - easy to execute without finding specific items
+2. FLEXIBLE - can be filmed anytime, anywhere in the business
+3. QUICK to create - don't require complicated setups or specific scenarios
+4. RELEVANT to ${actualBusinessType} - still connected to what the business does
+5. ACTIONABLE - clear instruction like "show", "walk through", "share", "tour"
+6. DIVERSE angles: mix of educational, behind_the_scenes, testimonial, funny, offer
 
 Think about:
-- What specific processes happen at a ${actualBusinessType}?
-- What unique products/services does "${info.businessName}" offer?
-- What would customers be curious to see?
-- What daily activities are visually interesting?
-- What makes THIS business different from competitors?
+- What can they film RIGHT NOW without preparation?
+- What simple activities happen daily at a ${actualBusinessType}?
+- What would be easy to show with a quick walk-through or tour?
+- What simple tips or insights can they share?
+- What makes the business atmosphere or process interesting?
+
+Remember: The goal is "Create a video of [simple action], then post it to your story or feed - don't overthink it!"
+
+${guidance ? `\n\n🚨🚨🚨 CRITICAL USER GUIDANCE - THIS TAKES PRIORITY 🚨🚨🚨\n\nThe user has provided specific feedback on how they want the video ideas adjusted:\n\n"${guidance}"\n\n⚠️ MANDATORY REQUIREMENTS:\n1. You MUST incorporate this guidance into ALL 6 video ideas\n2. The user's guidance takes PRIORITY over the "simple/generic" requirement\n3. If the guidance asks for more complexity, add complexity while keeping ideas executable\n4. If the guidance asks for specific angles/styles, prioritize those angles/styles\n5. Make sure EVERY idea reflects the user's guidance\n6. The ideas should still be actionable, but they should FIRST AND FOREMOST match what the user is asking for\n\nExamples of how to apply guidance:\n- If user says "more complex": Add more detailed setups, multiple steps, or deeper storytelling\n- If user says "more casual": Use casual language, relaxed formats, everyday scenarios\n- If user says "focus on behind-the-scenes": Prioritize behind_the_scenes angles\n- If user says "more educational": Add tips, facts, and teaching moments\n- If user says "shorter": Keep descriptions concise but still complete\n\nRemember: USER GUIDANCE > Generic simplicity. Follow the user's instructions!` : ''}
 
 RESPOND WITH VALID JSON:
 {
@@ -370,6 +388,7 @@ FINAL VALIDATION:
 - Are you using "your", "you" (not "our", "we")?
 - These are instructions TO the business owner, not FROM the business
 - Stay consistent with the business type!
+${guidance ? `\n- ⚠️ CRITICAL: Did you incorporate the user's guidance "${guidance}" into ALL 6 video ideas?\n- Double-check that each idea reflects what the user asked for!` : ''}
 `;
 }
 
@@ -378,47 +397,50 @@ function getBusinessTypeGuidance(businessType: string): string {
     "Thrift Store / Resale": `
 This is a THRIFT/RESALE business.
 
-SPECIFIC VIDEO IDEAS SHOULD INCLUDE:
-- "Found a [specific vintage item] for $[price] - Here's the story behind it"
-- "Watch us price these [donation category] that just came in"
-- "Customer discovers [specific find] - Their reaction is priceless"
-- "Before & After: Transforming this $[price] [furniture item]"
-- "Tour our [specific section] - Everything under $[price]"
-- "Opening today's donation boxes - Hidden treasures inside"
-- "How we sort and organize [specific category] donations"
-- "This [vintage item] from [decade] still works perfectly!"
+SIMPLE, GENERIC VIDEO IDEAS SHOULD BE:
+- "Walk through the store and show items that catch your eye"
+- "Quick tour of different sections - furniture, clothing, accessories"
+- "Show a few unique finds from today's inventory"
+- "Share styling tips using items from the store"
+- "Quick tips for finding great deals at thrift stores"
+- "Show what makes thrift shopping sustainable and fun"
+- "Tour different sections - what's new this week"
+- "Share why people love shopping secondhand"
 
-Make ideas about treasure hunting, discovery, unique finds, sustainability`,
+Keep ideas SIMPLE and GENERIC - don't require finding specific items or complicated setups.
+Focus on easy walk-throughs, tours, and simple tips that can be filmed anytime.`,
 
     "Restaurant": `
 This is a RESTAURANT business.
 
-SPECIFIC VIDEO IDEAS SHOULD INCLUDE:
-- "Making our signature [dish name] that customers wait 30 minutes for"
-- "Chef's [cooking technique] - [number] [ingredient] in [time]"
-- "Customer tries our [spiciest/unique dish] for the first time - Watch their reaction"
-- "5 AM prep: [specific task] before we open"
-- "[Day] night rush: Kitchen during our busiest hours"
-- "The secret to our famous [menu item]: [specific ingredient/technique]"
-- "How we prepare [number] [dish] for [busy period]"
-- "Behind the [specific station]: Where the magic happens"
+SIMPLE, GENERIC VIDEO IDEAS SHOULD BE:
+- "Show what's cooking in the kitchen right now"
+- "Quick tour of the menu - what's popular today"
+- "Behind the scenes: What happens during prep time"
+- "Share a simple cooking tip or technique"
+- "Show the atmosphere - what makes dining here special"
+- "Quick look at today's specials or fresh ingredients"
+- "Walk through the dining area - show the vibe"
+- "Share what makes this place unique"
 
-Focus on actual dishes, cooking processes, kitchen action, taste tests`,
+Keep ideas SIMPLE - don't require specific dishes or complicated setups.
+Focus on easy walk-throughs, quick tours, and simple behind-the-scenes content.`,
 
     "Cafe / Bakery": `
 This is a CAFÉ/BAKERY business.
 
-SPECIFIC VIDEO IDEAS SHOULD INCLUDE:
-- "Making [signature pastry] from scratch - [time] process in 60 seconds"
-- "[Time] AM: Pulling fresh [baked goods] from the oven"
-- "Decorating a [number]-tier [occasion] cake step-by-step"
-- "Customer's first bite of our [best-seller] - Pure joy"
-- "How we make [specific item]: The [specific technique] makes it special"
-- "Prepping [number] [item] for the weekend rush"
-- "Latte art challenge: Creating [design] in under [time]"
-- "Testing new [item] recipe - You decide if we add it to the menu"
+SIMPLE, GENERIC VIDEO IDEAS SHOULD BE:
+- "Show what's fresh out of the oven today"
+- "Quick tour of the display case - what's available"
+- "Behind the counter: What happens during morning prep"
+- "Share a simple baking tip or coffee fact"
+- "Show the cozy atmosphere - what makes this place special"
+- "Quick look at today's specials or new items"
+- "Walk through the space - show the vibe"
+- "Share what makes your coffee or pastries special"
 
-Focus on baking processes, decorating, morning routines, taste tests, coffee art`,
+Keep ideas SIMPLE - don't require specific pastries or complicated processes.
+Focus on easy tours, quick behind-the-scenes, and simple tips.`,
 
     "Salon / Spa": `
 This is a BEAUTY/WELLNESS business.
@@ -531,7 +553,7 @@ function getPlatformSpecificAdvice(platform: string): string {
   return platformAdvice[platform] || platformAdvice["Instagram"];
 }
 
-function buildCreatorStrategyPrompt(info: BusinessInfo, goals?: string): string {
+function buildCreatorStrategyPrompt(info: BusinessInfo, goals?: string, guidance?: string): string {
   const goalsSection = goals ? `\nCreator Goals: "${goals}"` : "";
   
   return `
@@ -592,6 +614,8 @@ PROVIDE:
    ❌ "Building a PC with Only Used Parts from eBay" - too specific
    
    Make ideas that 80% of ${info.businessType} creators could use!
+
+${guidance ? `\n\n🚨🚨🚨 CRITICAL USER GUIDANCE - THIS TAKES PRIORITY 🚨🚨🚨\n\nThe user has provided specific feedback on how they want the video ideas adjusted:\n\n"${guidance}"\n\n⚠️ MANDATORY REQUIREMENTS:\n1. You MUST incorporate this guidance into ALL 6 video ideas\n2. The user's guidance takes PRIORITY over general/flexible requirements\n3. If the guidance asks for more complexity, add complexity while keeping ideas adaptable\n4. If the guidance asks for specific angles/styles, prioritize those angles/styles\n5. Make sure EVERY idea reflects the user's guidance\n6. The ideas should still be adaptable, but they should FIRST AND FOREMOST match what the user is asking for\n\nExamples of how to apply guidance:\n- If user says "more complex": Add more detailed setups, multiple steps, or deeper storytelling\n- If user says "more casual": Use casual language, relaxed formats, everyday scenarios\n- If user says "focus on behind-the-scenes": Prioritize behind_the_scenes angles\n- If user says "more educational": Add tips, facts, and teaching moments\n- If user says "shorter": Keep descriptions concise but still complete\n\nRemember: USER GUIDANCE > Generic flexibility. Follow the user's instructions!` : ''}
 
 RESPONSE FORMAT (MUST be valid JSON):
 {

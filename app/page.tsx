@@ -19,6 +19,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { saveUserProgress, loadUserProgress } from "@/lib/userProgress";
 import { saveBusiness, loadSavedBusinesses, saveCompletedPost, loadPostHistory, saveVideoIdea, loadSavedVideoIdeas, deleteSavedVideoIdea, SavedVideoIdea } from "@/lib/userHistory";
+import { User } from '@supabase/supabase-js';
 
 type WizardStep = "form" | "researching" | "principles" | "choose-idea" | "record-video" | "generating-caption" | "post-details" | "premium" | "history" | "businesses";
 
@@ -166,15 +167,93 @@ function HomeContent() {
   const [planType, setPlanType] = useState<'pro' | 'creator'>('pro');
   const [isPlanTransitioning, setIsPlanTransitioning] = useState<boolean>(false);
   
-  // Dev mode overrides
-  const devUser = devMode !== 'none' ? { id: 'dev-user', email: devMode === 'pro' ? 'pro@test.com' : devMode === 'creator' ? 'creator@test.com' : 'user@test.com' } : null;
-  const effectiveUser = devMode !== 'none' ? devUser : user;
-  const effectiveIsPro = devMode === 'pro' || devMode === 'creator' ? true : devMode !== 'none' ? false : isPro;
+  // Dev mode overrides - accurately simulate different user states
+  // Create proper mock User objects that match Supabase User type
+  const createMockUser = (mode: 'regular' | 'pro' | 'creator'): User => {
+    const baseUser: Partial<User> = {
+      id: `dev-user-${mode}`,
+      email: mode === 'pro' ? 'pro@test.com' : mode === 'creator' ? 'creator@test.com' : 'user@test.com',
+      aud: 'authenticated',
+      role: 'authenticated',
+      email_confirmed_at: new Date().toISOString(),
+      phone: undefined,
+      confirmed_at: new Date().toISOString(),
+      last_sign_in_at: new Date().toISOString(),
+      app_metadata: {},
+      user_metadata: {
+        role: mode === 'creator' ? 'creator' : undefined,
+        plan: mode === 'pro' ? 'pro' : mode === 'creator' ? 'creator' : 'regular'
+      },
+      identities: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    return baseUser as User;
+  };
+
+  // When devMode='none': use real user if available, otherwise null (not signed in)
+  // When devMode is active: use mock user to simulate signed-in state
+  const effectiveUser: User | null = devMode === 'none' 
+    ? user  // Use real user when dev mode is off
+    : createMockUser(devMode);
   
-  // When dev mode is 'creator', also set userType to creator
+  // Pro status: true for pro/creator dev modes, or real pro users when devMode='none'
+  const effectiveIsPro = devMode === 'pro' || devMode === 'creator' 
+    ? true 
+    : devMode === 'none' 
+      ? isPro 
+      : false;
+  
+  // Check if user is a creator (dev mode creator or real creator user)
+  const isCreator = devMode === 'creator' || 
+    (effectiveUser?.user_metadata?.role === 'creator' || effectiveUser?.user_metadata?.plan === 'creator');
+  
+  // Handle dev mode changes - reset userType and usage counts to simulate fresh user state
   useEffect(() => {
+    // Reset userType based on dev mode
     if (devMode === 'creator') {
       setUserType('creator');
+    } else {
+      // Reset to business type when not in creator mode
+      setUserType('business');
+    }
+    
+    // Reset usage counts when switching dev modes to simulate fresh user accounts
+    // This ensures no data leaks between different user states
+    if (devMode === 'regular') {
+      // Regular user: Start fresh with 0 usage (will be limited to 2 uses)
+      setGenerateIdeasCount(0);
+      setRewriteCount(0);
+      setRegenerateCount(0);
+      setRewordTitleCount(0);
+      setHashtagCount(0);
+      setGuideAICount(0);
+      setGuideAIForIdeasCount(0);
+      console.log(`🔄 Dev mode: Regular User - Usage counts reset to 0 (limited to 2 uses)`);
+    } else if (devMode === 'pro') {
+      // Pro user: Unlimited usage, but reset counts for clean testing
+      setGenerateIdeasCount(0);
+      setRewriteCount(0);
+      setRegenerateCount(0);
+      setRewordTitleCount(0);
+      setHashtagCount(0);
+      setGuideAICount(0);
+      setGuideAIForIdeasCount(0);
+      console.log(`🔄 Dev mode: Pro User - Usage counts reset (unlimited usage)`);
+    } else if (devMode === 'creator') {
+      // Creator user: Unlimited usage, but reset counts for clean testing
+      setGenerateIdeasCount(0);
+      setRewriteCount(0);
+      setRegenerateCount(0);
+      setRewordTitleCount(0);
+      setHashtagCount(0);
+      setGuideAICount(0);
+      setGuideAIForIdeasCount(0);
+      console.log(`🔄 Dev mode: Creator User - Usage counts reset (unlimited usage)`);
+    } else if (devMode === 'none') {
+      // When switching to 'none', clear dev mode state but keep real user state
+      // Real user state will be loaded from database or localStorage
+      console.log(`🔄 Dev mode: Disabled - Using real authentication state`);
     }
   }, [devMode]);
   
@@ -195,9 +274,12 @@ function HomeContent() {
   const [isRewordingTitle, setIsRewordingTitle] = useState<boolean>(false);
   const [showGuideAI, setShowGuideAI] = useState<boolean>(false);
   const [aiGuidance, setAiGuidance] = useState<string>("");
+  const [showGuideAIForIdeas, setShowGuideAIForIdeas] = useState<boolean>(false);
+  const [aiGuidanceForIdeas, setAiGuidanceForIdeas] = useState<string>("");
   const [isGeneratingHashtags, setIsGeneratingHashtags] = useState<boolean>(false);
   const [hashtagCount, setHashtagCount] = useState<number>(0);
   const [guideAICount, setGuideAICount] = useState<number>(0);
+  const [guideAIForIdeasCount, setGuideAIForIdeasCount] = useState<number>(0);
   
   // Close Guide AI bubble when clicking outside
   useEffect(() => {
@@ -206,13 +288,16 @@ function HomeContent() {
       if (showGuideAI && !target.closest('.guide-ai-container')) {
         setShowGuideAI(false);
       }
+      if (showGuideAIForIdeas && !target.closest('.guide-ai-ideas-container')) {
+        setShowGuideAIForIdeas(false);
+      }
     };
     
-    if (showGuideAI) {
+    if (showGuideAI || showGuideAIForIdeas) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [showGuideAI]);
+  }, [showGuideAI, showGuideAIForIdeas]);
   const [captionAnimation, setCaptionAnimation] = useState<'idle' | 'fadeOut' | 'typing'>('idle');
   const [titleAnimation, setTitleAnimation] = useState<'idle' | 'fadeOut' | 'fadeIn'>('idle');
   const [ideasAnimation, setIdeasAnimation] = useState<'idle' | 'fadeOut' | 'fadeIn'>('idle');
@@ -272,50 +357,61 @@ function HomeContent() {
 
   const strategyRef = useRef<HTMLDivElement>(null);
   const postPlannerRef = useRef<HTMLDivElement>(null);
+  const urlParamsInitializedRef = useRef<boolean>(false);
 
   // Load user progress when user signs in OR when dev mode is active
   useEffect(() => {
     if (!authLoading) {
-      if (user) {
-        loadProgress();
-        loadHistoryData();
-      } else if (devMode !== 'none' && effectiveUser) {
-        // Load history for dev mode users
+      if (effectiveUser) {
+        // Load progress for both real users and dev mode users
+        if (devMode === 'none' && user) {
+          // Real user: Load from database
+          loadProgress();
+        }
+        // Load history for all authenticated users (real or dev mode)
         loadHistoryData();
       }
     }
-  }, [user, authLoading, devMode, effectiveUser]);
+  }, [effectiveUser, authLoading, devMode, user]);
 
   // Auto-save progress when data changes (but not for navigation pages)
+  // Only save for real users (not dev mode users - they use localStorage)
   useEffect(() => {
     const navigationPages: WizardStep[] = ["businesses", "history", "premium", "form"];
-    if (user && !navigationPages.includes(currentStep)) {
+    if (devMode === 'none' && user && !navigationPages.includes(currentStep)) {
       saveProgress();
     }
-  }, [user, businessInfo, strategy, selectedIdea, postDetails, currentStep]);
+  }, [user, businessInfo, strategy, selectedIdea, postDetails, currentStep, devMode]);
 
   // Auto-redirect to checkout after signup/signin if needed
+  // Only for real users (dev mode users don't need checkout)
   useEffect(() => {
-    if (user && redirectToCheckoutAfterAuth && !authLoading) {
+    if (devMode === 'none' && user && redirectToCheckoutAfterAuth && !authLoading) {
       setRedirectToCheckoutAfterAuth(false);
       initiateCheckout();
     }
-  }, [user, redirectToCheckoutAfterAuth, authLoading]);
+  }, [user, redirectToCheckoutAfterAuth, authLoading, devMode]);
 
-  // Scroll to top when step changes (mobile optimization)
-  useEffect(() => {
-    // Smooth scroll to top on step changes
-    window.scrollTo({
-      top: 0,
-      behavior: 'smooth'
-    });
-  }, [currentStep]);
 
-  // Handle URL parameters for navigation from portal
+  // Handle URL parameters for navigation from portal (only run once on initial mount)
   useEffect(() => {
+    // Only process URL params once on initial mount
+    if (urlParamsInitializedRef.current) {
+      return;
+    }
+    
     const view = searchParams.get('view');
     const premium = searchParams.get('premium');
     const upgrade = searchParams.get('upgrade');
+    
+    // Skip if there are no params to process
+    if (!view && !premium && !upgrade) {
+      urlParamsInitializedRef.current = true;
+      return;
+    }
+    
+    // Mark as initialized immediately to prevent re-running
+    urlParamsInitializedRef.current = true;
     
     if (view === 'history') {
       setCurrentStep('history');
@@ -324,7 +420,9 @@ function HomeContent() {
         loadHistoryData();
       }
       // Clear URL params after navigation
-      setTimeout(() => router.replace('/'), 100);
+      setTimeout(() => {
+        router.replace('/', { scroll: false });
+      }, 100);
     } else if (view === 'businesses') {
       setCurrentStep('businesses');
       // Reload businesses data when navigating to businesses page
@@ -332,88 +430,139 @@ function HomeContent() {
         loadHistoryData();
       }
       // Clear URL params after navigation
-      setTimeout(() => router.replace('/'), 100);
+      setTimeout(() => {
+        router.replace('/', { scroll: false });
+      }, 100);
     } else if (premium === 'true' || upgrade === 'true') {
       // Navigate to premium section
       setCurrentStep("premium");
-      // Scroll after state updates
+      // Clear URL params after navigation
       setTimeout(() => {
-        const viewportHeight = window.innerHeight;
-        const docHeight = document.documentElement.scrollHeight;
-        
-        let targetScroll;
-        if (docHeight > viewportHeight * 1.5) {
-          targetScroll = Math.min(docHeight * 0.25, docHeight - viewportHeight);
-        } else {
-          targetScroll = Math.max(0, docHeight - viewportHeight - 100);
-        }
-        
-        window.scrollTo({
-          top: targetScroll,
-          behavior: 'smooth'
-        });
-        
-        // Clear URL params after scroll
-        setTimeout(() => router.replace('/'), 500);
+        router.replace('/', { scroll: false });
       }, 100);
     }
-  }, [searchParams, router, user]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   // Load usage counts from localStorage for anonymous users (prevent refresh abuse)
+  // Only when not signed in and not in dev mode
   useEffect(() => {
-    if (!user && typeof window !== 'undefined') {
+    if (!effectiveUser && devMode === 'none' && typeof window !== 'undefined') {
       try {
-        const storedCount = localStorage.getItem('postready_generateIdeasCount');
-        const storedTimestamp = localStorage.getItem('postready_generateIdeasTimestamp');
+        const storedTimestamp = localStorage.getItem('postready_usageTimestamp');
+        const timestamp = storedTimestamp ? parseInt(storedTimestamp, 10) : Date.now();
         
-        if (storedCount) {
-          const count = parseInt(storedCount, 10);
-          const timestamp = storedTimestamp ? parseInt(storedTimestamp, 10) : Date.now();
+        // Check if data is fresh (within 30 days)
+        const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
+        const isDataFresh = (Date.now() - timestamp) < thirtyDaysInMs;
+        
+        if (isDataFresh) {
+          // Load all usage counts
+          const counts = {
+            generateIdeas: localStorage.getItem('postready_generateIdeasCount'),
+            rewrite: localStorage.getItem('postready_rewriteCount'),
+            hashtag: localStorage.getItem('postready_hashtagCount'),
+            guideAI: localStorage.getItem('postready_guideAICount'),
+            regenerate: localStorage.getItem('postready_regenerateCount'),
+            rewordTitle: localStorage.getItem('postready_rewordTitleCount'),
+          };
           
-          // Check if data is fresh (within 30 days)
-          const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
-          const isDataFresh = (Date.now() - timestamp) < thirtyDaysInMs;
-          
-          if (isDataFresh && !isNaN(count)) {
-            setGenerateIdeasCount(count);
-            console.log('Loaded usage count:', count);
-          } else {
-            // Reset if data is too old
-            localStorage.removeItem('postready_generateIdeasCount');
-            localStorage.removeItem('postready_generateIdeasTimestamp');
+          // Restore each count if valid
+          if (counts.generateIdeas) {
+            const count = parseInt(counts.generateIdeas, 10);
+            if (!isNaN(count)) setGenerateIdeasCount(count);
           }
+          if (counts.rewrite) {
+            const count = parseInt(counts.rewrite, 10);
+            if (!isNaN(count)) setRewriteCount(count);
+          }
+          if (counts.hashtag) {
+            const count = parseInt(counts.hashtag, 10);
+            if (!isNaN(count)) setHashtagCount(count);
+          }
+          if (counts.guideAI) {
+            const count = parseInt(counts.guideAI, 10);
+            if (!isNaN(count)) setGuideAICount(count);
+          }
+          if (counts.regenerate) {
+            const count = parseInt(counts.regenerate, 10);
+            if (!isNaN(count)) setRegenerateCount(count);
+          }
+          if (counts.rewordTitle) {
+            const count = parseInt(counts.rewordTitle, 10);
+            if (!isNaN(count)) setRewordTitleCount(count);
+          }
+          
+          console.log('✅ Loaded guest user usage counts from localStorage:', {
+            generateIdeas: counts.generateIdeas || 0,
+            rewrite: counts.rewrite || 0,
+            hashtag: counts.hashtag || 0,
+            guideAI: counts.guideAI || 0,
+            regenerate: counts.regenerate || 0,
+            rewordTitle: counts.rewordTitle || 0,
+          });
+        } else {
+          // Reset all if data is too old
+          console.log('⏰ Guest user usage data expired (>30 days), resetting...');
+          localStorage.removeItem('postready_generateIdeasCount');
+          localStorage.removeItem('postready_rewriteCount');
+          localStorage.removeItem('postready_hashtagCount');
+          localStorage.removeItem('postready_guideAICount');
+          localStorage.removeItem('postready_regenerateCount');
+          localStorage.removeItem('postready_rewordTitleCount');
+          localStorage.removeItem('postready_usageTimestamp');
+          // Legacy cleanup
+          localStorage.removeItem('postready_generateIdeasTimestamp');
         }
       } catch (error) {
-        console.error('Error loading usage from localStorage:', error);
+        console.error('❌ Error loading guest user usage from localStorage:', error);
       } finally {
         // Mark as loaded to prevent overwriting on initial mount
         setHasLoadedUsageCounts(true);
       }
-    } else if (user) {
-      // For authenticated users, mark as loaded after user data is available
+    } else if (effectiveUser) {
+      // For authenticated users (real or dev mode), mark as loaded after user data is available
       setHasLoadedUsageCounts(true);
     }
-  }, [user]);
+  }, [effectiveUser, devMode]);
 
   // Save usage counts to localStorage for anonymous users (prevent refresh abuse)
+  // Only when not signed in and not in dev mode
   useEffect(() => {
     // Only save if we've loaded the initial counts (prevent overwriting on mount)
-    if (!user && typeof window !== 'undefined' && hasLoadedUsageCounts) {
+    if (!effectiveUser && devMode === 'none' && typeof window !== 'undefined' && hasLoadedUsageCounts) {
       try {
+        // Save all usage counts
         localStorage.setItem('postready_generateIdeasCount', generateIdeasCount.toString());
-        if (!localStorage.getItem('postready_generateIdeasTimestamp')) {
-          localStorage.setItem('postready_generateIdeasTimestamp', Date.now().toString());
+        localStorage.setItem('postready_rewriteCount', rewriteCount.toString());
+        localStorage.setItem('postready_hashtagCount', hashtagCount.toString());
+        localStorage.setItem('postready_guideAICount', guideAICount.toString());
+        localStorage.setItem('postready_regenerateCount', regenerateCount.toString());
+        localStorage.setItem('postready_rewordTitleCount', rewordTitleCount.toString());
+        
+        // Set timestamp if not already set (for 30-day expiration)
+        if (!localStorage.getItem('postready_usageTimestamp')) {
+          localStorage.setItem('postready_usageTimestamp', Date.now().toString());
         }
-        console.log('Saved usage count:', generateIdeasCount);
+        
+        console.log('💾 Saved guest user usage counts to localStorage:', {
+          generateIdeas: generateIdeasCount,
+          rewrite: rewriteCount,
+          hashtag: hashtagCount,
+          guideAI: guideAICount,
+          regenerate: regenerateCount,
+          rewordTitle: rewordTitleCount,
+        });
       } catch (error) {
-        console.error('Error saving usage to localStorage:', error);
+        console.error('❌ Error saving guest user usage to localStorage:', error);
       }
     }
-  }, [generateIdeasCount, user, hasLoadedUsageCounts]);
+  }, [generateIdeasCount, rewriteCount, hashtagCount, guideAICount, regenerateCount, rewordTitleCount, effectiveUser, devMode, hasLoadedUsageCounts]);
 
   // Save usage counts to database for authenticated users (prevent refresh abuse)
+  // Only for real users (dev mode users use localStorage)
   useEffect(() => {
-    if (user && !authLoading) {
+    if (devMode === 'none' && user && !authLoading) {
       // Debounce the save to avoid too many database calls
       const timeoutId = setTimeout(() => {
         saveProgress();
@@ -421,7 +570,7 @@ function HomeContent() {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [generateIdeasCount, rewriteCount, regenerateCount, rewordTitleCount, hashtagCount, guideAICount, user, authLoading]);
+  }, [generateIdeasCount, rewriteCount, regenerateCount, rewordTitleCount, hashtagCount, guideAICount, user, authLoading, devMode]);
 
   // Save video idea to history when reaching post-details step (for all signed-in users: regular, pro, creator)
   // This runs immediately when the step changes, not waiting for postDetails
@@ -471,7 +620,7 @@ function HomeContent() {
             } else {
               console.log('ℹ️ Video idea already saved (dev mode), skipping duplicate');
             }
-          } else if (user && user.id) {
+          } else if (devMode === 'none' && user && user.id) {
             // Real user: Save to Supabase
             console.log('💾 Saving video idea to Supabase...', {
               userId: user.id,
@@ -500,14 +649,15 @@ function HomeContent() {
     }
     
     // Save completed post to history when postDetails is available
-    if (currentStep === "post-details" && user && selectedIdea && postDetails) {
+    if (currentStep === "post-details" && effectiveUser && selectedIdea && postDetails) {
       console.log('📝 Post-details step reached - ensuring post is saved to history');
       saveCompletedPostToHistory(selectedIdea, postDetails);
     }
-  }, [currentStep, effectiveUser, user, selectedIdea, postDetails, businessInfo, devMode]);
+  }, [currentStep, effectiveUser, selectedIdea, postDetails, businessInfo, devMode]);
 
   const loadProgress = async () => {
-    if (!user) return;
+    // Only load progress for real users (dev mode users don't have database progress)
+    if (devMode !== 'none' || !user) return;
 
     try {
       const { data, error } = await loadUserProgress(user.id);
@@ -675,12 +825,6 @@ function HomeContent() {
     
     setIsNavigating(true);
     
-    // Smooth scroll to top
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    
-    // Wait a bit for scroll to complete, then change page
-    await new Promise(resolve => setTimeout(resolve, 300));
-    
     // Reset to home state
     setCurrentStep("form");
     setStrategy(null);
@@ -700,16 +844,17 @@ function HomeContent() {
   const navigateToPortal = () => {
     console.log('navigateToPortal called', { isNavigating, effectiveUser, devMode });
     
-    // Only navigate if user is logged in (or in dev mode)
+    // If no user and not in dev mode, open auth modal
     if (!effectiveUser && devMode === 'none') {
       console.log('No user found, opening auth modal');
       openAuthModal('signin');
       return;
     }
     
+    // Navigate to portal for all authenticated users (real or dev mode)
     console.log('Navigating to /portal');
-    // Use Next.js router for client-side navigation
-    router.push('/portal');
+    // Use window.location for more reliable navigation
+    window.location.href = '/portal';
   };
 
   const detectUserLocation = async () => {
@@ -935,9 +1080,6 @@ function HomeContent() {
       });
     }, 350);
 
-    setTimeout(() => {
-      strategyRef.current?.scrollIntoView({ behavior: "smooth" });
-    }, 100);
 
     try {
       // Call research API with userType for proper content generation
@@ -1113,40 +1255,123 @@ function HomeContent() {
       setPlanType('pro');
     }
     setCurrentStep("premium");
-    // Elegant scroll to show both pricing card and comparison table
-    // Wait longer to ensure content is fully rendered
-    setTimeout(() => {
-      const viewportHeight = window.innerHeight;
-      const docHeight = document.documentElement.scrollHeight;
-      const isMobile = window.innerWidth < 768; // md breakpoint
+  };
+
+  const handleGenerateIdeasWithGuidance = async (guidance: string) => {
+    // Check if user has exceeded free limit (3 free uses)
+    if (guideAIForIdeasCount >= 3 && !effectiveIsPro) {
+      setModalState({
+        isOpen: true,
+        title: userType === 'creator' ? "Upgrade to Creator" : "Upgrade to PostReady Pro",
+        message: userType === 'creator' 
+          ? "You've used your 3 free Guide AI uses for video ideas. Upgrade to Creator for unlimited Guide AI and more features!"
+          : "You've used your 3 free Guide AI uses for video ideas. Upgrade to PostReady Pro for unlimited Guide AI and more features!",
+        type: 'confirm',
+        onConfirm: scrollToPremium,
+        confirmText: userType === 'creator' ? "View Creator Plan" : "View Pro Plan"
+      });
+      return;
+    }
+
+    if (!businessInfo.businessName) {
+      setModalState({
+        isOpen: true,
+        title: "Business Info Required",
+        message: "Please provide business information first.",
+        type: 'info',
+        confirmText: "OK"
+      });
+      return;
+    }
+
+    setIsGeneratingIdeas(true);
+    setIdeasAnimation('fadeOut');
+    setShowGuideAIForIdeas(false);
+    setAiGuidanceForIdeas(""); // Clear guidance after applying
+
+    try {
+      // Wait for fade out animation
+      await new Promise(resolve => setTimeout(resolve, 300));
       
-      let targetScroll;
-      
-      if (isMobile) {
-        // On mobile, scroll to top to show the premium card properly centered
-        targetScroll = 0;
-      } else {
-        // Desktop: Scroll down to show the premium section nicely
-        // We want to scroll just enough to see both the pricing and comparison
-        // If the page is tall enough, scroll to 25% of the page
-        // Otherwise, scroll to a position that shows content without too much white space
-        if (docHeight > viewportHeight * 1.5) {
-          // Page is tall enough, scroll to show premium section
-          targetScroll = Math.min(
-            docHeight - viewportHeight, // Don't scroll past the bottom
-            Math.max(200, docHeight * 0.25) // Scroll to 25% or at least 200px
-          );
-        } else {
-          // Page is shorter, scroll less aggressively
-          targetScroll = Math.max(0, (docHeight - viewportHeight) * 0.5);
+      const response = await fetch("/api/research-business", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ 
+          businessInfo,
+          userType,
+          creatorGoals,
+          guidance: guidance // Pass guidance to API
+        }),
+      });
+
+      if (!response.ok) {
+        // Try to parse error response to get actual error message
+        let errorMessage = "Failed to generate ideas with guidance";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+          if (errorData.details) {
+            errorMessage += `: ${errorData.details}`;
+          }
+        } catch (parseError) {
+          // If we can't parse the error, use status text
+          errorMessage = `Failed to generate ideas: ${response.statusText || 'Unknown error'}`;
         }
+        throw new Error(errorMessage);
+      }
+
+      const data = await response.json();
+      
+      // Hide loading state
+      setIsGeneratingIdeas(false);
+      
+      // CRITICAL: Validate AI-generated ideas
+      if (!data.research || !data.research.contentIdeas || !Array.isArray(data.research.contentIdeas)) {
+        console.error("❌ CRITICAL ERROR: Invalid ideas data received from API");
+        throw new Error("API returned invalid ideas. Never use generic fallback.");
       }
       
-      window.scrollTo({ 
-        top: targetScroll, 
-        behavior: 'smooth' 
-      });
-    }, 300); // Increased delay to ensure full render
+      console.log("✅ Generated", data.research.contentIdeas.length, "new guided ideas");
+      
+      // Update businessInfo with detected type if available
+      if (data.detectedBusinessType) {
+        setBusinessInfo(prev => ({
+          ...prev,
+          detectedBusinessType: data.detectedBusinessType
+        }));
+      }
+      
+      // Update strategy with new AI-generated ideas
+      setStrategy(data.research);
+      setSelectedIdea(null);
+      
+      // Increment usage count for non-Pro users
+      if (!effectiveIsPro) {
+        setGuideAIForIdeasCount(prev => prev + 1);
+      }
+      
+      // Start fade in animation
+      setIdeasAnimation('fadeIn');
+      
+      // Show success notification
+      showNotification("New video ideas generated with your guidance!", "success", "Success");
+      
+      // Reset animation after fade in completes
+      setTimeout(() => {
+        setIdeasAnimation('idle');
+      }, 500);
+    } catch (error: any) {
+      console.error("Error generating ideas with guidance:", error);
+      // Show the actual error message from the API or a user-friendly message
+      const errorMessage = error?.message || "Failed to generate ideas. Please try again.";
+      showNotification(errorMessage, "error", "Error");
+      setIdeasAnimation('idle');
+      setIsGeneratingIdeas(false);
+    } finally {
+      setIsRewriting(false);
+    }
   };
 
   const showNotification = (message: string, type: 'success' | 'error' | 'info' | 'warning' = 'success', title?: string) => {
@@ -1429,7 +1654,19 @@ function HomeContent() {
       clearTimeout(timeoutId);
 
       if (!response.ok) {
-        throw new Error("Failed to generate caption");
+        // Try to parse error response to get actual error message
+        let errorMessage = "Failed to generate caption";
+        try {
+          const errorData = await response.json();
+          errorMessage = errorData.error || errorData.message || errorMessage;
+          if (errorData.details) {
+            errorMessage += `: ${errorData.details}`;
+          }
+        } catch (parseError) {
+          // If we can't parse the error, use status text
+          errorMessage = `Failed to generate caption: ${response.statusText || 'Unknown error'}`;
+        }
+        throw new Error(errorMessage);
       }
 
       const data = await response.json();
@@ -1474,7 +1711,9 @@ function HomeContent() {
       if (error.name === 'AbortError') {
         showNotification("Caption rewrite timed out. Please try again.", "error", "Timeout");
       } else {
-        showNotification("Failed to rewrite caption. Please try again.", "error", "Error");
+        // Show the actual error message from the API or a user-friendly message
+        const errorMessage = error?.message || "Failed to rewrite caption. Please try again.";
+        showNotification(errorMessage, "error", "Error");
       }
       
       setCaptionAnimation('idle');
@@ -1670,34 +1909,104 @@ function HomeContent() {
         })}
       </div>
       <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>
+        {/* Dev Mode Buttons - Top Left - Development Only */}
+        {process.env.NODE_ENV !== 'production' && (
+          <div className="fixed top-4 left-4 z-50 flex flex-col gap-2">
+            <div className="text-xs font-bold mb-1 px-2 py-1 rounded" style={{ 
+              backgroundColor: 'var(--card-bg)',
+              border: '2px solid var(--primary)',
+              color: 'var(--primary)'
+            }}>
+              DEV MODE
+            </div>
+            <div className="flex flex-col gap-1">
+              <button
+                onClick={() => setDevMode('none')}
+                className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
+                  devMode === 'none' ? 'ring-2 ring-offset-1' : ''
+                }`}
+                style={devMode === 'none' ? {
+                  backgroundColor: 'var(--primary)',
+                  color: 'white',
+                  ringColor: 'var(--primary)'
+                } : {
+                  backgroundColor: 'var(--card-bg)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--card-border)'
+                }}
+                title="Simulate anonymous user (not signed in) - Usage tracked via localStorage"
+              >
+                Not Signed In
+              </button>
+              <button
+                onClick={() => setDevMode('regular')}
+                className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
+                  devMode === 'regular' ? 'ring-2 ring-offset-1' : ''
+                }`}
+                style={devMode === 'regular' ? {
+                  backgroundColor: 'var(--primary)',
+                  color: 'white',
+                  ringColor: 'var(--primary)'
+                } : {
+                  backgroundColor: 'var(--card-bg)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--card-border)'
+                }}
+                title="Simulate regular user account (signed in, free plan) - Limited to 2 uses per feature"
+              >
+                Regular User
+              </button>
+              <button
+                onClick={() => setDevMode('pro')}
+                className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
+                  devMode === 'pro' ? 'ring-2 ring-offset-1' : ''
+                }`}
+                style={devMode === 'pro' ? {
+                  backgroundColor: 'var(--primary)',
+                  color: 'white',
+                  ringColor: 'var(--primary)'
+                } : {
+                  backgroundColor: 'var(--card-bg)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--card-border)'
+                }}
+                title="Simulate Pro user account (signed in, Pro plan) - Unlimited usage"
+              >
+                Pro User
+              </button>
+              <button
+                onClick={() => setDevMode('creator')}
+                className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
+                  devMode === 'creator' ? 'ring-2 ring-offset-1' : ''
+                }`}
+                style={devMode === 'creator' ? {
+                  backgroundColor: 'var(--primary)',
+                  color: 'white',
+                  ringColor: 'var(--primary)'
+                } : {
+                  backgroundColor: 'var(--card-bg)',
+                  color: 'var(--text-primary)',
+                  border: '1px solid var(--card-border)'
+                }}
+                title="Simulate Creator user account (signed in, Creator plan) - Unlimited usage, creator features enabled"
+              >
+                Creator User
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* Header with Auth - Only for signed-in users */}
         {effectiveUser && !authLoading && (
           <div className="flex justify-end items-center mb-8">
             <div className="flex items-center gap-3">
-              {effectiveIsPro && (
-                <span 
-                  className="text-white px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden"
-                  style={{ 
-                    background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                    boxShadow: '0 0 20px rgba(41, 121, 255, 0.4), 0 0 40px rgba(111, 255, 210, 0.2)',
-                    animation: 'shimmer 3s ease-in-out infinite'
-                  }}
-                >
-                  <span className="relative z-10 flex items-center gap-1">
-                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    PRO
-                  </span>
-                </span>
-              )}
-              {devMode === 'creator' && !effectiveIsPro && (
+              {/* Show CREATOR badge for creator users */}
+              {isCreator && (
                 <span 
                   className="text-white px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden"
                   style={{ 
                     background: 'linear-gradient(to right, #DAA520, #F4D03F)',
-                    boxShadow: '0 0 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)',
-                    animation: 'shimmer 3s ease-in-out infinite'
+                    boxShadow: '0 0 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)'
                   }}
                 >
                   <span className="relative z-10 flex items-center gap-1">
@@ -1705,6 +2014,23 @@ function HomeContent() {
                       <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
                     </svg>
                     CREATOR
+                  </span>
+                </span>
+              )}
+              {/* Show PRO badge for pro users (but not creators) */}
+              {effectiveIsPro && !isCreator && (
+                <span 
+                  className="text-white px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden"
+                  style={{ 
+                    background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                    boxShadow: '0 0 20px rgba(41, 121, 255, 0.4), 0 0 40px rgba(111, 255, 210, 0.2)'
+                  }}
+                >
+                  <span className="relative z-10 flex items-center gap-1">
+                    <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 20 20">
+                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                    </svg>
+                    PRO
                   </span>
                 </span>
               )}
@@ -1759,10 +2085,12 @@ function HomeContent() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
+                  console.log('Username button clicked', { effectiveUser, devMode });
                   navigateToPortal();
                 }}
+                type="button"
                 className="text-sm transition-all font-medium underline decoration-dotted hover:opacity-70 cursor-pointer"
-                style={{ color: 'var(--text-secondary)' }}
+                style={{ color: 'var(--text-secondary)', pointerEvents: 'auto' }}
                 title="Go to User Portal"
               >
                 {effectiveUser?.email || 'dev@test.com'}
@@ -2135,34 +2463,36 @@ function HomeContent() {
               </button>
             </form>
 
-              {/* Pro Status Display */}
-              {!effectiveIsPro ? (
+            {/* Pro Status Display */}
+            {!effectiveIsPro ? (
+              <>
                 <div className="mt-8 rounded-2xl p-6 border-2" style={{ 
-                  background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.05) 0%, rgba(111, 255, 210, 0.05) 100%)',
-                  borderColor: 'rgba(41, 121, 255, 0.25)'
-                }}>
-                  <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                    <div className="flex-1">
-                      <h3 className="font-bold text-lg mb-1 flex items-center" style={{ color: 'var(--secondary)' }}>
-                        <span className="text-2xl mr-2">✨</span>
-                        Unlock PostReady Pro
-                      </h3>
-                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                        Get unlimited video ideas, advanced insights, and priority support
-                      </p>
+                    background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.05) 0%, rgba(111, 255, 210, 0.05) 100%)',
+                    borderColor: 'rgba(41, 121, 255, 0.25)'
+                  }}>
+                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+                      <div className="flex-1">
+                        <h3 className="font-bold text-lg mb-1 flex items-center" style={{ color: 'var(--secondary)' }}>
+                          <span className="text-2xl mr-2">✨</span>
+                          Unlock PostReady Pro
+                        </h3>
+                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                          Get unlimited video ideas, advanced insights, and priority support
+                        </p>
+                      </div>
+                      <button
+                        onClick={scrollToPremium}
+                        className="text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center whitespace-nowrap hover:scale-105"
+                        style={{ background: 'linear-gradient(to right, var(--primary), var(--accent))' }}
+                      >
+                        <span className="mr-2">⚡</span>
+                        View Pro Plan
+                      </button>
                     </div>
-                    <button
-                      onClick={scrollToPremium}
-                      className="text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center whitespace-nowrap hover:scale-105"
-                      style={{ background: 'linear-gradient(to right, var(--primary), var(--accent))' }}
-                    >
-                      <span className="mr-2">⚡</span>
-                      View Pro Plan
-                    </button>
                   </div>
-                </div>
-              ) : (
-                <div className="mt-8 rounded-2xl p-6 border-2" style={{ 
+              </>
+            ) : (
+              <div className="mt-8 rounded-2xl p-6 border-2" style={{
                   background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.08) 0%, rgba(111, 255, 210, 0.08) 100%)',
                   borderColor: 'rgba(41, 121, 255, 0.4)',
                   boxShadow: '0 4px 20px rgba(41, 121, 255, 0.15)'
@@ -2240,8 +2570,8 @@ function HomeContent() {
                   }
                 </p>
 
-                <div className="max-w-md mx-auto space-y-3">
-                  <div className="flex items-center justify-between text-sm">
+                <div className="max-w-md mx-auto space-y-4">
+                  <div className="flex items-center justify-between text-sm mb-2">
                     <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
                       {researchStatus}
                     </span>
@@ -2251,17 +2581,37 @@ function HomeContent() {
                       {Math.round(researchProgress)}%
                     </span>
                   </div>
-                  <div className="w-full rounded-full h-4 overflow-hidden" style={{ backgroundColor: 'var(--card-border)' }}>
+                  {/* Progress bar container */}
+                  <div 
+                    className="w-full rounded-full overflow-hidden relative"
+                    style={{ 
+                      backgroundColor: 'var(--card-border)',
+                      height: '12px',
+                      boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.1)'
+                    }}
+                  >
+                    {/* Progress bar fill */}
                     <div
-                      className="h-4 rounded-full transition-all duration-500"
+                      className="h-full rounded-full transition-all duration-700 ease-out relative overflow-hidden"
                       style={{ 
                         width: `${researchProgress}%`,
                         background: userType === 'creator'
-                          ? 'linear-gradient(to right, #DAA520, #F4D03F)'
-                          : 'linear-gradient(to right, #2979FF, #9F7AEA, #EC4899)'
+                          ? 'linear-gradient(90deg, #DAA520 0%, #F4D03F 50%, #FFD700 100%)'
+                          : 'linear-gradient(90deg, #2979FF 0%, #6F7FFF 50%, #9F7AEA 100%)',
+                        boxShadow: userType === 'creator'
+                          ? '0 0 12px rgba(218, 165, 32, 0.5), 0 2px 4px rgba(218, 165, 32, 0.3)'
+                          : '0 0 12px rgba(41, 121, 255, 0.5), 0 2px 4px rgba(41, 121, 255, 0.3)'
                       }}
                     >
-                      <div className="h-full w-full bg-white/30 animate-pulse"></div>
+                      {/* Shimmer effect */}
+                      <div 
+                        className="absolute inset-0 opacity-40"
+                        style={{
+                          background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%)',
+                          animation: 'shimmer 2s infinite ease-in-out',
+                          width: '50%'
+                        }}
+                      />
                     </div>
                   </div>
                 </div>
@@ -2613,7 +2963,10 @@ function HomeContent() {
                         }
 
                         // Generate ideas with smooth animation
-                        if (!businessInfo.businessName) return;
+                        if (!businessInfo.businessName) {
+                          showNotification("Please fill in your business information first.", "error", "Error");
+                          return;
+                        }
                         
                         setIsRewriting(true);
                         setIdeasAnimation('fadeOut');
@@ -2634,7 +2987,20 @@ function HomeContent() {
                           });
 
                           if (!response.ok) {
-                            throw new Error("Failed to generate more ideas");
+                            let errorMessage = `Failed to generate more ideas: ${response.status} ${response.statusText}`;
+                            try {
+                              const errorText = await response.text();
+                              try {
+                                const errorData = JSON.parse(errorText);
+                                errorMessage = errorData.error || errorMessage;
+                              } catch {
+                                errorMessage = errorText || errorMessage;
+                              }
+                            } catch {
+                              // Use default error message
+                            }
+                            console.error("API Error:", errorMessage);
+                            throw new Error(errorMessage);
                           }
 
                           const data = await response.json();
@@ -2686,18 +3052,34 @@ function HomeContent() {
                           setIsRewriting(false);
                         }
                       }}
-                      disabled={isRewriting}
-                      className={`px-5 py-3 rounded-xl font-bold text-sm transition-all shadow-lg hover:shadow-xl hover:scale-105 ${
-                        isRewriting
+                      disabled={isRewriting || isGeneratingIdeas}
+                      className={`px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] flex items-center gap-3 relative overflow-hidden ${
+                        isRewriting || isGeneratingIdeas
                           ? "bg-gray-400 text-white cursor-not-allowed"
                           : "text-white"
                       }`}
-                      style={!isRewriting ? { 
-                        backgroundColor: '#2979FF',
-                        border: '2px solid #6FFFD2'
+                      style={!isRewriting && !isGeneratingIdeas ? { 
+                        background: 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 50%, #6FFFD2 100%)',
+                        border: '2px solid rgba(111, 255, 210, 0.8)',
+                        boxShadow: '0 8px 25px rgba(41, 121, 255, 0.5), 0 0 40px rgba(111, 255, 210, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
+                        textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
                       } : {}}
-                      onMouseEnter={(e) => !isRewriting && (e.currentTarget.style.backgroundColor = '#1e5dd9')}
-                      onMouseLeave={(e) => !isRewriting && (e.currentTarget.style.backgroundColor = '#2979FF')}
+                      onMouseEnter={(e) => {
+                        if (!isRewriting && !isGeneratingIdeas) {
+                          e.currentTarget.style.background = 'linear-gradient(135deg, #1e5dd9 0%, #2979FF 50%, #4A9FFF 100%)';
+                          e.currentTarget.style.borderColor = 'rgba(111, 255, 210, 1)';
+                          e.currentTarget.style.boxShadow = '0 12px 35px rgba(41, 121, 255, 0.6), 0 0 60px rgba(111, 255, 210, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
+                          e.currentTarget.style.transform = 'scale(1.02) translateY(-2px)';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (!isRewriting && !isGeneratingIdeas) {
+                          e.currentTarget.style.background = 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 50%, #6FFFD2 100%)';
+                          e.currentTarget.style.borderColor = 'rgba(111, 255, 210, 0.8)';
+                          e.currentTarget.style.boxShadow = '0 8px 25px rgba(41, 121, 255, 0.5), 0 0 40px rgba(111, 255, 210, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
+                          e.currentTarget.style.transform = 'scale(1) translateY(0)';
+                        }
+                      }}
                     >
                       {isRewriting ? (
                         "Generating..."
@@ -2718,31 +3100,136 @@ function HomeContent() {
                         </>
                       )}
                     </button>
-                    
-                    {/* Usage counter inline - to the right of button */}
-                    {!effectiveIsPro && generateIdeasCount < 2 && (
-                      <span className="text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                        {2 - generateIdeasCount} use{2 - generateIdeasCount !== 1 ? 's' : ''} left
-                      </span>
-                    )}
-                    
-                    {/* Compact Go Pro Callout - Floating next to button */}
-                    {!effectiveIsPro && (
-                      <div className="relative">
-                        <button
-                          onClick={scrollToPremium}
-                          className="rounded-lg px-4 py-2 border-2 shadow-lg transition-all hover:shadow-xl hover:scale-105 flex items-center gap-2 text-sm font-bold whitespace-nowrap w-full"
-                          style={{ 
-                            background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.1) 0%, rgba(111, 255, 210, 0.1) 100%)',
-                            borderColor: 'rgba(41, 121, 255, 0.4)',
-                            color: '#2979FF'
+                  </div>
+
+                  {/* Guide AI Button for Video Ideas */}
+                  <div className="mb-6 flex items-center justify-center">
+                    <div className="relative guide-ai-ideas-container">
+                      <button
+                        onClick={() => {
+                          if (guideAIForIdeasCount >= 3 && !effectiveIsPro) {
+                            setModalState({
+                              isOpen: true,
+                              title: userType === 'creator' ? "Upgrade to Creator" : "Upgrade to PostReady Pro",
+                              message: userType === 'creator' 
+                                ? "You've used your 3 free Guide AI uses for video ideas. Upgrade to Creator for unlimited Guide AI and more features!"
+                                : "You've used your 3 free Guide AI uses for video ideas. Upgrade to PostReady Pro for unlimited Guide AI and more features!",
+                              type: 'confirm',
+                              onConfirm: scrollToPremium,
+                              confirmText: userType === 'creator' ? "View Creator Plan" : "View Pro Plan"
+                            });
+                            return;
+                          }
+                          setShowGuideAIForIdeas(!showGuideAIForIdeas);
+                        }}
+                        disabled={guideAIForIdeasCount >= 3 && !effectiveIsPro}
+                        className={`px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed ${
+                          guideAIForIdeasCount >= 3 && !effectiveIsPro ? '' : ''
+                        }`}
+                        style={guideAIForIdeasCount >= 3 && !effectiveIsPro ? {
+                          backgroundColor: 'transparent',
+                          borderColor: '#94a3b8',
+                          color: '#94a3b8'
+                        } : { 
+                          backgroundColor: 'transparent',
+                          borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
+                          color: userType === 'creator' ? '#DAA520' : '#2979FF'
+                        }}
+                        title={!effectiveIsPro && guideAIForIdeasCount < 3 ? `${3 - guideAIForIdeasCount} Guide AI uses left` : ''}
+                      >
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        Guide AI
+                        {!effectiveIsPro && guideAIForIdeasCount < 3 && (
+                          <span className="text-xs px-1.5 py-0.5 rounded" style={{ 
+                            backgroundColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.15)' : 'rgba(41, 121, 255, 0.15)',
+                            color: userType === 'creator' ? '#DAA520' : '#2979FF'
+                          }}>
+                            {3 - guideAIForIdeasCount}
+                          </span>
+                        )}
+                      </button>
+                      {showGuideAIForIdeas && (
+                        <div 
+                          className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-80 rounded-lg shadow-2xl border-2 p-4 z-50 guide-ai-ideas-container"
+                          style={{
+                            backgroundColor: 'var(--card-bg)',
+                            borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.3)',
+                            boxShadow: userType === 'creator' 
+                              ? '0 10px 40px rgba(218, 165, 32, 0.2)' 
+                              : '0 10px 40px rgba(41, 121, 255, 0.2)'
                           }}
                         >
-                          <span>⚡</span>
-                          <span>Go Pro</span>
-                        </button>
-                      </div>
-                    )}
+                          <div className="mb-3">
+                            <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                              Tell the AI how to adjust the video ideas:
+                            </label>
+                            <textarea
+                              value={aiGuidanceForIdeas}
+                              onChange={(e) => setAiGuidanceForIdeas(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter' && !e.shiftKey) {
+                                  e.preventDefault();
+                                  if (aiGuidanceForIdeas.trim() && !isGeneratingIdeas) {
+                                    handleGenerateIdeasWithGuidance(aiGuidanceForIdeas.trim());
+                                  }
+                                }
+                              }}
+                              placeholder="e.g., 'Make them more casual and fun', 'Focus on behind-the-scenes content', 'Make them shorter and simpler', 'Add more educational tips'"
+                              rows={3}
+                              className="w-full px-3 py-2 rounded-lg border-2 resize-none focus:outline-none text-sm"
+                              style={{
+                                backgroundColor: 'white',
+                                borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)',
+                                color: '#1a1a1a'
+                              }}
+                              onFocus={(e) => {
+                                e.target.style.boxShadow = userType === 'creator' 
+                                  ? '0 0 0 2px rgba(218, 165, 32, 0.5)' 
+                                  : '0 0 0 2px rgba(41, 121, 255, 0.5)';
+                              }}
+                              onBlur={(e) => {
+                                e.target.style.boxShadow = 'none';
+                              }}
+                            />
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => {
+                                if (aiGuidanceForIdeas.trim()) {
+                                  if (!effectiveIsPro) {
+                                    setGuideAIForIdeasCount(prev => prev + 1);
+                                  }
+                                  handleGenerateIdeasWithGuidance(aiGuidanceForIdeas.trim());
+                                }
+                              }}
+                              disabled={!aiGuidanceForIdeas.trim() || isGeneratingIdeas}
+                              className="flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                              style={{ 
+                                backgroundColor: userType === 'creator' ? '#DAA520' : '#2979FF'
+                              }}
+                            >
+                              Apply & Generate
+                            </button>
+                            <button
+                              onClick={() => {
+                                setShowGuideAIForIdeas(false);
+                                setAiGuidanceForIdeas("");
+                              }}
+                              className="px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2"
+                              style={{
+                                borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
+                                color: userType === 'creator' ? '#DAA520' : '#2979FF',
+                                backgroundColor: 'transparent'
+                              }}
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   </div>
 
                   <div className="flex gap-4">
@@ -3733,7 +4220,6 @@ function HomeContent() {
         {currentStep === "premium" && (
           <div className="animate-fade-in">
             {isPro ? (
-              /* Pro Member Status Display */
               <div className="max-w-3xl mx-auto mb-10">
                 <div className="bg-gradient-to-br from-blue-600 to-cyan-400 rounded-2xl p-8 text-white shadow-2xl relative overflow-hidden">
                   {/* Premium Background Pattern */}
@@ -3814,7 +4300,6 @@ function HomeContent() {
                 </div>
               </div>
             ) : (
-              /* Non-Pro User Pricing Card */
               <div className="max-w-3xl mx-auto mb-10">
                 {/* Plan Type Toggle Pill */}
                 <div className="flex justify-center mb-6">
@@ -3970,72 +4455,102 @@ function HomeContent() {
               </div>
             )}
 
-              {/* Feature Comparison */}
-              <div className="max-w-2xl mx-auto mb-8">
-                <h3 className="text-2xl font-bold mb-4 text-center" style={{ color: 'var(--secondary)' }}>
-                  Free vs Pro Comparison
-                </h3>
-                <div className="rounded-lg border-2 overflow-hidden" style={{ 
-                  backgroundColor: 'var(--card-bg)',
-                  borderColor: 'var(--card-border)'
-                }}>
-                  <div className="grid grid-cols-3 text-center border-b-2" style={{ borderColor: 'var(--card-border)' }}>
-                    <div className="p-4 font-bold" style={{ color: 'var(--text-primary)' }}>Feature</div>
-                    <div className="p-4 font-bold" style={{ 
-                      backgroundColor: 'var(--hover-bg)',
-                      color: 'var(--text-primary)'
-                    }}>Free</div>
-                    <div className="p-4 font-bold" style={{ 
-                      backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                      color: 'var(--primary)'
-                    }}>Pro/Creator</div>
-                  </div>
-                  <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
-                    <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Video Ideas</div>
-                    <div className="p-4" style={{ 
-                      backgroundColor: 'var(--hover-bg)',
-                      color: 'var(--text-primary)'
-                    }}>6</div>
-                    <div className="p-4 font-bold" style={{ 
-                      backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                      color: 'var(--primary)'
-                    }}>Unlimited</div>
-                  </div>
-                  <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
-                    <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Business Deep Research</div>
-                    <div className="p-4" style={{ 
-                      backgroundColor: 'var(--hover-bg)',
-                      color: 'var(--text-primary)'
-                    }}>1 use</div>
-                    <div className="p-4 font-bold" style={{ 
-                      backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                      color: 'var(--primary)'
-                    }}>Unlimited</div>
-                  </div>
-                  <div className="grid grid-cols-3 text-center">
-                    <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Support</div>
-                    <div className="p-4" style={{ 
-                      backgroundColor: 'var(--hover-bg)',
-                      color: 'var(--text-primary)'
-                    }}>Email</div>
-                    <div className="p-4 font-bold" style={{ 
-                      backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                      color: 'var(--primary)'
-                    }}>Priority</div>
-                  </div>
+            {/* Feature Comparison */}
+            <div className="max-w-2xl mx-auto mb-8">
+              <h3 className="text-2xl font-bold mb-4 text-center" style={{ color: 'var(--secondary)' }}>
+                Free vs Pro Comparison
+              </h3>
+              <div className="rounded-lg border-2 overflow-hidden" style={{ 
+                backgroundColor: 'var(--card-bg)',
+                borderColor: 'var(--card-border)'
+              }}>
+                <div className="grid grid-cols-3 text-center border-b-2" style={{ borderColor: 'var(--card-border)' }}>
+                  <div className="p-4 font-bold" style={{ color: 'var(--text-primary)' }}>Feature</div>
+                  <div className="p-4 font-bold" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-primary)'
+                  }}>Free</div>
+                  <div className="p-4 font-bold" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>Pro/Creator</div>
+                </div>
+                <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
+                  <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Video Ideas</div>
+                  <div className="p-4" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-primary)'
+                  }}>6</div>
+                  <div className="p-4 font-bold" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>Unlimited</div>
+                </div>
+                <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
+                  <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Business Deep Research</div>
+                  <div className="p-4" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-primary)'
+                  }}>1 use</div>
+                  <div className="p-4 font-bold" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>Unlimited</div>
+                </div>
+                <div className="grid grid-cols-3 text-center">
+                  <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Support</div>
+                  <div className="p-4" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-primary)'
+                  }}>Email</div>
+                  <div className="p-4 font-bold" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>Priority</div>
                 </div>
               </div>
+            </div>
 
-              {/* Back Button */}
-              <div className="text-center">
-                <button
-                  onClick={handlePreviousStep}
-                  className="font-medium transition-colors hover:scale-105"
-                  style={{ color: 'var(--text-secondary)' }}
-                >
-                  ← Back to Main Page
-                </button>
-              </div>
+            {/* Back Button */}
+            <div className="text-center">
+              <button
+                onClick={handlePreviousStep}
+                className="font-medium transition-colors hover:scale-105"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                ← Back to Main Page
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Get unlimited ideas with Pro button - Video ideas page only */}
+        {currentStep === "choose-idea" && !effectiveIsPro && (
+          <div className="mb-8 flex justify-center w-full">
+            <button
+              onClick={scrollToPremium}
+              className="rounded-xl px-6 py-3 border-2 shadow-lg transition-all hover:shadow-xl hover:scale-105 flex items-center gap-2 font-semibold text-base"
+              style={{
+                maxWidth: '28rem',
+                background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.2) 0%, rgba(111, 255, 210, 0.2) 100%)',
+                borderColor: 'rgba(41, 121, 255, 0.7)',
+                color: '#2979FF',
+                boxShadow: 'rgba(41, 121, 255, 0.3) 0px 4px 20px, rgba(111, 255, 210, 0.1) 0px 0px 40px'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(41, 121, 255, 0.2) 0%, rgba(111, 255, 210, 0.2) 100%)';
+                e.currentTarget.style.borderColor = 'rgba(41, 121, 255, 0.7)';
+                e.currentTarget.style.boxShadow = 'rgba(41, 121, 255, 0.3) 0px 6px 25px, rgba(111, 255, 210, 0.15) 0px 0px 50px';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(41, 121, 255, 0.2) 0%, rgba(111, 255, 210, 0.2) 100%)';
+                e.currentTarget.style.borderColor = 'rgba(41, 121, 255, 0.7)';
+                e.currentTarget.style.boxShadow = 'rgba(41, 121, 255, 0.3) 0px 4px 20px, rgba(111, 255, 210, 0.1) 0px 0px 40px';
+              }}
+            >
+              <span className="text-xl">⚡</span>
+              <span>Get unlimited ideas with Pro</span>
+            </button>
           </div>
         )}
 

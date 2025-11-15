@@ -8,6 +8,7 @@ import { SectionCard } from '@/components/SectionCard';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { SecondaryButton } from '@/components/SecondaryButton';
 import { Modal } from '@/components/Modal';
+import { User } from '@supabase/supabase-js';
 
 export default function UserPortal() {
   const { user, isPro, signOut, loading } = useAuth();
@@ -24,6 +25,15 @@ export default function UserPortal() {
     return 'none';
   });
   const [devModeLoaded, setDevModeLoaded] = useState(false);
+  
+  // Persist dev mode to localStorage so it syncs across pages
+  useEffect(() => {
+    if (devMode !== 'none') {
+      localStorage.setItem('devMode', devMode);
+    } else {
+      localStorage.removeItem('devMode');
+    }
+  }, [devMode]);
   
   // Support contact form state
   const [showSupportModal, setShowSupportModal] = useState(false);
@@ -47,13 +57,42 @@ export default function UserPortal() {
     setDevModeLoaded(true);
   }, []);
   
-  // Dev mode overrides (same logic as main page)
-  const devUser = devMode !== 'none' ? { 
-    id: 'dev-user', 
-    email: devMode === 'pro' ? 'pro@test.com' : devMode === 'creator' ? 'creator@test.com' : 'user@test.com' 
-  } : null;
-  const effectiveUser = devMode !== 'none' ? devUser : user;
-  const effectiveIsPro = devMode === 'pro' || devMode === 'creator' ? true : devMode !== 'none' ? false : isPro;
+  // Dev mode overrides - accurately simulate different user states
+  // Create proper mock User objects that match Supabase User type
+  const createMockUser = (mode: 'regular' | 'pro' | 'creator'): User => {
+    const baseUser: Partial<User> = {
+      id: `dev-user-${mode}`,
+      email: mode === 'pro' ? 'pro@test.com' : mode === 'creator' ? 'creator@test.com' : 'user@test.com',
+      aud: 'authenticated',
+      role: 'authenticated',
+      email_confirmed_at: new Date().toISOString(),
+      phone: undefined,
+      confirmed_at: new Date().toISOString(),
+      last_sign_in_at: new Date().toISOString(),
+      app_metadata: {},
+      user_metadata: {
+        role: mode === 'creator' ? 'creator' : undefined,
+        plan: mode === 'pro' ? 'pro' : mode === 'creator' ? 'creator' : 'regular'
+      },
+      identities: [],
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    };
+    return baseUser as User;
+  };
+
+  // When devMode='none': use real user if available, otherwise null (not signed in)
+  // When devMode is active: use mock user to simulate signed-in state
+  const effectiveUser: User | null = devMode === 'none' 
+    ? user  // Use real user when dev mode is off
+    : createMockUser(devMode);
+  
+  // Pro status: true for pro/creator dev modes, or real pro users when devMode='none'
+  const effectiveIsPro = devMode === 'pro' || devMode === 'creator' 
+    ? true 
+    : devMode === 'none' 
+      ? isPro 
+      : false;
   
   
   // Modal state
@@ -195,6 +234,92 @@ export default function UserPortal() {
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
+      {/* Dev Mode Buttons - Top Left - Development Only */}
+      {process.env.NODE_ENV !== 'production' && (
+        <div className="fixed top-4 left-4 z-50 flex flex-col gap-2">
+          <div className="text-xs font-bold mb-1 px-2 py-1 rounded" style={{ 
+            backgroundColor: 'var(--card-bg)',
+            border: '2px solid var(--primary)',
+            color: 'var(--primary)'
+          }}>
+            DEV MODE
+          </div>
+          <div className="flex flex-col gap-1">
+            <button
+              onClick={() => setDevMode('none')}
+              className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
+                devMode === 'none' ? 'ring-2 ring-offset-1' : ''
+              }`}
+              style={devMode === 'none' ? {
+                backgroundColor: 'var(--primary)',
+                color: 'white',
+                ringColor: 'var(--primary)'
+              } : {
+                backgroundColor: 'var(--card-bg)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--card-border)'
+              }}
+              title="Simulate anonymous user (not signed in) - Usage tracked via localStorage"
+            >
+              Not Signed In
+            </button>
+            <button
+              onClick={() => setDevMode('regular')}
+              className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
+                devMode === 'regular' ? 'ring-2 ring-offset-1' : ''
+              }`}
+              style={devMode === 'regular' ? {
+                backgroundColor: 'var(--primary)',
+                color: 'white',
+                ringColor: 'var(--primary)'
+              } : {
+                backgroundColor: 'var(--card-bg)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--card-border)'
+              }}
+              title="Simulate regular user account (signed in, free plan) - Limited to 2 uses per feature"
+            >
+              Regular User
+            </button>
+            <button
+              onClick={() => setDevMode('pro')}
+              className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
+                devMode === 'pro' ? 'ring-2 ring-offset-1' : ''
+              }`}
+              style={devMode === 'pro' ? {
+                backgroundColor: 'var(--primary)',
+                color: 'white',
+                ringColor: 'var(--primary)'
+              } : {
+                backgroundColor: 'var(--card-bg)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--card-border)'
+              }}
+              title="Simulate Pro user account (signed in, Pro plan) - Unlimited usage"
+            >
+              Pro User
+            </button>
+            <button
+              onClick={() => setDevMode('creator')}
+              className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
+                devMode === 'creator' ? 'ring-2 ring-offset-1' : ''
+              }`}
+              style={devMode === 'creator' ? {
+                backgroundColor: 'var(--primary)',
+                color: 'white',
+                ringColor: 'var(--primary)'
+              } : {
+                backgroundColor: 'var(--card-bg)',
+                color: 'var(--text-primary)',
+                border: '1px solid var(--card-border)'
+              }}
+              title="Simulate Creator user account (signed in, Creator plan) - Unlimited usage, creator features enabled"
+            >
+              Creator User
+            </button>
+          </div>
+        </div>
+      )}
       <div className="max-w-4xl mx-auto px-4 py-10">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
