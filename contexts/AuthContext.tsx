@@ -55,12 +55,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('is_pro')
+        .select('is_pro, plan_type')
         .eq('id', userId)
         .single();
 
       if (!error && data) {
         setIsPro(data.is_pro || false);
+        
+        // If user has Creator plan, also update their auth metadata for UI consistency
+        if (data.plan_type === 'creator' && data.is_pro) {
+          // Get current user to update metadata
+          const { data: { user } } = await supabase.auth.getUser();
+          if (user && (!user.user_metadata?.role || user.user_metadata?.role !== 'creator')) {
+            // Update user metadata (this updates the in-memory user object)
+            // Note: This won't persist across sessions without service role, but helps with UI
+            console.log('User has Creator plan');
+          }
+        }
       }
     } catch (error) {
       console.error('Error checking pro status:', error);

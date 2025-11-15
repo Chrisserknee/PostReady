@@ -150,8 +150,11 @@ function HomeContent() {
   const [planType, setPlanType] = useState<'pro' | 'creator'>('pro');
   const [isPlanTransitioning, setIsPlanTransitioning] = useState<boolean>(false);
   
-  // Check if user is a creator
-  const isCreator = user?.user_metadata?.role === 'creator' || user?.user_metadata?.plan === 'creator';
+  // Track user plan type from database
+  const [userPlanType, setUserPlanType] = useState<'free' | 'pro' | 'creator'>('free');
+  
+  // Check if user is a creator (from database plan_type or user_metadata)
+  const isCreator = userPlanType === 'creator' || user?.user_metadata?.role === 'creator' || user?.user_metadata?.plan === 'creator';
   
 
   const [strategy, setStrategy] = useState<StrategyResult | null>(null);
@@ -261,6 +264,31 @@ function HomeContent() {
   const postPlannerRef = useRef<HTMLDivElement>(null);
   const urlParamsInitializedRef = useRef<boolean>(false);
 
+  // Load user plan type when user signs in
+  useEffect(() => {
+    const loadUserPlanType = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .select('plan_type')
+            .eq('id', user.id)
+            .single();
+          
+          if (!error && data) {
+            setUserPlanType(data.plan_type || 'free');
+          }
+        } catch (error) {
+          console.error('Error loading plan type:', error);
+        }
+      } else {
+        setUserPlanType('free');
+      }
+    };
+    
+    loadUserPlanType();
+  }, [user]);
+  
   // Load user progress when user signs in
   useEffect(() => {
     if (!authLoading) {
@@ -903,6 +931,9 @@ function HomeContent() {
         throw new Error('No active session found. Please sign in again.');
       }
       
+      // Determine which plan the user selected (default to pro if not specified)
+      const selectedPlanType = planType || 'pro';
+      
       // Create Stripe checkout session
       const response = await fetch("/api/create-checkout", {
         method: "POST",
@@ -914,6 +945,7 @@ function HomeContent() {
         body: JSON.stringify({
           userId: user.id,
           userEmail: user.email,
+          planType: selectedPlanType,
         }),
       });
 

@@ -4,7 +4,7 @@ import { verifyUserOwnership } from "@/lib/auth-utils";
 
 export async function POST(request: NextRequest) {
   try {
-    const { userId, userEmail } = await request.json();
+    const { userId, userEmail, planType = 'pro' } = await request.json();
 
     // Input validation
     if (!userId || !userEmail) {
@@ -14,9 +14,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Validate planType
+    if (planType && !['pro', 'creator'].includes(planType)) {
+      return NextResponse.json(
+        { error: "Invalid plan type" },
+        { status: 400 }
+      );
+    }
+
     // Sanitize inputs
     const sanitizedUserId = String(userId).trim().substring(0, 100);
     const sanitizedEmail = String(userEmail).trim().substring(0, 255);
+    const sanitizedPlanType = planType || 'pro';
 
     // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedEmail)) {
@@ -45,6 +54,12 @@ export async function POST(request: NextRequest) {
     // Initialize Stripe client lazily (only when route is called)
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+    // Determine plan details
+    const planName = sanitizedPlanType === 'creator' ? 'PostReady Creator' : 'PostReady Pro';
+    const planDescription = sanitizedPlanType === 'creator' 
+      ? "Unlimited video ideas, advanced insights, priority support, and creator-focused features"
+      : "Unlimited video ideas, advanced insights, and priority support";
+    
     // Create a Stripe Checkout session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -54,10 +69,10 @@ export async function POST(request: NextRequest) {
           price_data: {
             currency: "usd",
             product_data: {
-              name: "PostReady Pro - Monthly Subscription",
-              description: "Unlimited video ideas, advanced insights, and priority support",
+              name: `${planName} - Monthly Subscription`,
+              description: planDescription,
             },
-            unit_amount: 1000, // $10.00 in cents
+            unit_amount: 1000, // $10.00 in cents (same price for both plans)
             recurring: {
               interval: "month",
             },
@@ -68,12 +83,14 @@ export async function POST(request: NextRequest) {
       subscription_data: {
         metadata: {
           userId: sanitizedUserId,
+          planType: sanitizedPlanType,
         },
-        description: "PostReady Pro Monthly Subscription",
+        description: `${planName} Monthly Subscription`,
       },
       customer_email: sanitizedEmail,
       metadata: {
         userId: sanitizedUserId,
+        planType: sanitizedPlanType,
       },
       consent_collection: {
         terms_of_service: 'required',

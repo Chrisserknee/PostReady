@@ -43,13 +43,17 @@ export async function POST(request: NextRequest) {
       case "checkout.session.completed": {
         const session = event.data.object as Stripe.Checkout.Session;
         const userId = session.metadata?.userId;
+        const planType = session.metadata?.planType || 'pro'; // Default to pro if not specified
 
         if (userId) {
-          // Upgrade user to Pro in Supabase
+          console.log(`Upgrading user ${userId} to ${planType}`);
+          
+          // Update user_profiles table
           const { error } = await supabase
             .from("user_profiles")
             .update({ 
               is_pro: true, 
+              plan_type: planType,
               updated_at: new Date().toISOString(),
               stripe_customer_id: session.customer as string,
               stripe_subscription_id: session.subscription as string,
@@ -57,9 +61,16 @@ export async function POST(request: NextRequest) {
             .eq("id", userId);
 
           if (error) {
-            console.error("Error upgrading user");
+            console.error("Error upgrading user:", error);
           } else {
-            console.log("User upgraded to Pro");
+            console.log(`User upgraded to ${planType.toUpperCase()}`);
+            
+            // For Creator plan, also update auth user metadata
+            if (planType === 'creator') {
+              // Note: This requires Supabase service role key to update user metadata
+              // For now, we'll rely on the plan_type in user_profiles
+              console.log("Creator plan activated - user_profiles updated");
+            }
           }
         }
         break;
@@ -79,15 +90,16 @@ export async function POST(request: NextRequest) {
           const { error } = await supabase
             .from("user_profiles")
             .update({ 
-              is_pro: false, 
+              is_pro: false,
+              plan_type: 'free',
               updated_at: new Date().toISOString() 
             })
             .eq("id", profiles[0].id);
 
           if (error) {
-            console.error("Error downgrading user");
+            console.error("Error downgrading user:", error);
           } else {
-            console.log("User downgraded from Pro");
+            console.log("User downgraded to Free plan");
           }
         }
         break;
