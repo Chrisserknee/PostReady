@@ -20,6 +20,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { saveUserProgress, loadUserProgress } from "@/lib/userProgress";
 import { saveBusiness, loadSavedBusinesses, saveCompletedPost, loadPostHistory, saveVideoIdea, loadSavedVideoIdeas, deleteSavedVideoIdea, SavedVideoIdea } from "@/lib/userHistory";
 import { User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 type WizardStep = "form" | "researching" | "principles" | "choose-idea" | "record-video" | "generating-caption" | "post-details" | "premium" | "history" | "businesses";
 
@@ -138,26 +139,6 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  // Dev mode state - load from localStorage on mount (only for localhost)
-  const [devMode, setDevMode] = useState<'none' | 'regular' | 'pro' | 'creator'>(() => {
-    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-      const stored = localStorage.getItem('devMode') as 'none' | 'regular' | 'pro' | 'creator' | null;
-      return stored || 'none';
-    }
-    return 'none';
-  });
-  
-  // Persist dev mode to localStorage
-  useEffect(() => {
-    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-      if (devMode !== 'none') {
-        localStorage.setItem('devMode', devMode);
-      } else {
-        localStorage.removeItem('devMode');
-      }
-    }
-  }, [devMode]);
-  
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
     businessName: "",
     businessType: "Restaurant",
@@ -169,19 +150,8 @@ function HomeContent() {
   const [planType, setPlanType] = useState<'pro' | 'creator'>('pro');
   const [isPlanTransitioning, setIsPlanTransitioning] = useState<boolean>(false);
   
-  // Dev mode overrides (only on localhost)
-  const devUser = (typeof window !== 'undefined' && window.location.hostname === 'localhost' && devMode !== 'none') 
-    ? { 
-        id: 'dev-user', 
-        email: devMode === 'pro' ? 'pro@test.com' : devMode === 'creator' ? 'creator@test.com' : 'user@test.com',
-        user_metadata: devMode === 'creator' ? { role: 'creator', plan: 'creator' } : {}
-      } as User 
-    : null;
-  const effectiveUser = devMode !== 'none' ? devUser : user;
-  const effectiveIsPro = devMode === 'pro' || devMode === 'creator' ? true : devMode !== 'none' ? false : isPro;
-  
   // Check if user is a creator
-  const isCreator = effectiveUser?.user_metadata?.role === 'creator' || effectiveUser?.user_metadata?.plan === 'creator';
+  const isCreator = user?.user_metadata?.role === 'creator' || user?.user_metadata?.plan === 'creator';
   
 
   const [strategy, setStrategy] = useState<StrategyResult | null>(null);
@@ -288,15 +258,14 @@ function HomeContent() {
   const postPlannerRef = useRef<HTMLDivElement>(null);
   const urlParamsInitializedRef = useRef<boolean>(false);
 
-  // Load user progress when user signs in OR when dev mode is active
+  // Load user progress when user signs in
   useEffect(() => {
     if (!authLoading) {
       if (user) {
-        // Load progress from database (only for real users)
+        // Load progress from database
         loadProgress();
         loadHistoryData();
       }
-      // Dev mode users don't load from database
     }
   }, [user, authLoading]);
 
@@ -499,9 +468,9 @@ function HomeContent() {
   // This runs immediately when the step changes, not waiting for postDetails
   useEffect(() => {
     if (currentStep === "post-details" && selectedIdea && businessInfo.businessName) {
-      // Skip if no user at all (not signed in and not dev mode)
+      // Skip if no user is signed in
       if (!user) {
-        console.log('⚠️ No user - video ideas cannot be saved. Sign in or use dev mode to save history.');
+        console.log('⚠️ No user - video ideas cannot be saved. Sign in to save history.');
         return;
       }
       
@@ -648,12 +617,21 @@ function HomeContent() {
     
     setBillingLoading(true);
     try {
+      // Get the current session to include auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('No active session found. Please sign in again.');
+      }
+      
       // Create Stripe Customer Portal session
       const response = await fetch('/api/create-portal-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
+        credentials: 'include',
         body: JSON.stringify({
           userId: user.id,
         }),
@@ -717,7 +695,7 @@ function HomeContent() {
       return;
     }
     
-    // Navigate to portal for all authenticated users (real or dev mode)
+    // Navigate to portal for all authenticated users
     console.log('Navigating to /portal');
     // Use window.location for more reliable navigation
     window.location.href = '/portal';
@@ -908,12 +886,21 @@ function HomeContent() {
     }
 
     try {
+      // Get the current session to include auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('No active session found. Please sign in again.');
+      }
+      
       // Create Stripe checkout session
       const response = await fetch("/api/create-checkout", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Authorization": `Bearer ${session.access_token}`,
         },
+        credentials: 'include',
         body: JSON.stringify({
           userId: user.id,
           userEmail: user.email,
@@ -921,16 +908,17 @@ function HomeContent() {
       });
 
       if (!response.ok) {
-        throw new Error("Failed to create checkout session");
+        const errorData = await response.json();
+        throw new Error(errorData.error || "Failed to create checkout session");
       }
 
       const { url } = await response.json();
       
       // Redirect to Stripe checkout
       window.location.href = url;
-    } catch (error) {
+    } catch (error: any) {
       console.error("Checkout error:", error);
-      showNotification("Failed to start checkout. Please try again.", "error", "Error");
+      showNotification(error.message || "Failed to start checkout. Please try again.", "error", "Error");
     }
   };
 
@@ -1787,51 +1775,6 @@ function HomeContent() {
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--background)' }}>
-      {/* Dev Mode Switcher - Only visible on localhost */}
-      {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
-        <div className="fixed top-4 left-4 z-50 flex gap-2 bg-black/80 p-2 rounded-lg border border-gray-600">
-          <button
-            onClick={() => setDevMode('none')}
-            className="px-3 py-1 rounded text-xs font-bold transition-all hover:opacity-80"
-            style={{
-              background: devMode === 'none' ? '#2979FF' : '#333',
-              color: 'white'
-            }}
-          >
-            None
-          </button>
-          <button
-            onClick={() => setDevMode('regular')}
-            className="px-3 py-1 rounded text-xs font-bold transition-all hover:opacity-80"
-            style={{
-              background: devMode === 'regular' ? '#2979FF' : '#333',
-              color: 'white'
-            }}
-          >
-            Regular
-          </button>
-          <button
-            onClick={() => setDevMode('pro')}
-            className="px-3 py-1 rounded text-xs font-bold transition-all hover:opacity-80"
-            style={{
-              background: devMode === 'pro' ? '#2979FF' : '#333',
-              color: 'white'
-            }}
-          >
-            Pro
-          </button>
-          <button
-            onClick={() => setDevMode('creator')}
-            className="px-3 py-1 rounded text-xs font-bold transition-all hover:opacity-80"
-            style={{
-              background: devMode === 'creator' ? '#DAA520' : '#333',
-              color: 'white'
-            }}
-          >
-            Creator
-          </button>
-        </div>
-      )}
       {/* Tiny Glowing Stars Effect */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
         {/* Generate multiple small stars scattered across the screen */}
@@ -1861,12 +1804,12 @@ function HomeContent() {
       </div>
       <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>
         {/* Header with Auth - Only for signed-in users */}
-        {effectiveUser && !authLoading && (
+        {user && !authLoading && (
           <div className="mb-8">
             {/* Mobile: Stacked layout */}
             <div className="flex sm:hidden flex-col gap-3 w-full">
               {/* Pro Badge on its own row */}
-              {(isCreator || effectiveIsPro) && (
+              {(isCreator || isPro) && (
                 <div className="flex justify-center">
                   {isCreator ? (
                     <span 
@@ -1988,7 +1931,7 @@ function HomeContent() {
                 >
                   Account
                 </button>
-                {!effectiveIsPro ? (
+                {!isPro ? (
                   <button
                     onClick={scrollToPremium}
                     className="flex-1 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap shadow-lg hover:scale-105 active:scale-95"
@@ -2014,7 +1957,7 @@ function HomeContent() {
                   </button>
                 )}
               </div>
-              {!effectiveIsPro && (
+              {!isPro && (
                 <button
                   onClick={handleSignOut}
                   className="w-full px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all shadow-md hover:scale-105 active:scale-95"
@@ -2050,7 +1993,7 @@ function HomeContent() {
                 </span>
               )}
               {/* Show PRO badge for pro users (but not creators) */}
-              {effectiveIsPro && !isCreator && (
+              {isPro && !isCreator && (
                 <span 
                   className="text-white px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden flex-shrink-0"
                   style={{ 
@@ -2125,9 +2068,9 @@ function HomeContent() {
                 style={{ color: 'var(--text-secondary)', pointerEvents: 'auto' }}
                 title="Go to User Portal"
               >
-                {effectiveUser?.email}
+                {user?.email}
               </button>
-              {!effectiveIsPro && (
+              {!isPro && (
                 <button
                   onClick={scrollToPremium}
                   className="text-white px-4 py-2 rounded-lg text-sm font-bold transition-all hover:opacity-90 whitespace-nowrap flex-shrink-0"
@@ -2147,7 +2090,7 @@ function HomeContent() {
         )}
 
         {/* Sign Up CTA Banner for Non-Signed-Up Users */}
-        {!effectiveUser && (
+        {!user && (
           <div className="mb-8">
             <div className="rounded-xl p-5 border-2 shadow-sm" style={{
               background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.04) 0%, rgba(111, 255, 210, 0.04) 100%)',

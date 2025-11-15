@@ -35,33 +35,14 @@ function IdeaDetailContent() {
   const [idea, setIdea] = useState<SavedVideoIdea | null>(null);
   const [completedPost, setCompletedPost] = useState<CompletedPost | null>(null);
   const [loading, setLoading] = useState(true);
-  const [devMode, setDevMode] = useState<'none' | 'regular' | 'pro' | 'creator'>('none');
-
-  useEffect(() => {
-    // Load dev mode from localStorage
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('devMode') as 'none' | 'regular' | 'pro' | 'creator' | null;
-      if (stored) setDevMode(stored);
-    }
-  }, []);
 
   useEffect(() => {
     const loadIdea = async () => {
       if (!params.id) return;
 
       try {
-        if (devMode !== 'none') {
-          // Load from localStorage for dev mode
-          const devIdeasKey = `dev_video_ideas_${devMode}`;
-          const devIdeasJson = localStorage.getItem(devIdeasKey);
-          const devIdeas: SavedVideoIdea[] = devIdeasJson ? JSON.parse(devIdeasJson) : [];
-          const foundIdea = devIdeas.find(i => i.id === params.id);
-          
-          if (foundIdea) {
-            setIdea(foundIdea);
-          }
-        } else if (user && user.id) {
-          // Load from Supabase for real users
+        if (user && user.id) {
+          // Load from Supabase for authenticated users
           const ideasResult = await loadSavedVideoIdeas(user.id);
           const foundIdea = ideasResult.data?.find(i => i.id === params.id);
           
@@ -88,7 +69,7 @@ function IdeaDetailContent() {
     };
 
     loadIdea();
-  }, [params.id, user, devMode]);
+  }, [params.id, user]);
 
   if (loading) {
     return (

@@ -163,7 +163,7 @@ export default function UserPortal() {
     }
   };
 
-  // Show loading if auth is loading OR dev mode hasn't loaded yet OR no user
+  // Show loading if auth is loading or no user
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--background)' }}>
