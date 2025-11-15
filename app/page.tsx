@@ -636,18 +636,28 @@ function HomeContent() {
   };
 
   const handleSignOut = async () => {
-    await signOut();
-    // Reset to initial state
-    setBusinessInfo({
-      businessName: "",
-      businessType: "Restaurant",
-      location: "",
-      platform: "Instagram",
-    });
-    setStrategy(null);
-    setCurrentStep("form");
-    setSelectedIdea(null);
-    setPostDetails(null);
+    try {
+      setIsNavigating(true); // Show loading state
+      await signOut();
+      // Reset to initial state
+      setBusinessInfo({
+        businessName: "",
+        businessType: "Restaurant",
+        location: "",
+        platform: "Instagram",
+      });
+      setStrategy(null);
+      setCurrentStep("form");
+      setSelectedIdea(null);
+      setPostDetails(null);
+      
+      // Force page reload to clear all state
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Sign out error:', error);
+      setIsNavigating(false);
+      showNotification('Failed to sign out. Please try again.', 'error', 'Error');
+    }
   };
 
   const handleManageBilling = async () => {

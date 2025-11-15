@@ -474,8 +474,13 @@ export default function UserPortal() {
                   message: 'Are you sure you want to sign out?',
                   type: 'confirm',
                   onConfirm: async () => {
-                    await signOut();
-                    router.push('/');
+                    try {
+                      await signOut();
+                      // Force reload to clear all state
+                      window.location.href = '/';
+                    } catch (error) {
+                      console.error('Sign out error:', error);
+                    }
                   },
                   confirmText: 'Sign Out'
                 });
