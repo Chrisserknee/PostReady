@@ -264,7 +264,6 @@ function HomeContent() {
 
   const strategyRef = useRef<HTMLDivElement>(null);
   const postPlannerRef = useRef<HTMLDivElement>(null);
-  const urlParamsInitializedRef = useRef<boolean>(false);
 
   // Load user plan type when user signs in or when isPro changes
   useEffect(() => {
@@ -319,26 +318,18 @@ function HomeContent() {
   }, [user, redirectToCheckoutAfterAuth, authLoading]);
 
 
-  // Handle URL parameters for navigation from portal (only run once on initial mount)
+  // Handle URL parameters for navigation from portal
   useEffect(() => {
-    // Only process URL params once on initial mount
-    if (urlParamsInitializedRef.current) {
-      return;
-    }
-    
     const view = searchParams.get('view');
     const premium = searchParams.get('premium');
     const upgrade = searchParams.get('upgrade');
     
     // Skip if there are no params to process
     if (!view && !premium && !upgrade) {
-      urlParamsInitializedRef.current = true;
       return;
     }
     
-    // Mark as initialized immediately to prevent re-running
-    urlParamsInitializedRef.current = true;
-    
+    // Process the params
     if (view === 'history') {
       setCurrentStep('history');
       // Reload history data when navigating to history page (only for real users)
@@ -375,7 +366,7 @@ function HomeContent() {
       }, 100);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [searchParams]);
 
   // Load usage counts from localStorage for anonymous users (prevent refresh abuse)
   // Only when not signed in
