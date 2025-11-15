@@ -68,21 +68,83 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signUp = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-    });
-
-    if (!error && data.user) {
-      // Create user profile
-      await supabase.from('user_profiles').insert({
-        id: data.user.id,
-        email: data.user.email,
-        is_pro: false,
+    try {
+      // First, check if user already exists by attempting to sign in
+      const { data: existingSession, error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
-    }
 
-    return { error };
+      // If sign in succeeds, user already exists with these exact credentials
+      if (existingSession?.user) {
+        return { 
+          error: { 
+            message: 'An account with this email already exists. Please sign in instead.',
+            code: 'user_already_exists'
+          } 
+        };
+      }
+
+      // If sign in fails with invalid credentials, check if the email exists at all
+      if (signInError && signInError.message !== 'Invalid login credentials') {
+        // Some other error occurred during sign in check
+        console.error('Error checking existing user:', signInError);
+      }
+
+      // Now attempt to sign up
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+      });
+
+      // Check if signup succeeded but user already exists (Supabase behavior)
+      if (data?.user && data.user.identities && data.user.identities.length === 0) {
+        // User already exists but hasn't confirmed email, or confirmation is disabled
+        return { 
+          error: { 
+            message: 'An account with this email already exists. Please sign in or check your email for a confirmation link.',
+            code: 'user_already_exists'
+          } 
+        };
+      }
+
+      if (error) {
+        // Handle specific Supabase errors
+        if (error.message.includes('already registered') || error.message.includes('already exists')) {
+          return { 
+            error: { 
+              message: 'An account with this email already exists. Please sign in instead.',
+              code: 'user_already_exists'
+            } 
+          };
+        }
+        return { error };
+      }
+
+      if (data.user) {
+        // Create user profile
+        const { error: profileError } = await supabase.from('user_profiles').insert({
+          id: data.user.id,
+          email: data.user.email,
+          is_pro: false,
+        });
+
+        if (profileError) {
+          console.error('Error creating user profile:', profileError);
+          // Don't fail signup if profile creation fails - profile can be created later
+        }
+      }
+
+      return { error: null };
+    } catch (err: any) {
+      console.error('Signup error:', err);
+      return { 
+        error: { 
+          message: err.message || 'An error occurred during signup. Please try again.',
+          code: 'signup_error'
+        } 
+      };
+    }
   };
 
   const signIn = async (email: string, password: string) => {

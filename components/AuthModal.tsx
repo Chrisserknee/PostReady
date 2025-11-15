@@ -44,7 +44,19 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
       if (mode === 'signup') {
         const { error } = await signUp(email, password);
         if (error) {
-          setError(error.message);
+          // Check if this is a duplicate account error
+          if (error.code === 'user_already_exists' || 
+              error.message?.includes('already exists') ||
+              error.message?.includes('already registered')) {
+            setError(error.message + ' Switching to sign in...');
+            // Switch to sign in mode after a brief delay
+            setTimeout(() => {
+              setMode('signin');
+              setError(null);
+            }, 2000);
+          } else {
+            setError(error.message);
+          }
         } else {
           setSuccess('Account created! Check your email to verify.');
           setTimeout(() => {
