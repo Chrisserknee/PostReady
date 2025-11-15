@@ -238,6 +238,9 @@ function HomeContent() {
     type: 'info',
   });
 
+  // Celebration modal for successful subscription
+  const [showCelebration, setShowCelebration] = useState(false);
+
   // History and Businesses state
   const [savedBusinesses, setSavedBusinesses] = useState<Array<{
     id: string;
@@ -323,6 +326,13 @@ function HomeContent() {
         loadHistoryData();
       }
       // Clear URL params after navigation
+      setTimeout(() => {
+        router.replace('/', { scroll: false });
+      }, 100);
+    } else if (upgrade === 'success') {
+      // Show celebration modal for successful subscription
+      setShowCelebration(true);
+      // Clear URL params after showing celebration
       setTimeout(() => {
         router.replace('/', { scroll: false });
       }, 100);
@@ -4675,6 +4685,176 @@ function HomeContent() {
         type={notification.type}
         duration={3000}
       />
+
+      {/* Celebration Splash Screen for Successful Subscription */}
+      {showCelebration && (
+        <div 
+          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(10px)',
+            animation: 'fadeIn 0.3s ease-out'
+          }}
+        >
+          {/* Confetti Effect */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {[...Array(50)].map((_, i) => (
+              <div
+                key={i}
+                className="absolute"
+                style={{
+                  left: `${Math.random() * 100}%`,
+                  top: '-20px',
+                  width: '10px',
+                  height: '10px',
+                  backgroundColor: ['#2979FF', '#6FFFD2', '#DAA520', '#F4D03F', '#FF6B9D'][Math.floor(Math.random() * 5)],
+                  borderRadius: Math.random() > 0.5 ? '50%' : '0',
+                  animation: `fall ${2 + Math.random() * 3}s linear infinite`,
+                  animationDelay: `${Math.random() * 2}s`,
+                  opacity: 0.8
+                }}
+              />
+            ))}
+          </div>
+
+          {/* Celebration Card */}
+          <div 
+            className="relative max-w-lg w-full rounded-3xl p-8 text-center"
+            style={{
+              background: isCreator 
+                ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.15) 0%, rgba(244, 208, 63, 0.15) 100%)'
+                : 'linear-gradient(135deg, rgba(41, 121, 255, 0.15) 0%, rgba(111, 255, 210, 0.15) 100%)',
+              border: `3px solid ${isCreator ? '#DAA520' : '#2979FF'}`,
+              boxShadow: isCreator
+                ? '0 20px 60px rgba(218, 165, 32, 0.4), 0 0 80px rgba(244, 208, 63, 0.2)'
+                : '0 20px 60px rgba(41, 121, 255, 0.4), 0 0 80px rgba(111, 255, 210, 0.2)',
+              animation: 'scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
+              backgroundColor: 'var(--card-bg)'
+            }}
+          >
+            {/* Animated Trophy/Star */}
+            <div 
+              className="text-8xl mb-6"
+              style={{
+                animation: 'bounce 1s ease-in-out infinite'
+              }}
+            >
+              {isCreator ? '✨' : '🎉'}
+            </div>
+
+            {/* Title */}
+            <h2 
+              className="text-4xl font-bold mb-4"
+              style={{
+                color: isCreator ? '#DAA520' : '#2979FF',
+                textShadow: isCreator
+                  ? '0 0 20px rgba(218, 165, 32, 0.5)'
+                  : '0 0 20px rgba(41, 121, 255, 0.5)'
+              }}
+            >
+              Welcome to {isCreator ? 'PostReady Creator' : 'PostReady Pro'}!
+            </h2>
+
+            {/* Message */}
+            <p 
+              className="text-xl mb-2"
+              style={{ color: 'var(--text-primary)' }}
+            >
+              You're all set! 🚀
+            </p>
+            <p 
+              className="text-lg mb-8 opacity-80"
+              style={{ color: 'var(--text-secondary)' }}
+            >
+              Enjoy unlimited video ideas, advanced insights, and priority support.
+            </p>
+
+            {/* Feature Pills */}
+            <div className="flex flex-wrap justify-center gap-3 mb-8">
+              {['Unlimited Ideas', 'Advanced Insights', 'Priority Support'].map((feature, idx) => (
+                <span
+                  key={idx}
+                  className="px-4 py-2 rounded-full text-sm font-bold"
+                  style={{
+                    background: isCreator
+                      ? 'linear-gradient(to right, #DAA520, #F4D03F)'
+                      : 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                    color: 'white',
+                    boxShadow: isCreator
+                      ? '0 4px 15px rgba(218, 165, 32, 0.4)'
+                      : '0 4px 15px rgba(41, 121, 255, 0.3)',
+                    animation: `slideUp 0.5s ease-out ${idx * 0.1}s backwards`
+                  }}
+                >
+                  ✓ {feature}
+                </span>
+              ))}
+            </div>
+
+            {/* Action Button */}
+            <button
+              onClick={() => setShowCelebration(false)}
+              className="px-8 py-4 rounded-xl font-bold text-lg text-white transition-all hover:scale-105"
+              style={{
+                background: isCreator
+                  ? 'linear-gradient(to right, #DAA520, #F4D03F)'
+                  : 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                boxShadow: isCreator
+                  ? '0 8px 25px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)'
+                  : '0 8px 25px rgba(41, 121, 255, 0.3), 0 0 40px rgba(111, 255, 210, 0.1)'
+              }}
+            >
+              Let's Get Started! 🎯
+            </button>
+          </div>
+
+          {/* CSS Animations */}
+          <style jsx>{`
+            @keyframes fadeIn {
+              from { opacity: 0; }
+              to { opacity: 1; }
+            }
+            
+            @keyframes scaleIn {
+              from {
+                opacity: 0;
+                transform: scale(0.5) rotate(-10deg);
+              }
+              to {
+                opacity: 1;
+                transform: scale(1) rotate(0deg);
+              }
+            }
+            
+            @keyframes bounce {
+              0%, 100% { transform: translateY(0); }
+              50% { transform: translateY(-20px); }
+            }
+            
+            @keyframes fall {
+              from {
+                transform: translateY(0) rotate(0deg);
+                opacity: 1;
+              }
+              to {
+                transform: translateY(100vh) rotate(360deg);
+                opacity: 0;
+              }
+            }
+            
+            @keyframes slideUp {
+              from {
+                opacity: 0;
+                transform: translateY(20px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+          `}</style>
+        </div>
+      )}
 
       {/* Floating Theme Toggle - Bottom Right */}
       <button
