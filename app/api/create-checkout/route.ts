@@ -89,8 +89,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ sessionId: session.id, url: session.url });
   } catch (error: any) {
-    // Don't leak error details to client
-    console.error("Stripe checkout error");
+    // Log detailed error server-side for debugging
+    console.error("Stripe checkout error:", {
+      message: error.message,
+      type: error.type,
+      code: error.code,
+      stack: error.stack
+    });
+    
+    // Return generic error to client (don't leak sensitive details)
     return NextResponse.json(
       { error: "Failed to create checkout session. Please try again." },
       { status: 500 }
