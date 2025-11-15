@@ -235,6 +235,7 @@ function HomeContent() {
     message: string;
     type: 'info' | 'confirm' | 'success' | 'error';
     onConfirm?: () => void;
+    onCancel?: () => void;
     confirmText?: string;
   }>({
     isOpen: false,
@@ -628,26 +629,48 @@ function HomeContent() {
     }
   };
 
-  const handleSignOut = useCallback(async () => {
-    // Prevent multiple clicks using ref (instant check, no re-render needed)
-    if (signingOutRef.current) {
-      console.log('⚠️ Sign out already in progress, ignoring click');
-      return;
-    }
-    
-    signingOutRef.current = true;
-    setIsSigningOut(true);
-    console.log('🚪 Signing out...');
-    
-    // Sign out from Supabase and wait for it to complete
-    await supabase.auth.signOut();
-    console.log('✅ Signed out successfully');
-    
-    // Clear all local storage
-    localStorage.clear();
-    
-    // Redirect
-    window.location.href = '/';
+  const handleSignOut = useCallback(() => {
+    // Show confirmation modal
+    setModalState({
+      isOpen: true,
+      title: 'Sign Out',
+      message: 'Are you sure you want to sign out?',
+      type: 'confirm',
+      onConfirm: async () => {
+        // Prevent multiple clicks using ref (instant check, no re-render needed)
+        if (signingOutRef.current) {
+          console.log('⚠️ Sign out already in progress, ignoring click');
+          return;
+        }
+        
+        signingOutRef.current = true;
+        setIsSigningOut(true);
+        console.log('🚪 Signing out...');
+        
+        // Add smooth fade-out effect
+        document.body.style.transition = 'opacity 0.3s ease-out';
+        document.body.style.opacity = '0';
+        
+        // Wait for fade animation
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
+        // Sign out from Supabase and wait for it to complete
+        await supabase.auth.signOut();
+        console.log('✅ Signed out successfully');
+        
+        // Clear all local storage
+        localStorage.clear();
+        
+        // Redirect
+        window.location.href = '/';
+      },
+      confirmText: 'Sign Out',
+      onCancel: () => {
+        // Reset the ref if they cancel
+        signingOutRef.current = false;
+        setIsSigningOut(false);
+      }
+    });
   }, []);
 
   const handleManageBilling = async () => {
@@ -4748,7 +4771,12 @@ function HomeContent() {
         title={modalState.title}
         message={modalState.message}
         type={modalState.type}
-        onClose={() => setModalState({ ...modalState, isOpen: false })}
+        onClose={() => {
+          if (modalState.onCancel) {
+            modalState.onCancel();
+          }
+          setModalState({ ...modalState, isOpen: false });
+        }}
         onConfirm={modalState.onConfirm}
         confirmText={modalState.confirmText}
         isCreator={userType === 'creator'}

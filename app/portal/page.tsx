@@ -469,26 +469,43 @@ export default function UserPortal() {
             </button>
 
             <button
-              onClick={async () => {
-                // Prevent multiple clicks using ref (instant check, no re-render needed)
-                if (signingOutRef.current) {
-                  console.log('⚠️ Sign out already in progress, ignoring click');
-                  return;
-                }
-                
-                signingOutRef.current = true;
-                setIsSigningOut(true);
-                console.log('🚪 Signing out...');
-                
-                // Sign out from Supabase and wait for it to complete
-                await supabase.auth.signOut();
-                console.log('✅ Signed out successfully');
-                
-                // Clear all local storage
-                localStorage.clear();
-                
-                // Redirect
-                window.location.href = '/';
+              onClick={() => {
+                // Show confirmation modal
+                setModalState({
+                  isOpen: true,
+                  title: 'Sign Out',
+                  message: 'Are you sure you want to sign out?',
+                  type: 'confirm',
+                  onConfirm: async () => {
+                    // Prevent multiple clicks using ref (instant check, no re-render needed)
+                    if (signingOutRef.current) {
+                      console.log('⚠️ Sign out already in progress, ignoring click');
+                      return;
+                    }
+                    
+                    signingOutRef.current = true;
+                    setIsSigningOut(true);
+                    console.log('🚪 Signing out...');
+                    
+                    // Add smooth fade-out effect
+                    document.body.style.transition = 'opacity 0.3s ease-out';
+                    document.body.style.opacity = '0';
+                    
+                    // Wait for fade animation
+                    await new Promise(resolve => setTimeout(resolve, 300));
+                    
+                    // Sign out from Supabase and wait for it to complete
+                    await supabase.auth.signOut();
+                    console.log('✅ Signed out successfully');
+                    
+                    // Clear all local storage
+                    localStorage.clear();
+                    
+                    // Redirect
+                    window.location.href = '/';
+                  },
+                  confirmText: 'Sign Out'
+                });
               }}
               disabled={isSigningOut}
               className="w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
