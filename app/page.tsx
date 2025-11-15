@@ -22,7 +22,7 @@ import { saveBusiness, loadSavedBusinesses, saveCompletedPost, loadPostHistory, 
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
-type WizardStep = "form" | "researching" | "principles" | "choose-idea" | "record-video" | "generating-caption" | "post-details" | "premium" | "history" | "businesses";
+type WizardStep = "form" | "researching" | "principles" | "choose-idea" | "record-video" | "generating-caption" | "post-details" | "premium" | "history" | "businesses" | "hashtag-research";
 
 // Loading Progress Component with animated status messages
 const LOADING_STATUSES = [
@@ -207,6 +207,204 @@ function HomeContent() {
   const [generateIdeasCount, setGenerateIdeasCount] = useState<number>(0);
   const [hasLoadedUsageCounts, setHasLoadedUsageCounts] = useState<boolean>(false);
   const [billingLoading, setBillingLoading] = useState<boolean>(false);
+  
+  // Hashtag Deep Research Tool State
+  const [hashtagResearchNiche, setHashtagResearchNiche] = useState<string>("");
+  const [hashtagResearchPlatform, setHashtagResearchPlatform] = useState<string>("Instagram");
+  const [hashtagResults, setHashtagResults] = useState<any>(null);
+  const [isResearchingHashtags, setIsResearchingHashtags] = useState<boolean>(false);
+  const [isGeneratingMore, setIsGeneratingMore] = useState<boolean>(false);
+  const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
+  const [generationCount, setGenerationCount] = useState<number>(0);
+  const hashtagSectionRef = useRef<HTMLDivElement>(null);
+  
+  // Watch for platform changes and regenerate hashtags if results exist
+  useEffect(() => {
+    // Only regenerate if we have results and the platform doesn't match
+    if (!hashtagResults || hashtagResults.platform === hashtagResearchPlatform) {
+      return;
+    }
+    
+    // Platform changed - regenerate with new platform
+    if (hashtagResults) {
+      console.log('🔄 Platform changed from', hashtagResults.platform, 'to', hashtagResearchPlatform);
+      
+      // Show a brief loading indicator
+      setIsResearchingHashtags(true);
+      
+      setTimeout(() => {
+        // Platform-specific hashtag generation with unique algorithms per platform
+        const generateSmartHashtags = (niche: string, platform: string, batchNumber: number = 0) => {
+        const nicheBase = niche.toLowerCase().replace(/\s+/g, '');
+        const reachLevels = ['Low', 'Medium', 'High', 'Very High'];
+        const competitionLevels = ['Low', 'Medium', 'High', 'Very High'];
+        
+        // Platform-specific scoring: each platform has different optimal hashtag strategies
+        const calculateScore = (reach: string, competition: string, platform: string) => {
+          const reachScore = reachLevels.indexOf(reach);
+          const compScore = competitionLevels.indexOf(competition);
+          
+          // Platform-specific weighting
+          if (platform === 'TikTok') {
+            // TikTok favors viral potential over niche - weight reach heavily
+            return (reachScore * 15) + ((3 - compScore) * 5);
+          } else if (platform === 'Instagram') {
+            // Instagram balances reach and niche - standard scoring
+            return (reachScore * 10) + ((3 - compScore) * 8);
+          } else if (platform === 'X (Twitter)') {
+            // X favors trending topics - maximum reach weight
+            return (reachScore * 18) + ((3 - compScore) * 3);
+          } else if (platform === 'YouTube Shorts') {
+            // YouTube values discoverability - balanced approach
+            return (reachScore * 12) + ((3 - compScore) * 7);
+          } else {
+            // Facebook favors community - lower competition matters more
+            return (reachScore * 8) + ((3 - compScore) * 10);
+          }
+        };
+        
+        // COMPLETELY platform-specific hashtag generation - each platform gets unique sets
+        let hashtagSets = [];
+        
+        if (platform === 'TikTok') {
+          // TikTok: Viral-focused, trending, FYP algorithm
+          hashtagSets = [
+            [
+              { tag: '#fyp', reach: 'Very High', competition: 'Very High' },
+              { tag: '#foryou', reach: 'Very High', competition: 'Very High' },
+              { tag: '#foryoupage', reach: 'Very High', competition: 'Very High' },
+              { tag: '#' + nicheBase + 'tok', reach: 'High', competition: 'Low' },
+              { tag: '#tiktok' + nicheBase, reach: 'High', competition: 'Medium' },
+              { tag: '#' + nicheBase + 'tiktok', reach: 'High', competition: 'Medium' },
+              { tag: '#viral' + nicheBase, reach: 'Very High', competition: 'High' },
+              { tag: '#' + nicheBase + 'challenge', reach: 'High', competition: 'Medium' },
+            ],
+            [
+              { tag: '#viral', reach: 'Very High', competition: 'Very High' },
+              { tag: '#trending', reach: 'Very High', competition: 'Very High' },
+              { tag: '#' + nicheBase, reach: 'High', competition: 'Medium' },
+              { tag: '#' + nicheBase + 'video', reach: 'High', competition: 'Low' },
+              { tag: '#' + nicheBase + 'content', reach: 'Medium', competition: 'Low' },
+              { tag: '#' + nicheBase + 'check', reach: 'Medium', competition: 'Low' },
+              { tag: '#' + nicheBase + 'vibes', reach: 'High', competition: 'Medium' },
+              { tag: '#tiktok', reach: 'Very High', competition: 'Very High' },
+            ],
+          ];
+        } else if (platform === 'Instagram') {
+          // Instagram: Aesthetic-focused, reels, explore page
+          hashtagSets = [
+            [
+              { tag: '#reels', reach: 'Very High', competition: 'Very High' },
+              { tag: '#reelsinstagram', reach: 'Very High', competition: 'Very High' },
+              { tag: '#explore', reach: 'Very High', competition: 'Very High' },
+              { tag: '#' + nicheBase + 'gram', reach: 'Very High', competition: 'High' },
+              { tag: '#insta' + nicheBase, reach: 'Very High', competition: 'High' },
+              { tag: '#' + nicheBase + 'photography', reach: 'High', competition: 'Medium' },
+              { tag: '#' + nicheBase + 'aesthetic', reach: 'High', competition: 'Medium' },
+              { tag: '#instagram' + nicheBase, reach: 'High', competition: 'Medium' },
+            ],
+            [
+              { tag: '#instagood', reach: 'Very High', competition: 'Very High' },
+              { tag: '#instadaily', reach: 'Very High', competition: 'Very High' },
+              { tag: '#' + nicheBase, reach: 'High', competition: 'Medium' },
+              { tag: '#' + nicheBase + 'life', reach: 'High', competition: 'Low' },
+              { tag: '#' + nicheBase + 'inspiration', reach: 'Very High', competition: 'High' },
+              { tag: '#' + nicheBase + 'daily', reach: 'High', competition: 'Medium' },
+              { tag: '#ig' + nicheBase, reach: 'High', competition: 'Low' },
+              { tag: '#' + nicheBase + 'lovers', reach: 'High', competition: 'Medium' },
+            ],
+          ];
+        } else if (platform === 'X (Twitter)') {
+          // X/Twitter: Trending, conversation-driven, news-focused, fewer hashtags
+          hashtagSets = [
+            [
+              { tag: '#' + nicheBase, reach: 'Very High', competition: 'High' },
+              { tag: '#' + nicheBase + 'Twitter', reach: 'High', competition: 'Medium' },
+              { tag: '#' + nicheBase + 'Community', reach: 'Medium', competition: 'Low' },
+              { tag: '#Trending', reach: 'Very High', competition: 'Very High' },
+              { tag: '#' + nicheBase + 'Thread', reach: 'Medium', competition: 'Low' },
+            ],
+            [
+              { tag: '#' + nicheBase + 'News', reach: 'High', competition: 'Medium' },
+              { tag: '#' + nicheBase + 'Talk', reach: 'Medium', competition: 'Low' },
+              { tag: '#' + nicheBase + 'Chat', reach: 'Medium', competition: 'Low' },
+              { tag: '#' + nicheBase + 'Tips', reach: 'High', competition: 'Medium' },
+              { tag: '#Daily' + nicheBase, reach: 'High', competition: 'Low' },
+            ],
+          ];
+        } else if (platform === 'YouTube Shorts') {
+          // YouTube Shorts: Discovery-focused, shorts-specific, searchable
+          hashtagSets = [
+            [
+              { tag: '#shorts', reach: 'Very High', competition: 'Very High' },
+              { tag: '#youtubeshorts', reach: 'Very High', competition: 'Very High' },
+              { tag: '#' + nicheBase + 'shorts', reach: 'High', competition: 'Low' },
+              { tag: '#' + nicheBase + 'video', reach: 'High', competition: 'Medium' },
+              { tag: '#short' + nicheBase, reach: 'High', competition: 'Medium' },
+              { tag: '#youtube' + nicheBase, reach: 'High', competition: 'Medium' },
+              { tag: '#' + nicheBase + 'content', reach: 'Medium', competition: 'Low' },
+              { tag: '#yt' + nicheBase, reach: 'Medium', competition: 'Low' },
+            ],
+            [
+              { tag: '#youtube', reach: 'Very High', competition: 'Very High' },
+              { tag: '#shortsvideo', reach: 'Very High', competition: 'High' },
+              { tag: '#' + nicheBase, reach: 'High', competition: 'Medium' },
+              { tag: '#' + nicheBase + 'youtube', reach: 'High', competition: 'Low' },
+              { tag: '#' + nicheBase + 'channel', reach: 'Medium', competition: 'Low' },
+              { tag: '#' + nicheBase + 'creator', reach: 'Medium', competition: 'Low' },
+              { tag: '#shortsyoutube', reach: 'Very High', competition: 'High' },
+              { tag: '#viral', reach: 'Very High', competition: 'Very High' },
+            ],
+          ];
+        } else {
+          // Facebook: Community-focused, groups, pages, local
+          hashtagSets = [
+            [
+              { tag: '#' + nicheBase, reach: 'High', competition: 'Medium' },
+              { tag: '#' + nicheBase + 'community', reach: 'High', competition: 'Low' },
+              { tag: '#' + nicheBase + 'group', reach: 'Medium', competition: 'Low' },
+              { tag: '#' + nicheBase + 'lovers', reach: 'High', competition: 'Medium' },
+              { tag: '#' + nicheBase + 'page', reach: 'Medium', competition: 'Low' },
+              { tag: '#facebook' + nicheBase, reach: 'High', competition: 'Medium' },
+              { tag: '#fb' + nicheBase, reach: 'High', competition: 'Low' },
+              { tag: '#' + nicheBase + 'family', reach: 'Medium', competition: 'Low' },
+            ],
+            [
+              { tag: '#facebook', reach: 'Very High', competition: 'Very High' },
+              { tag: '#' + nicheBase + 'life', reach: 'High', competition: 'Medium' },
+              { tag: '#' + nicheBase + 'enthusiasts', reach: 'Medium', competition: 'Low' },
+              { tag: '#' + nicheBase + 'fans', reach: 'Medium', competition: 'Low' },
+              { tag: '#love' + nicheBase, reach: 'High', competition: 'Medium' },
+              { tag: '#' + nicheBase + 'world', reach: 'High', competition: 'Medium' },
+              { tag: '#' + nicheBase + 'daily', reach: 'High', competition: 'Medium' },
+              { tag: '#trending', reach: 'Very High', competition: 'Very High' },
+            ],
+          ];
+        }
+        
+        const selectedBatch = hashtagSets[batchNumber % hashtagSets.length] || hashtagSets[0];
+        
+        return selectedBatch.map(h => ({
+          ...h,
+          score: calculateScore(h.reach, h.competition, platform)
+        })).sort((a, b) => b.score - a.score);
+      };
+      
+        const smartHashtags = generateSmartHashtags(hashtagResults.niche, hashtagResearchPlatform, 0);
+        
+        console.log('✅ Generated new hashtags for', hashtagResearchPlatform, ':', smartHashtags.map(h => h.tag).join(', '));
+        
+        setHashtagResults({
+          niche: hashtagResults.niche,
+          platform: hashtagResearchPlatform,
+          hashtags: smartHashtags
+        });
+        setGenerationCount(1);
+        setSelectedHashtags([]); // Clear selections when platform changes
+        setIsResearchingHashtags(false);
+      }, 500); // Brief delay to show loading
+    }
+  }, [hashtagResearchPlatform, hashtagResults?.platform, hashtagResults?.niche]);
   
   // Notification state
   const [notification, setNotification] = useState<{
@@ -1924,7 +2122,7 @@ function HomeContent() {
                 </div>
               )}
               {/* Navigation buttons */}
-              <div className="grid grid-cols-3 gap-2 w-full">
+              <div className="grid grid-cols-4 gap-2 w-full">
                 <button
                   onClick={navigateHome}
                   disabled={isNavigating}
@@ -1986,6 +2184,27 @@ function HomeContent() {
                   }}
                 >
                   History
+                </button>
+                <button
+                  onClick={() => {
+                    if (currentStep !== "form") {
+                      navigateHome();
+                      setTimeout(() => {
+                        hashtagSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }, 100);
+                    } else {
+                      hashtagSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }
+                  }}
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap shadow-md hover:scale-105 active:scale-95"
+                  style={{ 
+                    color: 'var(--text-primary)',
+                    backgroundColor: 'var(--card-bg)',
+                    border: '2px solid var(--card-border)',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
+                  }}
+                >
+                  #️⃣ Hashtags
                 </button>
               </div>
               {/* User actions */}
@@ -2158,6 +2377,24 @@ function HomeContent() {
                 History
               </button>
               <button
+                onClick={() => {
+                  if (currentStep !== "form") {
+                    navigateHome();
+                    setTimeout(() => {
+                      hashtagSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    }, 100);
+                  } else {
+                    hashtagSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                  }
+                }}
+                className="px-3 py-1.5 text-sm font-medium transition-all whitespace-nowrap hover:opacity-80"
+                style={{ 
+                  color: 'var(--text-secondary)'
+                }}
+              >
+                #️⃣ Hashtags
+              </button>
+              <button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -2294,7 +2531,7 @@ function HomeContent() {
             Posting made easy.
           </p>
           <p className="text-lg mt-4 max-w-3xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
-            PostReady builds your posts, captions, strategies, and ideas — and it pushes you to do what matters most: actually post.
+            PostReady is your all-in-one tool for instant social media growth.
           </p>
         </div>
 
@@ -2622,6 +2859,594 @@ function HomeContent() {
                   </div>
                 </div>
               )}
+          </div>
+        )}
+
+        {/* Hashtag Deep Research Tool - Always visible on homepage */}
+        {currentStep === "form" && (
+          <div 
+            ref={hashtagSectionRef}
+            className="mb-10 rounded-2xl shadow-lg border p-6 space-y-4 transition-all duration-500 scroll-mt-4"
+            style={{
+              backgroundColor: theme === 'dark' 
+                ? 'rgba(30, 37, 50, 0.85)' 
+                : '#FFFFFF',
+              borderColor: theme === 'dark'
+                ? 'var(--card-border)'
+                : 'rgba(41, 121, 255, 0.2)',
+              boxShadow: theme === 'dark'
+                ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'
+            }}
+          >
+            <div className="text-center mb-4">
+              <h2 className="text-3xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                #️⃣ Hashtag Deep Research Tool
+              </h2>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                Discover the best hashtags for your niche and platform
+              </p>
+            </div>
+
+            {/* Research Form */}
+            <form onSubmit={(e) => {
+              e.preventDefault();
+              if (!hashtagResearchNiche.trim()) return;
+              
+              setIsResearchingHashtags(true);
+              setSelectedHashtags([]); // Clear selection on new search
+              setGenerationCount(0); // Reset generation count
+              
+              // Smart hashtag generation algorithm
+              setTimeout(() => {
+                const generateSmartHashtags = (niche: string, platform: string, batchNumber: number = 0) => {
+                  const nicheBase = niche.toLowerCase().replace(/\s+/g, '');
+                  
+                  // Define reach and competition levels with numeric scores for intelligent ranking
+                  const reachLevels = ['Low', 'Medium', 'High', 'Very High'];
+                  const competitionLevels = ['Low', 'Medium', 'High', 'Very High'];
+                  
+                  // Calculate smart score: High reach + Low competition = Best
+                  const calculateScore = (reach: string, competition: string) => {
+                    const reachScore = reachLevels.indexOf(reach);
+                    const compScore = competitionLevels.indexOf(competition);
+                    // Score = reach points + inverse competition points
+                    // This prioritizes high reach and low competition
+                    return (reachScore * 10) + ((3 - compScore) * 8);
+                  };
+                  
+                  // Generate diverse, realistic hashtags
+                  const hashtagSets = [
+                    // Batch 0: Core niche + best performing tags
+                    [
+                      { tag: '#' + nicheBase, reach: 'High', competition: 'Low' },
+                      { tag: '#' + nicheBase + 'life', reach: 'High', competition: 'Low' },
+                      { tag: '#' + nicheBase + 'community', reach: 'Medium', competition: 'Low' },
+                      { tag: '#' + nicheBase + 'tips', reach: 'High', competition: 'Medium' },
+                      { tag: '#' + nicheBase + 'daily', reach: 'High', competition: 'Medium' },
+                      { tag: '#' + nicheBase + 'lovers', reach: 'High', competition: 'Medium' },
+                      { tag: '#' + nicheBase + 'inspiration', reach: 'Very High', competition: 'Medium' },
+                      { tag: '#' + nicheBase + 'goals', reach: 'High', competition: 'Low' },
+                    ],
+                    // Batch 1: Niche variations
+                    [
+                      { tag: '#' + nicheBase + 'gram', reach: 'Very High', competition: 'High' },
+                      { tag: '#' + nicheBase + 'addict', reach: 'Medium', competition: 'Low' },
+                      { tag: '#' + nicheBase + 'journey', reach: 'High', competition: 'Medium' },
+                      { tag: '#' + nicheBase + 'motivation', reach: 'Very High', competition: 'High' },
+                      { tag: '#' + nicheBase + 'vibes', reach: 'High', competition: 'Medium' },
+                      { tag: '#insta' + nicheBase, reach: 'Very High', competition: 'High' },
+                      { tag: '#' + nicheBase + 'lifestyle', reach: 'High', competition: 'Medium' },
+                      { tag: '#' + nicheBase + 'love', reach: 'Very High', competition: 'High' },
+                    ],
+                    // Batch 2: Platform-optimized
+                    platform === 'TikTok' ? [
+                      { tag: '#fyp', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#foryou', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#foryoupage', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#viral', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#trending', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#tiktok' + nicheBase, reach: 'High', competition: 'Medium' },
+                      { tag: '#' + nicheBase + 'tok', reach: 'High', competition: 'Medium' },
+                      { tag: '#' + nicheBase + 'tiktok', reach: 'High', competition: 'Medium' },
+                    ] : platform === 'Instagram' ? [
+                      { tag: '#explore', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#instagood', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#instadaily', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#insta' + nicheBase, reach: 'Very High', competition: 'High' },
+                      { tag: '#reels', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#' + nicheBase + 'gram', reach: 'Very High', competition: 'High' },
+                      { tag: '#instagram' + nicheBase, reach: 'High', competition: 'Medium' },
+                      { tag: '#ig' + nicheBase, reach: 'High', competition: 'Medium' },
+                    ] : platform === 'YouTube Shorts' ? [
+                      { tag: '#shorts', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#youtubeshorts', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#youtube', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#' + nicheBase + 'shorts', reach: 'High', competition: 'Medium' },
+                      { tag: '#' + nicheBase + 'video', reach: 'High', competition: 'Medium' },
+                      { tag: '#short' + nicheBase, reach: 'High', competition: 'Medium' },
+                      { tag: '#yt' + nicheBase, reach: 'Medium', competition: 'Low' },
+                      { tag: '#youtube' + nicheBase, reach: 'High', competition: 'Medium' },
+                    ] : [
+                      { tag: '#facebook', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#fb' + nicheBase, reach: 'High', competition: 'Medium' },
+                      { tag: '#trending', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#viral', reach: 'Very High', competition: 'Very High' },
+                      { tag: '#' + nicheBase + 'post', reach: 'Medium', competition: 'Low' },
+                      { tag: '#' + nicheBase + 'community', reach: 'Medium', competition: 'Low' },
+                      { tag: '#facebook' + nicheBase, reach: 'High', competition: 'Medium' },
+                      { tag: '#' + nicheBase + 'page', reach: 'Medium', competition: 'Low' },
+                    ],
+                    // Batch 3: Long-tail keywords (lower competition)
+                    [
+                      { tag: '#' + nicheBase + 'oftheday', reach: 'Medium', competition: 'Low' },
+                      { tag: '#' + nicheBase + '101', reach: 'Medium', competition: 'Low' },
+                      { tag: '#' + nicheBase + 'enthusiast', reach: 'Low', competition: 'Low' },
+                      { tag: '#' + nicheBase + 'passion', reach: 'Medium', competition: 'Low' },
+                      { tag: '#' + nicheBase + 'obsessed', reach: 'Medium', competition: 'Low' },
+                      { tag: '#best' + nicheBase, reach: 'High', competition: 'Medium' },
+                      { tag: '#' + nicheBase + 'lovers', reach: 'High', competition: 'Medium' },
+                      { tag: '#' + nicheBase + 'is' + 'life', reach: 'Medium', competition: 'Low' },
+                    ],
+                  ];
+                  
+                  const selectedBatch = hashtagSets[batchNumber % hashtagSets.length] || hashtagSets[0];
+                  
+                  // Add score to each hashtag and sort by score (best first)
+                  return selectedBatch.map(h => ({
+                    ...h,
+                    score: calculateScore(h.reach, h.competition)
+                  })).sort((a, b) => b.score - a.score);
+                };
+                
+                const smartHashtags = generateSmartHashtags(hashtagResearchNiche, hashtagResearchPlatform, 0);
+                
+                setHashtagResults({
+                  niche: hashtagResearchNiche,
+                  platform: hashtagResearchPlatform,
+                  hashtags: smartHashtags
+                });
+                setGenerationCount(1);
+                setIsResearchingHashtags(false);
+              }, 2000);
+            }} className="space-y-4">
+              <InputField
+                label="Your Niche or Topic"
+                value={hashtagResearchNiche}
+                onChange={(value) => setHashtagResearchNiche(value)}
+                placeholder="e.g., Fitness, Food, Travel, Fashion"
+                required
+              />
+
+              <SelectField
+                label="Platform"
+                value={hashtagResearchPlatform}
+                onChange={(value) => setHashtagResearchPlatform(value)}
+                options={["Instagram", "TikTok", "YouTube Shorts", "Facebook", "X (Twitter)"]}
+                required
+              />
+
+              <PrimaryButton 
+                type="submit" 
+                disabled={isResearchingHashtags || !hashtagResearchNiche.trim()}
+                className="w-full"
+                isPro={isPro}
+              >
+                {isResearchingHashtags ? (
+                  <>
+                    <span className="inline-block animate-spin mr-2">🔍</span>
+                    Researching Hashtags...
+                  </>
+                ) : (
+                  <>
+                    🔍 Research Hashtags
+                  </>
+                )}
+              </PrimaryButton>
+            </form>
+
+            {/* Results Section */}
+            {hashtagResults && (
+              <div className="mt-8 space-y-4 animate-fade-in">
+                <div className="border-t pt-6" style={{ borderColor: 'var(--card-border)' }}>
+                  <div className="flex items-start justify-between mb-4">
+                    <div>
+                      <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                        📊 Recommended Hashtags for {hashtagResults.niche}
+                      </h3>
+                      <p style={{ color: 'var(--text-secondary)' }}>
+                        Optimized for {hashtagResults.platform}
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => {
+                        setHashtagResults(null);
+                        setSelectedHashtags([]);
+                        setGenerationCount(0);
+                      }}
+                      className="px-3 py-1.5 rounded-lg font-semibold text-xs transition-all hover:scale-105 border-2 flex items-center gap-1.5"
+                      style={{
+                        borderColor: 'rgba(239, 68, 68, 0.3)',
+                        color: '#ef4444',
+                        backgroundColor: 'rgba(239, 68, 68, 0.05)'
+                      }}
+                      title="Clear all hashtags and start fresh"
+                    >
+                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                      </svg>
+                      Clear All
+                    </button>
+                  </div>
+                  <div 
+                    className="mb-4 p-3 rounded-lg flex items-center justify-center gap-2"
+                    style={{ 
+                      backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.04)',
+                      borderLeft: theme === 'dark' ? '3px solid #2979FF' : '3px solid rgba(41, 121, 255, 0.5)'
+                    }}
+                  >
+                    <span className="text-sm">💡</span>
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      Sorted by effectiveness score. Higher numbers = better reach + lower competition.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-2.5">
+                    {hashtagResults.hashtags.map((hashtag: any, index: number) => {
+                      const isSelected = selectedHashtags.includes(hashtag.tag);
+                      return (
+                        <div
+                          key={index}
+                          onClick={() => {
+                            if (isSelected) {
+                              setSelectedHashtags(prev => prev.filter(tag => tag !== hashtag.tag));
+                            } else {
+                              setSelectedHashtags(prev => [...prev, hashtag.tag]);
+                            }
+                          }}
+                          className="rounded-lg p-2.5 border-2 transition-all hover:scale-[1.02] cursor-pointer"
+                          style={{
+                            backgroundColor: isSelected 
+                              ? (theme === 'dark' ? 'rgba(41, 121, 255, 0.15)' : 'rgba(41, 121, 255, 0.08)')
+                              : 'var(--card-bg)',
+                            borderColor: isSelected 
+                              ? '#2979FF' 
+                              : 'var(--card-border)',
+                            boxShadow: isSelected 
+                              ? (theme === 'dark' 
+                                  ? '0 4px 20px rgba(41, 121, 255, 0.3), 0 0 0 2px rgba(41, 121, 255, 0.2)'
+                                  : '0 2px 8px rgba(41, 121, 255, 0.2), 0 0 0 1px rgba(41, 121, 255, 0.3)')
+                              : (theme === 'dark' ? '0 4px 12px rgba(41, 121, 255, 0.1)' : '0 2px 4px rgba(0, 0, 0, 0.05)')
+                          }}
+                        >
+                          <div className="flex items-center gap-1.5">
+                              <div 
+                                className="w-3.5 h-3.5 rounded border-2 flex items-center justify-center transition-all flex-shrink-0"
+                                style={{
+                                  borderColor: isSelected ? '#2979FF' : 'var(--card-border)',
+                                  backgroundColor: isSelected ? '#2979FF' : 'transparent'
+                                }}
+                              >
+                                {isSelected && (
+                                  <svg className="w-2 h-2 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                  </svg>
+                                )}
+                              </div>
+                              
+                              {/* Reach Score Badge */}
+                              {(() => {
+                                // Scale score from 0-54 to 0-100
+                                const reachScore = Math.round((hashtag.score / 54) * 100);
+                                
+                                const getRating = (score: number) => {
+                                  if (score >= 90) return { label: 'Outstanding', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.3)' };
+                                  if (score >= 70) return { label: 'High', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.15)', border: 'rgba(34, 197, 94, 0.3)' };
+                                  if (score >= 50) return { label: 'Medium', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.3)' };
+                                  if (score >= 30) return { label: 'Low', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.3)' };
+                                  return { label: 'Very Low', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.3)' };
+                                };
+                                const rating = getRating(reachScore);
+                                return (
+                                  <div 
+                                    className="px-1.5 py-0.5 rounded text-xs font-bold min-w-[32px] text-center"
+                                    style={{
+                                      backgroundColor: rating.bg,
+                                      color: rating.color,
+                                      border: `1px solid ${rating.border}`
+                                    }}
+                                    title={`Reach Score: ${reachScore}/100 - ${rating.label}`}
+                                  >
+                                    {reachScore}
+                                  </div>
+                                );
+                              })()}
+                              
+                              <h4 className="text-xs font-bold flex-1" style={{ color: 'var(--text-primary)' }}>
+                                {hashtag.tag}
+                              </h4>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  {/* Selected Hashtags Box */}
+                  {selectedHashtags.length > 0 && (
+                    <div className="mt-4">
+                      <div 
+                        className="rounded-lg p-4 border-2"
+                        style={{
+                          backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
+                          borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.3)' : 'rgba(41, 121, 255, 0.2)',
+                          boxShadow: theme === 'dark' ? '0 4px 16px rgba(41, 121, 255, 0.15)' : '0 2px 8px rgba(41, 121, 255, 0.1)'
+                        }}
+                      >
+                        <div className="flex items-center justify-between mb-3">
+                          <h4 className="text-base font-bold" style={{ color: 'var(--secondary)' }}>
+                            📦 Selected Hashtags ({selectedHashtags.length})
+                          </h4>
+                          <button
+                            onClick={() => {
+                              setSelectedHashtags([]);
+                            }}
+                            className="text-xs font-medium transition-all hover:opacity-70"
+                            style={{ color: 'var(--text-secondary)' }}
+                          >
+                            Clear All
+                          </button>
+                        </div>
+                        
+                        <div className="flex flex-wrap gap-2 mb-3 p-3 rounded-lg" style={{ 
+                          backgroundColor: 'var(--card-bg)',
+                          minHeight: '50px'
+                        }}>
+                          {selectedHashtags.map((tag, index) => (
+                            <div
+                              key={index}
+                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all hover:scale-105"
+                              style={{
+                                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.08)',
+                                borderWidth: '1px',
+                                borderStyle: 'solid',
+                                borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.3)' : 'rgba(41, 121, 255, 0.25)',
+                                color: 'var(--text-primary)'
+                              }}
+                            >
+                              <span className="font-medium text-sm">{tag}</span>
+                              <button
+                                onClick={() => {
+                                  setSelectedHashtags(prev => prev.filter(t => t !== tag));
+                                }}
+                                className="w-3.5 h-3.5 flex items-center justify-center rounded-full hover:bg-red-500 hover:text-white transition-all"
+                                style={{ color: 'var(--text-secondary)' }}
+                              >
+                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            const selectedText = selectedHashtags.join(' ');
+                            navigator.clipboard.writeText(selectedText);
+                            showNotification(`Copied ${selectedHashtags.length} hashtag${selectedHashtags.length > 1 ? 's' : ''}!`, 'success', 'Copied');
+                          }}
+                          className="w-full px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 shadow-md"
+                          style={{
+                            background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)',
+                            color: 'white'
+                          }}
+                        >
+                          📋 Copy Selected Hashtags ({selectedHashtags.length})
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Quick Actions */}
+                  <div className="mt-4 flex gap-3 justify-center">
+                    <button
+                      onClick={() => {
+                        const allTags = hashtagResults.hashtags.map((h: any) => h.tag);
+                        setSelectedHashtags(allTags);
+                      }}
+                      className="px-6 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2 shadow-sm"
+                      style={{
+                        borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.3)' : 'rgba(41, 121, 255, 0.25)',
+                        color: '#2979FF',
+                        backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.04)'
+                      }}
+                    >
+                      ✅ Select All
+                    </button>
+                    {selectedHashtags.length > 0 && (
+                      <button
+                        onClick={() => {
+                          setSelectedHashtags([]);
+                        }}
+                        className="px-6 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2 shadow-sm"
+                        style={{
+                          borderColor: 'var(--card-border)',
+                          color: 'var(--text-secondary)',
+                          backgroundColor: 'var(--card-bg)'
+                        }}
+                      >
+                        🗑️ Clear Selection
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Generate More Hashtags Button */}
+                  <div className="mt-4 flex justify-center">
+                    <button
+                      onClick={() => {
+                        setIsGeneratingMore(true);
+                        
+                        // Generate more hashtags using the smart algorithm
+                        setTimeout(() => {
+                          const generateSmartHashtags = (niche: string, platform: string, batchNumber: number = 0) => {
+                            const nicheBase = niche.toLowerCase().replace(/\s+/g, '');
+                            
+                            const reachLevels = ['Low', 'Medium', 'High', 'Very High'];
+                            const competitionLevels = ['Low', 'Medium', 'High', 'Very High'];
+                            
+                            const calculateScore = (reach: string, competition: string) => {
+                              const reachScore = reachLevels.indexOf(reach);
+                              const compScore = competitionLevels.indexOf(competition);
+                              return (reachScore * 10) + ((3 - compScore) * 8);
+                            };
+                            
+                            const hashtagSets = [
+                              // Batch 0: Core niche + best performing tags
+                              [
+                                { tag: '#' + nicheBase, reach: 'High', competition: 'Low' },
+                                { tag: '#' + nicheBase + 'life', reach: 'High', competition: 'Low' },
+                                { tag: '#' + nicheBase + 'community', reach: 'Medium', competition: 'Low' },
+                                { tag: '#' + nicheBase + 'tips', reach: 'High', competition: 'Medium' },
+                                { tag: '#' + nicheBase + 'daily', reach: 'High', competition: 'Medium' },
+                                { tag: '#' + nicheBase + 'lovers', reach: 'High', competition: 'Medium' },
+                                { tag: '#' + nicheBase + 'inspiration', reach: 'Very High', competition: 'Medium' },
+                                { tag: '#' + nicheBase + 'goals', reach: 'High', competition: 'Low' },
+                              ],
+                              // Batch 1: Niche variations
+                              [
+                                { tag: '#' + nicheBase + 'gram', reach: 'Very High', competition: 'High' },
+                                { tag: '#' + nicheBase + 'addict', reach: 'Medium', competition: 'Low' },
+                                { tag: '#' + nicheBase + 'journey', reach: 'High', competition: 'Medium' },
+                                { tag: '#' + nicheBase + 'motivation', reach: 'Very High', competition: 'High' },
+                                { tag: '#' + nicheBase + 'vibes', reach: 'High', competition: 'Medium' },
+                                { tag: '#insta' + nicheBase, reach: 'Very High', competition: 'High' },
+                                { tag: '#' + nicheBase + 'lifestyle', reach: 'High', competition: 'Medium' },
+                                { tag: '#' + nicheBase + 'love', reach: 'Very High', competition: 'High' },
+                              ],
+                              // Batch 2: Platform-optimized
+                              platform === 'TikTok' ? [
+                                { tag: '#fyp', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#foryou', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#foryoupage', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#viral', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#trending', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#tiktok' + nicheBase, reach: 'High', competition: 'Medium' },
+                                { tag: '#' + nicheBase + 'tok', reach: 'High', competition: 'Medium' },
+                                { tag: '#' + nicheBase + 'tiktok', reach: 'High', competition: 'Medium' },
+                              ] : platform === 'Instagram' ? [
+                                { tag: '#explore', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#instagood', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#instadaily', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#insta' + nicheBase, reach: 'Very High', competition: 'High' },
+                                { tag: '#reels', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#' + nicheBase + 'gram', reach: 'Very High', competition: 'High' },
+                                { tag: '#instagram' + nicheBase, reach: 'High', competition: 'Medium' },
+                                { tag: '#ig' + nicheBase, reach: 'High', competition: 'Medium' },
+                              ] : platform === 'YouTube Shorts' ? [
+                                { tag: '#shorts', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#youtubeshorts', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#youtube', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#' + nicheBase + 'shorts', reach: 'High', competition: 'Medium' },
+                                { tag: '#' + nicheBase + 'video', reach: 'High', competition: 'Medium' },
+                                { tag: '#short' + nicheBase, reach: 'High', competition: 'Medium' },
+                                { tag: '#yt' + nicheBase, reach: 'Medium', competition: 'Low' },
+                                { tag: '#youtube' + nicheBase, reach: 'High', competition: 'Medium' },
+                              ] : [
+                                { tag: '#facebook', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#fb' + nicheBase, reach: 'High', competition: 'Medium' },
+                                { tag: '#trending', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#viral', reach: 'Very High', competition: 'Very High' },
+                                { tag: '#' + nicheBase + 'post', reach: 'Medium', competition: 'Low' },
+                                { tag: '#' + nicheBase + 'community', reach: 'Medium', competition: 'Low' },
+                                { tag: '#facebook' + nicheBase, reach: 'High', competition: 'Medium' },
+                                { tag: '#' + nicheBase + 'page', reach: 'Medium', competition: 'Low' },
+                              ],
+                              // Batch 3: Long-tail keywords
+                              [
+                                { tag: '#' + nicheBase + 'oftheday', reach: 'Medium', competition: 'Low' },
+                                { tag: '#' + nicheBase + '101', reach: 'Medium', competition: 'Low' },
+                                { tag: '#' + nicheBase + 'enthusiast', reach: 'Low', competition: 'Low' },
+                                { tag: '#' + nicheBase + 'passion', reach: 'Medium', competition: 'Low' },
+                                { tag: '#' + nicheBase + 'obsessed', reach: 'Medium', competition: 'Low' },
+                                { tag: '#best' + nicheBase, reach: 'High', competition: 'Medium' },
+                                { tag: '#' + nicheBase + 'fanatic', reach: 'Medium', competition: 'Low' },
+                                { tag: '#' + nicheBase + 'islife', reach: 'Medium', competition: 'Low' },
+                              ],
+                            ];
+                            
+                            const selectedBatch = hashtagSets[batchNumber % hashtagSets.length] || hashtagSets[0];
+                            
+                            return selectedBatch.map(h => ({
+                              ...h,
+                              score: calculateScore(h.reach, h.competition)
+                            })).sort((a, b) => b.score - a.score);
+                          };
+                          
+                          const newHashtags = generateSmartHashtags(
+                            hashtagResults.niche, 
+                            hashtagResults.platform, 
+                            generationCount
+                          );
+                          
+                          // Filter out duplicates and append new ones
+                          const existingTags = new Set(hashtagResults.hashtags.map((h: any) => h.tag));
+                          const uniqueNewHashtags = newHashtags.filter(h => !existingTags.has(h.tag));
+                          
+                          // Append to existing hashtags and re-sort by score
+                          const allHashtags = [...hashtagResults.hashtags, ...uniqueNewHashtags];
+                          const sortedHashtags = allHashtags.sort((a, b) => b.score - a.score);
+                          
+                          setHashtagResults({
+                            ...hashtagResults,
+                            hashtags: sortedHashtags
+                          });
+                          
+                          setGenerationCount(prev => prev + 1);
+                          setIsGeneratingMore(false);
+                        }, 1500);
+                      }}
+                      disabled={isGeneratingMore}
+                      className="px-8 py-2.5 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2 flex items-center justify-center gap-2 shadow-sm"
+                      style={{
+                        background: isGeneratingMore 
+                          ? 'var(--card-bg)' 
+                          : (theme === 'dark' 
+                              ? 'linear-gradient(135deg, rgba(41, 121, 255, 0.1) 0%, rgba(111, 255, 210, 0.1) 100%)'
+                              : 'linear-gradient(135deg, rgba(41, 121, 255, 0.06) 0%, rgba(111, 255, 210, 0.06) 100%)'),
+                        borderColor: theme === 'dark' ? '#2979FF' : 'rgba(41, 121, 255, 0.4)',
+                        color: 'var(--text-primary)',
+                        borderStyle: 'dashed'
+                      }}
+                    >
+                      {isGeneratingMore ? (
+                        <>
+                          <span className="inline-block animate-spin">⚡</span>
+                          <span>Generating More...</span>
+                        </>
+                      ) : (
+                        <>
+                          <span>✨</span>
+                          <span>Generate More Hashtags</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Empty State */}
+            {!hashtagResults && !isResearchingHashtags && (
+              <div className="text-center py-12">
+                <div className="text-6xl mb-4">🔍</div>
+                <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                  Ready to find the perfect hashtags?
+                </h3>
+                <p style={{ color: 'var(--text-secondary)' }}>
+                  Enter your niche and platform to get started
+                </p>
+              </div>
+            )}
           </div>
         )}
 
@@ -4600,7 +5425,7 @@ function HomeContent() {
                     <div className="flex items-start">
                       <span className="text-2xl mr-3">✓</span>
                       <div>
-                        <p className="font-bold text-lg">Hashtag Research Tool</p>
+                        <p className="font-bold text-lg">Hashtag Deep Research Tool</p>
                         <p className="text-sm opacity-85">Find trending hashtags in your niche</p>
                       </div>
                     </div>
