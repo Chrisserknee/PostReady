@@ -2657,7 +2657,7 @@ function HomeContent() {
               {currentStep === "principles" && strategy && strategy.keyPrinciples && strategy.contentIdeas && (
                 <div>
                   <div className="mb-8">
-                    <h2 className="text-4xl font-bold mb-3 transition-colors duration-500" style={{ 
+                    <h2 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-3 transition-colors duration-500" style={{ 
                       color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
                     }}>
                       {userType === 'business' 
@@ -2665,7 +2665,7 @@ function HomeContent() {
                         : `Your ${businessInfo.platform} Creator Strategy`
                       }
                     </h2>
-                    <p className="text-lg" style={{ color: 'var(--text-secondary)' }}>
+                    <p className="text-sm sm:text-lg" style={{ color: 'var(--text-secondary)' }}>
                       {userType === 'business'
                         ? 'Simple, actionable tactics that actually work'
                         : 'Expert insights to grow your channel and engage your audience'
@@ -2673,54 +2673,54 @@ function HomeContent() {
                     </p>
                   </div>
 
-                  <div className="rounded-2xl p-8 mb-8 border-l-4 transition-all duration-500" style={{ 
+                  <div className="rounded-xl sm:rounded-2xl p-4 sm:p-8 mb-5 sm:mb-8 border-l-4 transition-all duration-500" style={{ 
                     background: userType === 'creator'
                       ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.12) 0%, rgba(244, 208, 63, 0.12) 100%)'
                       : 'linear-gradient(135deg, rgba(41, 121, 255, 0.08) 0%, rgba(111, 255, 210, 0.08) 100%)',
                     borderColor: userType === 'creator' ? '#DAA520' : 'var(--accent)'
                   }}>
                     <div className="flex items-start">
-                      <span className="text-5xl mr-5">🎯</span>
+                      <span className="text-3xl sm:text-5xl mr-3 sm:mr-5">🎯</span>
                       <div>
-                        <h3 className="font-bold text-xl mb-3 transition-colors duration-500" style={{ 
+                        <h3 className="font-bold text-base sm:text-xl mb-2 sm:mb-3 transition-colors duration-500" style={{ 
                           color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
                         }}>
                           {userType === 'business' ? 'The Key to Success' : 'Your Creator Blueprint'}
                         </h3>
-                        <p className="text-lg leading-relaxed" style={{ color: 'var(--text-primary)' }}>{strategy.headlineSummary}</p>
+                        <p className="text-sm sm:text-lg leading-relaxed" style={{ color: 'var(--text-primary)' }}>{strategy.headlineSummary}</p>
                       </div>
                     </div>
                   </div>
 
                   {/* Value Creation Message - Only for Creators */}
                   {userType === 'creator' && (
-                    <div className="rounded-2xl p-8 mb-8 border-2" style={{
+                    <div className="rounded-xl sm:rounded-2xl p-4 sm:p-8 mb-5 sm:mb-8 border-2" style={{
                       background: 'linear-gradient(135deg, rgba(218, 165, 32, 0.15) 0%, rgba(244, 208, 63, 0.15) 100%)',
                       borderColor: '#DAA520',
                       boxShadow: '0 4px 16px rgba(218, 165, 32, 0.2)'
                     }}>
-                      <div className="flex items-start gap-5">
-                        <span className="text-6xl">💎</span>
+                      <div className="flex items-start gap-3 sm:gap-5">
+                        <span className="text-4xl sm:text-6xl">💎</span>
                         <div>
-                          <h4 className="font-bold text-2xl mb-4" style={{ color: '#DAA520' }}>
+                          <h4 className="font-bold text-lg sm:text-2xl mb-2 sm:mb-4" style={{ color: '#DAA520' }}>
                             The Golden Rule: Deliver Real Value
                           </h4>
-                          <p className="text-lg leading-relaxed mb-4" style={{ color: 'var(--text-primary)' }}>
+                          <p className="text-sm sm:text-lg leading-relaxed mb-3 sm:mb-4" style={{ color: 'var(--text-primary)' }}>
                             Whether you entertain, educate, or inspire — <span className="font-bold" style={{ color: '#DAA520' }}>the more value you provide, the faster your channel grows</span>. Every video should answer: "What does my viewer gain from watching this?"
                           </p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4">
                             <div className="flex items-start gap-2">
-                              <span className="text-2xl">🎭</span>
+                              <span className="text-xl sm:text-2xl">🎭</span>
                               <div>
-                                <p className="font-semibold mb-1" style={{ color: '#DAA520' }}>Entertainment Value</p>
-                                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Make them laugh, feel, or escape reality</p>
+                                <p className="font-semibold mb-1 text-sm sm:text-base" style={{ color: '#DAA520' }}>Entertainment Value</p>
+                                <p className="text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>Make them laugh, feel, or escape reality</p>
                               </div>
                             </div>
                             <div className="flex items-start gap-2">
-                              <span className="text-2xl">🎓</span>
+                              <span className="text-xl sm:text-2xl">🎓</span>
                               <div>
-                                <p className="font-semibold mb-1" style={{ color: '#DAA520' }}>Utility Value</p>
-                                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Teach them something useful or solve a problem</p>
+                                <p className="font-semibold mb-1 text-sm sm:text-base" style={{ color: '#DAA520' }}>Utility Value</p>
+                                <p className="text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>Teach them something useful or solve a problem</p>
                               </div>
                             </div>
                           </div>
@@ -2731,20 +2731,20 @@ function HomeContent() {
 
                   {/* Experimentation Message - Only for Creators */}
                   {userType === 'creator' && (
-                    <div className="rounded-xl p-6 mb-8 border-l-4" style={{
+                    <div className="rounded-xl p-4 sm:p-6 mb-5 sm:mb-8 border-l-4" style={{
                       background: 'linear-gradient(135deg, rgba(218, 165, 32, 0.1) 0%, rgba(244, 208, 63, 0.1) 100%)',
                       borderColor: '#DAA520'
                     }}>
-                      <div className="flex items-start gap-4">
-                        <span className="text-4xl">🧪</span>
+                      <div className="flex items-start gap-3 sm:gap-4">
+                        <span className="text-3xl sm:text-4xl">🧪</span>
                         <div>
-                          <h4 className="font-bold text-lg mb-2" style={{ color: '#DAA520' }}>
+                          <h4 className="font-bold text-base sm:text-lg mb-2" style={{ color: '#DAA520' }}>
                             The Power of Experimentation
                           </h4>
-                          <p className="text-base leading-relaxed mb-3" style={{ color: 'var(--text-primary)' }}>
+                          <p className="text-sm sm:text-base leading-relaxed mb-2 sm:mb-3" style={{ color: 'var(--text-primary)' }}>
                             Experimentation is often how creators reach new heights. By leveraging your unique creativity and trying new formats, styles, and approaches, you'll discover what truly resonates with your audience. Don't be afraid to break your own rules and test new ideas — that's where breakthrough content lives.
                           </p>
-                          <p className="text-base leading-relaxed italic" style={{ color: 'var(--text-primary)', opacity: 0.9 }}>
+                          <p className="text-sm sm:text-base leading-relaxed italic" style={{ color: 'var(--text-primary)', opacity: 0.9 }}>
                             Remember: sometimes the most chaotic, unplanned moments create the most viral, memorable content. Embrace the unexpected — it's often your greatest creative asset.
                           </p>
                         </div>
@@ -2752,18 +2752,18 @@ function HomeContent() {
                     </div>
                   )}
 
-                  <div className="mb-10">
-                    <h3 className="text-2xl font-bold mb-6 flex items-center transition-colors duration-500" style={{ 
+                  <div className="mb-6 sm:mb-10">
+                    <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center transition-colors duration-500" style={{ 
                       color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
                     }}>
-                      <span className="text-3xl mr-3">⚡</span>
+                      <span className="text-2xl sm:text-3xl mr-2 sm:mr-3">⚡</span>
                       {userType === 'business' ? '5 Strategies to Grow Your Audience' : '5 Key Creator Strategies'}
                     </h3>
-                    <div className="space-y-3">
+                    <div className="space-y-2 sm:space-y-3">
                       {strategy.keyPrinciples.map((principle, index) => (
                         <div 
                           key={index} 
-                          className="rounded-xl p-6 border transition-all duration-500 hover:scale-[1.02] cursor-default"
+                          className="rounded-lg sm:rounded-xl p-4 sm:p-6 border transition-all duration-500 hover:scale-[1.02] cursor-default"
                           style={{
                             backgroundColor: userType === 'creator' 
                               ? 'rgba(218, 165, 32, 0.05)'
@@ -2776,9 +2776,9 @@ function HomeContent() {
                               : '0 1px 3px rgba(0,0,0,0.05)'
                           }}
                         >
-                          <div className="flex items-start gap-4">
+                          <div className="flex items-start gap-3 sm:gap-4">
                             <div 
-                              className="rounded-full w-10 h-10 flex items-center justify-center font-bold flex-shrink-0 text-lg transition-all duration-500"
+                              className="rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center font-bold flex-shrink-0 text-sm sm:text-lg transition-all duration-500"
                               style={{
                                 background: userType === 'creator' 
                                   ? 'linear-gradient(135deg, #DAA520 0%, #F4D03F 100%)'
@@ -2788,7 +2788,7 @@ function HomeContent() {
                             >
                               {index + 1}
                             </div>
-                            <p className="text-base leading-relaxed pt-1" style={{ color: 'var(--text-primary)' }}>{principle}</p>
+                            <p className="text-sm sm:text-base leading-relaxed pt-0.5 sm:pt-1" style={{ color: 'var(--text-primary)' }}>{principle}</p>
                           </div>
                         </div>
                       ))}
