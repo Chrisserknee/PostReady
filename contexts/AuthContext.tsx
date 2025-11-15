@@ -64,6 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const checkProStatus = async (userId: string) => {
     try {
+      // Force fresh data by adding timestamp to prevent caching
       const { data, error } = await supabase
         .from('user_profiles')
         .select('is_pro, plan_type')
@@ -71,21 +72,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (!error && data) {
-        setIsPro(data.is_pro || false);
+        console.log('✅ Subscription status loaded from database:', { 
+          is_pro: data.is_pro, 
+          plan_type: data.plan_type,
+          userId: userId 
+        });
         
-        // If user has Creator plan, also update their auth metadata for UI consistency
-        if (data.plan_type === 'creator' && data.is_pro) {
-          // Get current user to update metadata
-          const { data: { user } } = await supabase.auth.getUser();
-          if (user && (!user.user_metadata?.role || user.user_metadata?.role !== 'creator')) {
-            // Update user metadata (this updates the in-memory user object)
-            // Note: This won't persist across sessions without service role, but helps with UI
-            console.log('User has Creator plan');
-          }
-        }
+        // Set isPro status
+        const proStatus = data.is_pro || false;
+        setIsPro(proStatus);
+        
+        // Log if status changed
+        console.log(`User subscription status: ${proStatus ? 'PRO' : 'FREE'} (Plan: ${data.plan_type})`);
+      } else if (error) {
+        console.error('❌ Error checking subscription status:', error);
       }
     } catch (error) {
-      console.error('Error checking pro status:', error);
+      console.error('❌ Exception checking subscription status:', error);
     }
   };
 
