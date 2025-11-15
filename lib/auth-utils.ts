@@ -21,10 +21,45 @@ function createServerSupabaseClient(request: NextRequest) {
   });
 
   // Try to find Supabase access token in cookies
-  const accessToken = cookies['sb-access-token'] || 
-                      cookies['supabase-auth-token'] ||
-                      cookies[`sb-${supabaseUrl.split('//')[1]?.split('.')[0]}-auth-token`] ||
-                      request.headers.get('authorization')?.replace('Bearer ', '');
+  // Supabase v2 uses a different cookie structure
+  let accessToken = request.headers.get('authorization')?.replace('Bearer ', '');
+  
+  if (!accessToken) {
+    // Try different cookie names used by Supabase
+    const possibleCookieNames = [
+      'sb-access-token',
+      'supabase-auth-token',
+      `sb-${supabaseUrl.split('//')[1]?.split('.')[0]}-auth-token`
+    ];
+    
+    for (const cookieName of possibleCookieNames) {
+      if (cookies[cookieName]) {
+        accessToken = cookies[cookieName];
+        break;
+      }
+    }
+    
+    // Also try to extract from compound cookie format (base64 JSON)
+    if (!accessToken) {
+      for (const [name, value] of Object.entries(cookies)) {
+        if (name.includes('supabase') || name.startsWith('sb-')) {
+          try {
+            // Try to parse as JSON in case it's a compound cookie
+            const parsed = JSON.parse(value);
+            if (parsed.access_token) {
+              accessToken = parsed.access_token;
+              break;
+            }
+          } catch {
+            // Not JSON, might be the token itself
+            if (value && value.length > 20 && !value.includes(';')) {
+              accessToken = value;
+            }
+          }
+        }
+      }
+    }
+  }
 
   const client = createClient(supabaseUrl, supabaseAnonKey, {
     auth: {

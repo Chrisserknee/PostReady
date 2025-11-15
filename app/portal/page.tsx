@@ -9,6 +9,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { SecondaryButton } from '@/components/SecondaryButton';
 import { Modal } from '@/components/Modal';
 import { User } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabase';
 
 export default function UserPortal() {
   const { user, isPro, signOut, loading } = useAuth();
@@ -122,12 +123,21 @@ export default function UserPortal() {
     
     setBillingLoading(true);
     try {
+      // Get the current session to include auth token
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session?.access_token) {
+        throw new Error('No active session found. Please sign in again.');
+      }
+      
       // Create Stripe Customer Portal session
       const response = await fetch('/api/create-portal-session', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`,
         },
+        credentials: 'include',
         body: JSON.stringify({
           userId: user.id,
         }),
