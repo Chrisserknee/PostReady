@@ -225,6 +225,7 @@ function HomeContent() {
   const [redirectToCheckoutAfterAuth, setRedirectToCheckoutAfterAuth] = useState(false);
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
+  const [isSigningOut, setIsSigningOut] = useState(false);
 
   // Modal state
   const [modalState, setModalState] = useState<{
@@ -636,26 +637,19 @@ function HomeContent() {
   };
 
   const handleSignOut = async () => {
+    // Prevent multiple clicks
+    if (isSigningOut) return;
+    
     try {
-      setIsNavigating(true); // Show loading state
+      setIsSigningOut(true);
+      console.log('Signing out...');
       await signOut();
-      // Reset to initial state
-      setBusinessInfo({
-        businessName: "",
-        businessType: "Restaurant",
-        location: "",
-        platform: "Instagram",
-      });
-      setStrategy(null);
-      setCurrentStep("form");
-      setSelectedIdea(null);
-      setPostDetails(null);
       
-      // Force page reload to clear all state
+      // Force immediate redirect - don't wait for state updates
       window.location.href = '/';
     } catch (error) {
       console.error('Sign out error:', error);
-      setIsNavigating(false);
+      setIsSigningOut(false);
       showNotification('Failed to sign out. Please try again.', 'error', 'Error');
     }
   };
@@ -1997,30 +1991,52 @@ function HomeContent() {
                 ) : (
                   <button
                     onClick={handleSignOut}
-                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all shadow-md hover:scale-105 active:scale-95"
+                    disabled={isSigningOut}
+                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all shadow-md hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ 
                       color: '#dc2626',
                       backgroundColor: 'rgba(220, 38, 38, 0.15)',
                       border: '2px solid rgba(220, 38, 38, 0.3)',
                       boxShadow: '0 2px 8px rgba(220, 38, 38, 0.15)'
                     }}
+                    onMouseEnter={(e) => {
+                      if (!isSigningOut) {
+                        e.currentTarget.style.backgroundColor = '#dc2626';
+                        e.currentTarget.style.color = 'white';
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.15)';
+                      e.currentTarget.style.color = '#dc2626';
+                    }}
                   >
-                    Sign Out
+                    {isSigningOut ? 'Signing Out...' : 'Sign Out'}
                   </button>
                 )}
               </div>
               {!isPro && (
                 <button
                   onClick={handleSignOut}
-                  className="w-full px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all shadow-md hover:scale-105 active:scale-95"
+                  disabled={isSigningOut}
+                  className="w-full px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all shadow-md hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ 
                     color: '#dc2626',
                     backgroundColor: 'rgba(220, 38, 38, 0.15)',
                     border: '2px solid rgba(220, 38, 38, 0.3)',
                     boxShadow: '0 2px 8px rgba(220, 38, 38, 0.15)'
                   }}
+                  onMouseEnter={(e) => {
+                    if (!isSigningOut) {
+                      e.currentTarget.style.backgroundColor = '#dc2626';
+                      e.currentTarget.style.color = 'white';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.15)';
+                    e.currentTarget.style.color = '#dc2626';
+                  }}
                 >
-                  Sign Out
+                  {isSigningOut ? 'Signing Out...' : 'Sign Out'}
                 </button>
               )}
             </div>
@@ -2133,9 +2149,19 @@ function HomeContent() {
               )}
               <button
                 onClick={handleSignOut}
-                className="text-gray-600 hover:text-gray-900 text-sm font-medium whitespace-nowrap"
+                disabled={isSigningOut}
+                className="text-sm font-medium whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ color: '#dc2626' }}
+                onMouseEnter={(e) => {
+                  if (!isSigningOut) {
+                    e.currentTarget.style.color = '#991b1b';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.color = '#dc2626';
+                }}
               >
-                Sign Out
+                {isSigningOut ? 'Signing Out...' : 'Sign Out'}
               </button>
             </div>
           </div>

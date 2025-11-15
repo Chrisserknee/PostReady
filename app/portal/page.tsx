@@ -17,6 +17,7 @@ export default function UserPortal() {
   const router = useRouter();
   const [billingLoading, setBillingLoading] = useState(false);
   const [userPlanType, setUserPlanType] = useState<'free' | 'pro' | 'creator'>('free');
+  const [isSigningOut, setIsSigningOut] = useState(false);
   
   // Support contact form state
   const [showSupportModal, setShowSupportModal] = useState(false);
@@ -468,33 +469,49 @@ export default function UserPortal() {
 
             <button
               onClick={async () => {
-                setModalState({
-                  isOpen: true,
-                  title: 'Sign Out',
-                  message: 'Are you sure you want to sign out?',
-                  type: 'confirm',
-                  onConfirm: async () => {
-                    try {
-                      await signOut();
-                      // Force reload to clear all state
-                      window.location.href = '/';
-                    } catch (error) {
-                      console.error('Sign out error:', error);
-                    }
-                  },
-                  confirmText: 'Sign Out'
-                });
+                // Prevent multiple clicks
+                if (isSigningOut) return;
+                
+                setIsSigningOut(true);
+                try {
+                  console.log('Signing out...');
+                  await signOut();
+                  // Force reload to clear all state
+                  window.location.href = '/';
+                } catch (error) {
+                  console.error('Sign out error:', error);
+                  setIsSigningOut(false);
+                  setModalState({
+                    isOpen: true,
+                    title: 'Error',
+                    message: 'Failed to sign out. Please try again.',
+                    type: 'error'
+                  });
+                }
               }}
-              className="w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-105"
+              disabled={isSigningOut}
+              className="w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
               style={{ 
                 borderColor: '#EF4444',
                 backgroundColor: 'var(--card-bg)'
               }}
+              onMouseEnter={(e) => {
+                if (!isSigningOut) {
+                  e.currentTarget.style.backgroundColor = '#FEE2E2';
+                  e.currentTarget.style.borderColor = '#DC2626';
+                }
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.backgroundColor = 'var(--card-bg)';
+                e.currentTarget.style.borderColor = '#EF4444';
+              }}
             >
               <div className="flex items-center justify-between">
                 <div>
-                  <h3 className="font-bold text-red-600">Sign Out</h3>
-                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Sign out of your account</p>
+                  <h3 className="font-bold text-red-600">{isSigningOut ? 'Signing Out...' : 'Sign Out'}</h3>
+                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    {isSigningOut ? 'Please wait...' : 'Sign out of your account'}
+                  </p>
                 </div>
                 <span className="text-red-600">→</span>
               </div>
