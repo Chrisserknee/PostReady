@@ -16,6 +16,7 @@ export default function UserPortal() {
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const [billingLoading, setBillingLoading] = useState(false);
+  const [userPlanType, setUserPlanType] = useState<'free' | 'pro' | 'creator'>('free');
   
   // Support contact form state
   const [showSupportModal, setShowSupportModal] = useState(false);
@@ -48,6 +49,29 @@ export default function UserPortal() {
     message: '',
     type: 'info',
   });
+
+  // Load user plan type
+  useEffect(() => {
+    const loadUserPlanType = async () => {
+      if (user) {
+        try {
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .select('plan_type')
+            .eq('id', user.id)
+            .single();
+          
+          if (!error && data) {
+            setUserPlanType(data.plan_type || 'free');
+          }
+        } catch (error) {
+          console.error('Error loading plan type:', error);
+        }
+      }
+    };
+    
+    loadUserPlanType();
+  }, [user]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -176,7 +200,7 @@ export default function UserPortal() {
   }
 
   // Check if user is a creator
-  const isCreator = user?.user_metadata?.role === 'creator' || user?.user_metadata?.plan === 'creator';
+  const isCreator = userPlanType === 'creator';
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
@@ -190,11 +214,6 @@ export default function UserPortal() {
               className="h-16 w-auto cursor-pointer transition-all hover:scale-105"
               onClick={() => router.push('/')}
             />
-            <h1 className="text-3xl font-bold" style={{ 
-              color: isCreator && isPro ? '#DAA520' : 'var(--secondary)' 
-            }}>
-              User Portal
-            </h1>
           </div>
           <button
             onClick={() => router.push('/')}
