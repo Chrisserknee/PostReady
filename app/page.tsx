@@ -138,6 +138,26 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
+  // Dev mode state - load from localStorage on mount (only for localhost)
+  const [devMode, setDevMode] = useState<'none' | 'regular' | 'pro' | 'creator'>(() => {
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      const stored = localStorage.getItem('devMode') as 'none' | 'regular' | 'pro' | 'creator' | null;
+      return stored || 'none';
+    }
+    return 'none';
+  });
+  
+  // Persist dev mode to localStorage
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
+      if (devMode !== 'none') {
+        localStorage.setItem('devMode', devMode);
+      } else {
+        localStorage.removeItem('devMode');
+      }
+    }
+  }, [devMode]);
+  
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
     businessName: "",
     businessType: "Restaurant",
@@ -149,8 +169,19 @@ function HomeContent() {
   const [planType, setPlanType] = useState<'pro' | 'creator'>('pro');
   const [isPlanTransitioning, setIsPlanTransitioning] = useState<boolean>(false);
   
+  // Dev mode overrides (only on localhost)
+  const devUser = (typeof window !== 'undefined' && window.location.hostname === 'localhost' && devMode !== 'none') 
+    ? { 
+        id: 'dev-user', 
+        email: devMode === 'pro' ? 'pro@test.com' : devMode === 'creator' ? 'creator@test.com' : 'user@test.com',
+        user_metadata: devMode === 'creator' ? { role: 'creator', plan: 'creator' } : {}
+      } as User 
+    : null;
+  const effectiveUser = devMode !== 'none' ? devUser : user;
+  const effectiveIsPro = devMode === 'pro' || devMode === 'creator' ? true : devMode !== 'none' ? false : isPro;
+  
   // Check if user is a creator
-  const isCreator = user?.user_metadata?.role === 'creator' || user?.user_metadata?.plan === 'creator';
+  const isCreator = effectiveUser?.user_metadata?.role === 'creator' || effectiveUser?.user_metadata?.plan === 'creator';
   
 
   const [strategy, setStrategy] = useState<StrategyResult | null>(null);
@@ -1717,6 +1748,51 @@ function HomeContent() {
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--background)' }}>
+      {/* Dev Mode Switcher - Only visible on localhost */}
+      {typeof window !== 'undefined' && window.location.hostname === 'localhost' && (
+        <div className="fixed top-4 left-4 z-50 flex gap-2 bg-black/80 p-2 rounded-lg border border-gray-600">
+          <button
+            onClick={() => setDevMode('none')}
+            className="px-3 py-1 rounded text-xs font-bold transition-all hover:opacity-80"
+            style={{
+              background: devMode === 'none' ? '#2979FF' : '#333',
+              color: 'white'
+            }}
+          >
+            None
+          </button>
+          <button
+            onClick={() => setDevMode('regular')}
+            className="px-3 py-1 rounded text-xs font-bold transition-all hover:opacity-80"
+            style={{
+              background: devMode === 'regular' ? '#2979FF' : '#333',
+              color: 'white'
+            }}
+          >
+            Regular
+          </button>
+          <button
+            onClick={() => setDevMode('pro')}
+            className="px-3 py-1 rounded text-xs font-bold transition-all hover:opacity-80"
+            style={{
+              background: devMode === 'pro' ? '#2979FF' : '#333',
+              color: 'white'
+            }}
+          >
+            Pro
+          </button>
+          <button
+            onClick={() => setDevMode('creator')}
+            className="px-3 py-1 rounded text-xs font-bold transition-all hover:opacity-80"
+            style={{
+              background: devMode === 'creator' ? '#DAA520' : '#333',
+              color: 'white'
+            }}
+          >
+            Creator
+          </button>
+        </div>
+      )}
       {/* Tiny Glowing Stars Effect */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
         {/* Generate multiple small stars scattered across the screen */}
@@ -1746,7 +1822,7 @@ function HomeContent() {
       </div>
       <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>
         {/* Header with Auth - Only for signed-in users */}
-        {user && !authLoading && (
+        {effectiveUser && !authLoading && (
           <div className="flex flex-col sm:flex-row justify-between sm:justify-end items-center gap-3 sm:gap-4 mb-8">
             {/* Row 1: Badges and main navigation - wraps on mobile */}
             <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto">
@@ -1768,7 +1844,7 @@ function HomeContent() {
                 </span>
               )}
               {/* Show PRO badge for pro users (but not creators) */}
-              {isPro && !isCreator && (
+              {effectiveIsPro && !isCreator && (
                 <span 
                   className="text-white px-3 sm:px-3 py-2 sm:py-1 rounded-full text-sm sm:text-xs font-bold relative overflow-hidden flex-shrink-0"
                   style={{ 
@@ -1853,9 +1929,9 @@ function HomeContent() {
                 }}
                 title="Go to User Portal"
               >
-                {user?.email}
+                {effectiveUser?.email}
               </button>
-              {!isPro && (
+              {!effectiveIsPro && (
                 <button
                   onClick={scrollToPremium}
                   className="text-white px-4 sm:px-4 py-2.5 sm:py-2 rounded-lg text-sm sm:text-sm font-bold transition-all hover:scale-105 sm:hover:opacity-90 active:scale-95 whitespace-nowrap flex-shrink-0"
@@ -1879,7 +1955,7 @@ function HomeContent() {
         )}
 
         {/* Sign Up CTA Banner for Non-Signed-Up Users */}
-        {!user && (
+        {!effectiveUser && (
           <div className="mb-8">
             <div className="rounded-xl p-5 border-2 shadow-sm" style={{
               background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.04) 0%, rgba(111, 255, 210, 0.04) 100%)',
