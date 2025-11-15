@@ -366,9 +366,9 @@ function HomeContent() {
   }, []);
 
   // Load usage counts from localStorage for anonymous users (prevent refresh abuse)
-  // Only when not signed in (and not in dev mode)
+  // Only when not signed in
   useEffect(() => {
-    if (!user && !effectiveUser && typeof window !== 'undefined') {
+    if (!user && typeof window !== 'undefined') {
       try {
         const storedTimestamp = localStorage.getItem('postready_usageTimestamp');
         const timestamp = storedTimestamp ? parseInt(storedTimestamp, 10) : Date.now();
@@ -709,10 +709,10 @@ function HomeContent() {
   };
 
   const navigateToPortal = () => {
-    console.log('navigateToPortal called', { isNavigating, effectiveUser, devMode });
+    console.log('navigateToPortal called', { isNavigating, user });
     
-    // If no effectiveUser (real or dev), open auth modal
-    if (!effectiveUser) {
+    // If no user, open auth modal
+    if (!user) {
       console.log('No user found, opening auth modal');
       openAuthModal('signin');
       return;

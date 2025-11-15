@@ -16,26 +16,6 @@ export default function UserPortal() {
   const router = useRouter();
   const [billingLoading, setBillingLoading] = useState(false);
   
-  // Dev mode state - load from localStorage on mount (only for localhost)
-  const [devMode, setDevMode] = useState<'none' | 'regular' | 'pro' | 'creator'>(() => {
-    if (typeof window !== 'undefined' && window.location.hostname === 'localhost') {
-      const stored = localStorage.getItem('devMode') as 'none' | 'regular' | 'pro' | 'creator' | null;
-      return stored || 'none';
-    }
-    return 'none';
-  });
-  
-  // Dev mode overrides (only on localhost)
-  const devUser = (typeof window !== 'undefined' && window.location.hostname === 'localhost' && devMode !== 'none') 
-    ? { 
-        id: 'dev-user', 
-        email: devMode === 'pro' ? 'pro@test.com' : devMode === 'creator' ? 'creator@test.com' : 'user@test.com',
-        user_metadata: devMode === 'creator' ? { role: 'creator', plan: 'creator' } : {}
-      } as User 
-    : null;
-  const effectiveUser = devMode !== 'none' ? devUser : user;
-  const effectiveIsPro = devMode === 'pro' || devMode === 'creator' ? true : devMode !== 'none' ? false : isPro;
-  
   // Support contact form state
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [supportSubject, setSupportSubject] = useState('');
@@ -69,10 +49,10 @@ export default function UserPortal() {
   });
 
   useEffect(() => {
-    if (!loading && !effectiveUser) {
+    if (!loading && !user) {
       router.push('/');
     }
-  }, [effectiveUser, loading, router]);
+  }, [user, loading, router]);
 
   const handleSupportSubmit = async () => {
     if (!supportSubject.trim() || !supportMessage.trim()) {
@@ -95,8 +75,8 @@ export default function UserPortal() {
         body: JSON.stringify({
           subject: supportSubject,
           message: supportMessage,
-          userEmail: effectiveUser?.email || 'Anonymous',
-          userId: effectiveUser?.id || null,
+          userEmail: user?.email || 'Anonymous',
+          userId: user?.id || null,
         }),
       });
 
@@ -186,7 +166,7 @@ export default function UserPortal() {
   }
 
   // Check if user is a creator
-  const isCreator = effectiveUser?.user_metadata?.role === 'creator' || effectiveUser?.user_metadata?.plan === 'creator';
+  const isCreator = user?.user_metadata?.role === 'creator' || user?.user_metadata?.plan === 'creator';
 
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
@@ -201,7 +181,7 @@ export default function UserPortal() {
               onClick={() => router.push('/')}
             />
             <h1 className="text-3xl font-bold" style={{ 
-              color: isCreator && effectiveIsPro ? '#DAA520' : 'var(--secondary)' 
+              color: isCreator && isPro ? '#DAA520' : 'var(--secondary)' 
             }}>
               User Portal
             </h1>
@@ -213,10 +193,10 @@ export default function UserPortal() {
               backgroundColor: 'var(--card-bg)',
               borderWidth: '2px',
               borderStyle: 'solid',
-              borderColor: isCreator && effectiveIsPro 
+              borderColor: isCreator && isPro 
                 ? 'rgba(218, 165, 32, 0.3)' 
                 : 'var(--card-border)',
-              color: isCreator && effectiveIsPro 
+              color: isCreator && isPro 
                 ? '#DAA520' 
                 : 'var(--text-primary)'
             }}
@@ -229,13 +209,13 @@ export default function UserPortal() {
         <div 
           className="mb-6 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-300"
           style={{
-            backgroundColor: isCreator && effectiveIsPro 
+            backgroundColor: isCreator && isPro 
               ? 'rgba(218, 165, 32, 0.08)' 
               : 'var(--card-bg)',
-            borderColor: isCreator && effectiveIsPro 
+            borderColor: isCreator && isPro 
               ? 'rgba(218, 165, 32, 0.3)' 
               : 'var(--card-border)',
-            boxShadow: isCreator && effectiveIsPro 
+            boxShadow: isCreator && isPro 
               ? '0 10px 40px rgba(218, 165, 32, 0.15)' 
               : '0 10px 40px rgba(0, 0, 0, 0.05)'
           }}
@@ -243,29 +223,29 @@ export default function UserPortal() {
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-2xl font-bold mb-4" style={{ 
-                color: isCreator && effectiveIsPro ? '#DAA520' : 'var(--text-primary)' 
+                color: isCreator && isPro ? '#DAA520' : 'var(--text-primary)' 
               }}>
                 Account Overview
               </h2>
               <div className="space-y-3">
                 <div>
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Email</p>
-                  <p className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>{effectiveUser?.email || 'Unknown'}</p>
+                  <p className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>{user?.email || 'Unknown'}</p>
                 </div>
                 <div>
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Account Status</p>
                   <div className="flex items-center gap-2">
-                    {effectiveIsPro ? (
+                    {isPro ? (
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold" style={{ 
-                        background: isCreator && effectiveIsPro 
+                        background: isCreator && isPro 
                           ? 'linear-gradient(to right, #DAA520, #F4D03F)' 
                           : 'linear-gradient(to right, #2979FF, #6FFFD2)', 
                         color: 'white',
-                        boxShadow: isCreator && effectiveIsPro 
+                        boxShadow: isCreator && isPro 
                           ? '0 0 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)' 
                           : 'none'
                       }}>
-                        {isCreator && effectiveIsPro ? '✨' : '⚡'} {isCreator && effectiveIsPro ? 'Creator' : 'Pro'} Member
+                        {isCreator && isPro ? '✨' : '⚡'} {isCreator && isPro ? 'Creator' : 'Pro'} Member
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-gray-200" style={{ color: 'var(--text-secondary)' }}>
@@ -282,33 +262,33 @@ export default function UserPortal() {
         {/* Billing & Subscription */}
         <SectionCard className="mb-6">
           <h2 className="text-2xl font-bold mb-6" style={{ 
-            color: isCreator && effectiveIsPro ? '#DAA520' : 'var(--secondary)' 
+            color: isCreator && isPro ? '#DAA520' : 'var(--secondary)' 
           }}>
             Billing & Subscription
           </h2>
           
-          {effectiveIsPro ? (
+          {isPro ? (
             <div className="space-y-4">
               <div className="p-6 rounded-xl border-2" style={{ 
-                backgroundColor: isCreator && effectiveIsPro 
+                backgroundColor: isCreator && isPro 
                   ? 'rgba(218, 165, 32, 0.08)' 
                   : 'var(--hover-bg)',
-                borderColor: isCreator && effectiveIsPro 
+                borderColor: isCreator && isPro 
                   ? 'rgba(218, 165, 32, 0.3)' 
                   : 'var(--primary)',
-                boxShadow: isCreator && effectiveIsPro 
+                boxShadow: isCreator && isPro 
                   ? '0 10px 40px rgba(218, 165, 32, 0.15)' 
                   : 'none'
               }}>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-bold text-xl flex items-center" style={{ 
-                    color: isCreator && effectiveIsPro ? '#DAA520' : 'var(--text-primary)' 
+                    color: isCreator && isPro ? '#DAA520' : 'var(--text-primary)' 
                   }}>
-                    <span className="mr-2">{isCreator && effectiveIsPro ? '✨' : '⚡'}</span>
-                    {isCreator && effectiveIsPro ? 'PostReady Creator' : 'PostReady Pro'}
+                    <span className="mr-2">{isCreator && isPro ? '✨' : '⚡'}</span>
+                    {isCreator && isPro ? 'PostReady Creator' : 'PostReady Pro'}
                   </h3>
                   <span className="text-lg font-bold px-3 py-1 rounded-lg" style={{ 
-                    color: isCreator && effectiveIsPro ? '#DAA520' : 'var(--primary)',
+                    color: isCreator && isPro ? '#DAA520' : 'var(--primary)',
                     backgroundColor: 'var(--card-bg)'
                   }}>
                     $10/month
@@ -322,19 +302,19 @@ export default function UserPortal() {
                   disabled={billingLoading}
                   className="w-full text-white rounded-xl px-6 py-3 font-bold transition-all disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:scale-105"
                   style={{
-                    backgroundColor: billingLoading ? undefined : (isCreator && effectiveIsPro ? '#DAA520' : '#2979FF'),
-                    boxShadow: billingLoading ? undefined : (isCreator && effectiveIsPro 
+                    backgroundColor: billingLoading ? undefined : (isCreator && isPro ? '#DAA520' : '#2979FF'),
+                    boxShadow: billingLoading ? undefined : (isCreator && isPro 
                       ? '0 4px 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)' 
                       : '0 4px 20px rgba(41, 121, 255, 0.3), 0 0 40px rgba(111, 255, 210, 0.1)')
                   }}
                   onMouseEnter={(e) => {
                     if (!billingLoading) {
-                      e.currentTarget.style.backgroundColor = isCreator && effectiveIsPro ? '#C19A1E' : '#1e5dd9';
+                      e.currentTarget.style.backgroundColor = isCreator && isPro ? '#C19A1E' : '#1e5dd9';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!billingLoading) {
-                      e.currentTarget.style.backgroundColor = isCreator && effectiveIsPro ? '#DAA520' : '#2979FF';
+                      e.currentTarget.style.backgroundColor = isCreator && isPro ? '#DAA520' : '#2979FF';
                     }
                   }}
                 >
@@ -383,7 +363,7 @@ export default function UserPortal() {
         {/* Account Actions */}
         <SectionCard>
           <h2 className="text-2xl font-bold mb-6" style={{ 
-            color: isCreator && effectiveIsPro ? '#DAA520' : 'var(--secondary)' 
+            color: isCreator && isPro ? '#DAA520' : 'var(--secondary)' 
           }}>
             Account Actions
           </h2>
@@ -402,7 +382,7 @@ export default function UserPortal() {
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>View and manage your saved businesses</p>
                 </div>
                 <span style={{ 
-                  color: isCreator && effectiveIsPro ? '#DAA520' : 'var(--primary)' 
+                  color: isCreator && isPro ? '#DAA520' : 'var(--primary)' 
                 }}>→</span>
               </div>
             </button>
@@ -421,7 +401,7 @@ export default function UserPortal() {
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>View all your completed posts</p>
                 </div>
                 <span style={{ 
-                  color: isCreator && effectiveIsPro ? '#DAA520' : 'var(--primary)' 
+                  color: isCreator && isPro ? '#DAA520' : 'var(--primary)' 
                 }}>→</span>
               </div>
             </button>
@@ -430,8 +410,8 @@ export default function UserPortal() {
               onClick={() => setShowSupportModal(true)}
               className="w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-105"
               style={{ 
-                borderColor: effectiveIsPro 
-                  ? (isCreator && effectiveIsPro ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.3)')
+                borderColor: isPro 
+                  ? (isCreator && isPro ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.3)')
                   : 'var(--card-border)',
                 backgroundColor: 'var(--card-bg)'
               }}
@@ -439,19 +419,19 @@ export default function UserPortal() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-bold flex items-center gap-2" style={{ 
-                    color: effectiveIsPro 
-                      ? (isCreator && effectiveIsPro ? '#DAA520' : 'var(--primary)')
+                    color: isPro 
+                      ? (isCreator && isPro ? '#DAA520' : 'var(--primary)')
                       : 'var(--text-primary)'
                   }}>
-                    {effectiveIsPro ? '⚡' : ''} {effectiveIsPro ? 'Priority Support' : 'Support'}
+                    {isPro ? '⚡' : ''} {isPro ? 'Priority Support' : 'Support'}
                   </h3>
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    {effectiveIsPro ? 'Get priority assistance from our team' : 'Contact our support team'}
+                    {isPro ? 'Get priority assistance from our team' : 'Contact our support team'}
                   </p>
                 </div>
                 <span style={{ 
-                  color: effectiveIsPro 
-                    ? (isCreator && effectiveIsPro ? '#DAA520' : 'var(--primary)')
+                  color: isPro 
+                    ? (isCreator && isPro ? '#DAA520' : 'var(--primary)')
                     : 'var(--primary)' 
                 }}>→</span>
               </div>
@@ -495,9 +475,9 @@ export default function UserPortal() {
         className="fixed bottom-6 right-6 p-4 rounded-full shadow-2xl hover:scale-110 z-50"
         style={{ 
           backgroundColor: 'var(--card-bg)',
-          border: `3px solid ${isCreator && effectiveIsPro ? '#DAA520' : 'var(--primary)'}`,
+          border: `3px solid ${isCreator && isPro ? '#DAA520' : 'var(--primary)'}`,
           transition: 'all 0.3s ease, transform 0.2s ease',
-          boxShadow: isCreator && effectiveIsPro 
+          boxShadow: isCreator && isPro 
             ? '0 10px 40px rgba(218, 165, 32, 0.3)' 
             : '0 10px 40px rgba(0, 0, 0, 0.2)'
         }}
@@ -524,8 +504,8 @@ export default function UserPortal() {
             className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200"
             style={{
               backgroundColor: 'var(--card-bg)',
-              border: `2px solid ${effectiveIsPro 
-                ? (isCreator && effectiveIsPro ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.3)')
+              border: `2px solid ${isPro 
+                ? (isCreator && isPro ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.3)')
                 : 'var(--card-border)'}`,
             }}
             onClick={(e) => e.stopPropagation()}
@@ -533,11 +513,11 @@ export default function UserPortal() {
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <h3 className="text-xl font-bold" style={{ 
-                  color: effectiveIsPro 
-                    ? (isCreator && effectiveIsPro ? '#DAA520' : 'var(--primary)')
+                  color: isPro 
+                    ? (isCreator && isPro ? '#DAA520' : 'var(--primary)')
                     : 'var(--text-primary)'
                 }}>
-                  {effectiveIsPro ? '⚡ Priority Support' : 'Support'}
+                  {isPro ? '⚡ Priority Support' : 'Support'}
                 </h3>
                 <button
                   onClick={() => {
@@ -551,17 +531,17 @@ export default function UserPortal() {
                 </button>
               </div>
 
-              {effectiveIsPro && (
+              {isPro && (
                 <div className="mb-4 p-3 rounded-lg" style={{
-                  backgroundColor: isCreator && effectiveIsPro 
+                  backgroundColor: isCreator && isPro 
                     ? 'rgba(218, 165, 32, 0.1)' 
                     : 'rgba(41, 121, 255, 0.1)',
-                  border: `1px solid ${isCreator && effectiveIsPro 
+                  border: `1px solid ${isCreator && isPro 
                     ? 'rgba(218, 165, 32, 0.3)' 
                     : 'rgba(41, 121, 255, 0.3)'}`
                 }}>
                   <p className="text-sm font-medium" style={{ 
-                    color: isCreator && effectiveIsPro ? '#DAA520' : 'var(--primary)' 
+                    color: isCreator && isPro ? '#DAA520' : 'var(--primary)' 
                   }}>
                     ⚡ As a Pro member, you'll receive priority support with faster response times.
                   </p>
@@ -581,15 +561,15 @@ export default function UserPortal() {
                     className="w-full px-4 py-2 rounded-lg border-2 focus:outline-none"
                     style={{
                       backgroundColor: 'white',
-                      borderColor: effectiveIsPro 
-                        ? (isCreator && effectiveIsPro ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)')
+                      borderColor: isPro 
+                        ? (isCreator && isPro ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)')
                         : 'var(--card-border)',
                       color: '#1a1a1a',
                     }}
                     disabled={isSubmittingSupport}
                     onFocus={(e) => {
-                      e.target.style.boxShadow = effectiveIsPro 
-                        ? (isCreator && effectiveIsPro 
+                      e.target.style.boxShadow = isPro 
+                        ? (isCreator && isPro 
                           ? '0 0 0 2px rgba(218, 165, 32, 0.5)' 
                           : '0 0 0 2px rgba(41, 121, 255, 0.5)')
                         : '0 0 0 2px rgba(0, 0, 0, 0.1)';
@@ -612,15 +592,15 @@ export default function UserPortal() {
                     className="w-full px-4 py-2 rounded-lg border-2 resize-none focus:outline-none"
                     style={{
                       backgroundColor: 'white',
-                      borderColor: effectiveIsPro 
-                        ? (isCreator && effectiveIsPro ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)')
+                      borderColor: isPro 
+                        ? (isCreator && isPro ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)')
                         : 'var(--card-border)',
                       color: '#1a1a1a',
                     }}
                     disabled={isSubmittingSupport}
                     onFocus={(e) => {
-                      e.target.style.boxShadow = effectiveIsPro 
-                        ? (isCreator && effectiveIsPro 
+                      e.target.style.boxShadow = isPro 
+                        ? (isCreator && isPro 
                           ? '0 0 0 2px rgba(218, 165, 32, 0.5)' 
                           : '0 0 0 2px rgba(41, 121, 255, 0.5)')
                         : '0 0 0 2px rgba(0, 0, 0, 0.1)';
@@ -660,13 +640,13 @@ export default function UserPortal() {
                 disabled={isSubmittingSupport || !supportSubject.trim() || !supportMessage.trim()}
                 className="px-6 py-2 rounded-lg font-bold transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
-                  background: effectiveIsPro 
-                    ? (isCreator && effectiveIsPro 
+                  background: isPro 
+                    ? (isCreator && isPro 
                       ? 'linear-gradient(to right, #DAA520, #F4D03F)'
                       : 'linear-gradient(to right, #2979FF, #6FFFD2)')
                     : 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  boxShadow: effectiveIsPro 
-                    ? (isCreator && effectiveIsPro 
+                  boxShadow: isPro 
+                    ? (isCreator && isPro 
                       ? '0 4px 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)'
                       : '0 4px 20px rgba(41, 121, 255, 0.3), 0 0 40px rgba(111, 255, 210, 0.1)')
                     : 'none'
