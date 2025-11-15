@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 
 type AuthModalProps = {
   isOpen: boolean;
@@ -20,6 +21,7 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const { signIn, signUp, resetPassword } = useAuth();
+  const { theme } = useTheme();
 
   // Update internal mode state when modal opens or initialMode changes
   useEffect(() => {
@@ -116,19 +118,22 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-2xl max-w-md w-full p-8 relative shadow-2xl">
+      <div className="rounded-2xl max-w-md w-full p-8 relative shadow-2xl" style={{ backgroundColor: 'var(--card-bg)' }}>
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600 text-2xl"
+          className="absolute top-4 right-4 text-2xl transition-colors"
+          style={{ color: 'var(--text-secondary)' }}
+          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
         >
           ×
         </button>
 
         <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold text-gray-900 mb-2">
+          <h2 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
             {showForgotPassword ? 'Reset Password' : mode === 'signup' ? 'Create Account' : 'Welcome Back'}
           </h2>
-          <p className="text-gray-600">
+          <p style={{ color: 'var(--text-secondary)' }}>
             {showForgotPassword
               ? 'Enter your email to receive a password reset link'
               : mode === 'signup'
@@ -138,13 +143,25 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
         </div>
 
         {error && (
-          <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg text-red-700 text-sm">
+          <div className="mb-4 p-3 rounded-lg text-sm" style={{
+            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+            borderWidth: '1px',
+            borderStyle: 'solid',
+            borderColor: 'rgba(239, 68, 68, 0.3)',
+            color: '#ef4444'
+          }}>
             {error}
           </div>
         )}
 
         {success && (
-          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg text-green-700 text-sm">
+          <div className="mb-4 p-3 rounded-lg text-sm" style={{
+            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+            borderWidth: '1px',
+            borderStyle: 'solid',
+            borderColor: 'rgba(34, 197, 94, 0.3)',
+            color: '#22c55e'
+          }}>
             {success}
           </div>
         )}
@@ -186,7 +203,10 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
                 setError(null);
                 setSuccess(null);
               }}
-              className="w-full text-sm font-medium text-gray-600 hover:text-gray-800 transition-colors"
+              className="w-full text-sm font-medium transition-colors"
+              style={{ color: 'var(--text-secondary)' }}
+              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
             >
               ← Back to Sign In
             </button>
@@ -194,7 +214,7 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
         ) : (
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
                 Email
               </label>
               <input
@@ -203,13 +223,18 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border-2 rounded-lg px-4 py-2 focus:outline-none transition-all"
+                style={{
+                  backgroundColor: 'var(--input-bg)',
+                  borderColor: 'var(--card-border)',
+                  color: 'var(--text-primary)'
+                }}
                 placeholder="you@example.com"
               />
             </div>
 
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
                 Password
               </label>
               <div className="relative">
@@ -220,13 +245,21 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   minLength={6}
-                  className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 pr-12 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  className="w-full border-2 rounded-lg px-4 py-2 pr-12 focus:outline-none transition-all"
+                  style={{
+                    backgroundColor: 'var(--input-bg)',
+                    borderColor: 'var(--card-border)',
+                    color: 'var(--text-primary)'
+                  }}
                   placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700 transition-colors"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
+                  style={{ color: 'var(--text-secondary)' }}
+                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
+                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
                   aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? (
@@ -242,7 +275,7 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
                 </button>
               </div>
               {mode === 'signup' && (
-                <p className="text-xs text-gray-500 mt-1">Must be at least 6 characters</p>
+                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Must be at least 6 characters</p>
               )}
               {mode === 'signin' && (
                 <div className="mt-2 text-right">
@@ -280,6 +313,9 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
         )}
 
         <div className="mt-6 text-center">
+          <p style={{ color: 'var(--text-secondary)' }} className="text-sm mb-2">
+            {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}
+          </p>
           <button
             onClick={() => {
               setMode(mode === 'signup' ? 'signin' : 'signup');
@@ -291,9 +327,7 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
             onMouseEnter={(e) => e.currentTarget.style.color = '#1e5dd9'}
             onMouseLeave={(e) => e.currentTarget.style.color = '#2979FF'}
           >
-            {mode === 'signup'
-              ? 'Already have an account? Sign in'
-              : "Don't have an account? Sign up"}
+            {mode === 'signup'? 'Sign in' : 'Sign up'}
           </button>
         </div>
       </div>

@@ -289,11 +289,11 @@ function HomeContent() {
   useEffect(() => {
     if (!authLoading) {
       if (user) {
-        // Load progress from database
+        // Load progress from database (only for real users)
         loadProgress();
-        // Load history for all authenticated users (real or dev mode)
         loadHistoryData();
       }
+      // Dev mode users don't load from database
     }
   }, [user, authLoading]);
 
@@ -336,7 +336,7 @@ function HomeContent() {
     
     if (view === 'history') {
       setCurrentStep('history');
-      // Reload history data when navigating to history page
+      // Reload history data when navigating to history page (only for real users)
       if (user) {
         loadHistoryData();
       }
@@ -346,7 +346,7 @@ function HomeContent() {
       }, 100);
     } else if (view === 'businesses') {
       setCurrentStep('businesses');
-      // Reload businesses data when navigating to businesses page
+      // Reload businesses data when navigating to businesses page (only for real users)
       if (user) {
         loadHistoryData();
       }
@@ -366,9 +366,9 @@ function HomeContent() {
   }, []);
 
   // Load usage counts from localStorage for anonymous users (prevent refresh abuse)
-  // Only when not signed in
+  // Only when not signed in (and not in dev mode)
   useEffect(() => {
-    if (!user && typeof window !== 'undefined') {
+    if (!user && !effectiveUser && typeof window !== 'undefined') {
       try {
         const storedTimestamp = localStorage.getItem('postready_usageTimestamp');
         const timestamp = storedTimestamp ? parseInt(storedTimestamp, 10) : Date.now();
@@ -709,10 +709,10 @@ function HomeContent() {
   };
 
   const navigateToPortal = () => {
-    console.log('navigateToPortal called', { isNavigating, user });
+    console.log('navigateToPortal called', { isNavigating, effectiveUser, devMode });
     
-    // If no user, open auth modal
-    if (!user) {
+    // If no effectiveUser (real or dev), open auth modal
+    if (!effectiveUser) {
       console.log('No user found, opening auth modal');
       openAuthModal('signin');
       return;
