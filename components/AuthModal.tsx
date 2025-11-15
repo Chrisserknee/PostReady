@@ -169,7 +169,7 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
         {showForgotPassword ? (
           <form onSubmit={handleForgotPassword} className="space-y-4">
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+              <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
                 Email
               </label>
               <input
@@ -178,9 +178,24 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full border-2 border-gray-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full border-2 rounded-lg px-4 py-2 focus:outline-none transition-all"
+                style={{
+                  backgroundColor: 'var(--input-bg)',
+                  borderColor: 'var(--card-border)',
+                  color: 'var(--text-primary)'
+                }}
                 placeholder="you@example.com"
               />
+            </div>
+
+            <div className="p-3 rounded-lg text-sm" style={{
+              backgroundColor: 'rgba(41, 121, 255, 0.1)',
+              borderWidth: '1px',
+              borderStyle: 'solid',
+              borderColor: 'rgba(41, 121, 255, 0.2)',
+              color: 'var(--text-secondary)'
+            }}>
+              💡 Please check your inbox for an email from <strong style={{ color: 'var(--text-primary)' }}>Supabase Auth</strong> — it contains your secure password reset link.
             </div>
 
             <button
