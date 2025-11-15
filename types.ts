@@ -37,6 +37,7 @@ export type PostDetails = {
   caption: string;
   hashtags: string[];
   bestPostTime: string;
+  notes?: string;
 };
 
 export type LogoRequest = {

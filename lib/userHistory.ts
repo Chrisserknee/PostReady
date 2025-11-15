@@ -259,4 +259,45 @@ export async function deleteSavedVideoIdea(
   }
 }
 
+// Update notes for a completed post
+export async function updatePostNotes(
+  userId: string,
+  postId: string,
+  notes: string
+): Promise<{ error: any }> {
+  try {
+    // First, get the current post to preserve other post_details fields
+    const { data: existingPost, error: fetchError } = await supabase
+      .from('post_history')
+      .select('post_details')
+      .eq('id', postId)
+      .eq('user_id', userId)
+      .single();
+
+    if (fetchError || !existingPost) {
+      console.error('Error fetching post for notes update:', fetchError);
+      return { error: fetchError };
+    }
+
+    // Update the post_details with new notes
+    const updatedPostDetails = {
+      ...existingPost.post_details,
+      notes: notes || undefined
+    };
+
+    const { error } = await supabase
+      .from('post_history')
+      .update({
+        post_details: updatedPostDetails
+      })
+      .eq('id', postId)
+      .eq('user_id', userId);
+
+    return { error };
+  } catch (error) {
+    console.error('Error updating post notes:', error);
+    return { error };
+  }
+}
+
 

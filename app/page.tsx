@@ -200,6 +200,7 @@ function HomeContent() {
   const [regenerateCount, setRegenerateCount] = useState<number>(0);
   const [rewordTitleCount, setRewordTitleCount] = useState<number>(0);
   const [isRewordingTitle, setIsRewordingTitle] = useState<boolean>(false);
+  const [userNotes, setUserNotes] = useState<string>("");
   const [showGuideAI, setShowGuideAI] = useState<boolean>(false);
   const [aiGuidance, setAiGuidance] = useState<string>("");
   const [showGuideAIForIdeas, setShowGuideAIForIdeas] = useState<boolean>(false);
@@ -694,6 +695,7 @@ function HomeContent() {
     setSelectedIdea(null);
     setPostDetails(null);
     setIsSavedToHistory(false);
+    setUserNotes("");
     setRewriteCount(0);
     setRegenerateCount(0);
     setGenerateIdeasCount(0);
@@ -855,7 +857,13 @@ function HomeContent() {
 
     setIsSavingToHistory(true);
     try {
-      await saveCompletedPostToHistory(selectedIdea, postDetails);
+      // Include user notes in the postDetails before saving
+      const postDetailsWithNotes = {
+        ...postDetails,
+        notes: userNotes || undefined // Only include notes if they exist
+      };
+      
+      await saveCompletedPostToHistory(selectedIdea, postDetailsWithNotes);
       setIsSavedToHistory(true);
       showNotification('Post saved to history successfully!', 'success', 'Saved!');
     } catch (error) {
@@ -874,6 +882,7 @@ function HomeContent() {
     setSelectedIdea(null);
     setPostDetails(null);
     setIsSavedToHistory(false);
+    setUserNotes("");
     setRewriteCount(0);
     setRegenerateCount(0);
     
@@ -1666,6 +1675,7 @@ function HomeContent() {
     setSelectedIdea(newIdea);
     setPostDetails(null); // Reset post details so caption gets regenerated with new idea
     setIsSavedToHistory(false); // Reset saved state for new idea
+    setUserNotes(""); // Reset notes for new idea
     setRegenerateCount(prev => prev + 1);
     
     showNotification(`New idea selected: "${newIdea.title}"`, "success", "Idea Updated");
@@ -3926,6 +3936,40 @@ function HomeContent() {
                           </div>
                         </div>
 
+                        {/* User Notes Section (Only for signed-in users) */}
+                        {user && (
+                          <div className="mt-6">
+                            <h3 className="font-bold mb-3 flex items-center text-base" style={{ color: 'var(--text-primary)' }}>
+                              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                              </svg>
+                              Personal Notes
+                            </h3>
+                            <textarea
+                              value={userNotes}
+                              onChange={(e) => setUserNotes(e.target.value)}
+                              placeholder="Add personal notes about this post idea... (optional)"
+                              rows={4}
+                              className="w-full rounded-lg px-4 py-3 text-sm resize-none border-2 focus:outline-none focus:ring-2 transition-all"
+                              style={{
+                                backgroundColor: 'var(--input-bg)',
+                                borderColor: 'var(--card-border)',
+                                color: 'var(--text-primary)'
+                              }}
+                              onFocus={(e) => {
+                                e.target.style.borderColor = userType === 'creator' ? '#DAA520' : '#2979FF';
+                                e.target.style.boxShadow = userType === 'creator' 
+                                  ? '0 0 0 3px rgba(218, 165, 32, 0.1)' 
+                                  : '0 0 0 3px rgba(41, 121, 255, 0.1)';
+                              }}
+                              onBlur={(e) => {
+                                e.target.style.borderColor = 'var(--card-border)';
+                                e.target.style.boxShadow = 'none';
+                              }}
+                            />
+                          </div>
+                        )}
+
                         {/* Save to History Button (Only for signed-in users) */}
                         {user && (
                           <div className="pt-2">
@@ -4113,59 +4157,74 @@ function HomeContent() {
                     </div>
                   )}
 
-                  {/* Completed Posts Section */}
+                  {/* Completed Posts Section - Compact List View */}
                   {completedPosts.length > 0 && (
                     <div>
                       <h3 className="text-2xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
                         ✅ Completed Posts ({completedPosts.length})
                       </h3>
-                      <div className="space-y-6">
+                      <div className="space-y-3">
                         {completedPosts.map((post) => (
                           <div
                             key={post.id}
-                            className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-md transition-all"
+                            onClick={() => router.push(`/post/${post.id}`)}
+                            className="group rounded-xl p-5 border-2 transition-all cursor-pointer hover:scale-[1.01]"
+                            style={{
+                              backgroundColor: 'var(--card-bg)',
+                              borderColor: 'var(--card-border)',
+                              boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.borderColor = 'rgba(41, 121, 255, 0.4)';
+                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(41, 121, 255, 0.15)';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.borderColor = 'var(--card-border)';
+                              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+                            }}
                           >
-                            <div className="flex items-start justify-between mb-4">
-                              <div className="flex-1">
-                                <h3 className="text-xl font-bold text-gray-900 mb-1">
+                            <div className="flex items-start justify-between gap-4">
+                              <div className="flex-1 min-w-0">
+                                <h3 className="text-lg font-bold mb-2 truncate" style={{ color: 'var(--text-primary)' }}>
                                   {post.videoIdea.title}
                                 </h3>
-                                <p className="text-sm text-gray-500 mb-2">
+                                <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
                                   {post.businessName} • {new Date(post.completedAt).toLocaleDateString()}
                                 </p>
-                                <Badge variant={post.videoIdea.angle}>
-                                  {post.videoIdea.angle.replace(/_/g, " ")}
-                                </Badge>
+                                <p className="text-sm mb-3 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
+                                  {post.postDetails.caption.substring(0, 100)}
+                                  {post.postDetails.caption.length > 100 ? '...' : ''}
+                                </p>
+                                <div className="flex items-center gap-2 flex-wrap">
+                                  <Badge variant={post.videoIdea.angle}>
+                                    {post.videoIdea.angle.replace(/_/g, " ")}
+                                  </Badge>
+                                  {post.postDetails.notes && (
+                                    <span 
+                                      className="text-xs px-2 py-1 rounded-full flex items-center gap-1"
+                                      style={{
+                                        backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                                        color: '#2979FF'
+                                      }}
+                                    >
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                                      </svg>
+                                      Has notes
+                                    </span>
+                                  )}
+                                </div>
                               </div>
+                              <svg 
+                                className="w-5 h-5 flex-shrink-0 opacity-0 group-hover:opacity-70 transition-opacity" 
+                                fill="none" 
+                                stroke="currentColor" 
+                                viewBox="0 0 24 24"
+                                style={{ color: 'var(--text-secondary)' }}
+                              >
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                              </svg>
                             </div>
-                            
-                            <div className="bg-gray-50 rounded-lg p-4 mb-4">
-                              <h4 className="font-bold text-gray-900 mb-2">Caption:</h4>
-                              <p className="text-gray-700 whitespace-pre-wrap text-sm">
-                                {post.postDetails.caption}
-                              </p>
-                            </div>
-
-                            <div className="grid grid-cols-2 gap-4 text-sm">
-                              <div>
-                                <span className="font-bold text-gray-700">Title:</span>
-                                <p className="text-gray-600">{post.postDetails.title}</p>
-                              </div>
-                              <div>
-                                <span className="font-bold text-gray-700">Best Time:</span>
-                                <p className="text-gray-600">{post.postDetails.bestPostTime}</p>
-                              </div>
-                            </div>
-
-                            <button
-                              onClick={() => {
-                                navigator.clipboard.writeText(post.postDetails.caption);
-                                showNotification("Caption copied to clipboard!", "success", "Copied!");
-                              }}
-                              className="mt-4 w-full bg-blue-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-blue-700 transition-all"
-                            >
-                              Copy Caption
-                            </button>
                           </div>
                         ))}
                       </div>
