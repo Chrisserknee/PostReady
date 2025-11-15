@@ -264,14 +264,14 @@ function HomeContent() {
   const postPlannerRef = useRef<HTMLDivElement>(null);
   const urlParamsInitializedRef = useRef<boolean>(false);
 
-  // Load user plan type when user signs in
+  // Load user plan type when user signs in or when isPro changes
   useEffect(() => {
     const loadUserPlanType = async () => {
       if (user) {
         try {
           const { data, error } = await supabase
             .from('user_profiles')
-            .select('plan_type')
+            .select('plan_type, is_pro')
             .eq('id', user.id)
             .single();
           
@@ -287,7 +287,7 @@ function HomeContent() {
     };
     
     loadUserPlanType();
-  }, [user]);
+  }, [user, isPro]); // Added isPro dependency to refresh when subscription status changes
   
   // Load user progress when user signs in
   useEffect(() => {

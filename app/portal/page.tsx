@@ -50,14 +50,14 @@ export default function UserPortal() {
     type: 'info',
   });
 
-  // Load user plan type
+  // Load user plan type - refresh when isPro changes
   useEffect(() => {
     const loadUserPlanType = async () => {
       if (user) {
         try {
           const { data, error } = await supabase
             .from('user_profiles')
-            .select('plan_type')
+            .select('plan_type, is_pro')
             .eq('id', user.id)
             .single();
           
@@ -67,11 +67,13 @@ export default function UserPortal() {
         } catch (error) {
           console.error('Error loading plan type:', error);
         }
+      } else {
+        setUserPlanType('free');
       }
     };
     
     loadUserPlanType();
-  }, [user]);
+  }, [user, isPro]); // Refresh when subscription status changes
 
   useEffect(() => {
     if (!loading && !user) {
@@ -356,11 +358,11 @@ export default function UserPortal() {
             </div>
           ) : (
             <div className="text-center py-10">
-              <div className="text-6xl mb-4">{isCreator ? '✨' : '⚡'}</div>
+              <div className="text-6xl mb-4">⚡</div>
               <h3 className="text-2xl font-bold mb-3" style={{ 
-                color: isCreator ? '#DAA520' : 'var(--secondary)' 
+                color: 'var(--secondary)' 
               }}>
-                Upgrade to {isCreator ? 'PostReady Creator' : 'PostReady Pro'}
+                Upgrade to Pro
               </h3>
               <p className="mb-6 text-lg" style={{ color: 'var(--text-secondary)' }}>
                 Get unlimited video ideas, advanced insights, and priority support for just $10/month
@@ -371,19 +373,17 @@ export default function UserPortal() {
                 }}
                 className="w-full text-white rounded-xl px-6 py-3 font-bold transition-all shadow-md hover:shadow-lg hover:scale-105"
                 style={{
-                  backgroundColor: isCreator ? '#DAA520' : '#2979FF',
-                  boxShadow: isCreator
-                    ? '0 4px 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)'
-                    : '0 4px 20px rgba(41, 121, 255, 0.3), 0 0 40px rgba(111, 255, 210, 0.1)'
+                  backgroundColor: '#2979FF',
+                  boxShadow: '0 4px 20px rgba(41, 121, 255, 0.3), 0 0 40px rgba(111, 255, 210, 0.1)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = isCreator ? '#C19A1E' : '#1e5dd9';
+                  e.currentTarget.style.backgroundColor = '#1e5dd9';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = isCreator ? '#DAA520' : '#2979FF';
+                  e.currentTarget.style.backgroundColor = '#2979FF';
                 }}
               >
-                {isCreator ? '✨' : '⚡'} View {isCreator ? 'Creator' : 'Pro'} Plans
+                ⚡ View Pro Plans
               </button>
             </div>
           )}
