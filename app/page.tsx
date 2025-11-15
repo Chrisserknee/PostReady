@@ -1747,12 +1747,13 @@ function HomeContent() {
       <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>
         {/* Header with Auth - Only for signed-in users */}
         {user && !authLoading && (
-          <div className="flex justify-end items-center mb-8">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row justify-between sm:justify-end items-center gap-3 sm:gap-4 mb-8">
+            {/* Row 1: Badges and main navigation - wraps on mobile */}
+            <div className="flex flex-wrap items-center justify-center sm:justify-end gap-2 sm:gap-3 w-full sm:w-auto">
               {/* Show CREATOR badge for creator users */}
               {isCreator && (
                 <span 
-                  className="text-white px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden"
+                  className="text-white px-2 sm:px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden flex-shrink-0"
                   style={{ 
                     background: 'linear-gradient(to right, #DAA520, #F4D03F)',
                     boxShadow: '0 0 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)'
@@ -1769,7 +1770,7 @@ function HomeContent() {
               {/* Show PRO badge for pro users (but not creators) */}
               {isPro && !isCreator && (
                 <span 
-                  className="text-white px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden"
+                  className="text-white px-2 sm:px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden flex-shrink-0"
                   style={{ 
                     background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
                     boxShadow: '0 0 20px rgba(41, 121, 255, 0.4), 0 0 40px rgba(111, 255, 210, 0.2)'
@@ -1786,7 +1787,7 @@ function HomeContent() {
               <button
                 onClick={navigateHome}
                 disabled={isNavigating}
-                className="text-sm font-medium transition-all disabled:opacity-50"
+                className="text-xs sm:text-sm font-medium transition-all disabled:opacity-50 whitespace-nowrap"
                 style={currentStep === "form" ? { 
                   color: 'var(--primary)',
                   fontWeight: 'bold'
@@ -1803,7 +1804,7 @@ function HomeContent() {
                     loadHistoryData();
                   }
                 }}
-                className="text-sm font-medium transition-colors"
+                className="text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
                 style={currentStep === "businesses" ? { 
                   color: 'var(--primary)',
                   fontWeight: 'bold'
@@ -1811,7 +1812,7 @@ function HomeContent() {
                   color: 'var(--text-secondary)' 
                 }}
               >
-                My Businesses
+                Businesses
               </button>
               <button
                     onClick={() => {
@@ -1820,7 +1821,7 @@ function HomeContent() {
                         loadHistoryData();
                       }
                     }}
-                className="text-sm font-medium transition-colors"
+                className="text-xs sm:text-sm font-medium transition-colors whitespace-nowrap"
                 style={currentStep === "history" ? { 
                   color: 'var(--primary)',
                   fontWeight: 'bold'
@@ -1838,7 +1839,7 @@ function HomeContent() {
                   navigateToPortal();
                 }}
                 type="button"
-                className="text-sm transition-all font-medium underline decoration-dotted hover:opacity-70 cursor-pointer"
+                className="text-xs sm:text-sm transition-all font-medium underline decoration-dotted hover:opacity-70 cursor-pointer truncate max-w-[120px] sm:max-w-none"
                 style={{ color: 'var(--text-secondary)', pointerEvents: 'auto' }}
                 title="Go to User Portal"
               >
@@ -1847,15 +1848,15 @@ function HomeContent() {
               {!isPro && (
                 <button
                   onClick={scrollToPremium}
-                  className="text-white px-4 py-2 rounded-lg text-sm font-bold transition-all hover:opacity-90"
+                  className="text-white px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg text-xs sm:text-sm font-bold transition-all hover:opacity-90 whitespace-nowrap flex-shrink-0"
                   style={{ background: 'linear-gradient(to right, #2979FF, #6FFFD2)' }}
                 >
-                  Upgrade to Pro
+                  Upgrade
                 </button>
               )}
               <button
                 onClick={handleSignOut}
-                className="text-gray-600 hover:text-gray-900 text-sm font-medium"
+                className="text-gray-600 hover:text-gray-900 text-xs sm:text-sm font-medium whitespace-nowrap"
               >
                 Sign Out
               </button>
