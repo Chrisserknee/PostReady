@@ -4602,7 +4602,7 @@ function HomeContent() {
       {/* Floating Theme Toggle - Bottom Right */}
       <button
         onClick={toggleTheme}
-        className="fixed bottom-6 right-6 p-4 rounded-full shadow-2xl hover:scale-110 z-50"
+        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 p-3 sm:p-4 rounded-full shadow-2xl hover:scale-110 z-50 opacity-70 sm:opacity-100"
         style={{ 
           backgroundColor: 'var(--card-bg)',
           border: '3px solid var(--primary)',
@@ -4610,7 +4610,7 @@ function HomeContent() {
         }}
         title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
       >
-        <span className="text-3xl" style={{ transition: 'opacity 0.3s ease' }}>
+        <span className="text-2xl sm:text-3xl" style={{ transition: 'opacity 0.3s ease' }}>
           {theme === 'light' ? '🌙' : '☀️'}
         </span>
       </button>
