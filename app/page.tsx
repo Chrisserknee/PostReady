@@ -536,7 +536,17 @@ function HomeContent() {
     // Save completed post to history when postDetails is available
     if (currentStep === "post-details" && user && selectedIdea && postDetails) {
       console.log('📝 Post-details step reached - ensuring post is saved to history');
-      saveCompletedPostToHistory(selectedIdea, postDetails);
+      
+      const savePostToHistory = async () => {
+        try {
+          await saveCompletedPostToHistory(selectedIdea, postDetails);
+          console.log('✅ Post saved to history from post-details step');
+        } catch (error) {
+          console.error('❌ Error saving post to history:', error);
+        }
+      };
+      
+      savePostToHistory();
     }
   }, [currentStep, user, selectedIdea, postDetails, businessInfo]);
 

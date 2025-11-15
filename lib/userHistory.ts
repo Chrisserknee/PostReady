@@ -89,30 +89,34 @@ export async function saveCompletedPost(
   postDetails: PostDetails
 ): Promise<{ error: any }> {
   try {
-    // Check if a post with the same video idea title already exists (within the last 5 minutes)
+    // Check if a post with the same video idea title already exists (within the last 30 seconds)
     // This prevents duplicate saves when the same post is saved multiple times during the workflow
-    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    // but allows re-saves after 30 seconds for legitimate use cases
+    const thirtySecondsAgo = new Date(Date.now() - 30 * 1000).toISOString();
     
     const { data: existingPosts, error: checkError } = await supabase
       .from('post_history')
-      .select('id, video_idea')
+      .select('id, video_idea, post_details')
       .eq('user_id', userId)
       .eq('business_name', businessName)
-      .gte('completed_at', fiveMinutesAgo)
+      .gte('completed_at', thirtySecondsAgo)
       .order('completed_at', { ascending: false })
-      .limit(5);
+      .limit(3);
 
     if (checkError) {
       console.error('Error checking for existing posts:', checkError);
       // Continue with insert even if check fails
     }
 
-    // Check if we have a very recent post with the same video idea
+    // Check if we have a very recent post with the exact same video idea title AND caption
+    // This ensures we only prevent true duplicates, not legitimate iterations
     if (existingPosts && existingPosts.length > 0) {
       for (const post of existingPosts) {
         const existingVideoIdea = (post as any).video_idea;
-        if (existingVideoIdea?.title === videoIdea.title) {
-          console.log('📝 Post already saved recently, skipping duplicate save');
+        const existingPostDetails = (post as any).post_details;
+        if (existingVideoIdea?.title === videoIdea.title && 
+            existingPostDetails?.caption === postDetails.caption) {
+          console.log('📝 Exact duplicate post found within 30 seconds, skipping save');
           return { error: null };
         }
       }
