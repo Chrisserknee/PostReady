@@ -226,6 +226,7 @@ function HomeContent() {
   const [isDetectingLocation, setIsDetectingLocation] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const signingOutRef = useRef(false);
 
   // Modal state
   const [modalState, setModalState] = useState<{
@@ -636,22 +637,25 @@ function HomeContent() {
     }
   };
 
-  const handleSignOut = () => {
-    // Prevent multiple clicks
-    if (isSigningOut) return;
+  const handleSignOut = useCallback(() => {
+    // Prevent multiple clicks using ref (instant check, no re-render needed)
+    if (signingOutRef.current) {
+      console.log('⚠️ Sign out already in progress, ignoring click');
+      return;
+    }
     
+    signingOutRef.current = true;
     setIsSigningOut(true);
-    console.log('Signing out...');
+    console.log('🚪 Signing out...');
     
-    // Sign out and immediately redirect without waiting
-    supabase.auth.signOut().then(() => {
+    // Sign out from Supabase (don't wait for response, just redirect)
+    supabase.auth.signOut();
+    
+    // Redirect immediately - don't wait for anything
+    setTimeout(() => {
       window.location.href = '/';
-    }).catch((error) => {
-      console.error('Sign out error:', error);
-      setIsSigningOut(false);
-      showNotification('Failed to sign out. Please try again.', 'error', 'Error');
-    });
-  };
+    }, 100);
+  }, []);
 
   const handleManageBilling = async () => {
     if (!user) return;

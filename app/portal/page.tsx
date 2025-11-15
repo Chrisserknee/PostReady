@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'next/navigation';
@@ -18,6 +18,7 @@ export default function UserPortal() {
   const [billingLoading, setBillingLoading] = useState(false);
   const [userPlanType, setUserPlanType] = useState<'free' | 'pro' | 'creator'>('free');
   const [isSigningOut, setIsSigningOut] = useState(false);
+  const signingOutRef = useRef(false);
   
   // Support contact form state
   const [showSupportModal, setShowSupportModal] = useState(false);
@@ -469,25 +470,23 @@ export default function UserPortal() {
 
             <button
               onClick={() => {
-                // Prevent multiple clicks
-                if (isSigningOut) return;
+                // Prevent multiple clicks using ref (instant check, no re-render needed)
+                if (signingOutRef.current) {
+                  console.log('⚠️ Sign out already in progress, ignoring click');
+                  return;
+                }
                 
+                signingOutRef.current = true;
                 setIsSigningOut(true);
-                console.log('Signing out...');
+                console.log('🚪 Signing out...');
                 
-                // Sign out and immediately redirect without waiting
-                supabase.auth.signOut().then(() => {
+                // Sign out from Supabase (don't wait for response, just redirect)
+                supabase.auth.signOut();
+                
+                // Redirect immediately - don't wait for anything
+                setTimeout(() => {
                   window.location.href = '/';
-                }).catch((error) => {
-                  console.error('Sign out error:', error);
-                  setIsSigningOut(false);
-                  setModalState({
-                    isOpen: true,
-                    title: 'Error',
-                    message: 'Failed to sign out. Please try again.',
-                    type: 'error'
-                  });
-                });
+                }, 100);
               }}
               disabled={isSigningOut}
               className="w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
