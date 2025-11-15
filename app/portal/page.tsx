@@ -16,25 +16,6 @@ export default function UserPortal() {
   const router = useRouter();
   const [billingLoading, setBillingLoading] = useState(false);
   
-  // Dev mode support - check localStorage for dev mode state
-  const [devMode, setDevMode] = useState<'none' | 'regular' | 'pro' | 'creator'>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('devMode') as 'none' | 'regular' | 'pro' | 'creator' | null;
-      return stored || 'none';
-    }
-    return 'none';
-  });
-  const [devModeLoaded, setDevModeLoaded] = useState(false);
-  
-  // Persist dev mode to localStorage so it syncs across pages
-  useEffect(() => {
-    if (devMode !== 'none') {
-      localStorage.setItem('devMode', devMode);
-    } else {
-      localStorage.removeItem('devMode');
-    }
-  }, [devMode]);
-  
   // Support contact form state
   const [showSupportModal, setShowSupportModal] = useState(false);
   const [supportSubject, setSupportSubject] = useState('');
@@ -52,49 +33,6 @@ export default function UserPortal() {
     type: 'info',
   });
   
-  useEffect(() => {
-    // Mark dev mode as loaded after component mounts
-    setDevModeLoaded(true);
-  }, []);
-  
-  // Dev mode overrides - accurately simulate different user states
-  // Create proper mock User objects that match Supabase User type
-  const createMockUser = (mode: 'regular' | 'pro' | 'creator'): User => {
-    const baseUser: Partial<User> = {
-      id: `dev-user-${mode}`,
-      email: mode === 'pro' ? 'pro@test.com' : mode === 'creator' ? 'creator@test.com' : 'user@test.com',
-      aud: 'authenticated',
-      role: 'authenticated',
-      email_confirmed_at: new Date().toISOString(),
-      phone: undefined,
-      confirmed_at: new Date().toISOString(),
-      last_sign_in_at: new Date().toISOString(),
-      app_metadata: {},
-      user_metadata: {
-        role: mode === 'creator' ? 'creator' : undefined,
-        plan: mode === 'pro' ? 'pro' : mode === 'creator' ? 'creator' : 'regular'
-      },
-      identities: [],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    return baseUser as User;
-  };
-
-  // When devMode='none': use real user if available, otherwise null (not signed in)
-  // When devMode is active: use mock user to simulate signed-in state
-  const effectiveUser: User | null = devMode === 'none' 
-    ? user  // Use real user when dev mode is off
-    : createMockUser(devMode);
-  
-  // Pro status: true for pro/creator dev modes, or real pro users when devMode='none'
-  const effectiveIsPro = devMode === 'pro' || devMode === 'creator' 
-    ? true 
-    : devMode === 'none' 
-      ? isPro 
-      : false;
-  
-  
   // Modal state
   const [modalState, setModalState] = useState<{
     isOpen: boolean;
@@ -111,12 +49,10 @@ export default function UserPortal() {
   });
 
   useEffect(() => {
-    // Wait for both auth loading and dev mode loading to complete
-    // Allow dev mode users or real users
-    if (!loading && devModeLoaded && !effectiveUser) {
+    if (!loading && !user) {
       router.push('/');
     }
-  }, [effectiveUser, loading, devModeLoaded, router]);
+  }, [user, loading, router]);
 
   const handleSupportSubmit = async () => {
     if (!supportSubject.trim() || !supportMessage.trim()) {
@@ -139,8 +75,8 @@ export default function UserPortal() {
         body: JSON.stringify({
           subject: supportSubject,
           message: supportMessage,
-          userEmail: effectiveUser?.email || 'Anonymous',
-          userId: effectiveUser?.id || null,
+          userEmail: user?.email || 'Anonymous',
+          userId: user?.id || null,
         }),
       });
 
@@ -174,18 +110,15 @@ export default function UserPortal() {
   };
 
   const handleManageBilling = async () => {
-    if (!effectiveUser || devMode !== 'none') {
-      // Dev mode users can't manage billing
+    if (!user) {
       setModalState({
         isOpen: true,
-        title: 'Billing Unavailable',
-        message: 'Billing management is not available in dev mode. Please sign in with a real account.',
+        title: 'Not Signed In',
+        message: 'Please sign in to manage your billing.',
         type: 'info',
       });
       return;
     }
-    
-    if (!user) return;
     
     setBillingLoading(true);
     try {
@@ -221,7 +154,7 @@ export default function UserPortal() {
   };
 
   // Show loading if auth is loading OR dev mode hasn't loaded yet OR no user
-  if (loading || !devModeLoaded || !effectiveUser) {
+  if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--background)' }}>
         <div className="text-center">
@@ -232,94 +165,11 @@ export default function UserPortal() {
     );
   }
 
+  // Check if user is a creator
+  const isCreator = user?.user_metadata?.role === 'creator' || user?.user_metadata?.plan === 'creator';
+
   return (
     <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
-      {/* Dev Mode Buttons - Top Left - Development Only */}
-      {process.env.NODE_ENV !== 'production' && (
-        <div className="fixed top-4 left-4 z-50 flex flex-col gap-2">
-          <div className="text-xs font-bold mb-1 px-2 py-1 rounded" style={{ 
-            backgroundColor: 'var(--card-bg)',
-            border: '2px solid var(--primary)',
-            color: 'var(--primary)'
-          }}>
-            DEV MODE
-          </div>
-          <div className="flex flex-col gap-1">
-            <button
-              onClick={() => setDevMode('none')}
-              className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
-                devMode === 'none' ? 'ring-2 ring-offset-1' : ''
-              }`}
-              style={devMode === 'none' ? {
-                backgroundColor: 'var(--primary)',
-                color: 'white',
-                ringColor: 'var(--primary)'
-              } : {
-                backgroundColor: 'var(--card-bg)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--card-border)'
-              }}
-              title="Simulate anonymous user (not signed in) - Usage tracked via localStorage"
-            >
-              Not Signed In
-            </button>
-            <button
-              onClick={() => setDevMode('regular')}
-              className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
-                devMode === 'regular' ? 'ring-2 ring-offset-1' : ''
-              }`}
-              style={devMode === 'regular' ? {
-                backgroundColor: 'var(--primary)',
-                color: 'white',
-                ringColor: 'var(--primary)'
-              } : {
-                backgroundColor: 'var(--card-bg)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--card-border)'
-              }}
-              title="Simulate regular user account (signed in, free plan) - Limited to 2 uses per feature"
-            >
-              Regular User
-            </button>
-            <button
-              onClick={() => setDevMode('pro')}
-              className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
-                devMode === 'pro' ? 'ring-2 ring-offset-1' : ''
-              }`}
-              style={devMode === 'pro' ? {
-                backgroundColor: 'var(--primary)',
-                color: 'white',
-                ringColor: 'var(--primary)'
-              } : {
-                backgroundColor: 'var(--card-bg)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--card-border)'
-              }}
-              title="Simulate Pro user account (signed in, Pro plan) - Unlimited usage"
-            >
-              Pro User
-            </button>
-            <button
-              onClick={() => setDevMode('creator')}
-              className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
-                devMode === 'creator' ? 'ring-2 ring-offset-1' : ''
-              }`}
-              style={devMode === 'creator' ? {
-                backgroundColor: 'var(--primary)',
-                color: 'white',
-                ringColor: 'var(--primary)'
-              } : {
-                backgroundColor: 'var(--card-bg)',
-                color: 'var(--text-primary)',
-                border: '1px solid var(--card-border)'
-              }}
-              title="Simulate Creator user account (signed in, Creator plan) - Unlimited usage, creator features enabled"
-            >
-              Creator User
-            </button>
-          </div>
-        </div>
-      )}
       <div className="max-w-4xl mx-auto px-4 py-10">
         {/* Header */}
         <div className="flex justify-between items-center mb-8">
@@ -331,14 +181,9 @@ export default function UserPortal() {
               onClick={() => router.push('/')}
             />
             <h1 className="text-3xl font-bold" style={{ 
-              color: devMode === 'creator' && effectiveIsPro ? '#DAA520' : 'var(--secondary)' 
+              color: isCreator && isPro ? '#DAA520' : 'var(--secondary)' 
             }}>
               User Portal
-              {devMode !== 'none' && (
-                <span className="ml-3 text-xs px-2 py-1 rounded bg-red-100 text-red-700 border border-red-300">
-                  DEV MODE
-                </span>
-              )}
             </h1>
           </div>
           <button
@@ -348,10 +193,10 @@ export default function UserPortal() {
               backgroundColor: 'var(--card-bg)',
               borderWidth: '2px',
               borderStyle: 'solid',
-              borderColor: devMode === 'creator' && effectiveIsPro 
+              borderColor: isCreator && isPro 
                 ? 'rgba(218, 165, 32, 0.3)' 
                 : 'var(--card-border)',
-              color: devMode === 'creator' && effectiveIsPro 
+              color: isCreator && isPro 
                 ? '#DAA520' 
                 : 'var(--text-primary)'
             }}
@@ -364,13 +209,13 @@ export default function UserPortal() {
         <div 
           className="mb-6 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-300"
           style={{
-            backgroundColor: devMode === 'creator' && effectiveIsPro 
+            backgroundColor: isCreator && isPro 
               ? 'rgba(218, 165, 32, 0.08)' 
               : 'var(--card-bg)',
-            borderColor: devMode === 'creator' && effectiveIsPro 
+            borderColor: isCreator && isPro 
               ? 'rgba(218, 165, 32, 0.3)' 
               : 'var(--card-border)',
-            boxShadow: devMode === 'creator' && effectiveIsPro 
+            boxShadow: isCreator && isPro 
               ? '0 10px 40px rgba(218, 165, 32, 0.15)' 
               : '0 10px 40px rgba(0, 0, 0, 0.05)'
           }}
@@ -378,29 +223,29 @@ export default function UserPortal() {
           <div className="flex items-start justify-between">
             <div>
               <h2 className="text-2xl font-bold mb-4" style={{ 
-                color: devMode === 'creator' && effectiveIsPro ? '#DAA520' : 'var(--text-primary)' 
+                color: isCreator && isPro ? '#DAA520' : 'var(--text-primary)' 
               }}>
                 Account Overview
               </h2>
               <div className="space-y-3">
                 <div>
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Email</p>
-                  <p className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>{effectiveUser?.email || 'Unknown'}</p>
+                  <p className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>{user?.email || 'Unknown'}</p>
                 </div>
                 <div>
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Account Status</p>
                   <div className="flex items-center gap-2">
-                    {effectiveIsPro ? (
+                    {isPro ? (
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold" style={{ 
-                        background: devMode === 'creator' && effectiveIsPro 
+                        background: isCreator && isPro 
                           ? 'linear-gradient(to right, #DAA520, #F4D03F)' 
                           : 'linear-gradient(to right, #2979FF, #6FFFD2)', 
                         color: 'white',
-                        boxShadow: devMode === 'creator' && effectiveIsPro 
+                        boxShadow: isCreator && isPro 
                           ? '0 0 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)' 
                           : 'none'
                       }}>
-                        {devMode === 'creator' && effectiveIsPro ? '✨' : '⚡'} {devMode === 'creator' && effectiveIsPro ? 'Creator' : 'Pro'} Member
+                        {isCreator && isPro ? '✨' : '⚡'} {isCreator && isPro ? 'Creator' : 'Pro'} Member
                       </span>
                     ) : (
                       <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-gray-200" style={{ color: 'var(--text-secondary)' }}>
@@ -417,33 +262,33 @@ export default function UserPortal() {
         {/* Billing & Subscription */}
         <SectionCard className="mb-6">
           <h2 className="text-2xl font-bold mb-6" style={{ 
-            color: devMode === 'creator' && effectiveIsPro ? '#DAA520' : 'var(--secondary)' 
+            color: isCreator && isPro ? '#DAA520' : 'var(--secondary)' 
           }}>
             Billing & Subscription
           </h2>
           
-          {effectiveIsPro ? (
+          {isPro ? (
             <div className="space-y-4">
               <div className="p-6 rounded-xl border-2" style={{ 
-                backgroundColor: devMode === 'creator' && effectiveIsPro 
+                backgroundColor: isCreator && isPro 
                   ? 'rgba(218, 165, 32, 0.08)' 
                   : 'var(--hover-bg)',
-                borderColor: devMode === 'creator' && effectiveIsPro 
+                borderColor: isCreator && isPro 
                   ? 'rgba(218, 165, 32, 0.3)' 
                   : 'var(--primary)',
-                boxShadow: devMode === 'creator' && effectiveIsPro 
+                boxShadow: isCreator && isPro 
                   ? '0 10px 40px rgba(218, 165, 32, 0.15)' 
                   : 'none'
               }}>
                 <div className="flex items-center justify-between mb-3">
                   <h3 className="font-bold text-xl flex items-center" style={{ 
-                    color: devMode === 'creator' && effectiveIsPro ? '#DAA520' : 'var(--text-primary)' 
+                    color: isCreator && isPro ? '#DAA520' : 'var(--text-primary)' 
                   }}>
-                    <span className="mr-2">{devMode === 'creator' && effectiveIsPro ? '✨' : '⚡'}</span>
-                    {devMode === 'creator' && effectiveIsPro ? 'PostReady Creator' : 'PostReady Pro'}
+                    <span className="mr-2">{isCreator && isPro ? '✨' : '⚡'}</span>
+                    {isCreator && isPro ? 'PostReady Creator' : 'PostReady Pro'}
                   </h3>
                   <span className="text-lg font-bold px-3 py-1 rounded-lg" style={{ 
-                    color: devMode === 'creator' && effectiveIsPro ? '#DAA520' : 'var(--primary)',
+                    color: isCreator && isPro ? '#DAA520' : 'var(--primary)',
                     backgroundColor: 'var(--card-bg)'
                   }}>
                     $10/month
@@ -457,19 +302,19 @@ export default function UserPortal() {
                   disabled={billingLoading}
                   className="w-full text-white rounded-xl px-6 py-3 font-bold transition-all disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:scale-105"
                   style={{
-                    backgroundColor: billingLoading ? undefined : (devMode === 'creator' && effectiveIsPro ? '#DAA520' : '#2979FF'),
-                    boxShadow: billingLoading ? undefined : (devMode === 'creator' && effectiveIsPro 
+                    backgroundColor: billingLoading ? undefined : (isCreator && isPro ? '#DAA520' : '#2979FF'),
+                    boxShadow: billingLoading ? undefined : (isCreator && isPro 
                       ? '0 4px 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)' 
                       : '0 4px 20px rgba(41, 121, 255, 0.3), 0 0 40px rgba(111, 255, 210, 0.1)')
                   }}
                   onMouseEnter={(e) => {
                     if (!billingLoading) {
-                      e.currentTarget.style.backgroundColor = devMode === 'creator' && effectiveIsPro ? '#C19A1E' : '#1e5dd9';
+                      e.currentTarget.style.backgroundColor = isCreator && isPro ? '#C19A1E' : '#1e5dd9';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!billingLoading) {
-                      e.currentTarget.style.backgroundColor = devMode === 'creator' && effectiveIsPro ? '#DAA520' : '#2979FF';
+                      e.currentTarget.style.backgroundColor = isCreator && isPro ? '#DAA520' : '#2979FF';
                     }
                   }}
                 >
@@ -482,11 +327,11 @@ export default function UserPortal() {
             </div>
           ) : (
             <div className="text-center py-10">
-              <div className="text-6xl mb-4">{devMode === 'creator' ? '✨' : '⚡'}</div>
+              <div className="text-6xl mb-4">{isCreator ? '✨' : '⚡'}</div>
               <h3 className="text-2xl font-bold mb-3" style={{ 
-                color: devMode === 'creator' ? '#DAA520' : 'var(--secondary)' 
+                color: isCreator ? '#DAA520' : 'var(--secondary)' 
               }}>
-                Upgrade to {devMode === 'creator' ? 'PostReady Creator' : 'PostReady Pro'}
+                Upgrade to {isCreator ? 'PostReady Creator' : 'PostReady Pro'}
               </h3>
               <p className="mb-6 text-lg" style={{ color: 'var(--text-secondary)' }}>
                 Get unlimited video ideas, advanced insights, and priority support for just $10/month
@@ -497,19 +342,19 @@ export default function UserPortal() {
                 }}
                 className="w-full text-white rounded-xl px-6 py-3 font-bold transition-all shadow-md hover:shadow-lg hover:scale-105"
                 style={{
-                  backgroundColor: devMode === 'creator' ? '#DAA520' : '#2979FF',
-                  boxShadow: devMode === 'creator'
+                  backgroundColor: isCreator ? '#DAA520' : '#2979FF',
+                  boxShadow: isCreator
                     ? '0 4px 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)'
                     : '0 4px 20px rgba(41, 121, 255, 0.3), 0 0 40px rgba(111, 255, 210, 0.1)'
                 }}
                 onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = devMode === 'creator' ? '#C19A1E' : '#1e5dd9';
+                  e.currentTarget.style.backgroundColor = isCreator ? '#C19A1E' : '#1e5dd9';
                 }}
                 onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = devMode === 'creator' ? '#DAA520' : '#2979FF';
+                  e.currentTarget.style.backgroundColor = isCreator ? '#DAA520' : '#2979FF';
                 }}
               >
-                {devMode === 'creator' ? '✨' : '⚡'} View {devMode === 'creator' ? 'Creator' : 'Pro'} Plans
+                {isCreator ? '✨' : '⚡'} View {isCreator ? 'Creator' : 'Pro'} Plans
               </button>
             </div>
           )}
@@ -518,7 +363,7 @@ export default function UserPortal() {
         {/* Account Actions */}
         <SectionCard>
           <h2 className="text-2xl font-bold mb-6" style={{ 
-            color: devMode === 'creator' && effectiveIsPro ? '#DAA520' : 'var(--secondary)' 
+            color: isCreator && isPro ? '#DAA520' : 'var(--secondary)' 
           }}>
             Account Actions
           </h2>
@@ -537,7 +382,7 @@ export default function UserPortal() {
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>View and manage your saved businesses</p>
                 </div>
                 <span style={{ 
-                  color: devMode === 'creator' && effectiveIsPro ? '#DAA520' : 'var(--primary)' 
+                  color: isCreator && isPro ? '#DAA520' : 'var(--primary)' 
                 }}>→</span>
               </div>
             </button>
@@ -556,7 +401,7 @@ export default function UserPortal() {
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>View all your completed posts</p>
                 </div>
                 <span style={{ 
-                  color: devMode === 'creator' && effectiveIsPro ? '#DAA520' : 'var(--primary)' 
+                  color: isCreator && isPro ? '#DAA520' : 'var(--primary)' 
                 }}>→</span>
               </div>
             </button>
@@ -565,8 +410,8 @@ export default function UserPortal() {
               onClick={() => setShowSupportModal(true)}
               className="w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-105"
               style={{ 
-                borderColor: effectiveIsPro 
-                  ? (devMode === 'creator' && effectiveIsPro ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.3)')
+                borderColor: isPro 
+                  ? (isCreator && isPro ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.3)')
                   : 'var(--card-border)',
                 backgroundColor: 'var(--card-bg)'
               }}
@@ -574,19 +419,19 @@ export default function UserPortal() {
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-bold flex items-center gap-2" style={{ 
-                    color: effectiveIsPro 
-                      ? (devMode === 'creator' && effectiveIsPro ? '#DAA520' : 'var(--primary)')
+                    color: isPro 
+                      ? (isCreator && isPro ? '#DAA520' : 'var(--primary)')
                       : 'var(--text-primary)'
                   }}>
-                    {effectiveIsPro ? '⚡' : ''} {effectiveIsPro ? 'Priority Support' : 'Support'}
+                    {isPro ? '⚡' : ''} {isPro ? 'Priority Support' : 'Support'}
                   </h3>
                   <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    {effectiveIsPro ? 'Get priority assistance from our team' : 'Contact our support team'}
+                    {isPro ? 'Get priority assistance from our team' : 'Contact our support team'}
                   </p>
                 </div>
                 <span style={{ 
-                  color: effectiveIsPro 
-                    ? (devMode === 'creator' && effectiveIsPro ? '#DAA520' : 'var(--primary)')
+                  color: isPro 
+                    ? (isCreator && isPro ? '#DAA520' : 'var(--primary)')
                     : 'var(--primary)' 
                 }}>→</span>
               </div>
@@ -594,13 +439,6 @@ export default function UserPortal() {
 
             <button
               onClick={async () => {
-                if (devMode !== 'none') {
-                  // For dev mode, just clear dev mode and redirect
-                  localStorage.removeItem('devMode');
-                  router.push('/');
-                  return;
-                }
-                
                 setModalState({
                   isOpen: true,
                   title: 'Sign Out',
@@ -637,9 +475,9 @@ export default function UserPortal() {
         className="fixed bottom-6 right-6 p-4 rounded-full shadow-2xl hover:scale-110 z-50"
         style={{ 
           backgroundColor: 'var(--card-bg)',
-          border: `3px solid ${devMode === 'creator' && effectiveIsPro ? '#DAA520' : 'var(--primary)'}`,
+          border: `3px solid ${isCreator && isPro ? '#DAA520' : 'var(--primary)'}`,
           transition: 'all 0.3s ease, transform 0.2s ease',
-          boxShadow: devMode === 'creator' && effectiveIsPro 
+          boxShadow: isCreator && isPro 
             ? '0 10px 40px rgba(218, 165, 32, 0.3)' 
             : '0 10px 40px rgba(0, 0, 0, 0.2)'
         }}
@@ -666,8 +504,8 @@ export default function UserPortal() {
             className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200"
             style={{
               backgroundColor: 'var(--card-bg)',
-              border: `2px solid ${effectiveIsPro 
-                ? (devMode === 'creator' && effectiveIsPro ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.3)')
+              border: `2px solid ${isPro 
+                ? (isCreator && isPro ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.3)')
                 : 'var(--card-border)'}`,
             }}
             onClick={(e) => e.stopPropagation()}
@@ -675,11 +513,11 @@ export default function UserPortal() {
             <div className="p-6">
               <div className="flex items-start justify-between mb-4">
                 <h3 className="text-xl font-bold" style={{ 
-                  color: effectiveIsPro 
-                    ? (devMode === 'creator' && effectiveIsPro ? '#DAA520' : 'var(--primary)')
+                  color: isPro 
+                    ? (isCreator && isPro ? '#DAA520' : 'var(--primary)')
                     : 'var(--text-primary)'
                 }}>
-                  {effectiveIsPro ? '⚡ Priority Support' : 'Support'}
+                  {isPro ? '⚡ Priority Support' : 'Support'}
                 </h3>
                 <button
                   onClick={() => {
@@ -693,17 +531,17 @@ export default function UserPortal() {
                 </button>
               </div>
 
-              {effectiveIsPro && (
+              {isPro && (
                 <div className="mb-4 p-3 rounded-lg" style={{
-                  backgroundColor: devMode === 'creator' && effectiveIsPro 
+                  backgroundColor: isCreator && isPro 
                     ? 'rgba(218, 165, 32, 0.1)' 
                     : 'rgba(41, 121, 255, 0.1)',
-                  border: `1px solid ${devMode === 'creator' && effectiveIsPro 
+                  border: `1px solid ${isCreator && isPro 
                     ? 'rgba(218, 165, 32, 0.3)' 
                     : 'rgba(41, 121, 255, 0.3)'}`
                 }}>
                   <p className="text-sm font-medium" style={{ 
-                    color: devMode === 'creator' && effectiveIsPro ? '#DAA520' : 'var(--primary)' 
+                    color: isCreator && isPro ? '#DAA520' : 'var(--primary)' 
                   }}>
                     ⚡ As a Pro member, you'll receive priority support with faster response times.
                   </p>
@@ -723,15 +561,15 @@ export default function UserPortal() {
                     className="w-full px-4 py-2 rounded-lg border-2 focus:outline-none"
                     style={{
                       backgroundColor: 'white',
-                      borderColor: effectiveIsPro 
-                        ? (devMode === 'creator' && effectiveIsPro ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)')
+                      borderColor: isPro 
+                        ? (isCreator && isPro ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)')
                         : 'var(--card-border)',
                       color: '#1a1a1a',
                     }}
                     disabled={isSubmittingSupport}
                     onFocus={(e) => {
-                      e.target.style.boxShadow = effectiveIsPro 
-                        ? (devMode === 'creator' && effectiveIsPro 
+                      e.target.style.boxShadow = isPro 
+                        ? (isCreator && isPro 
                           ? '0 0 0 2px rgba(218, 165, 32, 0.5)' 
                           : '0 0 0 2px rgba(41, 121, 255, 0.5)')
                         : '0 0 0 2px rgba(0, 0, 0, 0.1)';
@@ -754,15 +592,15 @@ export default function UserPortal() {
                     className="w-full px-4 py-2 rounded-lg border-2 resize-none focus:outline-none"
                     style={{
                       backgroundColor: 'white',
-                      borderColor: effectiveIsPro 
-                        ? (devMode === 'creator' && effectiveIsPro ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)')
+                      borderColor: isPro 
+                        ? (isCreator && isPro ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)')
                         : 'var(--card-border)',
                       color: '#1a1a1a',
                     }}
                     disabled={isSubmittingSupport}
                     onFocus={(e) => {
-                      e.target.style.boxShadow = effectiveIsPro 
-                        ? (devMode === 'creator' && effectiveIsPro 
+                      e.target.style.boxShadow = isPro 
+                        ? (isCreator && isPro 
                           ? '0 0 0 2px rgba(218, 165, 32, 0.5)' 
                           : '0 0 0 2px rgba(41, 121, 255, 0.5)')
                         : '0 0 0 2px rgba(0, 0, 0, 0.1)';
@@ -773,9 +611,9 @@ export default function UserPortal() {
                   />
                 </div>
 
-                {effectiveUser?.email && (
+                {user?.email && (
                   <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                    Sending from: {effectiveUser.email}
+                    Sending from: {user.email}
                   </p>
                 )}
               </div>
@@ -802,13 +640,13 @@ export default function UserPortal() {
                 disabled={isSubmittingSupport || !supportSubject.trim() || !supportMessage.trim()}
                 className="px-6 py-2 rounded-lg font-bold transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
                 style={{
-                  background: effectiveIsPro 
-                    ? (devMode === 'creator' && effectiveIsPro 
+                  background: isPro 
+                    ? (isCreator && isPro 
                       ? 'linear-gradient(to right, #DAA520, #F4D03F)'
                       : 'linear-gradient(to right, #2979FF, #6FFFD2)')
                     : 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  boxShadow: effectiveIsPro 
-                    ? (devMode === 'creator' && effectiveIsPro 
+                  boxShadow: isPro 
+                    ? (isCreator && isPro 
                       ? '0 4px 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)'
                       : '0 4px 20px rgba(41, 121, 255, 0.3), 0 0 40px rgba(111, 255, 210, 0.1)')
                     : 'none'

@@ -138,24 +138,6 @@ function HomeContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   
-  // Dev mode state - load from localStorage on mount
-  const [devMode, setDevMode] = useState<'none' | 'regular' | 'pro' | 'creator'>(() => {
-    if (typeof window !== 'undefined') {
-      const stored = localStorage.getItem('devMode') as 'none' | 'regular' | 'pro' | 'creator' | null;
-      return stored || 'none';
-    }
-    return 'none';
-  });
-  
-  // Persist dev mode to localStorage so portal page can access it
-  useEffect(() => {
-    if (devMode !== 'none') {
-      localStorage.setItem('devMode', devMode);
-    } else {
-      localStorage.removeItem('devMode');
-    }
-  }, [devMode]);
-  
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
     businessName: "",
     businessType: "Restaurant",
@@ -167,95 +149,8 @@ function HomeContent() {
   const [planType, setPlanType] = useState<'pro' | 'creator'>('pro');
   const [isPlanTransitioning, setIsPlanTransitioning] = useState<boolean>(false);
   
-  // Dev mode overrides - accurately simulate different user states
-  // Create proper mock User objects that match Supabase User type
-  const createMockUser = (mode: 'regular' | 'pro' | 'creator'): User => {
-    const baseUser: Partial<User> = {
-      id: `dev-user-${mode}`,
-      email: mode === 'pro' ? 'pro@test.com' : mode === 'creator' ? 'creator@test.com' : 'user@test.com',
-      aud: 'authenticated',
-      role: 'authenticated',
-      email_confirmed_at: new Date().toISOString(),
-      phone: undefined,
-      confirmed_at: new Date().toISOString(),
-      last_sign_in_at: new Date().toISOString(),
-      app_metadata: {},
-      user_metadata: {
-        role: mode === 'creator' ? 'creator' : undefined,
-        plan: mode === 'pro' ? 'pro' : mode === 'creator' ? 'creator' : 'regular'
-      },
-      identities: [],
-      created_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    };
-    return baseUser as User;
-  };
-
-  // When devMode='none': use real user if available, otherwise null (not signed in)
-  // When devMode is active: use mock user to simulate signed-in state
-  const effectiveUser: User | null = devMode === 'none' 
-    ? user  // Use real user when dev mode is off
-    : createMockUser(devMode);
-  
-  // Pro status: true for pro/creator dev modes, or real pro users when devMode='none'
-  const effectiveIsPro = devMode === 'pro' || devMode === 'creator' 
-    ? true 
-    : devMode === 'none' 
-      ? isPro 
-      : false;
-  
-  // Check if user is a creator (dev mode creator or real creator user)
-  const isCreator = devMode === 'creator' || 
-    (effectiveUser?.user_metadata?.role === 'creator' || effectiveUser?.user_metadata?.plan === 'creator');
-  
-  // Handle dev mode changes - reset userType and usage counts to simulate fresh user state
-  useEffect(() => {
-    // Reset userType based on dev mode
-    if (devMode === 'creator') {
-      setUserType('creator');
-    } else {
-      // Reset to business type when not in creator mode
-      setUserType('business');
-    }
-    
-    // Reset usage counts when switching dev modes to simulate fresh user accounts
-    // This ensures no data leaks between different user states
-    if (devMode === 'regular') {
-      // Regular user: Start fresh with 0 usage (will be limited to 2 uses)
-      setGenerateIdeasCount(0);
-      setRewriteCount(0);
-      setRegenerateCount(0);
-      setRewordTitleCount(0);
-      setHashtagCount(0);
-      setGuideAICount(0);
-      setGuideAIForIdeasCount(0);
-      console.log(`🔄 Dev mode: Regular User - Usage counts reset to 0 (limited to 2 uses)`);
-    } else if (devMode === 'pro') {
-      // Pro user: Unlimited usage, but reset counts for clean testing
-      setGenerateIdeasCount(0);
-      setRewriteCount(0);
-      setRegenerateCount(0);
-      setRewordTitleCount(0);
-      setHashtagCount(0);
-      setGuideAICount(0);
-      setGuideAIForIdeasCount(0);
-      console.log(`🔄 Dev mode: Pro User - Usage counts reset (unlimited usage)`);
-    } else if (devMode === 'creator') {
-      // Creator user: Unlimited usage, but reset counts for clean testing
-      setGenerateIdeasCount(0);
-      setRewriteCount(0);
-      setRegenerateCount(0);
-      setRewordTitleCount(0);
-      setHashtagCount(0);
-      setGuideAICount(0);
-      setGuideAIForIdeasCount(0);
-      console.log(`🔄 Dev mode: Creator User - Usage counts reset (unlimited usage)`);
-    } else if (devMode === 'none') {
-      // When switching to 'none', clear dev mode state but keep real user state
-      // Real user state will be loaded from database or localStorage
-      console.log(`🔄 Dev mode: Disabled - Using real authentication state`);
-    }
-  }, [devMode]);
+  // Check if user is a creator
+  const isCreator = user?.user_metadata?.role === 'creator' || user?.user_metadata?.plan === 'creator';
   
 
   const [strategy, setStrategy] = useState<StrategyResult | null>(null);
@@ -362,35 +257,30 @@ function HomeContent() {
   // Load user progress when user signs in OR when dev mode is active
   useEffect(() => {
     if (!authLoading) {
-      if (effectiveUser) {
-        // Load progress for both real users and dev mode users
-        if (devMode === 'none' && user) {
-          // Real user: Load from database
-          loadProgress();
-        }
+      if (user) {
+        // Load progress from database
+        loadProgress();
         // Load history for all authenticated users (real or dev mode)
         loadHistoryData();
       }
     }
-  }, [effectiveUser, authLoading, devMode, user]);
+  }, [user, authLoading]);
 
   // Auto-save progress when data changes (but not for navigation pages)
-  // Only save for real users (not dev mode users - they use localStorage)
   useEffect(() => {
     const navigationPages: WizardStep[] = ["businesses", "history", "premium", "form"];
-    if (devMode === 'none' && user && !navigationPages.includes(currentStep)) {
+    if (user && !navigationPages.includes(currentStep)) {
       saveProgress();
     }
-  }, [user, businessInfo, strategy, selectedIdea, postDetails, currentStep, devMode]);
+  }, [user, businessInfo, strategy, selectedIdea, postDetails, currentStep]);
 
   // Auto-redirect to checkout after signup/signin if needed
-  // Only for real users (dev mode users don't need checkout)
   useEffect(() => {
-    if (devMode === 'none' && user && redirectToCheckoutAfterAuth && !authLoading) {
+    if (user && redirectToCheckoutAfterAuth && !authLoading) {
       setRedirectToCheckoutAfterAuth(false);
       initiateCheckout();
     }
-  }, [user, redirectToCheckoutAfterAuth, authLoading, devMode]);
+  }, [user, redirectToCheckoutAfterAuth, authLoading]);
 
 
   // Handle URL parameters for navigation from portal (only run once on initial mount)
@@ -416,7 +306,7 @@ function HomeContent() {
     if (view === 'history') {
       setCurrentStep('history');
       // Reload history data when navigating to history page
-      if (effectiveUser) {
+      if (user) {
         loadHistoryData();
       }
       // Clear URL params after navigation
@@ -426,7 +316,7 @@ function HomeContent() {
     } else if (view === 'businesses') {
       setCurrentStep('businesses');
       // Reload businesses data when navigating to businesses page
-      if (effectiveUser) {
+      if (user) {
         loadHistoryData();
       }
       // Clear URL params after navigation
@@ -445,9 +335,9 @@ function HomeContent() {
   }, []);
 
   // Load usage counts from localStorage for anonymous users (prevent refresh abuse)
-  // Only when not signed in and not in dev mode
+  // Only when not signed in
   useEffect(() => {
-    if (!effectiveUser && devMode === 'none' && typeof window !== 'undefined') {
+    if (!user && typeof window !== 'undefined') {
       try {
         const storedTimestamp = localStorage.getItem('postready_usageTimestamp');
         const timestamp = storedTimestamp ? parseInt(storedTimestamp, 10) : Date.now();
@@ -520,17 +410,17 @@ function HomeContent() {
         // Mark as loaded to prevent overwriting on initial mount
         setHasLoadedUsageCounts(true);
       }
-    } else if (effectiveUser) {
-      // For authenticated users (real or dev mode), mark as loaded after user data is available
+    } else if (user) {
+      // For authenticated users, mark as loaded after user data is available
       setHasLoadedUsageCounts(true);
     }
-  }, [effectiveUser, devMode]);
+  }, [user]);
 
   // Save usage counts to localStorage for anonymous users (prevent refresh abuse)
-  // Only when not signed in and not in dev mode
+  // Only when not signed in
   useEffect(() => {
     // Only save if we've loaded the initial counts (prevent overwriting on mount)
-    if (!effectiveUser && devMode === 'none' && typeof window !== 'undefined' && hasLoadedUsageCounts) {
+    if (!user && typeof window !== 'undefined' && hasLoadedUsageCounts) {
       try {
         // Save all usage counts
         localStorage.setItem('postready_generateIdeasCount', generateIdeasCount.toString());
@@ -557,12 +447,11 @@ function HomeContent() {
         console.error('❌ Error saving guest user usage to localStorage:', error);
       }
     }
-  }, [generateIdeasCount, rewriteCount, hashtagCount, guideAICount, regenerateCount, rewordTitleCount, effectiveUser, devMode, hasLoadedUsageCounts]);
+  }, [generateIdeasCount, rewriteCount, hashtagCount, guideAICount, regenerateCount, rewordTitleCount, user, hasLoadedUsageCounts]);
 
   // Save usage counts to database for authenticated users (prevent refresh abuse)
-  // Only for real users (dev mode users use localStorage)
   useEffect(() => {
-    if (devMode === 'none' && user && !authLoading) {
+    if (user && !authLoading) {
       // Debounce the save to avoid too many database calls
       const timeoutId = setTimeout(() => {
         saveProgress();
@@ -570,14 +459,14 @@ function HomeContent() {
       
       return () => clearTimeout(timeoutId);
     }
-  }, [generateIdeasCount, rewriteCount, regenerateCount, rewordTitleCount, hashtagCount, guideAICount, user, authLoading, devMode]);
+  }, [generateIdeasCount, rewriteCount, regenerateCount, rewordTitleCount, hashtagCount, guideAICount, user, authLoading]);
 
   // Save video idea to history when reaching post-details step (for all signed-in users: regular, pro, creator)
   // This runs immediately when the step changes, not waiting for postDetails
   useEffect(() => {
     if (currentStep === "post-details" && selectedIdea && businessInfo.businessName) {
       // Skip if no user at all (not signed in and not dev mode)
-      if (!effectiveUser) {
+      if (!user) {
         console.log('⚠️ No user - video ideas cannot be saved. Sign in or use dev mode to save history.');
         return;
       }
@@ -585,43 +474,8 @@ function HomeContent() {
       // Save the video idea to saved ideas
       const saveIdeaToHistory = async () => {
         try {
-          if (devMode !== 'none') {
-            // Dev mode: Save to localStorage
-            console.log('💾 Saving video idea to localStorage (dev mode)...', {
-              devMode,
-              ideaTitle: selectedIdea.title,
-              businessName: businessInfo.businessName
-            });
-            
-            const devIdeasKey = `dev_video_ideas_${devMode}`;
-            const existingIdeasJson = localStorage.getItem(devIdeasKey);
-            const existingIdeas: SavedVideoIdea[] = existingIdeasJson ? JSON.parse(existingIdeasJson) : [];
-            
-            // Check for duplicates
-            const isDuplicate = existingIdeas.some(
-              saved => saved.videoIdea.title === selectedIdea.title && saved.businessName === businessInfo.businessName
-            );
-            
-            if (!isDuplicate) {
-              const newIdea: SavedVideoIdea = {
-                id: `dev-${Date.now()}-${Math.random()}`,
-                businessName: businessInfo.businessName,
-                businessInfo: businessInfo,
-                videoIdea: selectedIdea,
-                savedAt: new Date().toISOString()
-              };
-              
-              existingIdeas.unshift(newIdea); // Add to beginning
-              localStorage.setItem(devIdeasKey, JSON.stringify(existingIdeas));
-              
-              // Update state
-              setSavedVideoIdeas(existingIdeas);
-              console.log('✅ Video idea saved to localStorage (dev mode)');
-            } else {
-              console.log('ℹ️ Video idea already saved (dev mode), skipping duplicate');
-            }
-          } else if (devMode === 'none' && user && user.id) {
-            // Real user: Save to Supabase
+          if (user && user.id) {
+            // Save to Supabase
             console.log('💾 Saving video idea to Supabase...', {
               userId: user.id,
               ideaTitle: selectedIdea.title,
@@ -649,15 +503,14 @@ function HomeContent() {
     }
     
     // Save completed post to history when postDetails is available
-    if (currentStep === "post-details" && effectiveUser && selectedIdea && postDetails) {
+    if (currentStep === "post-details" && user && selectedIdea && postDetails) {
       console.log('📝 Post-details step reached - ensuring post is saved to history');
       saveCompletedPostToHistory(selectedIdea, postDetails);
     }
-  }, [currentStep, effectiveUser, selectedIdea, postDetails, businessInfo, devMode]);
+  }, [currentStep, user, selectedIdea, postDetails, businessInfo]);
 
   const loadProgress = async () => {
-    // Only load progress for real users (dev mode users don't have database progress)
-    if (devMode !== 'none' || !user) return;
+    if (!user) return;
 
     try {
       const { data, error } = await loadUserProgress(user.id);
@@ -707,57 +560,40 @@ function HomeContent() {
   };
 
   const loadHistoryData = async () => {
-    // Skip if no user at all
-    if (!effectiveUser) return;
+    if (!user || !user.id) return;
 
-    console.log('📂 Loading history data...', { devMode, hasRealUser: !!user });
+    console.log('📂 Loading history data from Supabase for user:', user.id);
     
     try {
-      if (devMode !== 'none') {
-        // Dev mode: Load from localStorage
-        console.log('📂 Loading dev mode history from localStorage...');
-        const devIdeasKey = `dev_video_ideas_${devMode}`;
-        const devIdeasJson = localStorage.getItem(devIdeasKey);
-        const devIdeas: SavedVideoIdea[] = devIdeasJson ? JSON.parse(devIdeasJson) : [];
-        
-        console.log('✅ Loaded dev mode video ideas:', devIdeas.length);
-        setSavedVideoIdeas(devIdeas);
-        setSavedBusinesses([]); // Dev mode doesn't save businesses
-        setCompletedPosts([]); // Dev mode doesn't save completed posts
-      } else if (user && user.id) {
-        // Real user: Load from Supabase
-        console.log('📂 Loading history data from Supabase for user:', user.id);
-        
-        const [businessesResult, postsResult, ideasResult] = await Promise.all([
-          loadSavedBusinesses(user.id),
-          loadPostHistory(user.id),
-          loadSavedVideoIdeas(user.id)
-        ]);
+      const [businessesResult, postsResult, ideasResult] = await Promise.all([
+        loadSavedBusinesses(user.id),
+        loadPostHistory(user.id),
+        loadSavedVideoIdeas(user.id)
+      ]);
 
-        console.log('📂 Businesses result:', businessesResult);
-        console.log('📂 Posts result:', postsResult);
-        console.log('📂 Saved ideas result:', ideasResult);
+      console.log('📂 Businesses result:', businessesResult);
+      console.log('📂 Posts result:', postsResult);
+      console.log('📂 Saved ideas result:', ideasResult);
 
-        if (!businessesResult.error && businessesResult.data) {
-          console.log('✅ Setting saved businesses:', businessesResult.data.length, 'businesses');
-          setSavedBusinesses(businessesResult.data);
-        } else if (businessesResult.error) {
-          console.error('❌ Error loading businesses:', businessesResult.error);
-        }
+      if (!businessesResult.error && businessesResult.data) {
+        console.log('✅ Setting saved businesses:', businessesResult.data.length, 'businesses');
+        setSavedBusinesses(businessesResult.data);
+      } else if (businessesResult.error) {
+        console.error('❌ Error loading businesses:', businessesResult.error);
+      }
 
-        if (!postsResult.error && postsResult.data) {
-          console.log('✅ Setting completed posts:', postsResult.data.length, 'posts');
-          setCompletedPosts(postsResult.data);
-        } else if (postsResult.error) {
-          console.error('❌ Error loading posts:', postsResult.error);
-        }
+      if (!postsResult.error && postsResult.data) {
+        console.log('✅ Setting completed posts:', postsResult.data.length, 'posts');
+        setCompletedPosts(postsResult.data);
+      } else if (postsResult.error) {
+        console.error('❌ Error loading posts:', postsResult.error);
+      }
 
-        if (!ideasResult.error && ideasResult.data) {
-          console.log('✅ Setting saved video ideas:', ideasResult.data.length, 'ideas');
-          setSavedVideoIdeas(ideasResult.data);
-        } else if (ideasResult.error) {
-          console.error('❌ Error loading saved ideas:', ideasResult.error);
-        }
+      if (!ideasResult.error && ideasResult.data) {
+        console.log('✅ Setting saved video ideas:', ideasResult.data.length, 'ideas');
+        setSavedVideoIdeas(ideasResult.data);
+      } else if (ideasResult.error) {
+        console.error('❌ Error loading saved ideas:', ideasResult.error);
       }
     } catch (error) {
       console.error('❌ Error loading history:', error);
@@ -842,10 +678,10 @@ function HomeContent() {
   };
 
   const navigateToPortal = () => {
-    console.log('navigateToPortal called', { isNavigating, effectiveUser, devMode });
+    console.log('navigateToPortal called', { isNavigating, user });
     
-    // If no user and not in dev mode, open auth modal
-    if (!effectiveUser && devMode === 'none') {
+    // If no user, open auth modal
+    if (!user) {
       console.log('No user found, opening auth modal');
       openAuthModal('signin');
       return;
@@ -1259,7 +1095,7 @@ function HomeContent() {
 
   const handleGenerateIdeasWithGuidance = async (guidance: string) => {
     // Check if user has exceeded free limit (3 free uses)
-    if (guideAIForIdeasCount >= 3 && !effectiveIsPro) {
+    if (guideAIForIdeasCount >= 3 && !isPro) {
       setModalState({
         isOpen: true,
         title: userType === 'creator' ? "Upgrade to Creator" : "Upgrade to PostReady Pro",
@@ -1348,7 +1184,7 @@ function HomeContent() {
       setSelectedIdea(null);
       
       // Increment usage count for non-Pro users
-      if (!effectiveIsPro) {
+      if (!isPro) {
         setGuideAIForIdeasCount(prev => prev + 1);
       }
       
@@ -1516,7 +1352,7 @@ function HomeContent() {
     if (!postDetails || !selectedIdea) return;
 
     // Check if user has exceeded free limit (3 free hashtag generations)
-    if (hashtagCount >= 3 && !effectiveIsPro) {
+    if (hashtagCount >= 3 && !isPro) {
       setModalState({
         isOpen: true,
         title: userType === 'creator' ? "Upgrade to Creator" : "Upgrade to PostReady Pro",
@@ -1574,7 +1410,7 @@ function HomeContent() {
       setPostDetails(updatedPostDetails);
       
       // Increment usage count for non-Pro users
-      if (!effectiveIsPro) {
+      if (!isPro) {
         setHashtagCount(prev => prev + 1);
       }
       
@@ -1594,7 +1430,7 @@ function HomeContent() {
 
   const handleRewriteCaption = async (guidance?: string) => {
     // Check if user has exceeded free rewrite limit (2 free rewrites)
-    if (rewriteCount >= 2 && !effectiveIsPro) {
+    if (rewriteCount >= 2 && !isPro) {
       setModalState({
         isOpen: true,
         title: userType === 'creator' ? "Upgrade to Creator" : "Upgrade to PostReady Pro",
@@ -1724,7 +1560,7 @@ function HomeContent() {
 
   const handleRegenerateIdea = () => {
     // Check if user has exceeded free regenerate limit
-    if (regenerateCount >= 2 && !effectiveIsPro) {
+    if (regenerateCount >= 2 && !isPro) {
       setModalState({
         isOpen: true,
         title: userType === 'creator' ? "Upgrade to Creator" : "Upgrade to PostReady Pro",
@@ -1777,7 +1613,7 @@ function HomeContent() {
 
   const handleRewordTitle = async () => {
     // Check if user has exceeded free reword limit (3 free rewords)
-    if (rewordTitleCount >= 3 && !effectiveIsPro) {
+    if (rewordTitleCount >= 3 && !isPro) {
       setModalState({
         isOpen: true,
         title: "Upgrade to PostReady Pro",
@@ -1909,95 +1745,8 @@ function HomeContent() {
         })}
       </div>
       <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>
-        {/* Dev Mode Buttons - Top Left - Development Only */}
-        {process.env.NODE_ENV !== 'production' && (
-          <div className="fixed top-4 left-4 z-50 flex flex-col gap-2">
-            <div className="text-xs font-bold mb-1 px-2 py-1 rounded" style={{ 
-              backgroundColor: 'var(--card-bg)',
-              border: '2px solid var(--primary)',
-              color: 'var(--primary)'
-            }}>
-              DEV MODE
-            </div>
-            <div className="flex flex-col gap-1">
-              <button
-                onClick={() => setDevMode('none')}
-                className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
-                  devMode === 'none' ? 'ring-2 ring-offset-1' : ''
-                }`}
-                style={devMode === 'none' ? {
-                  backgroundColor: 'var(--primary)',
-                  color: 'white',
-                  ringColor: 'var(--primary)'
-                } : {
-                  backgroundColor: 'var(--card-bg)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--card-border)'
-                }}
-                title="Simulate anonymous user (not signed in) - Usage tracked via localStorage"
-              >
-                Not Signed In
-              </button>
-              <button
-                onClick={() => setDevMode('regular')}
-                className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
-                  devMode === 'regular' ? 'ring-2 ring-offset-1' : ''
-                }`}
-                style={devMode === 'regular' ? {
-                  backgroundColor: 'var(--primary)',
-                  color: 'white',
-                  ringColor: 'var(--primary)'
-                } : {
-                  backgroundColor: 'var(--card-bg)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--card-border)'
-                }}
-                title="Simulate regular user account (signed in, free plan) - Limited to 2 uses per feature"
-              >
-                Regular User
-              </button>
-              <button
-                onClick={() => setDevMode('pro')}
-                className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
-                  devMode === 'pro' ? 'ring-2 ring-offset-1' : ''
-                }`}
-                style={devMode === 'pro' ? {
-                  backgroundColor: 'var(--primary)',
-                  color: 'white',
-                  ringColor: 'var(--primary)'
-                } : {
-                  backgroundColor: 'var(--card-bg)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--card-border)'
-                }}
-                title="Simulate Pro user account (signed in, Pro plan) - Unlimited usage"
-              >
-                Pro User
-              </button>
-              <button
-                onClick={() => setDevMode('creator')}
-                className={`text-xs px-3 py-1.5 rounded font-medium transition-all ${
-                  devMode === 'creator' ? 'ring-2 ring-offset-1' : ''
-                }`}
-                style={devMode === 'creator' ? {
-                  backgroundColor: 'var(--primary)',
-                  color: 'white',
-                  ringColor: 'var(--primary)'
-                } : {
-                  backgroundColor: 'var(--card-bg)',
-                  color: 'var(--text-primary)',
-                  border: '1px solid var(--card-border)'
-                }}
-                title="Simulate Creator user account (signed in, Creator plan) - Unlimited usage, creator features enabled"
-              >
-                Creator User
-              </button>
-            </div>
-          </div>
-        )}
-
         {/* Header with Auth - Only for signed-in users */}
-        {effectiveUser && !authLoading && (
+        {user && !authLoading && (
           <div className="flex justify-end items-center mb-8">
             <div className="flex items-center gap-3">
               {/* Show CREATOR badge for creator users */}
@@ -2018,7 +1767,7 @@ function HomeContent() {
                 </span>
               )}
               {/* Show PRO badge for pro users (but not creators) */}
-              {effectiveIsPro && !isCreator && (
+              {isPro && !isCreator && (
                 <span 
                   className="text-white px-3 py-1 rounded-full text-xs font-bold relative overflow-hidden"
                   style={{ 
@@ -2067,7 +1816,7 @@ function HomeContent() {
               <button
                     onClick={() => {
                       setCurrentStep("history");
-                      if (effectiveUser) {
+                      if (user) {
                         loadHistoryData();
                       }
                     }}
@@ -2085,7 +1834,7 @@ function HomeContent() {
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
-                  console.log('Username button clicked', { effectiveUser, devMode });
+                  console.log('Username button clicked', { user });
                   navigateToPortal();
                 }}
                 type="button"
@@ -2093,9 +1842,9 @@ function HomeContent() {
                 style={{ color: 'var(--text-secondary)', pointerEvents: 'auto' }}
                 title="Go to User Portal"
               >
-                {effectiveUser?.email || 'dev@test.com'}
+                {user?.email}
               </button>
-              {!effectiveIsPro && devMode !== 'creator' && (
+              {!isPro && (
                 <button
                   onClick={scrollToPremium}
                   className="text-white px-4 py-2 rounded-lg text-sm font-bold transition-all hover:opacity-90"
@@ -2115,7 +1864,7 @@ function HomeContent() {
         )}
 
         {/* Sign Up CTA Banner for Non-Signed-Up Users */}
-        {!effectiveUser && (
+        {!user && (
           <div className="mb-8">
             <div className="rounded-xl p-5 border-2 shadow-sm" style={{
               background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.04) 0%, rgba(111, 255, 210, 0.04) 100%)',
@@ -2464,7 +2213,7 @@ function HomeContent() {
             </form>
 
             {/* Pro Status Display */}
-            {!effectiveIsPro ? (
+            {!isPro ? (
               <>
                 <div className="mt-8 rounded-2xl p-6 border-2" style={{ 
                     background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.05) 0%, rgba(111, 255, 210, 0.05) 100%)',
@@ -2950,7 +2699,7 @@ function HomeContent() {
                     <button
                       onClick={async () => {
                         // Check if user has exceeded free limit (2 free generates)
-                        if (generateIdeasCount >= 2 && !effectiveIsPro) {
+                        if (generateIdeasCount >= 2 && !isPro) {
                           setModalState({
                             isOpen: true,
                             title: "Pro Feature",
@@ -3029,7 +2778,7 @@ function HomeContent() {
                           setSelectedIdea(null);
                           
                           // Increment usage count for non-Pro users
-                          if (!effectiveIsPro) {
+                          if (!isPro) {
                             setGenerateIdeasCount(prev => prev + 1);
                           }
                           
@@ -3083,12 +2832,12 @@ function HomeContent() {
                     >
                       {isRewriting ? (
                         "Generating..."
-                      ) : generateIdeasCount >= 2 && !effectiveIsPro ? (
+                      ) : generateIdeasCount >= 2 && !isPro ? (
                         <>
                           <span className="mr-2">🔒</span>
                           Pro: Unlimited Ideas
                         </>
-                      ) : effectiveIsPro ? (
+                      ) : isPro ? (
                         <>
                           <span className="mr-2">🎬</span>
                           Generate More Ideas
@@ -3107,7 +2856,7 @@ function HomeContent() {
                     <div className="relative guide-ai-ideas-container">
                       <button
                         onClick={() => {
-                          if (guideAIForIdeasCount >= 3 && !effectiveIsPro) {
+                          if (guideAIForIdeasCount >= 3 && !isPro) {
                             setModalState({
                               isOpen: true,
                               title: userType === 'creator' ? "Upgrade to Creator" : "Upgrade to PostReady Pro",
@@ -3122,11 +2871,11 @@ function HomeContent() {
                           }
                           setShowGuideAIForIdeas(!showGuideAIForIdeas);
                         }}
-                        disabled={guideAIForIdeasCount >= 3 && !effectiveIsPro}
+                        disabled={guideAIForIdeasCount >= 3 && !isPro}
                         className={`px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                          guideAIForIdeasCount >= 3 && !effectiveIsPro ? '' : ''
+                          guideAIForIdeasCount >= 3 && !isPro ? '' : ''
                         }`}
-                        style={guideAIForIdeasCount >= 3 && !effectiveIsPro ? {
+                        style={guideAIForIdeasCount >= 3 && !isPro ? {
                           backgroundColor: 'transparent',
                           borderColor: '#94a3b8',
                           color: '#94a3b8'
@@ -3135,13 +2884,13 @@ function HomeContent() {
                           borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
                           color: userType === 'creator' ? '#DAA520' : '#2979FF'
                         }}
-                        title={!effectiveIsPro && guideAIForIdeasCount < 3 ? `${3 - guideAIForIdeasCount} Guide AI uses left` : ''}
+                        title={!isPro && guideAIForIdeasCount < 3 ? `${3 - guideAIForIdeasCount} Guide AI uses left` : ''}
                       >
                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                         </svg>
                         Guide AI
-                        {!effectiveIsPro && guideAIForIdeasCount < 3 && (
+                        {!isPro && guideAIForIdeasCount < 3 && (
                           <span className="text-xs px-1.5 py-0.5 rounded" style={{ 
                             backgroundColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.15)' : 'rgba(41, 121, 255, 0.15)',
                             color: userType === 'creator' ? '#DAA520' : '#2979FF'
@@ -3198,7 +2947,7 @@ function HomeContent() {
                             <button
                               onClick={() => {
                                 if (aiGuidanceForIdeas.trim()) {
-                                  if (!effectiveIsPro) {
+                                  if (!isPro) {
                                     setGuideAIForIdeasCount(prev => prev + 1);
                                   }
                                   handleGenerateIdeasWithGuidance(aiGuidanceForIdeas.trim());
@@ -3298,13 +3047,13 @@ function HomeContent() {
                       <button
                         onClick={handleRegenerateIdea}
                         className={`w-full px-4 py-3 rounded-lg font-bold transition-all shadow-sm hover:shadow-md hover:scale-105 ${
-                          regenerateCount >= 2 && !effectiveIsPro
+                          regenerateCount >= 2 && !isPro
                             ? userType === 'creator'
                               ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600"
                               : "bg-gradient-to-r from-amber-500 to-blue-600 text-white hover:from-amber-600 hover:to-blue-700"
                             : ""
                         }`}
-                        style={regenerateCount < 2 || effectiveIsPro ? {
+                        style={regenerateCount < 2 || isPro ? {
                           borderWidth: '2px',
                           borderStyle: 'solid',
                           borderColor: userType === 'creator' ? '#DAA520' : '#2563eb',
@@ -3314,7 +3063,7 @@ function HomeContent() {
                             : 'rgba(37, 99, 235, 0.05)'
                         } : {}}
                       >
-                        {regenerateCount >= 2 && !effectiveIsPro
+                        {regenerateCount >= 2 && !isPro
                           ? "🔒 Pro: Unlimited Ideas"
                           : <span className="flex items-center justify-center gap-2">
                               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -3323,12 +3072,12 @@ function HomeContent() {
                               Regenerate Idea
                             </span>}
                       </button>
-                      {regenerateCount >= 2 && !effectiveIsPro && (
+                      {regenerateCount >= 2 && !isPro && (
                         <p className="text-xs text-gray-600 text-center mt-2">
                           You've used your 2 free regenerations
                         </p>
                       )}
-                      {regenerateCount > 0 && regenerateCount < 2 && !effectiveIsPro && (
+                      {regenerateCount > 0 && regenerateCount < 2 && !isPro && (
                         <p className="text-xs text-gray-600 text-center mt-2">
                           {2 - regenerateCount} free regeneration{2 - regenerateCount !== 1 ? 's' : ''} remaining
                         </p>
@@ -3550,12 +3299,12 @@ function HomeContent() {
                               className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 flex items-center gap-2 shadow-sm ${
                                 isRewordingTitle
                                   ? "bg-gray-400 text-white cursor-not-allowed"
-                                  : rewordTitleCount >= 3 && !effectiveIsPro
+                                  : rewordTitleCount >= 3 && !isPro
                                   ? "text-white"
                                   : "text-white"
                               }`}
                               style={!isRewordingTitle ? {
-                                backgroundColor: rewordTitleCount >= 3 && !effectiveIsPro 
+                                backgroundColor: rewordTitleCount >= 3 && !isPro 
                                   ? '#94a3b8' 
                                   : userType === 'creator' ? '#DAA520' : '#2979FF'
                               } : {}}
@@ -3568,7 +3317,7 @@ function HomeContent() {
                                   </svg>
                                   Rewording...
                                 </>
-                              ) : rewordTitleCount >= 3 && !effectiveIsPro ? (
+                              ) : rewordTitleCount >= 3 && !isPro ? (
                                 <>
                                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
@@ -3585,7 +3334,7 @@ function HomeContent() {
                               )}
                             </button>
                           </div>
-                          {!effectiveIsPro && (
+                          {!isPro && (
                             <p className="text-xs mb-3 flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
                               <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
                                 <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
@@ -3685,7 +3434,7 @@ function HomeContent() {
                             <div className="relative guide-ai-container">
                               <button
                                 onClick={() => {
-                                  if (guideAICount >= 2 && !effectiveIsPro) {
+                                  if (guideAICount >= 2 && !isPro) {
                                     setModalState({
                                       isOpen: true,
                                       title: userType === 'creator' ? "Upgrade to Creator" : "Upgrade to PostReady Pro",
@@ -3700,11 +3449,11 @@ function HomeContent() {
                                   }
                                   setShowGuideAI(!showGuideAI);
                                 }}
-                                disabled={guideAICount >= 2 && !effectiveIsPro}
+                                disabled={guideAICount >= 2 && !isPro}
                                 className={`px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                                  guideAICount >= 2 && !effectiveIsPro ? '' : ''
+                                  guideAICount >= 2 && !isPro ? '' : ''
                                 }`}
-                                style={guideAICount >= 2 && !effectiveIsPro ? {
+                                style={guideAICount >= 2 && !isPro ? {
                                   backgroundColor: 'transparent',
                                   borderColor: '#94a3b8',
                                   color: '#94a3b8'
@@ -3713,13 +3462,13 @@ function HomeContent() {
                                   borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
                                   color: userType === 'creator' ? '#DAA520' : '#2979FF'
                                 }}
-                                title={!effectiveIsPro && guideAICount < 2 ? `${2 - guideAICount} Guide AI uses left` : ''}
+                                title={!isPro && guideAICount < 2 ? `${2 - guideAICount} Guide AI uses left` : ''}
                               >
                                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
                                 </svg>
                                 Guide AI
-                                {!effectiveIsPro && guideAICount < 2 && (
+                                {!isPro && guideAICount < 2 && (
                                   <span className="text-xs px-1.5 py-0.5 rounded" style={{ 
                                     backgroundColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.15)' : 'rgba(41, 121, 255, 0.15)',
                                     color: userType === 'creator' ? '#DAA520' : '#2979FF'
@@ -3776,7 +3525,7 @@ function HomeContent() {
                                     <button
                                       onClick={() => {
                                         if (aiGuidance.trim()) {
-                                          if (!effectiveIsPro) {
+                                          if (!isPro) {
                                             setGuideAICount(prev => prev + 1);
                                           }
                                           handleRewriteCaption(aiGuidance.trim());
@@ -3818,11 +3567,11 @@ function HomeContent() {
                                   : "text-white"
                               }`}
                               style={!isRewriting ? {
-                                backgroundColor: rewriteCount >= 2 && !effectiveIsPro 
+                                backgroundColor: rewriteCount >= 2 && !isPro 
                                   ? '#94a3b8' 
                                   : userType === 'creator' ? '#DAA520' : '#2979FF'
                               } : {}}
-                              title={!effectiveIsPro && rewriteCount < 2 ? `${2 - rewriteCount} rewrites left` : ''}
+                              title={!isPro && rewriteCount < 2 ? `${2 - rewriteCount} rewrites left` : ''}
                             >
                               {isRewriting ? (
                                 <>
@@ -3832,7 +3581,7 @@ function HomeContent() {
                                   </svg>
                                   Rewriting...
                                 </>
-                              ) : rewriteCount >= 2 && !effectiveIsPro ? (
+                              ) : rewriteCount >= 2 && !isPro ? (
                                 <>
                                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
@@ -3845,7 +3594,7 @@ function HomeContent() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
                                   </svg>
                                   Rewrite
-                                  {!effectiveIsPro && rewriteCount < 2 && (
+                                  {!isPro && rewriteCount < 2 && (
                                     <span className="text-xs px-1.5 py-0.5 rounded bg-white/20">
                                       {2 - rewriteCount}
                                     </span>
@@ -3856,9 +3605,9 @@ function HomeContent() {
                             
                             <button
                               onClick={handleMoreHashtags}
-                              disabled={isGeneratingHashtags || (hashtagCount >= 3 && !effectiveIsPro)}
+                              disabled={isGeneratingHashtags || (hashtagCount >= 3 && !isPro)}
                               className={`px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed`}
-                              style={hashtagCount >= 3 && !effectiveIsPro ? {
+                              style={hashtagCount >= 3 && !isPro ? {
                                 backgroundColor: 'transparent',
                                 borderColor: '#94a3b8',
                                 color: '#94a3b8'
@@ -3867,7 +3616,7 @@ function HomeContent() {
                                 borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
                                 color: userType === 'creator' ? '#DAA520' : '#2979FF'
                               }}
-                              title={!effectiveIsPro && hashtagCount < 3 ? `${3 - hashtagCount} hashtag generations left` : ''}
+                              title={!isPro && hashtagCount < 3 ? `${3 - hashtagCount} hashtag generations left` : ''}
                             >
                               {isGeneratingHashtags ? (
                                 <>
@@ -3877,7 +3626,7 @@ function HomeContent() {
                                   </svg>
                                   Generating...
                                 </>
-                              ) : hashtagCount >= 3 && !effectiveIsPro ? (
+                              ) : hashtagCount >= 3 && !isPro ? (
                                 <>
                                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
                                     <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
@@ -3890,7 +3639,7 @@ function HomeContent() {
                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
                                   </svg>
                                   More Hashtags
-                                  {!effectiveIsPro && hashtagCount < 3 && (
+                                  {!isPro && hashtagCount < 3 && (
                                     <span className="text-xs px-1.5 py-0.5 rounded" style={{ 
                                       backgroundColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.15)' : 'rgba(41, 121, 255, 0.15)',
                                       color: userType === 'creator' ? '#DAA520' : '#2979FF'
@@ -4021,22 +3770,13 @@ function HomeContent() {
                               <button
                                 onClick={async (e) => {
                                   e.stopPropagation();
-                                  if (!effectiveUser) return;
+                                  if (!user || !user.id) return;
                                   
-                                  if (devMode !== 'none') {
-                                    // Dev mode: Remove from localStorage
-                                    const devIdeasKey = `dev_video_ideas_${devMode}`;
-                                    const updatedIdeas = savedVideoIdeas.filter(s => s.id !== savedIdea.id);
-                                    localStorage.setItem(devIdeasKey, JSON.stringify(updatedIdeas));
-                                    setSavedVideoIdeas(updatedIdeas);
+                                  // Remove from Supabase
+                                  const result = await deleteSavedVideoIdea(user.id, savedIdea.id);
+                                  if (!result.error) {
+                                    setSavedVideoIdeas(prev => prev.filter(s => s.id !== savedIdea.id));
                                     showNotification("Idea removed", "success", "Removed");
-                                  } else if (user && user.id) {
-                                    // Real user: Remove from Supabase
-                                    const result = await deleteSavedVideoIdea(user.id, savedIdea.id);
-                                    if (!result.error) {
-                                      setSavedVideoIdeas(prev => prev.filter(s => s.id !== savedIdea.id));
-                                      showNotification("Idea removed", "success", "Removed");
-                                    }
                                   }
                                 }}
                                 className="p-1.5 rounded hover:bg-gray-100 transition-colors ml-2 flex-shrink-0"
@@ -4444,7 +4184,7 @@ function HomeContent() {
                       transition: 'all 0.5s ease-in-out'
                     }}
                   >
-                    {effectiveUser 
+                    {user 
                       ? `Subscribe to PostReady ${planType === 'creator' ? 'Creator' : 'Pro'} - $10/month` 
                       : `Sign Up & Subscribe - $10/month`}
                   </button>
@@ -4525,7 +4265,7 @@ function HomeContent() {
         )}
 
         {/* Get unlimited ideas with Pro button - Video ideas page only */}
-        {currentStep === "choose-idea" && !effectiveIsPro && (
+        {currentStep === "choose-idea" && !isPro && (
           <div className="mb-8 flex justify-center w-full">
             <button
               onClick={scrollToPremium}
