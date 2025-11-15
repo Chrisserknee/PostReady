@@ -1867,16 +1867,17 @@ function HomeContent() {
                 <button
                   onClick={navigateHome}
                   disabled={isNavigating}
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 whitespace-nowrap shadow-sm"
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all disabled:opacity-50 whitespace-nowrap shadow-md hover:scale-105 active:scale-95"
                   style={currentStep === "form" ? { 
                     color: 'white',
                     fontWeight: 'bold',
                     background: 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 100%)',
-                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)'
+                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
                   } : { 
-                    color: 'var(--text-secondary)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                    border: '1px solid rgba(0, 0, 0, 0.1)'
+                    color: 'var(--text-primary)',
+                    backgroundColor: 'var(--card-bg)',
+                    border: '2px solid var(--card-border)',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                   }}
                 >
                   Home
@@ -1888,16 +1889,17 @@ function HomeContent() {
                       loadHistoryData();
                     }
                   }}
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap shadow-sm"
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap shadow-md hover:scale-105 active:scale-95"
                   style={currentStep === "businesses" ? { 
                     color: 'white',
                     fontWeight: 'bold',
                     background: 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 100%)',
-                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)'
+                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
                   } : { 
-                    color: 'var(--text-secondary)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                    border: '1px solid rgba(0, 0, 0, 0.1)'
+                    color: 'var(--text-primary)',
+                    backgroundColor: 'var(--card-bg)',
+                    border: '2px solid var(--card-border)',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                   }}
                 >
                   Businesses
@@ -1909,16 +1911,17 @@ function HomeContent() {
                       loadHistoryData();
                     }
                   }}
-                  className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap shadow-sm"
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold transition-all whitespace-nowrap shadow-md hover:scale-105 active:scale-95"
                   style={currentStep === "history" ? { 
                     color: 'white',
                     fontWeight: 'bold',
                     background: 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 100%)',
-                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)'
+                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
                   } : { 
-                    color: 'var(--text-secondary)',
-                    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                    border: '1px solid rgba(0, 0, 0, 0.1)'
+                    color: 'var(--text-primary)',
+                    backgroundColor: 'var(--card-bg)',
+                    border: '2px solid var(--card-border)',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                   }}
                 >
                   History
@@ -1930,25 +1933,26 @@ function HomeContent() {
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
-                    console.log('Username button clicked', { user });
+                    console.log('Account button clicked', { user });
                     navigateToPortal();
                   }}
                   type="button"
-                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer truncate shadow-sm"
+                  className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
                   style={{ 
-                    color: 'var(--text-secondary)', 
+                    color: 'var(--text-primary)', 
                     pointerEvents: 'auto',
-                    backgroundColor: 'rgba(255, 255, 255, 0.5)',
-                    border: '1px solid rgba(0, 0, 0, 0.1)'
+                    backgroundColor: 'var(--card-bg)',
+                    border: '2px solid var(--card-border)',
+                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                   }}
                   title="Go to User Portal"
                 >
-                  {effectiveUser?.email?.split('@')[0]}
+                  Account
                 </button>
                 {!effectiveIsPro ? (
                   <button
                     onClick={scrollToPremium}
-                    className="flex-1 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap shadow-lg"
+                    className="flex-1 text-white px-4 py-2.5 rounded-xl text-sm font-bold transition-all whitespace-nowrap shadow-lg hover:scale-105 active:scale-95"
                     style={{ 
                       background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)',
                       boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
@@ -1959,11 +1963,12 @@ function HomeContent() {
                 ) : (
                   <button
                     onClick={handleSignOut}
-                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all shadow-sm"
+                    className="flex-1 px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all shadow-md hover:scale-105 active:scale-95"
                     style={{ 
                       color: '#dc2626',
-                      backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                      border: '1px solid rgba(220, 38, 38, 0.2)'
+                      backgroundColor: 'rgba(220, 38, 38, 0.15)',
+                      border: '2px solid rgba(220, 38, 38, 0.3)',
+                      boxShadow: '0 2px 8px rgba(220, 38, 38, 0.15)'
                     }}
                   >
                     Sign Out
@@ -1973,11 +1978,12 @@ function HomeContent() {
               {!effectiveIsPro && (
                 <button
                   onClick={handleSignOut}
-                  className="w-full px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all shadow-sm"
+                  className="w-full px-4 py-2.5 rounded-xl text-sm font-semibold whitespace-nowrap transition-all shadow-md hover:scale-105 active:scale-95"
                   style={{ 
                     color: '#dc2626',
-                    backgroundColor: 'rgba(220, 38, 38, 0.1)',
-                    border: '1px solid rgba(220, 38, 38, 0.2)'
+                    backgroundColor: 'rgba(220, 38, 38, 0.15)',
+                    border: '2px solid rgba(220, 38, 38, 0.3)',
+                    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.15)'
                   }}
                 >
                   Sign Out
