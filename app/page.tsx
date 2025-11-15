@@ -193,6 +193,8 @@ function HomeContent() {
   const [videoDescription, setVideoDescription] = useState<string>("");
   const [postPlatform, setPostPlatform] = useState<string>("");
   const [postDetails, setPostDetails] = useState<PostDetails | null>(null);
+  const [isSavedToHistory, setIsSavedToHistory] = useState<boolean>(false);
+  const [isSavingToHistory, setIsSavingToHistory] = useState<boolean>(false);
   const [rewriteCount, setRewriteCount] = useState<number>(0);
   const [isRewriting, setIsRewriting] = useState<boolean>(false);
   const [regenerateCount, setRegenerateCount] = useState<number>(0);
@@ -532,22 +534,6 @@ function HomeContent() {
       
       saveIdeaToHistory();
     }
-    
-    // Save completed post to history when postDetails is available
-    if (currentStep === "post-details" && user && selectedIdea && postDetails) {
-      console.log('📝 Post-details step reached - ensuring post is saved to history');
-      
-      const savePostToHistory = async () => {
-        try {
-          await saveCompletedPostToHistory(selectedIdea, postDetails);
-          console.log('✅ Post saved to history from post-details step');
-        } catch (error) {
-          console.error('❌ Error saving post to history:', error);
-        }
-      };
-      
-      savePostToHistory();
-    }
   }, [currentStep, user, selectedIdea, postDetails, businessInfo]);
 
   const loadProgress = async () => {
@@ -707,6 +693,7 @@ function HomeContent() {
     setStrategy(null);
     setSelectedIdea(null);
     setPostDetails(null);
+    setIsSavedToHistory(false);
     setRewriteCount(0);
     setRegenerateCount(0);
     setGenerateIdeasCount(0);
@@ -849,6 +836,36 @@ function HomeContent() {
     }
   };
 
+  // Manual save to history handler (triggered by button click)
+  const handleSaveToHistory = async () => {
+    if (!user) {
+      showNotification('Please sign in to save your post to history', 'error', 'Not Signed In');
+      return;
+    }
+
+    if (!selectedIdea || !postDetails) {
+      showNotification('No post to save', 'error', 'Error');
+      return;
+    }
+
+    if (isSavedToHistory) {
+      showNotification('This post is already saved to your history', 'info', 'Already Saved');
+      return;
+    }
+
+    setIsSavingToHistory(true);
+    try {
+      await saveCompletedPostToHistory(selectedIdea, postDetails);
+      setIsSavedToHistory(true);
+      showNotification('Post saved to history successfully!', 'success', 'Saved!');
+    } catch (error) {
+      console.error('Error saving to history:', error);
+      showNotification('Failed to save post to history', 'error', 'Error');
+    } finally {
+      setIsSavingToHistory(false);
+    }
+  };
+
   // Load saved business
   const loadSavedBusiness = async (business: typeof savedBusinesses[0]) => {
     setBusinessInfo(business.businessInfo);
@@ -856,6 +873,7 @@ function HomeContent() {
     setCurrentStep("choose-idea");
     setSelectedIdea(null);
     setPostDetails(null);
+    setIsSavedToHistory(false);
     setRewriteCount(0);
     setRegenerateCount(0);
     
@@ -1647,6 +1665,7 @@ function HomeContent() {
     
     setSelectedIdea(newIdea);
     setPostDetails(null); // Reset post details so caption gets regenerated with new idea
+    setIsSavedToHistory(false); // Reset saved state for new idea
     setRegenerateCount(prev => prev + 1);
     
     showNotification(`New idea selected: "${newIdea.title}"`, "success", "Idea Updated");
@@ -3906,6 +3925,52 @@ function HomeContent() {
                             </button>
                           </div>
                         </div>
+
+                        {/* Save to History Button (Only for signed-in users) */}
+                        {user && (
+                          <div className="pt-2">
+                            <button
+                              onClick={handleSaveToHistory}
+                              disabled={isSavingToHistory || isSavedToHistory}
+                              className="w-full px-4 py-3 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2 flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                              style={isSavedToHistory ? {
+                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                borderColor: '#10b981',
+                                color: 'white'
+                              } : {
+                                background: userType === 'creator' 
+                                  ? 'linear-gradient(135deg, #DAA520 0%, #F4D03F 100%)'
+                                  : 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 100%)',
+                                borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
+                                color: 'white'
+                              }}
+                            >
+                              {isSavingToHistory ? (
+                                <>
+                                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
+                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                  </svg>
+                                  Saving...
+                                </>
+                              ) : isSavedToHistory ? (
+                                <>
+                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
+                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                                  </svg>
+                                  Saved to History
+                                </>
+                              ) : (
+                                <>
+                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
+                                  </svg>
+                                  Save to History
+                                </>
+                              )}
+                            </button>
+                          </div>
+                        )}
 
                         {/* Back Button */}
                         <div className="pt-2">
