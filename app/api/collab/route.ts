@@ -76,14 +76,22 @@ export async function POST(request: NextRequest) {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Parse the follower range
-    const { min, max } = parseFollowerRange(followerCount || '10,000-25,000');
+    // Handle follower count as a single number or range
+    let searchMin: number, searchMax: number;
     
-    // Calculate a wider range for matching (±50%)
-    const searchMin = Math.floor(min * 0.5);
-    const searchMax = Math.ceil(max * 1.5);
+    if (typeof followerCount === 'number' || !followerCount.includes('-')) {
+      // Single number provided - create a ±50% range
+      const count = typeof followerCount === 'number' ? followerCount : parseInt(followerCount.toString().replace(/,/g, ''));
+      searchMin = Math.floor(count * 0.5);
+      searchMax = Math.ceil(count * 1.5);
+    } else {
+      // Range provided - parse it
+      const { min, max } = parseFollowerRange(followerCount || '10,000-25,000');
+      searchMin = Math.floor(min * 0.5);
+      searchMax = Math.ceil(max * 1.5);
+    }
 
-    console.log(`🔍 Searching for collaborators with ${searchMin}-${searchMax} followers in niche: ${niche}`);
+    console.log(`🔍 Searching for collaborators with ${searchMin.toLocaleString()}-${searchMax.toLocaleString()} followers in niche: ${niche}`);
 
     // Query the database for matching profiles
     let query = supabase
@@ -111,11 +119,14 @@ export async function POST(request: NextRequest) {
     // Transform database results into the expected format
     const collaborators = (matches || []).map((profile: any) => ({
       username: profile.tiktok_username,
-      followerCount: formatFollowerCount(profile.follower_count),
-      contentFocus: profile.content_focus || profile.niche,
-      matchReason: profile.bio || `Active ${profile.niche} creator looking for collaborations`,
-      collabIdea: `Create engaging ${profile.niche} content together that combines both of your unique styles`,
-      dmTemplate: `Hey! I'm @${username} and I love your ${profile.content_focus || profile.niche} content! I think our styles would complement each other really well. Would you be interested in collaborating on a video together?`,
+      displayName: profile.display_name,
+      followerCount: profile.follower_count,
+      niche: profile.niche,
+      contentFocus: profile.content_focus,
+      bio: profile.bio,
+      whyPerfect: profile.bio || `Active ${profile.niche} creator with ${formatFollowerCount(profile.follower_count)} followers looking for collaborations`,
+      collabIdea: `Create engaging ${profile.niche} content together that combines both of your unique styles and reaches both audiences`,
+      dm: `Hey! I'm @${username} and I love your ${profile.content_focus || profile.niche} content! I think our styles would complement each other really well. Would you be interested in collaborating on a video together? 🎥`,
       isRealUser: true,
       instagram: profile.instagram_username,
       youtube: profile.youtube_username,
