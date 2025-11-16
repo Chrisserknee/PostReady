@@ -2928,6 +2928,33 @@ function HomeContent() {
             <form onSubmit={handleCollabSearch} className="space-y-4">
               <div className="space-y-2">
                 <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  Your TikTok Username <span className="text-red-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <span 
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-lg font-bold pointer-events-none z-10"
+                    style={{ color: 'rgba(255, 107, 107, 0.8)' }}
+                  >
+                    @
+                  </span>
+                  <input
+                    type="text"
+                    value={collabUsername}
+                    onChange={(e) => setCollabUsername(e.target.value.replace('@', ''))}
+                    placeholder="yourusername"
+                    required
+                    className="w-full rounded-md px-3 py-2 pl-10 focus:outline-none focus:ring-2 border"
+                    style={{
+                      backgroundColor: 'var(--card-bg)',
+                      borderColor: 'var(--card-border)',
+                      color: 'var(--text-primary)'
+                    }}
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                   Your Niche <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -2962,33 +2989,6 @@ function HomeContent() {
                     color: 'var(--text-primary)'
                   }}
                 />
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                  Your TikTok Username <span className="text-red-500">*</span>
-                </label>
-                <div className="relative flex items-center">
-                  <span 
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-lg font-bold pointer-events-none z-10"
-                    style={{ color: 'rgba(255, 107, 107, 0.8)' }}
-                  >
-                    @
-                  </span>
-                  <input
-                    type="text"
-                    value={collabUsername}
-                    onChange={(e) => setCollabUsername(e.target.value.replace('@', ''))}
-                    placeholder="yourusername"
-                    required
-                    className="w-full rounded-md px-3 py-2 pl-10 focus:outline-none focus:ring-2 border"
-                    style={{
-                      backgroundColor: 'var(--card-bg)',
-                      borderColor: 'var(--card-border)',
-                      color: 'var(--text-primary)'
-                    }}
-                  />
-                </div>
               </div>
 
               <button
