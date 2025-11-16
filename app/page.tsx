@@ -403,7 +403,15 @@ function HomeContent() {
       if (!user) return;
       
       try {
-        const response = await fetch('/api/collab-directory');
+        // Get user session token
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) return;
+
+        const response = await fetch('/api/collab-directory', {
+          headers: {
+            'Authorization': `Bearer ${session.access_token}`
+          }
+        });
         if (response.ok) {
           const data = await response.json();
           if (data.profile) {
@@ -1226,9 +1234,18 @@ function HomeContent() {
       else if (followerCountNum >= 2500) followerRange = "2.5K-5K";
       else if (followerCountNum >= 1000) followerRange = "1K-2.5K";
       
+      // Get user session token
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        throw new Error('No active session');
+      }
+
       const response = await fetch('/api/collab-directory', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${session.access_token}`
+        },
         body: JSON.stringify({
           ...profileForm,
           follower_count: followerCountNum,
