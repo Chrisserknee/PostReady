@@ -421,7 +421,7 @@ function HomeContent() {
               tiktok_username: data.profile.tiktok_username || "",
               display_name: data.profile.display_name || "",
               niche: data.profile.niche || "",
-              follower_count: data.profile.follower_count?.toLocaleString() || "",
+              follower_count: data.profile.follower_range || "",
               content_focus: data.profile.content_focus || "",
               bio: data.profile.bio || "",
               instagram_username: data.profile.instagram_username || "",
@@ -1219,20 +1219,21 @@ function HomeContent() {
     setIsSubmittingProfile(true);
     
     try {
-      // Calculate follower range from follower count
-      const followerCountNum = parseInt(profileForm.follower_count.replace(/,/g, ''));
-      let followerRange = "0-1,000";
+      // Parse the follower range to get a representative follower count (use middle of range)
+      const followerRange = profileForm.follower_count;
+      let followerCountNum: number;
       
-      if (followerCountNum >= 1000000) followerRange = "1M+";
-      else if (followerCountNum >= 500000) followerRange = "500K-1M";
-      else if (followerCountNum >= 250000) followerRange = "250K-500K";
-      else if (followerCountNum >= 100000) followerRange = "100K-250K";
-      else if (followerCountNum >= 50000) followerRange = "50K-100K";
-      else if (followerCountNum >= 25000) followerRange = "25K-50K";
-      else if (followerCountNum >= 10000) followerRange = "10K-25K";
-      else if (followerCountNum >= 5000) followerRange = "5K-10K";
-      else if (followerCountNum >= 2500) followerRange = "2.5K-5K";
-      else if (followerCountNum >= 1000) followerRange = "1K-2.5K";
+      if (followerRange.includes('+')) {
+        // Handle "1M+" format
+        followerCountNum = 1000000;
+      } else if (followerRange.includes('-')) {
+        // Handle "1000-5000" format - use middle of range
+        const [min, max] = followerRange.split('-').map(s => parseInt(s.replace(/,/g, '')));
+        followerCountNum = Math.floor((min + max) / 2);
+      } else {
+        // Fallback
+        followerCountNum = parseInt(followerRange.replace(/[^\d]/g, '')) || 1000;
+      }
       
       // Get user session token
       const { data: { session } } = await supabase.auth.getSession();
@@ -2784,11 +2785,9 @@ function HomeContent() {
                       <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                         Follower Count <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
+                      <select
                         value={profileForm.follower_count}
-                        onChange={(e) => setProfileForm({ ...profileForm, follower_count: e.target.value.replace(/[^\d,]/g, '') })}
-                        placeholder="e.g., 15,000"
+                        onChange={(e) => setProfileForm({ ...profileForm, follower_count: e.target.value })}
                         required
                         className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
                         style={{
@@ -2796,7 +2795,20 @@ function HomeContent() {
                           borderColor: 'var(--card-border)',
                           color: 'var(--text-primary)'
                         }}
-                      />
+                      >
+                        <option value="">Select follower range</option>
+                        <option value="1-500">1 - 500</option>
+                        <option value="500-1500">500 - 1,500</option>
+                        <option value="2000-5000">2,000 - 5,000</option>
+                        <option value="5000-9000">5,000 - 9,000</option>
+                        <option value="9000-15000">9,000 - 15,000</option>
+                        <option value="15000-25000">15,000 - 25,000</option>
+                        <option value="25000-75000">25,000 - 75,000</option>
+                        <option value="75000-150000">75,000 - 150,000</option>
+                        <option value="150000-300000">150,000 - 300,000</option>
+                        <option value="300000-1000000">300,000 - 1M</option>
+                        <option value="1000000+">1M+</option>
+                      </select>
                     </div>
                   </div>
 
@@ -2976,11 +2988,9 @@ function HomeContent() {
                 <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                   Your Follower Count <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <select
                   value={collabFollowerCount}
-                  onChange={(e) => setCollabFollowerCount(e.target.value.replace(/[^\d,]/g, ''))}
-                  placeholder="e.g., 15,000"
+                  onChange={(e) => setCollabFollowerCount(e.target.value)}
                   required
                   className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
                   style={{
@@ -2988,7 +2998,20 @@ function HomeContent() {
                     borderColor: 'var(--card-border)',
                     color: 'var(--text-primary)'
                   }}
-                />
+                >
+                  <option value="">Select follower range</option>
+                  <option value="1-500">1 - 500</option>
+                  <option value="500-1500">500 - 1,500</option>
+                  <option value="2000-5000">2,000 - 5,000</option>
+                  <option value="5000-9000">5,000 - 9,000</option>
+                  <option value="9000-15000">9,000 - 15,000</option>
+                  <option value="15000-25000">15,000 - 25,000</option>
+                  <option value="25000-75000">25,000 - 75,000</option>
+                  <option value="75000-150000">75,000 - 150,000</option>
+                  <option value="150000-300000">150,000 - 300,000</option>
+                  <option value="300000-1000000">300,000 - 1M</option>
+                  <option value="1000000+">1M+</option>
+                </select>
               </div>
 
               <button
