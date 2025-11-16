@@ -24,7 +24,7 @@ export default function Error({
           <img 
             src="/postready-logo.svg" 
             alt="PostReady Logo" 
-            className="h-16 w-auto"
+            className="h-16 w-auto logo-glow"
           />
         </div>
         <div className="text-6xl mb-4">⚠️</div>

@@ -17,7 +17,7 @@ export default function TermsOfService() {
             <img 
               src="/postready-logo.svg" 
               alt="PostReady Logo" 
-              className="h-16 w-auto cursor-pointer transition-all hover:scale-105"
+              className="h-16 w-auto cursor-pointer transition-all hover:scale-105 logo-glow"
               onClick={() => router.push('/')}
             />
             <h1 className="text-3xl font-bold" style={{ color: 'var(--secondary)' }}>

@@ -2368,11 +2368,11 @@ function HomeContent() {
                 boxShadow: '0 2px 8px rgba(41, 121, 255, 0.15)'
               }}
             >
-              <img 
-                src="/postready-logo.svg" 
-                alt="PostReady" 
-                className="h-6 w-auto"
-              />
+            <img 
+              src="/postready-logo.svg" 
+              alt="PostReady" 
+              className="h-6 w-auto logo-glow"
+            />
             </button>
           </div>
         )}
@@ -2388,7 +2388,7 @@ function HomeContent() {
             <img 
               src="/postready-logo.svg" 
               alt="PostReady Logo" 
-              className="h-24 w-auto"
+              className="h-24 w-auto logo-glow"
             />
           </div>
           <p className="text-2xl font-medium tracking-wide" style={{ color: 'var(--primary)' }}>
