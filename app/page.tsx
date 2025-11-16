@@ -1943,6 +1943,10 @@ function HomeContent() {
           />
         ))}
       </div>
+      
+      {/* Purple Gradient Glow - Homepage Only, Dark Mode Only */}
+      <div className="homepage-purple-glow" />
+      
       <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>
         {/* Header with Auth - Only for signed-in users */}
         {user && !authLoading && (

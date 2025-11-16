@@ -266,8 +266,8 @@ body {
   position: relative;
 }
 
-/* Animated Purple Gradient Overlay */
-body::before {
+/* Animated Purple Gradient Overlay - Homepage + Dark Mode Only */
+.homepage-purple-glow {
   content: '';
   position: fixed;
   top: 0;
@@ -276,12 +276,18 @@ body::before {
   bottom: 0;
   pointer-events: none;
   z-index: 0;
+  opacity: 0;
+  transition: opacity 0.5s ease;
+}
+
+/* Show purple glow only in dark mode on homepage */
+:root[data-theme="dark"] .homepage-purple-glow {
+  opacity: 0.3;
   background: 
     radial-gradient(circle at 20% 50%, rgba(147, 51, 234, 0.08) 0%, transparent 50%),
     radial-gradient(circle at 80% 80%, rgba(168, 85, 247, 0.06) 0%, transparent 50%),
     radial-gradient(circle at 40% 90%, rgba(139, 92, 246, 0.05) 0%, transparent 40%);
   animation: purpleShift 15s ease-in-out infinite;
-  opacity: 0.6;
 }
 
 @keyframes purpleShift {
@@ -305,24 +311,28 @@ body::before {
   }
 }
 
-/* PostReady Logo Glow Effect */
+/* PostReady Logo Blue Glow Effect - Dark Mode Only */
 .logo-glow {
-  filter: drop-shadow(0 0 8px rgba(147, 51, 234, 0.4))
-          drop-shadow(0 0 16px rgba(168, 85, 247, 0.2))
-          drop-shadow(0 0 24px rgba(139, 92, 246, 0.1));
-  animation: logoGlow 4s ease-in-out infinite;
+  transition: filter 0.3s ease;
 }
 
-@keyframes logoGlow {
+:root[data-theme="dark"] .logo-glow {
+  filter: drop-shadow(0 0 8px rgba(41, 121, 255, 0.4))
+          drop-shadow(0 0 16px rgba(41, 121, 255, 0.2))
+          drop-shadow(0 0 24px rgba(41, 121, 255, 0.1));
+  animation: logoGlowBlue 4s ease-in-out infinite;
+}
+
+@keyframes logoGlowBlue {
   0%, 100% {
-    filter: drop-shadow(0 0 8px rgba(147, 51, 234, 0.4))
-            drop-shadow(0 0 16px rgba(168, 85, 247, 0.2))
-            drop-shadow(0 0 24px rgba(139, 92, 246, 0.1));
+    filter: drop-shadow(0 0 8px rgba(41, 121, 255, 0.4))
+            drop-shadow(0 0 16px rgba(41, 121, 255, 0.2))
+            drop-shadow(0 0 24px rgba(41, 121, 255, 0.1));
   }
   50% {
-    filter: drop-shadow(0 0 12px rgba(147, 51, 234, 0.5))
-            drop-shadow(0 0 20px rgba(168, 85, 247, 0.3))
-            drop-shadow(0 0 32px rgba(139, 92, 246, 0.15));
+    filter: drop-shadow(0 0 12px rgba(41, 121, 255, 0.5))
+            drop-shadow(0 0 20px rgba(41, 121, 255, 0.3))
+            drop-shadow(0 0 32px rgba(41, 121, 255, 0.15));
   }
 }
 
