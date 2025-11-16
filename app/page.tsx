@@ -2657,7 +2657,7 @@ function HomeContent() {
         {currentStep === "form" && (
           <div 
             ref={collabSectionRef}
-            className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500"
+            className="mb-10 rounded-2xl shadow-lg border p-4 sm:p-6 md:p-8 space-y-6 transition-all duration-500"
             style={{
               backgroundColor: theme === 'dark' 
                 ? 'rgba(30, 37, 50, 0.85)' 
@@ -2671,30 +2671,30 @@ function HomeContent() {
             }}
           >
             <div className="text-center mb-6">
-              <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+              <h2 className="text-3xl sm:text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                 🤝 Collab Engine
               </h2>
-              <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
+              <p className="text-sm sm:text-base" style={{ color: 'var(--text-secondary)' }}>
                 Find real TikTok creators in your niche with similar follower counts to collaborate with
               </p>
             </div>
 
             {/* Join Network CTA */}
             {!directoryProfile && user && (
-              <div className="mb-6 p-6 rounded-xl border-2 border-dashed" style={{
+              <div className="mb-6 p-4 sm:p-6 rounded-xl border-2 border-dashed" style={{
                 backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
                 borderColor: 'rgba(41, 121, 255, 0.3)'
               }}>
                 <div className="text-center">
-                  <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                  <h3 className="text-lg sm:text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                     ✨ Join the PostReady Collab Network
                   </h3>
-                  <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                  <p className="text-xs sm:text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
                     Add your profile so other creators can find and collaborate with you!
                   </p>
                   <button
                     onClick={() => setShowJoinDirectory(true)}
-                    className="px-6 py-3 rounded-lg font-bold transition-all hover:scale-105 shadow-md"
+                    className="w-full sm:w-auto px-6 py-3 rounded-lg font-bold transition-all hover:scale-105 shadow-md"
                     style={{
                       background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
                       color: 'white'
@@ -2708,11 +2708,11 @@ function HomeContent() {
 
             {/* Join Directory Form */}
             {showJoinDirectory && (
-              <div className="mb-6 p-6 rounded-xl border" style={{
+              <div className="mb-6 p-4 sm:p-6 rounded-xl border" style={{
                 backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.08)' : 'rgba(41, 121, 255, 0.05)',
                 borderColor: 'rgba(41, 121, 255, 0.3)'
               }}>
-                <h3 className="text-2xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
+                <h3 className="text-xl sm:text-2xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
                   📝 Create Your Collab Profile
                 </h3>
                 <form onSubmit={handleProfileSubmit} className="space-y-4">
