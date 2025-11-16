@@ -4,16 +4,12 @@ import { verifyUserOwnership } from "@/lib/auth-utils";
 
 export async function POST(request: NextRequest) {
   try {
-    console.log('🔍 Checkout API called');
-    
     const body = await request.json();
     const { userId, userEmail, planType = 'pro' } = body;
 
-    console.log('📥 Checkout request data:', { userId: userId ? 'present' : 'missing', userEmail: userEmail ? 'present' : 'missing', planType });
-
     // Input validation
     if (!userId || !userEmail) {
-      console.error('❌ Missing user information:', { userId: !!userId, userEmail: !!userEmail });
+      console.error('Checkout: Missing user information');
       return NextResponse.json(
         { error: "Missing user information" },
         { status: 400 }
@@ -22,7 +18,7 @@ export async function POST(request: NextRequest) {
 
     // Validate planType
     if (planType && !['pro', 'creator'].includes(planType)) {
-      console.error('❌ Invalid plan type:', planType);
+      console.error('Checkout: Invalid plan type:', planType);
       return NextResponse.json(
         { error: "Invalid plan type" },
         { status: 400 }
@@ -36,39 +32,32 @@ export async function POST(request: NextRequest) {
 
     // Validate email format
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(sanitizedEmail)) {
-      console.error('❌ Invalid email format:', sanitizedEmail);
+      console.error('Checkout: Invalid email format');
       return NextResponse.json(
         { error: "Invalid email format" },
         { status: 400 }
       );
     }
 
-    console.log('🔐 Verifying user ownership...');
     // SECURITY: Verify user is authenticated and owns this userId
-    try {
-      const isAuthorized = await verifyUserOwnership(request, sanitizedUserId);
-      console.log('🔐 Authorization result:', isAuthorized);
-      
-      if (!isAuthorized) {
-        console.error('❌ Unauthorized access attempt - but proceeding for debugging');
-        // TODO: Re-enable this check after fixing auth flow
-        // For now, allow checkout to proceed if user data is provided
-        console.log('⚠️ TEMPORARY: Allowing checkout without strict auth verification');
-      }
-    } catch (authError: any) {
-      console.error('❌ Auth verification error:', authError.message);
-      console.log('⚠️ TEMPORARY: Proceeding with checkout despite auth error');
+    const isAuthorized = await verifyUserOwnership(request, sanitizedUserId);
+    
+    if (!isAuthorized) {
+      console.error('Checkout: Unauthorized access attempt');
+      return NextResponse.json(
+        { error: "Unauthorized - Please sign in again" },
+        { status: 401 }
+      );
     }
 
     if (!process.env.STRIPE_SECRET_KEY) {
-      console.error('❌ STRIPE_SECRET_KEY not configured');
+      console.error('Checkout: STRIPE_SECRET_KEY not configured');
       return NextResponse.json(
         { error: "Stripe is not configured" },
         { status: 500 }
       );
     }
 
-    console.log('💳 Creating Stripe checkout session...');
     // Initialize Stripe client lazily (only when route is called)
     const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
@@ -122,16 +111,10 @@ export async function POST(request: NextRequest) {
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}?upgrade=cancelled`,
     });
 
-    console.log('✅ Checkout session created successfully');
     return NextResponse.json({ sessionId: session.id, url: session.url });
   } catch (error: any) {
-    // Log detailed error server-side for debugging
-    console.error("❌ Stripe checkout error:", {
-      message: error.message,
-      type: error.type,
-      code: error.code,
-      stack: error.stack
-    });
+    // Log error for debugging
+    console.error("Checkout error:", error.message, error.type);
     
     // Return generic error to client (don't leak sensitive details)
     return NextResponse.json(
