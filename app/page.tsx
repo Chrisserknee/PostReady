@@ -2814,23 +2814,35 @@ function HomeContent() {
                 required
               />
 
-              <PrimaryButton 
+              <button 
                 type="submit" 
                 disabled={isResearchingHashtags || !hashtagResearchNiche.trim()}
-                className="w-full"
-                isPro={isPro}
+                className="w-full px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl relative overflow-hidden"
+                style={{
+                  background: isResearchingHashtags || !hashtagResearchNiche.trim()
+                    ? 'linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%)'
+                    : 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  boxShadow: isResearchingHashtags || !hashtagResearchNiche.trim()
+                    ? '0 4px 15px rgba(0, 0, 0, 0.1)'
+                    : '0 8px 32px rgba(41, 121, 255, 0.3)'
+                }}
               >
-                {isResearchingHashtags ? (
-                  <>
-                    <span className="inline-block animate-spin mr-2">🔍</span>
-                    Researching Hashtags...
-                  </>
-                ) : (
-                  <>
-                    🔍 Research Hashtags
-                  </>
-                )}
-              </PrimaryButton>
+                <span className="relative z-10 flex items-center justify-center gap-2">
+                  {isResearchingHashtags ? (
+                    <>
+                      <span className="inline-block animate-spin text-xl">🔍</span>
+                      <span>Researching Hashtags...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span className="text-xl">🔍</span>
+                      <span>Research Hashtags</span>
+                    </>
+                  )}
+                </span>
+              </button>
             </form>
 
             {/* Results Section */}
