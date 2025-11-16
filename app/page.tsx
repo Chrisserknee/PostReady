@@ -2427,11 +2427,11 @@ function HomeContent() {
                 </div>
               )}
               {/* Navigation buttons */}
-              <div className="grid grid-cols-4 gap-1.5 sm:gap-2 w-full">
+              <div className="grid grid-cols-4 gap-1 sm:gap-2 w-full">
                 <button
                   onClick={navigateHome}
                   disabled={isNavigating}
-                  className="px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all disabled:opacity-50 whitespace-nowrap shadow-md hover:scale-105 active:scale-95"
+                  className="px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all disabled:opacity-50 shadow-md hover:scale-105 active:scale-95"
                   style={currentStep === "form" ? { 
                     color: 'white',
                     fontWeight: 'bold',
@@ -2444,8 +2444,7 @@ function HomeContent() {
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                   }}
                 >
-                  <span className="hidden sm:inline">Home</span>
-                  <span className="sm:hidden">🏠</span>
+                  Home
                 </button>
                 <button
                   onClick={() => {
@@ -2454,7 +2453,7 @@ function HomeContent() {
                       loadHistoryData();
                     }
                   }}
-                  className="px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shadow-md hover:scale-105 active:scale-95"
+                  className="px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-md hover:scale-105 active:scale-95"
                   style={currentStep === "businesses" ? { 
                     color: 'white',
                     fontWeight: 'bold',
@@ -2467,8 +2466,7 @@ function HomeContent() {
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                   }}
                 >
-                  <span className="hidden sm:inline">Businesses</span>
-                  <span className="sm:hidden">💼</span>
+                  Businesses
                 </button>
                 <button
                   onClick={() => {
@@ -2477,7 +2475,7 @@ function HomeContent() {
                       loadHistoryData();
                     }
                   }}
-                  className="px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shadow-md hover:scale-105 active:scale-95"
+                  className="px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-md hover:scale-105 active:scale-95"
                   style={currentStep === "history" ? { 
                     color: 'white',
                     fontWeight: 'bold',
@@ -2490,8 +2488,7 @@ function HomeContent() {
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                   }}
                 >
-                  <span className="hidden sm:inline">History</span>
-                  <span className="sm:hidden">📜</span>
+                  History
                 </button>
                 <button
                   onClick={() => {
@@ -2504,7 +2501,7 @@ function HomeContent() {
                       hashtagSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
                     }
                   }}
-                  className="px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all whitespace-nowrap shadow-md hover:scale-105 active:scale-95"
+                  className="px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-md hover:scale-105 active:scale-95"
                   style={{ 
                     color: 'var(--text-primary)',
                     backgroundColor: 'var(--card-bg)',
@@ -2512,12 +2509,11 @@ function HomeContent() {
                     boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                   }}
                 >
-                  <span className="hidden sm:inline">#️⃣ Hashtags</span>
-                  <span className="sm:hidden">#️⃣</span>
+                  Hashtags
                 </button>
               </div>
               {/* User actions */}
-              <div className="flex gap-1.5 sm:gap-2 w-full">
+              <div className="flex gap-1 sm:gap-2 w-full">
                 <button
                   onClick={(e) => {
                     e.preventDefault();
@@ -2526,7 +2522,7 @@ function HomeContent() {
                     navigateToPortal();
                   }}
                   type="button"
-                  className="flex-1 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
+                  className="flex-1 px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
                   style={{ 
                     color: 'var(--text-primary)', 
                     pointerEvents: 'auto',
@@ -2536,26 +2532,24 @@ function HomeContent() {
                   }}
                   title="Go to User Portal"
                 >
-                  <span className="hidden sm:inline">Account</span>
-                  <span className="sm:hidden">👤</span>
+                  Account
                 </button>
                 {!isPro ? (
                   <button
                     onClick={scrollToPremium}
-                    className="flex-1 text-white px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all whitespace-nowrap shadow-lg hover:scale-105 active:scale-95"
+                    className="flex-1 text-white px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold transition-all shadow-lg hover:scale-105 active:scale-95"
                     style={{ 
                       background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)',
                       boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
                     }}
                   >
-                    <span className="hidden sm:inline">Upgrade</span>
-                    <span className="sm:hidden">⭐</span>
+                    Upgrade
                   </button>
                 ) : (
                   <button
                     onClick={handleSignOut}
                     disabled={isSigningOut}
-                    className="flex-1 px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all shadow-md hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex-1 px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-md hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                     style={{ 
                       color: '#dc2626',
                       backgroundColor: 'rgba(220, 38, 38, 0.15)',
@@ -2573,17 +2567,7 @@ function HomeContent() {
                       e.currentTarget.style.color = '#dc2626';
                     }}
                   >
-                    {isSigningOut ? (
-                      <>
-                        <span className="hidden sm:inline">Signing Out...</span>
-                        <span className="sm:hidden">...</span>
-                      </>
-                    ) : (
-                      <>
-                        <span className="hidden sm:inline">Sign Out</span>
-                        <span className="sm:hidden">🚪</span>
-                      </>
-                    )}
+                    {isSigningOut ? 'Signing Out...' : 'Sign Out'}
                   </button>
                 )}
               </div>
@@ -2591,7 +2575,7 @@ function HomeContent() {
                 <button
                   onClick={handleSignOut}
                   disabled={isSigningOut}
-                  className="w-full px-2 sm:px-4 py-2 sm:py-2.5 rounded-xl text-xs sm:text-sm font-semibold whitespace-nowrap transition-all shadow-md hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="w-full px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-md hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ 
                     color: '#dc2626',
                     backgroundColor: 'rgba(220, 38, 38, 0.15)',
