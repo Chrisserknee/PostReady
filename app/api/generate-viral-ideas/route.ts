@@ -63,3 +63,4 @@ Format your response as a JSON array with exactly 10 ideas.`,
   }
 }
 
+

@@ -1,0 +1,66 @@
+-- Add 25 test users to collab_directory for testing
+-- Note: These are fake users for testing purposes only
+
+INSERT INTO collab_directory (
+  user_id,
+  tiktok_username,
+  display_name,
+  niche,
+  follower_count,
+  follower_range,
+  content_focus,
+  bio,
+  looking_for_collab,
+  instagram_username,
+  youtube_username,
+  email_for_collabs
+) VALUES
+-- Fitness creators
+(gen_random_uuid(), 'fitnesswithsarah', 'Sarah Martinez', 'Fitness', 15000, '10K-25K', 'Home Workouts & Nutrition', 'Helping busy moms get fit at home 💪 DM for collabs!', true, 'fitnesswithsarah', 'sarahfitness', 'sarah@example.com'),
+(gen_random_uuid(), 'gymrattommy', 'Tommy Chen', 'Fitness', 45000, '25K-50K', 'Gym Tutorials & Muscle Building', 'Your daily dose of gym motivation 🏋️', true, 'tommygym', 'tommychen', 'tommy@example.com'),
+(gen_random_uuid(), 'yogaflow_emma', 'Emma Wilson', 'Fitness', 8500, '5K-10K', 'Yoga & Mindfulness', 'Flow with me 🧘‍♀️ Yoga for beginners', true, 'emmaflow', null, 'emma@example.com'),
+
+-- Gaming creators
+(gen_random_uuid(), 'progamer_alex', 'Alex Rivera', 'Gaming', 125000, '100K-250K', 'FPS & Battle Royale', 'Professional gamer | Streaming daily 🎮', true, 'alexgaming', 'alexrivera', 'alex@example.com'),
+(gen_random_uuid(), 'casualgamer_mike', 'Mike Johnson', 'Gaming', 22000, '10K-25K', 'Indie Games & Reviews', 'Discovering hidden gem games 👾', true, 'mikegames', 'mikejgaming', 'mike@example.com'),
+(gen_random_uuid(), 'retro_gaming_lisa', 'Lisa Park', 'Gaming', 35000, '25K-50K', 'Retro & Classic Games', '90s gaming nostalgia 🕹️', true, 'retrolisa', null, 'lisa@example.com'),
+
+-- Beauty creators
+(gen_random_uuid(), 'makeupbyjade', 'Jade Anderson', 'Beauty', 67000, '50K-100K', 'Makeup Tutorials', 'Makeup artist | Cruelty-free beauty 💄', true, 'jadebeauty', 'makeupwithjade', 'jade@example.com'),
+(gen_random_uuid(), 'skincarequeen_nina', 'Nina Rodriguez', 'Beauty', 18000, '10K-25K', 'Skincare Routines', 'Glass skin secrets ✨ Open to brand deals', true, 'ninaskincare', null, 'nina@example.com'),
+(gen_random_uuid(), 'beautyby_chris', 'Chris Taylor', 'Beauty', 42000, '25K-50K', 'Hair & Nails', 'Licensed cosmetologist | Collab friendly 💅', true, 'christaylor', 'beautybychris', 'chris@example.com'),
+
+-- Food/Cooking creators
+(gen_random_uuid(), 'quickmeals_rachel', 'Rachel Kim', 'Food', 95000, '50K-100K', '15-Minute Recipes', 'Quick meals for busy people 🍳', true, 'rachelcooks', 'rachelkitchen', 'rachel@example.com'),
+(gen_random_uuid(), 'bakingwith_ben', 'Ben Thompson', 'Food', 31000, '25K-50K', 'Baking & Desserts', 'Home baker sharing my favorite recipes 🧁', true, 'bensbakes', 'bakingwithben', 'ben@example.com'),
+(gen_random_uuid(), 'healthyeats_maya', 'Maya Patel', 'Food', 12000, '10K-25K', 'Healthy Meal Prep', 'Nutrition student | Meal prep Sundays 🥗', true, 'mayaeats', null, 'maya@example.com'),
+
+-- Lifestyle/Vlog creators
+(gen_random_uuid(), 'dailyvlog_sam', 'Sam Williams', 'Lifestyle', 78000, '50K-100K', 'Daily Vlogs & Life Updates', 'Living my best life in NYC 🌆', true, 'samvlogs', 'samwilliams', 'sam@example.com'),
+(gen_random_uuid(), 'minimalist_kelly', 'Kelly Zhang', 'Lifestyle', 54000, '50K-100K', 'Minimalism & Organization', 'Less stuff, more life 🌿', true, 'kellyminimal', 'kellyliving', 'kelly@example.com'),
+(gen_random_uuid(), 'collegelife_jason', 'Jason Lee', 'Lifestyle', 16000, '10K-25K', 'College Student Life', 'Surviving college one day at a time 📚', true, 'jasonlee', null, 'jason@example.com'),
+
+-- Tech/Education creators
+(gen_random_uuid(), 'techexplained_david', 'David Brown', 'Tech', 110000, '100K-250K', 'Tech Reviews & Tutorials', 'Breaking down tech for everyone 💻', true, 'davidtech', 'techwithdavid', 'david@example.com'),
+(gen_random_uuid(), 'codingwith_sophia', 'Sophia Garcia', 'Tech', 38000, '25K-50K', 'Programming Tutorials', 'Teaching code in bite-sized lessons 👩‍💻', true, 'sophiacodes', 'codingsophia', 'sophia@example.com'),
+(gen_random_uuid(), 'gadget_guru_mark', 'Mark Davis', 'Tech', 72000, '50K-100K', 'Latest Gadget Reviews', 'First look at the newest tech 📱', true, 'markgadgets', 'marktech', 'mark@example.com'),
+
+-- Fashion creators
+(gen_random_uuid(), 'fashionista_amy', 'Amy White', 'Fashion', 88000, '50K-100K', 'Outfit Ideas & Styling', 'Affordable fashion for everyone 👗', true, 'amyfashion', 'stylewithamy', 'amy@example.com'),
+(gen_random_uuid(), 'streetstyle_tyler', 'Tyler Moore', 'Fashion', 26000, '25K-50K', 'Streetwear & Urban Fashion', 'Sneakerhead | Street style daily 👟', true, 'tylerstyle', null, 'tyler@example.com'),
+
+-- Music/Arts creators
+(gen_random_uuid(), 'singer_olivia', 'Olivia Martinez', 'Music', 156000, '100K-250K', 'Original Songs & Covers', 'Independent artist | New music every week 🎤', true, 'oliviasings', 'oliviamusic', 'olivia@example.com'),
+(gen_random_uuid(), 'artist_jordan', 'Jordan Hill', 'Arts', 29000, '25K-50K', 'Digital Art & Illustrations', 'Freelance illustrator | Commission open 🎨', true, 'jordandraws', 'jordanart', 'jordan@example.com'),
+
+-- Comedy/Entertainment
+(gen_random_uuid(), 'comedy_central_luke', 'Luke Anderson', 'Entertainment', 210000, '100K-250K', 'Sketch Comedy & Parodies', 'Making you laugh daily 😂', true, 'lukecomedy', 'lukeentertainment', 'luke@example.com'),
+(gen_random_uuid(), 'funny_skits_mia', 'Mia Thomas', 'Entertainment', 63000, '50K-100K', 'Relatable Comedy Skits', 'Comedy creator | Open for collabs 🤣', true, 'miafunny', 'miacomedy', 'mia@example.com'),
+
+-- Misc niches
+(gen_random_uuid(), 'petlover_casey', 'Casey Rodriguez', 'Pets', 47000, '25K-50K', 'Dog Training & Pet Care', 'Dog mom to 3 rescues 🐕', true, 'caseypets', 'caseydogs', 'casey@example.com');
+
+-- Verify insertion
+SELECT COUNT(*) as total_test_users FROM collab_directory WHERE email_for_collabs LIKE '%@example.com';
+
+

@@ -62,7 +62,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      if (error) {
+        console.error('❌ Session retrieval error:', error);
+      }
+      
+      if (session) {
+        console.log('✅ Session found on load:', session.user?.email);
+      } else {
+        console.log('⚠️ No session found on load');
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -75,6 +85,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
+      console.log('🔄 Auth state changed:', _event, session?.user?.email || 'No user');
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {

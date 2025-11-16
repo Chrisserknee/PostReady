@@ -23,6 +23,9 @@ export const getSupabaseClient = (): SupabaseClient => {
         persistSession: typeof window !== 'undefined', // Only persist on client
         autoRefreshToken: true,
         detectSessionInUrl: true,
+        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        storageKey: 'postready-auth-token',
+        flowType: 'pkce', // More secure and mobile-friendly
       }
     });
   }
