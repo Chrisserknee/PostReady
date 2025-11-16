@@ -427,3 +427,44 @@ textarea::placeholder {
   }
 }
 
+/* Smooth Page Transitions - Prevent Flash */
+html {
+  background-color: var(--bg-primary);
+  transition: background-color 0.2s ease-in-out;
+}
+
+body {
+  background-color: var(--bg-primary);
+  transition: background-color 0.2s ease-in-out;
+  min-height: 100vh;
+}
+
+/* Prevent white flash during navigation */
+html[data-theme="dark"] {
+  background-color: rgb(15, 23, 42);
+}
+
+html[data-theme="light"] {
+  background-color: rgb(255, 255, 255);
+}
+
+/* Smooth content transitions */
+main {
+  animation: fadeIn 0.2s ease-in-out;
+}
+
+/* Hardware acceleration for smoother animations - only on interactive elements */
+@media (prefers-reduced-motion: no-preference) {
+  a, button {
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+  }
+}
+
+/* Smooth color transitions for theme changes */
+:root,
+:root[data-theme="dark"],
+:root[data-theme="light"] {
+  transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+}
+

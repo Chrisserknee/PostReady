@@ -217,6 +217,39 @@ function HomeContent() {
   const [selectedHashtags, setSelectedHashtags] = useState<string[]>([]);
   const [generationCount, setGenerationCount] = useState<number>(0);
   const hashtagSectionRef = useRef<HTMLDivElement>(null);
+
+  // Collab Engine State
+  const [collabUsername, setCollabUsername] = useState<string>("");
+  const [collabNiche, setCollabNiche] = useState<string>("");
+  const [collabFollowerCount, setCollabFollowerCount] = useState<string>("");
+  const [collaborators, setCollaborators] = useState<any[]>([]);
+  const [isLoadingCollabs, setIsLoadingCollabs] = useState<boolean>(false);
+  const [showJoinDirectory, setShowJoinDirectory] = useState<boolean>(false);
+  const [directoryProfile, setDirectoryProfile] = useState<any>(null);
+  const [isSubmittingProfile, setIsSubmittingProfile] = useState<boolean>(false);
+  const [copyingDmIndex, setCopyingDmIndex] = useState<number | null>(null);
+  const [profileForm, setProfileForm] = useState({
+    tiktok_username: "",
+    display_name: "",
+    niche: "",
+    follower_count: "",
+    content_focus: "",
+    bio: "",
+    instagram_username: "",
+    youtube_username: "",
+    email_for_collabs: "",
+  });
+  const collabSectionRef = useRef<HTMLDivElement>(null);
+
+  // Trend Radar State
+  const [showAdvancedTrends, setShowAdvancedTrends] = useState<boolean>(false);
+  const [trendData, setTrendData] = useState<any[]>([]);
+  const [hoveredTrend, setHoveredTrend] = useState<any>(null);
+
+  // Viral Video Idea Generator State
+  const [viralTopic, setViralTopic] = useState<string>("");
+  const [viralIdeas, setViralIdeas] = useState<any[]>([]);
+  const [isGeneratingViralIdeas, setIsGeneratingViralIdeas] = useState<boolean>(false);
   
   // Watch for platform changes and regenerate hashtags if results exist
   useEffect(() => {
@@ -361,6 +394,41 @@ function HomeContent() {
         loadProgress();
         loadHistoryData();
       }
+    }
+  }, [user, authLoading]);
+
+  // Load user's collab directory profile
+  useEffect(() => {
+    const loadCollabProfile = async () => {
+      if (!user) return;
+      
+      try {
+        const response = await fetch('/api/collab-directory');
+        if (response.ok) {
+          const data = await response.json();
+          if (data.profile) {
+            setDirectoryProfile(data.profile);
+            // Pre-fill the form with existing data
+            setProfileForm({
+              tiktok_username: data.profile.tiktok_username || "",
+              display_name: data.profile.display_name || "",
+              niche: data.profile.niche || "",
+              follower_count: data.profile.follower_count?.toLocaleString() || "",
+              content_focus: data.profile.content_focus || "",
+              bio: data.profile.bio || "",
+              instagram_username: data.profile.instagram_username || "",
+              youtube_username: data.profile.youtube_username || "",
+              email_for_collabs: data.profile.email_for_collabs || "",
+            });
+          }
+        }
+      } catch (error) {
+        console.error('Error loading collab profile:', error);
+      }
+    };
+    
+    if (user && !authLoading) {
+      loadCollabProfile();
     }
   }, [user, authLoading]);
 
@@ -1083,6 +1151,133 @@ function HomeContent() {
         name: error.name
       });
       showNotification(error.message || "Failed to start checkout. Please try again.", "error", "Error");
+    }
+  };
+
+  // Collab Engine Handlers
+  const handleCollabSearch = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!collabUsername || !collabNiche || !collabFollowerCount) {
+      showNotification("Please fill in all fields", "warning");
+      return;
+    }
+    
+    setIsLoadingCollabs(true);
+    setCollaborators([]);
+    
+    try {
+      const response = await fetch('/api/collab', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          username: collabUsername,
+          niche: collabNiche,
+          followerCount: parseInt(collabFollowerCount.replace(/,/g, '')),
+        }),
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to find collaborators');
+      }
+      
+      const data = await response.json();
+      setCollaborators(data.collaborators || []);
+      
+      if (data.collaborators.length === 0) {
+        showNotification("No collaborators found matching your criteria. Try adjusting your filters or join the network to help others find you!", "info", "No Matches");
+      }
+    } catch (error) {
+      console.error('Collab search error:', error);
+      showNotification("Failed to search for collaborators. Please try again.", "error");
+    } finally {
+      setIsLoadingCollabs(false);
+    }
+  };
+
+  const handleProfileSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!user) {
+      showNotification("Please sign in to join the network", "warning");
+      return;
+    }
+    
+    if (!profileForm.tiktok_username || !profileForm.niche || !profileForm.follower_count || !profileForm.email_for_collabs) {
+      showNotification("Please fill in all required fields", "warning");
+      return;
+    }
+    
+    setIsSubmittingProfile(true);
+    
+    try {
+      // Calculate follower range from follower count
+      const followerCountNum = parseInt(profileForm.follower_count.replace(/,/g, ''));
+      let followerRange = "0-1,000";
+      
+      if (followerCountNum >= 1000000) followerRange = "1M+";
+      else if (followerCountNum >= 500000) followerRange = "500K-1M";
+      else if (followerCountNum >= 250000) followerRange = "250K-500K";
+      else if (followerCountNum >= 100000) followerRange = "100K-250K";
+      else if (followerCountNum >= 50000) followerRange = "50K-100K";
+      else if (followerCountNum >= 25000) followerRange = "25K-50K";
+      else if (followerCountNum >= 10000) followerRange = "10K-25K";
+      else if (followerCountNum >= 5000) followerRange = "5K-10K";
+      else if (followerCountNum >= 2500) followerRange = "2.5K-5K";
+      else if (followerCountNum >= 1000) followerRange = "1K-2.5K";
+      
+      const response = await fetch('/api/collab-directory', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...profileForm,
+          follower_count: followerCountNum,
+          follower_range: followerRange,
+        }),
+      });
+      
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save profile');
+      }
+      
+      const data = await response.json();
+      setDirectoryProfile(data.profile);
+      setShowJoinDirectory(false);
+      showNotification("Successfully joined the PostReady Collab Network! 🎉", "success");
+    } catch (error: any) {
+      console.error('Profile submit error:', error);
+      showNotification(error.message || "Failed to save profile. Please try again.", "error");
+    } finally {
+      setIsSubmittingProfile(false);
+    }
+  };
+
+  const handleCopyDmAndVisit = async (dm: string, username: string, index: number) => {
+    try {
+      setCopyingDmIndex(index);
+      
+      // Step 1: Copy DM
+      await navigator.clipboard.writeText(dm);
+      showNotification("DM copied to clipboard!", "success");
+      
+      // Step 2: Wait 1 second
+      await new Promise(resolve => setTimeout(resolve, 1000));
+      
+      // Step 3: Show redirecting message
+      showNotification("Redirecting you to TikTok...", "info");
+      
+      // Step 4: Wait 3 more seconds
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      
+      // Step 5: Open TikTok profile
+      const cleanUsername = username.replace('@', '');
+      window.open(`https://www.tiktok.com/@${cleanUsername}`, '_blank');
+    } catch (error) {
+      console.error('Copy/visit error:', error);
+      showNotification("Failed to copy DM", "error");
+    } finally {
+      setCopyingDmIndex(null);
     }
   };
 
@@ -2440,330 +2635,895 @@ function HomeContent() {
           </p>
         </div>
 
-        {/* Business Info Form */}
+        {/* Collab Engine - Top of Homepage */}
         {currentStep === "form" && (
           <div 
+            ref={collabSectionRef}
             className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500"
             style={{
-              backgroundColor: userType === 'creator' 
-                ? theme === 'light'
-                  ? '#FFFFFF' // Clean white background in light mode
-                  : 'rgba(218, 165, 32, 0.08)' // Light shimmery gold in dark mode
-                : theme === 'dark'
-                  ? 'rgba(30, 37, 50, 0.85)' // More see-through background in dark mode
-                  : 'var(--card-bg)',
-              borderColor: userType === 'creator'
-                ? theme === 'light'
-                  ? 'rgba(218, 165, 32, 0.25)' // Subtle gold border in light mode
-                  : 'rgba(218, 165, 32, 0.3)'
-                : 'var(--card-border)',
-              boxShadow: userType === 'creator'
-                ? theme === 'light'
-                  ? '0 4px 20px rgba(218, 165, 32, 0.12), 0 0 0 1px rgba(218, 165, 32, 0.08)'
-                  : '0 10px 40px rgba(218, 165, 32, 0.15)'
-                : theme === 'dark'
-                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)' // Subtle blue glow in dark mode
-                  : undefined
+              backgroundColor: theme === 'dark' 
+                ? 'rgba(30, 37, 50, 0.85)' 
+                : '#FFFFFF',
+              borderColor: theme === 'dark'
+                ? 'var(--card-border)'
+                : 'rgba(41, 121, 255, 0.2)',
+              boxShadow: theme === 'dark'
+                ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'
             }}
           >
-            {/* Business/Creator Toggle Pill with Slider */}
-            <div className="flex justify-center mb-8">
-              <div 
-                className="relative inline-flex rounded-full p-1 cursor-pointer"
-                style={{
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  backdropFilter: 'blur(10px)',
-                  width: '340px'
-                }}
-                onClick={() => setUserType(userType === 'business' ? 'creator' : 'business')}
-              >
-                {/* Sliding background indicator */}
-                <div 
-                  className="absolute top-1 bottom-1 rounded-full transition-all duration-500 ease-in-out"
-                  style={{
-                    left: userType === 'business' ? '4px' : 'calc(50% - 4px)',
-                    width: 'calc(50% + 4px)',
-                    background: userType === 'business' 
-                      ? 'linear-gradient(to right, #2979FF, #4A9FFF)'
-                      : 'linear-gradient(to right, #DAA520, #F4D03F)', // Softer gold
-                    boxShadow: userType === 'business'
-                      ? '0 4px 12px rgba(41, 121, 255, 0.4)'
-                      : '0 4px 12px rgba(218, 165, 32, 0.4)'
-                  }}
-                />
-                
-                <button
-                  type="button"
-                  className="relative px-8 py-3 rounded-full font-semibold transition-all duration-300 z-10 flex-1"
-                  style={{
-                    color: userType === 'business' ? 'white' : 'var(--text-secondary)'
-                  }}
-                >
-                  Businesses
-                </button>
-                <button
-                  type="button"
-                  className="relative px-8 py-3 rounded-full font-semibold transition-all duration-300 z-10 flex-1"
-                  style={{
-                    color: userType === 'creator' 
-                      ? theme === 'light' 
-                        ? '#1A1A1A' // Darker text for better contrast in light mode
-                        : '#1A1F2E' 
-                      : 'var(--text-secondary)'
-                  }}
-                >
-                  Creators
-                </button>
-              </div>
+            <div className="text-center mb-6">
+              <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                🤝 Collab Engine
+              </h2>
+              <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
+                Find real TikTok creators in your niche with similar follower counts to collaborate with
+              </p>
             </div>
 
-            <h2 className="text-3xl font-bold mb-6 transition-colors duration-500" style={{ 
-              color: userType === 'creator' 
-                ? theme === 'light' 
-                  ? '#D97706' // Rich amber-gold for better contrast in light mode
-                  : '#DAA520' 
-                : 'var(--secondary)' 
-            }}>
-              {userType === 'business' ? 'Tell Us About Your Business' : 'Tell Us About Your Content'}
-            </h2>
-            <form onSubmit={handleGenerateStrategy} className="space-y-4">
-              <InputField
-                label={userType === 'business' ? 'Business Name' : 'Creator / Channel Name'}
-                value={businessInfo.businessName}
-                onChange={(value) =>
-                  setBusinessInfo({ ...businessInfo, businessName: value })
-                }
-                placeholder={userType === 'business' ? "Joe's Pizza" : "Your Creator Name"}
-                required
-              />
+            {/* Join Network CTA */}
+            {!directoryProfile && user && (
+              <div className="mb-6 p-6 rounded-xl border-2 border-dashed" style={{
+                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
+                borderColor: 'rgba(41, 121, 255, 0.3)'
+              }}>
+                <div className="text-center">
+                  <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                    ✨ Join the PostReady Collab Network
+                  </h3>
+                  <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                    Add your profile so other creators can find and collaborate with you!
+                  </p>
+                  <button
+                    onClick={() => setShowJoinDirectory(true)}
+                    className="px-6 py-3 rounded-lg font-bold transition-all hover:scale-105 shadow-md"
+                    style={{
+                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                      color: 'white'
+                    }}
+                  >
+                    Join the Network
+                  </button>
+                </div>
+              </div>
+            )}
 
-              <SelectField
-                label={userType === 'business' ? 'Business Type' : 'Content Category'}
-                value={businessInfo.businessType}
-                onChange={(value) =>
-                  setBusinessInfo({
-                    ...businessInfo,
-                    businessType: value as BusinessInfo["businessType"],
-                  })
-                }
-                options={
-                  userType === 'business' 
-                    ? [
-                        "Restaurant",
-                        "Cafe / Bakery",
-                        "Retail Shop",
-                        "Thrift Store / Resale",
-                        "Salon / Spa",
-                        "Gym / Fitness",
-                        "Real Estate",
-                        "Movie Theater",
-                        "Other",
-                      ]
-                    : [
-                        "Gaming",
-                        "Lifestyle / Vlog",
-                        "Beauty / Fashion",
-                        "Fitness / Health",
-                        "Food / Cooking",
-                        "Tech / Reviews",
-                        "Education / Tutorials",
-                        "Entertainment",
-                        "Music / Arts",
-                        "Other",
-                      ]
-                }
-                required
-              />
+            {/* Join Directory Form */}
+            {showJoinDirectory && (
+              <div className="mb-6 p-6 rounded-xl border" style={{
+                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.08)' : 'rgba(41, 121, 255, 0.05)',
+                borderColor: 'rgba(41, 121, 255, 0.3)'
+              }}>
+                <h3 className="text-2xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
+                  📝 Create Your Collab Profile
+                </h3>
+                <form onSubmit={handleProfileSubmit} className="space-y-4">
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                      Your TikTok Username <span className="text-red-500">*</span>
+                    </label>
+                    <div className="relative flex items-center">
+                      <span 
+                        className="absolute left-4 top-1/2 transform -translate-y-1/2 text-lg font-bold pointer-events-none z-10"
+                        style={{ color: 'rgba(255, 107, 107, 0.8)' }}
+                      >
+                        @
+                      </span>
+                      <input
+                        type="text"
+                        value={profileForm.tiktok_username}
+                        onChange={(e) => setProfileForm({ ...profileForm, tiktok_username: e.target.value.replace('@', '') })}
+                        placeholder="yourusername"
+                        required
+                        className="w-full rounded-md px-3 py-2 pl-10 focus:outline-none focus:ring-2 border"
+                        style={{
+                          backgroundColor: 'var(--card-bg)',
+                          borderColor: 'var(--card-border)',
+                          color: 'var(--text-primary)'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                      Display Name
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.display_name}
+                      onChange={(e) => setProfileForm({ ...profileForm, display_name: e.target.value })}
+                      placeholder="Your Name"
+                      className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                      style={{
+                        backgroundColor: 'var(--card-bg)',
+                        borderColor: 'var(--card-border)',
+                        color: 'var(--text-primary)'
+                      }}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                        Niche <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={profileForm.niche}
+                        onChange={(e) => setProfileForm({ ...profileForm, niche: e.target.value })}
+                        placeholder="e.g., Fitness, Gaming, Beauty"
+                        required
+                        className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                        style={{
+                          backgroundColor: 'var(--card-bg)',
+                          borderColor: 'var(--card-border)',
+                          color: 'var(--text-primary)'
+                        }}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                        Follower Count <span className="text-red-500">*</span>
+                      </label>
+                      <input
+                        type="text"
+                        value={profileForm.follower_count}
+                        onChange={(e) => setProfileForm({ ...profileForm, follower_count: e.target.value.replace(/[^\d,]/g, '') })}
+                        placeholder="e.g., 15,000"
+                        required
+                        className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                        style={{
+                          backgroundColor: 'var(--card-bg)',
+                          borderColor: 'var(--card-border)',
+                          color: 'var(--text-primary)'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                      Content Focus
+                    </label>
+                    <input
+                      type="text"
+                      value={profileForm.content_focus}
+                      onChange={(e) => setProfileForm({ ...profileForm, content_focus: e.target.value })}
+                      placeholder="e.g., Workout Tutorials, Product Reviews"
+                      className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                      style={{
+                        backgroundColor: 'var(--card-bg)',
+                        borderColor: 'var(--card-border)',
+                        color: 'var(--text-primary)'
+                      }}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                      Bio
+                    </label>
+                    <textarea
+                      value={profileForm.bio}
+                      onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
+                      placeholder="Tell other creators about yourself..."
+                      rows={3}
+                      className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                      style={{
+                        backgroundColor: 'var(--card-bg)',
+                        borderColor: 'var(--card-border)',
+                        color: 'var(--text-primary)'
+                      }}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                        Instagram Username
+                      </label>
+                      <input
+                        type="text"
+                        value={profileForm.instagram_username}
+                        onChange={(e) => setProfileForm({ ...profileForm, instagram_username: e.target.value.replace('@', '') })}
+                        placeholder="instagram_handle"
+                        className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                        style={{
+                          backgroundColor: 'var(--card-bg)',
+                          borderColor: 'var(--card-border)',
+                          color: 'var(--text-primary)'
+                        }}
+                      />
+                    </div>
+
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                        YouTube Username
+                      </label>
+                      <input
+                        type="text"
+                        value={profileForm.youtube_username}
+                        onChange={(e) => setProfileForm({ ...profileForm, youtube_username: e.target.value.replace('@', '') })}
+                        placeholder="youtube_channel"
+                        className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                        style={{
+                          backgroundColor: 'var(--card-bg)',
+                          borderColor: 'var(--card-border)',
+                          color: 'var(--text-primary)'
+                        }}
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                      Email for Collabs <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={profileForm.email_for_collabs}
+                      onChange={(e) => setProfileForm({ ...profileForm, email_for_collabs: e.target.value })}
+                      placeholder="your@email.com"
+                      required
+                      className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                      style={{
+                        backgroundColor: 'var(--card-bg)',
+                        borderColor: 'var(--card-border)',
+                        color: 'var(--text-primary)'
+                      }}
+                    />
+                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                      This email will be stored but NOT displayed to other users for privacy
+                    </p>
+                  </div>
+
+                  <div className="flex gap-3">
+                    <button
+                      type="submit"
+                      disabled={isSubmittingProfile}
+                      className="flex-1 py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                      style={{
+                        background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                        color: 'white'
+                      }}
+                    >
+                      {isSubmittingProfile ? 'Saving...' : directoryProfile ? 'Update Profile' : 'Join Network'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowJoinDirectory(false)}
+                      className="px-6 py-3 rounded-lg font-medium transition-all hover:opacity-80 border"
+                      style={{
+                        borderColor: 'var(--card-border)',
+                        color: 'var(--text-secondary)'
+                      }}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+
+            {/* Search Form */}
+            <form onSubmit={handleCollabSearch} className="space-y-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  Your Niche <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={collabNiche}
+                  onChange={(e) => setCollabNiche(e.target.value)}
+                  placeholder="e.g., Fitness, Gaming, Beauty"
+                  required
+                  className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                  style={{
+                    backgroundColor: 'var(--card-bg)',
+                    borderColor: 'var(--card-border)',
+                    color: 'var(--text-primary)'
+                  }}
+                />
+              </div>
 
               <div className="space-y-2">
                 <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                  Location
-                  <span className="text-red-500 ml-1">*</span>
+                  Your Follower Count <span className="text-red-500">*</span>
                 </label>
-                <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={collabFollowerCount}
+                  onChange={(e) => setCollabFollowerCount(e.target.value.replace(/[^\d,]/g, ''))}
+                  placeholder="e.g., 15,000"
+                  required
+                  className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                  style={{
+                    backgroundColor: 'var(--card-bg)',
+                    borderColor: 'var(--card-border)',
+                    color: 'var(--text-primary)'
+                  }}
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  Your TikTok Username <span className="text-red-500">*</span>
+                </label>
+                <div className="relative flex items-center">
+                  <span 
+                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-lg font-bold pointer-events-none z-10"
+                    style={{ color: 'rgba(255, 107, 107, 0.8)' }}
+                  >
+                    @
+                  </span>
                   <input
                     type="text"
-                    value={businessInfo.location}
-                    onChange={(e) => setBusinessInfo({ ...businessInfo, location: e.target.value })}
-                    placeholder="Monterey, CA"
+                    value={collabUsername}
+                    onChange={(e) => setCollabUsername(e.target.value.replace('@', ''))}
+                    placeholder="yourusername"
                     required
-                    className="rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 border"
+                    className="w-full rounded-md px-3 py-2 pl-10 focus:outline-none focus:ring-2 border"
                     style={{
                       backgroundColor: 'var(--card-bg)',
                       borderColor: 'var(--card-border)',
                       color: 'var(--text-primary)'
                     }}
                   />
-                  <button
-                    type="button"
-                    onClick={detectUserLocation}
-                    disabled={isDetectingLocation}
-                    className="px-4 py-2 rounded-md font-medium text-sm transition-all hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 whitespace-nowrap"
-                    style={{
-                      backgroundColor: 'var(--primary)',
-                      color: 'white'
-                    }}
-                    title="Detect my location"
-                  >
-                    {isDetectingLocation ? (
-                      <>
-                        <span className="animate-spin">🌍</span>
-                        Detecting...
-                      </>
-                    ) : (
-                      <>
-                        📍 Detect
-                      </>
-                    )}
-                  </button>
                 </div>
               </div>
 
-              <SelectField
-                label="Primary Platform"
-                value={businessInfo.platform}
-                onChange={(value) =>
-                  setBusinessInfo({
-                    ...businessInfo,
-                    platform: value as BusinessInfo["platform"],
-                  })
-                }
-                options={["Instagram", "TikTok", "Facebook", "YouTube Shorts"]}
-                required
-              />
-
-              {/* Goals Field - Only for Creators */}
-              {userType === 'creator' && (
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                    Your Goals
-                  </label>
-                  <textarea
-                    value={creatorGoals}
-                    onChange={(e) => setCreatorGoals(e.target.value)}
-                    placeholder="What are your goals? (e.g., grow followers, increase engagement, monetize content...)"
-                    className="w-full px-4 py-3 rounded-lg border transition-all"
-                    rows={3}
-                    style={{
-                      backgroundColor: theme === 'light' ? '#FAFAFA' : 'var(--card-bg)',
-                      borderColor: theme === 'light' 
-                        ? 'rgba(218, 165, 32, 0.25)' 
-                        : 'rgba(218, 165, 32, 0.3)',
-                      color: 'var(--text-primary)',
-                      outline: 'none'
-                    }}
-                    onFocus={(e) => {
-                      e.target.style.borderColor = theme === 'light' ? '#D97706' : '#DAA520';
-                      e.target.style.boxShadow = theme === 'light' 
-                        ? '0 0 0 3px rgba(217, 119, 6, 0.12)' 
-                        : '0 0 0 3px rgba(218, 165, 32, 0.1)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.borderColor = theme === 'light' 
-                        ? 'rgba(218, 165, 32, 0.25)' 
-                        : 'rgba(218, 165, 32, 0.3)';
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
-                </div>
-              )}
-
-              <button 
-                type="submit" 
-                className="w-full py-4 rounded-lg font-bold text-lg transition-all duration-500 hover:scale-105 active:scale-95 shadow-lg relative overflow-hidden"
+              <button
+                type="submit"
+                disabled={isLoadingCollabs}
+                className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 style={{
-                  background: userType === 'creator' 
-                    ? theme === 'light'
-                      ? 'linear-gradient(to right, #D97706, #F59E0B)' // Rich amber-gold gradient for light mode
-                      : 'linear-gradient(to right, #DAA520, #F4D03F)' // Softer shimmery gold for dark mode
-                    : 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  color: userType === 'creator' 
-                    ? 'white' // White text for both modes
-                    : 'white',
-                  boxShadow: userType === 'creator'
-                    ? theme === 'light'
-                      ? '0 6px 20px rgba(217, 119, 6, 0.3)'
-                      : '0 8px 20px rgba(218, 165, 32, 0.35)'
-                    : '0 8px 20px rgba(41, 121, 255, 0.3)'
+                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                  color: 'white'
                 }}
               >
-                {userType === 'business' ? 'Generate Social Media Strategy' : 'Generate Creator Strategy'}
+                {isLoadingCollabs ? (
+                  <>
+                    <span className="animate-spin">🔄</span>
+                    Finding Collaborators...
+                  </>
+                ) : (
+                  <>
+                    🔍 Find Collaborators
+                  </>
+                )}
               </button>
             </form>
 
-            {/* Pro Status Display */}
-            {!isPro ? (
-              <>
-                <div className="mt-8 rounded-2xl p-6 border-2" style={{ 
-                    background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.05) 0%, rgba(111, 255, 210, 0.05) 100%)',
-                    borderColor: 'rgba(41, 121, 255, 0.25)'
-                  }}>
-                    <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
+            {/* Results */}
+            {collaborators.length > 0 && (
+              <div className="mt-8 space-y-4">
+                <h3 className="text-2xl font-bold" style={{ color: 'var(--secondary)' }}>
+                  ✨ Perfect Matches ({collaborators.length})
+                </h3>
+                {collaborators.map((collab, index) => (
+                  <div 
+                    key={index}
+                    className="p-6 rounded-xl border transition-all hover:scale-[1.02]"
+                    style={{
+                      backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
+                      borderColor: collab.isRealUser ? 'rgba(34, 197, 94, 0.4)' : 'rgba(41, 121, 255, 0.3)'
+                    }}
+                  >
+                    <div className="flex items-start justify-between mb-4">
                       <div className="flex-1">
-                        <h3 className="font-bold text-lg mb-1 flex items-center" style={{ color: 'var(--secondary)' }}>
-                          <span className="text-2xl mr-2">✨</span>
-                          Unlock PostReady Pro
-                        </h3>
-                        <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                          Get unlimited video ideas, advanced insights, and priority support
+                        <div className="flex items-center gap-3 mb-2">
+                          <a
+                            href={`https://www.tiktok.com/@${collab.username.replace('@', '')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-xl font-bold hover:underline"
+                            style={{ color: 'var(--secondary)' }}
+                          >
+                            @{collab.username.replace('@', '')}
+                          </a>
+                          {collab.isRealUser && (
+                            <span 
+                              className="px-3 py-1 rounded-full text-xs font-bold"
+                              style={{ 
+                                backgroundColor: 'rgba(34, 197, 94, 0.2)', 
+                                color: '#22c55e' 
+                              }}
+                            >
+                              ✅ REAL USER
+                            </span>
+                          )}
+                        </div>
+                        {collab.displayName && (
+                          <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
+                            {collab.displayName}
+                          </p>
+                        )}
+                        <div className="flex flex-wrap gap-2 mb-3">
+                          <span 
+                            className="px-3 py-1 rounded-full text-xs font-semibold"
+                            style={{ 
+                              backgroundColor: 'rgba(41, 121, 255, 0.15)', 
+                              color: 'var(--secondary)' 
+                            }}
+                          >
+                            {collab.followerCount.toLocaleString()} followers
+                          </span>
+                          <span 
+                            className="px-3 py-1 rounded-full text-xs font-semibold"
+                            style={{ 
+                              backgroundColor: 'rgba(111, 255, 210, 0.15)', 
+                              color: '#6FFFD2' 
+                            }}
+                          >
+                            {collab.niche}
+                          </span>
+                        </div>
+                        {collab.contentFocus && (
+                          <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
+                            <strong>Focus:</strong> {collab.contentFocus}
+                          </p>
+                        )}
+                        {collab.bio && (
+                          <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
+                            {collab.bio}
+                          </p>
+                        )}
+                        {collab.isRealUser && (collab.instagram || collab.youtube) && (
+                          <div className="flex gap-3 mb-3">
+                            {collab.instagram && (
+                              <a
+                                href={`https://instagram.com/${collab.instagram}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm hover:underline"
+                                style={{ color: '#E1306C' }}
+                              >
+                                📷 Instagram
+                              </a>
+                            )}
+                            {collab.youtube && (
+                              <a
+                                href={`https://youtube.com/@${collab.youtube}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-sm hover:underline"
+                                style={{ color: '#FF0000' }}
+                              >
+                                ▶️ YouTube
+                              </a>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {collab.whyPerfect && (
+                      <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: 'rgba(41, 121, 255, 0.08)' }}>
+                        <p className="text-sm font-semibold mb-1" style={{ color: 'var(--secondary)' }}>
+                          💡 Why They're Perfect:
+                        </p>
+                        <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                          {collab.whyPerfect}
                         </p>
                       </div>
-                      <button
-                        onClick={scrollToPremium}
-                        className="text-white px-6 py-3 rounded-xl font-bold transition-all shadow-lg hover:shadow-xl flex items-center whitespace-nowrap hover:scale-105"
-                        style={{ background: 'linear-gradient(to right, var(--primary), var(--accent))' }}
-                      >
-                        <span className="mr-2">⚡</span>
-                        View Pro Plan
-                      </button>
-                    </div>
+                    )}
+
+                    {collab.collabIdea && (
+                      <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: 'rgba(111, 255, 210, 0.08)' }}>
+                        <p className="text-sm font-semibold mb-1" style={{ color: '#6FFFD2' }}>
+                          🎬 Collaboration Idea:
+                        </p>
+                        <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                          {collab.collabIdea}
+                        </p>
+                      </div>
+                    )}
+
+                    {collab.dm && (
+                      <div className="space-y-3">
+                        <div className="p-4 rounded-lg border" style={{ 
+                          backgroundColor: 'var(--card-bg)',
+                          borderColor: 'var(--card-border)'
+                        }}>
+                          <p className="text-sm font-semibold mb-2" style={{ color: 'var(--secondary)' }}>
+                            💬 Personalized DM:
+                          </p>
+                          <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>
+                            {collab.dm}
+                          </p>
+                        </div>
+                        <button
+                          onClick={() => handleCopyDmAndVisit(collab.dm, collab.username, index)}
+                          disabled={copyingDmIndex === index}
+                          className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          style={{
+                            background: copyingDmIndex === index 
+                              ? 'linear-gradient(to right, #6366f1, #8b5cf6)' 
+                              : 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                            color: 'white'
+                          }}
+                        >
+                          {copyingDmIndex === index ? (
+                            <>
+                              <span className="animate-spin">⏳</span>
+                              Redirecting...
+                            </>
+                          ) : (
+                            <>
+                              📋 Copy DM & Visit Profile
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    )}
                   </div>
-              </>
-            ) : (
-              <div className="mt-8 rounded-2xl p-6 border-2" style={{
-                  background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.08) 0%, rgba(111, 255, 210, 0.08) 100%)',
-                  borderColor: 'rgba(41, 121, 255, 0.4)',
-                  boxShadow: '0 4px 20px rgba(41, 121, 255, 0.15)'
-                }}>
-                  <div className="flex items-center gap-3 mb-4">
-                    <svg className="w-8 h-8" style={{ color: '#2979FF' }} fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                    </svg>
-                    <h3 className="font-bold text-xl" style={{ color: 'var(--secondary)' }}>
-                      You're a Pro Member! 🎉
-                    </h3>
-                  </div>
-                  <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                    Enjoy unlimited access to all premium features
-                  </p>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div className="flex items-center gap-2 text-sm">
-                      <svg className="w-5 h-5 flex-shrink-0" style={{ color: '#10b981' }} fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      <span style={{ color: 'var(--text-primary)' }}>Unlimited Video Ideas</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <svg className="w-5 h-5 flex-shrink-0" style={{ color: '#10b981' }} fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      <span style={{ color: 'var(--text-primary)' }}>Unlimited Caption Rewrites</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <svg className="w-5 h-5 flex-shrink-0" style={{ color: '#10b981' }} fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      <span style={{ color: 'var(--text-primary)' }}>Unlimited Title Rewords</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm">
-                      <svg className="w-5 h-5 flex-shrink-0" style={{ color: '#10b981' }} fill="currentColor" viewBox="0 0 20 20">
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      <span style={{ color: 'var(--text-primary)' }}>Priority Support</span>
-                    </div>
+                ))}
+              </div>
+            )}
+
+            {!isLoadingCollabs && collaborators.length === 0 && collabNiche && (
+              <div className="mt-6 p-6 rounded-xl text-center" style={{
+                backgroundColor: theme === 'dark' ? 'rgba(255, 165, 0, 0.08)' : 'rgba(255, 165, 0, 0.05)',
+                borderWidth: '2px',
+                borderStyle: 'dashed',
+                borderColor: 'rgba(255, 165, 0, 0.3)'
+              }}>
+                <p className="text-lg font-semibold mb-2" style={{ color: '#FFA500' }}>
+                  No matches found yet
+                </p>
+                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                  Try adjusting your filters, or be the first to join the network in your niche!
+                </p>
+              </div>
+            )}
+
+            {directoryProfile && (
+              <div className="mt-6 p-4 rounded-lg border flex items-center justify-between" style={{
+                backgroundColor: theme === 'dark' ? 'rgba(34, 197, 94, 0.08)' : 'rgba(34, 197, 94, 0.05)',
+                borderColor: 'rgba(34, 197, 94, 0.3)'
+              }}>
+                <div className="flex items-center gap-3">
+                  <span className="text-2xl">✅</span>
+                  <div>
+                    <p className="font-bold" style={{ color: 'var(--secondary)' }}>
+                      You're in the network!
+                    </p>
+                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      Other creators can now find you
+                    </p>
                   </div>
                 </div>
-              )}
+                <button
+                  onClick={() => setShowJoinDirectory(true)}
+                  className="px-4 py-2 rounded-lg font-medium transition-all hover:opacity-80 border"
+                  style={{
+                    borderColor: 'var(--card-border)',
+                    color: 'var(--secondary)'
+                  }}
+                >
+                  Edit Profile
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Trend Radar - Live trend tracking */}
+        {currentStep === "form" && (
+          <div 
+            className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500"
+            style={{
+              backgroundColor: theme === 'dark' 
+                ? 'rgba(30, 37, 50, 0.85)' 
+                : '#FFFFFF',
+              borderColor: theme === 'dark'
+                ? 'var(--card-border)'
+                : 'rgba(41, 121, 255, 0.2)',
+              boxShadow: theme === 'dark'
+                ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'
+            }}
+          >
+            <div className="flex items-center justify-between mb-6">
+              <div className="text-center flex-1">
+                <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                  📊 Trend Radar
+                </h2>
+                <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
+                  Discover what's trending right now across social media
+                </p>
+              </div>
+              <button
+                onClick={() => setShowAdvancedTrends(!showAdvancedTrends)}
+                className="px-4 py-2 rounded-lg font-semibold transition-all hover:scale-105"
+                style={{
+                  background: showAdvancedTrends ? 'linear-gradient(to right, #6366f1, #8b5cf6)' : 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                  color: 'white'
+                }}
+              >
+                {showAdvancedTrends ? '📋 Simple View' : '📈 Advanced'}
+              </button>
+            </div>
+
+            {!showAdvancedTrends ? (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {[
+                  { topic: 'AI Content Creation', views: '45.2M', growth: '+234%', platform: 'TikTok' },
+                  { topic: 'Winter Fashion 2025', views: '38.7M', growth: '+189%', platform: 'Instagram' },
+                  { topic: 'Quick Recipes', views: '52.1M', growth: '+167%', platform: 'YouTube' },
+                  { topic: 'Productivity Hacks', views: '29.4M', growth: '+145%', platform: 'TikTok' },
+                  { topic: 'Home Workouts', views: '41.3M', growth: '+128%', platform: 'Instagram' },
+                  { topic: 'Tech Reviews', views: '36.8M', growth: '+112%', platform: 'YouTube' },
+                ].map((trend, index) => (
+                  <div 
+                    key={index}
+                    className="p-4 rounded-xl border transition-all hover:scale-105 cursor-pointer"
+                    style={{
+                      backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
+                      borderColor: 'rgba(41, 121, 255, 0.3)'
+                    }}
+                  >
+                    <div className="flex items-start justify-between mb-2">
+                      <h3 className="font-bold text-lg" style={{ color: 'var(--secondary)' }}>
+                        {trend.topic}
+                      </h3>
+                      <span 
+                        className="px-2 py-1 rounded-full text-xs font-bold"
+                        style={{ 
+                          backgroundColor: 'rgba(34, 197, 94, 0.2)', 
+                          color: '#22c55e' 
+                        }}
+                      >
+                        🔥 Hot
+                      </span>
+                    </div>
+                    <div className="space-y-1">
+                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        <strong>{trend.views}</strong> views
+                      </p>
+                      <p className="text-sm font-semibold" style={{ color: '#22c55e' }}>
+                        {trend.growth} growth
+                      </p>
+                      <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                        Top on {trend.platform}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="space-y-6">
+                <div 
+                  className="p-6 rounded-xl border"
+                  style={{
+                    backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.08)' : 'rgba(41, 121, 255, 0.05)',
+                    borderColor: 'rgba(41, 121, 255, 0.3)'
+                  }}
+                >
+                  <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
+                    🔥 Biggest Trending Topics
+                  </h3>
+                  <div className="space-y-4">
+                    {[
+                      { topic: 'AI Content Creation', views: 45200000, growth: 234, posts: 1240000 },
+                      { topic: 'Winter Fashion 2025', views: 38700000, growth: 189, posts: 980000 },
+                      { topic: 'Quick Recipes', views: 52100000, growth: 167, posts: 1560000 },
+                      { topic: 'Productivity Hacks', views: 29400000, growth: 145, posts: 750000 },
+                      { topic: 'Home Workouts', views: 41300000, growth: 128, posts: 920000 },
+                    ].map((trend, index) => {
+                      const maxViews = 52100000;
+                      const barWidth = (trend.views / maxViews) * 100;
+                      
+                      return (
+                        <div 
+                          key={index}
+                          className="relative"
+                          onMouseEnter={() => setHoveredTrend(trend)}
+                          onMouseLeave={() => setHoveredTrend(null)}
+                        >
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                              {trend.topic}
+                            </span>
+                            <span className="text-sm font-bold" style={{ color: '#22c55e' }}>
+                              +{trend.growth}%
+                            </span>
+                          </div>
+                          <div 
+                            className="h-8 rounded-lg relative overflow-hidden cursor-pointer transition-all hover:scale-[1.02]"
+                            style={{ 
+                              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' 
+                            }}
+                          >
+                            <div 
+                              className="h-full rounded-lg transition-all duration-500"
+                              style={{ 
+                                width: `${barWidth}%`,
+                                background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                              }}
+                            />
+                            <div className="absolute inset-0 flex items-center px-3">
+                              <span className="text-sm font-bold text-white mix-blend-difference">
+                                {(trend.views / 1000000).toFixed(1)}M views
+                              </span>
+                            </div>
+                          </div>
+                          {hoveredTrend === trend && (
+                            <div 
+                              className="absolute z-10 mt-2 p-4 rounded-lg shadow-xl border animate-fade-in"
+                              style={{
+                                backgroundColor: 'var(--card-bg)',
+                                borderColor: 'var(--card-border)',
+                                minWidth: '250px'
+                              }}
+                            >
+                              <h4 className="font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                                {trend.topic}
+                              </h4>
+                              <div className="space-y-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
+                                <p><strong>Total Views:</strong> {(trend.views / 1000000).toFixed(1)}M</p>
+                                <p><strong>Growth Rate:</strong> +{trend.growth}%</p>
+                                <p><strong>Active Posts:</strong> {(trend.posts / 1000).toFixed(0)}K</p>
+                                <p><strong>Trending on:</strong> TikTok, Instagram, YouTube</p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+                <p className="text-sm text-center" style={{ color: 'var(--text-secondary)' }}>
+                  💡 Data updates in real-time. Hover over bars for detailed insights.
+                </p>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Viral Video Idea Generator */}
+        {currentStep === "form" && (
+          <div 
+            className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500"
+            style={{
+              backgroundColor: theme === 'dark' 
+                ? 'rgba(30, 37, 50, 0.85)' 
+                : '#FFFFFF',
+              borderColor: theme === 'dark'
+                ? 'var(--card-border)'
+                : 'rgba(41, 121, 255, 0.2)',
+              boxShadow: theme === 'dark'
+                ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'
+            }}
+          >
+            <div className="text-center mb-6">
+              <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                🎥 Viral Video Idea Generator
+              </h2>
+              <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
+                Get 10 viral-worthy video ideas based on any topic
+              </p>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (!viralTopic.trim()) return;
+              
+              setIsGeneratingViralIdeas(true);
+              setViralIdeas([]);
+              
+              try {
+                const response = await fetch('/api/generate-viral-ideas', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ topic: viralTopic }),
+                });
+                
+                if (!response.ok) {
+                  throw new Error('Failed to generate ideas');
+                }
+                
+                const data = await response.json();
+                setViralIdeas(data.ideas || []);
+              } catch (error) {
+                console.error('Error generating viral ideas:', error);
+                showNotification("Failed to generate ideas. Please try again.", "error");
+              } finally {
+                setIsGeneratingViralIdeas(false);
+              }
+            }} className="space-y-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  What topic do you want video ideas for? <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={viralTopic}
+                  onChange={(e) => setViralTopic(e.target.value)}
+                  placeholder="e.g., AI, Fitness, Cooking, Gaming"
+                  required
+                  className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                  style={{
+                    backgroundColor: 'var(--card-bg)',
+                    borderColor: 'var(--card-border)',
+                    color: 'var(--text-primary)'
+                  }}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isGeneratingViralIdeas}
+                className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                style={{
+                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                  color: 'white'
+                }}
+              >
+                {isGeneratingViralIdeas ? (
+                  <>
+                    <span className="animate-spin">🔄</span>
+                    Generating Ideas...
+                  </>
+                ) : (
+                  <>
+                    ✨ Generate Video Ideas
+                  </>
+                )}
+              </button>
+            </form>
+
+            {viralIdeas.length > 0 && (
+              <div className="mt-8 space-y-4">
+                <h3 className="text-2xl font-bold text-center" style={{ color: 'var(--secondary)' }}>
+                  🎬 10 Viral Video Ideas
+                </h3>
+                {viralIdeas.map((idea: any, index: number) => (
+                  <div 
+                    key={index}
+                    className="p-6 rounded-xl border transition-all hover:scale-[1.01]"
+                    style={{
+                      backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
+                      borderColor: 'rgba(41, 121, 255, 0.3)'
+                    }}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div 
+                        className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg"
+                        style={{
+                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                          color: 'white'
+                        }}
+                      >
+                        {index + 1}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                          {idea.title}
+                        </h4>
+                        <p className="text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
+                          {idea.description}
+                        </p>
+                        <div 
+                          className="p-4 rounded-lg"
+                          style={{ backgroundColor: theme === 'dark' ? 'rgba(111, 255, 210, 0.08)' : 'rgba(111, 255, 210, 0.05)' }}
+                        >
+                          <p className="text-sm font-semibold mb-1" style={{ color: '#6FFFD2' }}>
+                            💡 Why This Could Go Viral:
+                          </p>
+                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                            {idea.whyViral}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
         )}
 
