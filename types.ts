@@ -57,3 +57,66 @@ export type LogoGeneratorState = {
   logos: LogoResult[];
   isPremium: boolean;
 };
+
+// Enhanced Trend Radar Types
+export type TrendEngagementLevel = "Viral 🚀" | "Hot 🔥" | "Rising 📈" | "Steady ⭐" | "Emerging 🌱";
+
+export type TrendPlatform = "TikTok" | "Instagram" | "YouTube" | "Twitter/X" | "LinkedIn" | "Facebook" | "All Platforms";
+
+export type TrendDemographics = {
+  targetAge: string;
+  targetGender: string;
+  mainRegions: string[];
+};
+
+export type TrendEstimatedViews = {
+  min: number;
+  max: number;
+};
+
+export type EnhancedTrend = {
+  id: string;
+  title: string;
+  description: string;
+  engagementLevel: TrendEngagementLevel;
+  reachPotential: string;
+  platforms: TrendPlatform[];
+  primaryPlatform: TrendPlatform;
+  hashtags: string[];
+  viralScore: number;
+  demographics: TrendDemographics;
+  contentAngles: string[];
+  trendingAudio: string | null;
+  bestPostingTimes: string[];
+  estimatedViews: TrendEstimatedViews;
+  quickContentIdeas: string[];
+  durationPrediction: string;
+  competitionLevel: "Low" | "Medium" | "High";
+  keywords: string[];
+  relatedTrends: string[];
+  timestamp: string;
+};
+
+export type TrendMetadata = {
+  category: string;
+  platform: string;
+  subcategory: string | null;
+  trendCount: number;
+  generatedAt: string;
+  targetAudience: string;
+  version: string;
+};
+
+export type TrendInsights = {
+  topEngagementLevel: string;
+  averageViralScore: number;
+  mostCommonPlatform: string;
+  trendingHashtags: string[];
+};
+
+export type TrendResponse = {
+  success: boolean;
+  trends: EnhancedTrend[];
+  metadata: TrendMetadata;
+  insights: TrendInsights;
+};

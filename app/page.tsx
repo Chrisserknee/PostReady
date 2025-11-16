@@ -15,6 +15,7 @@ import { Badge } from "@/components/Badge";
 import { AuthModal } from "@/components/AuthModal";
 import { Modal } from "@/components/Modal";
 import { Notification } from "@/components/Notification";
+import TrendRadar from "@/components/TrendRadar";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { saveUserProgress, loadUserProgress } from "@/lib/userProgress";
@@ -242,10 +243,7 @@ function HomeContent() {
   });
   const collabSectionRef = useRef<HTMLDivElement>(null);
 
-  // Trend Radar State
-  const [showAdvancedTrends, setShowAdvancedTrends] = useState<boolean>(false);
-  const [trendData, setTrendData] = useState<any[]>([]);
-  const [hoveredTrend, setHoveredTrend] = useState<any>(null);
+  // Trend Radar State - Now handled by TrendRadar component
 
   // Viral Video Idea Generator State
   const [viralTopic, setViralTopic] = useState<string>("");
@@ -3656,178 +3654,8 @@ function HomeContent() {
           </div>
         )}
 
-        {/* Trend Radar - Live trend tracking */}
-        {currentStep === "form" && (
-          <div 
-            className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500"
-            style={{
-              backgroundColor: theme === 'dark' 
-                ? 'rgba(30, 37, 50, 0.85)' 
-                : '#FFFFFF',
-              borderColor: theme === 'dark'
-                ? 'var(--card-border)'
-                : 'rgba(41, 121, 255, 0.2)',
-              boxShadow: theme === 'dark'
-                ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'
-            }}
-          >
-            <div className="flex items-center justify-between mb-6">
-              <div className="text-center flex-1">
-                <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                  📊 Trend Radar
-                </h2>
-                <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
-                  Discover what's trending right now across social media
-                </p>
-              </div>
-              <button
-                onClick={() => setShowAdvancedTrends(!showAdvancedTrends)}
-                className="px-4 py-2 rounded-lg font-semibold transition-all hover:scale-105"
-                style={{
-                  background: showAdvancedTrends ? 'linear-gradient(to right, #6366f1, #8b5cf6)' : 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  color: 'white'
-                }}
-              >
-                {showAdvancedTrends ? '📋 Simple View' : '📈 Advanced'}
-              </button>
-            </div>
-
-            {!showAdvancedTrends ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[
-                  { topic: 'AI Content Creation', views: '45.2M', growth: '+234%', platform: 'TikTok' },
-                  { topic: 'Winter Fashion 2025', views: '38.7M', growth: '+189%', platform: 'Instagram' },
-                  { topic: 'Quick Recipes', views: '52.1M', growth: '+167%', platform: 'YouTube' },
-                  { topic: 'Productivity Hacks', views: '29.4M', growth: '+145%', platform: 'TikTok' },
-                  { topic: 'Home Workouts', views: '41.3M', growth: '+128%', platform: 'Instagram' },
-                  { topic: 'Tech Reviews', views: '36.8M', growth: '+112%', platform: 'YouTube' },
-                ].map((trend, index) => (
-                  <div 
-                    key={index}
-                    className="p-4 rounded-xl border transition-all hover:scale-105 cursor-pointer"
-                    style={{
-                      backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
-                      borderColor: 'rgba(41, 121, 255, 0.3)'
-                    }}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-bold text-lg" style={{ color: 'var(--secondary)' }}>
-                        {trend.topic}
-                      </h3>
-                      <span 
-                        className="px-2 py-1 rounded-full text-xs font-bold"
-                        style={{ 
-                          backgroundColor: 'rgba(34, 197, 94, 0.2)', 
-                          color: '#22c55e' 
-                        }}
-                      >
-                        🔥 Hot
-                      </span>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                        <strong>{trend.views}</strong> views
-                      </p>
-                      <p className="text-sm font-semibold" style={{ color: '#22c55e' }}>
-                        {trend.growth} growth
-                      </p>
-                      <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        Top on {trend.platform}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div className="space-y-6">
-                <div 
-                  className="p-6 rounded-xl border"
-                  style={{
-                    backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.08)' : 'rgba(41, 121, 255, 0.05)',
-                    borderColor: 'rgba(41, 121, 255, 0.3)'
-                  }}
-                >
-                  <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
-                    🔥 Biggest Trending Topics
-                  </h3>
-                  <div className="space-y-4">
-                    {[
-                      { topic: 'AI Content Creation', views: 45200000, growth: 234, posts: 1240000 },
-                      { topic: 'Winter Fashion 2025', views: 38700000, growth: 189, posts: 980000 },
-                      { topic: 'Quick Recipes', views: 52100000, growth: 167, posts: 1560000 },
-                      { topic: 'Productivity Hacks', views: 29400000, growth: 145, posts: 750000 },
-                      { topic: 'Home Workouts', views: 41300000, growth: 128, posts: 920000 },
-                    ].map((trend, index) => {
-                      const maxViews = 52100000;
-                      const barWidth = (trend.views / maxViews) * 100;
-                      
-                      return (
-                        <div 
-                          key={index}
-                          className="relative"
-                          onMouseEnter={() => setHoveredTrend(trend)}
-                          onMouseLeave={() => setHoveredTrend(null)}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                              {trend.topic}
-                            </span>
-                            <span className="text-sm font-bold" style={{ color: '#22c55e' }}>
-                              +{trend.growth}%
-                            </span>
-                          </div>
-                          <div 
-                            className="h-8 rounded-lg relative overflow-hidden cursor-pointer transition-all hover:scale-[1.02]"
-                            style={{ 
-                              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' 
-                            }}
-                          >
-                            <div 
-                              className="h-full rounded-lg transition-all duration-500"
-                              style={{ 
-                                width: `${barWidth}%`,
-                                background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                              }}
-                            />
-                            <div className="absolute inset-0 flex items-center px-3">
-                              <span className="text-sm font-bold text-white mix-blend-difference">
-                                {(trend.views / 1000000).toFixed(1)}M views
-                              </span>
-                            </div>
-                          </div>
-                          {hoveredTrend === trend && (
-                            <div 
-                              className="absolute z-10 mt-2 p-4 rounded-lg shadow-xl border animate-fade-in"
-                              style={{
-                                backgroundColor: 'var(--card-bg)',
-                                borderColor: 'var(--card-border)',
-                                minWidth: '250px'
-                              }}
-                            >
-                              <h4 className="font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                                {trend.topic}
-                              </h4>
-                              <div className="space-y-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                <p><strong>Total Views:</strong> {(trend.views / 1000000).toFixed(1)}M</p>
-                                <p><strong>Growth Rate:</strong> +{trend.growth}%</p>
-                                <p><strong>Active Posts:</strong> {(trend.posts / 1000).toFixed(0)}K</p>
-                                <p><strong>Trending on:</strong> TikTok, Instagram, YouTube</p>
-                              </div>
-                            </div>
-                          )}
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-                <p className="text-sm text-center" style={{ color: 'var(--text-secondary)' }}>
-                  💡 Data updates in real-time. Hover over bars for detailed insights.
-                </p>
-              </div>
-            )}
-          </div>
-        )}
+        {/* Enhanced Trend Radar 2.0 - Real-time AI-powered trend analysis */}
+        {currentStep === "form" && <TrendRadar theme={theme} />}
 
         {/* Viral Video Idea Generator */}
         {currentStep === "form" && (
