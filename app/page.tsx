@@ -226,8 +226,10 @@ function HomeContent() {
   const [isLoadingCollabs, setIsLoadingCollabs] = useState<boolean>(false);
   const [showJoinDirectory, setShowJoinDirectory] = useState<boolean>(false);
   const [directoryProfile, setDirectoryProfile] = useState<any>(null);
+  const [isLoadingProfile, setIsLoadingProfile] = useState<boolean>(true); // Start as loading
   const [isSubmittingProfile, setIsSubmittingProfile] = useState<boolean>(false);
   const [copyingDmIndex, setCopyingDmIndex] = useState<number | null>(null);
+  const [showEmailVerificationModal, setShowEmailVerificationModal] = useState<boolean>(false);
   const [profileForm, setProfileForm] = useState({
     tiktok_username: "",
     display_name: "",
@@ -235,9 +237,8 @@ function HomeContent() {
     follower_count: "",
     content_focus: "",
     bio: "",
-    instagram_username: "",
-    youtube_username: "",
     email_for_collabs: "",
+    password: "",
   });
   const collabSectionRef = useRef<HTMLDivElement>(null);
 
@@ -400,22 +401,39 @@ function HomeContent() {
   // Load user's collab directory profile
   useEffect(() => {
     const loadCollabProfile = async () => {
-      if (!user) return;
+      if (!user) {
+        console.log('❌ No user, skipping profile load');
+        setIsLoadingProfile(false); // Done loading - no user
+        return;
+      }
+      
+      setIsLoadingProfile(true); // Start loading
       
       try {
+        console.log('🔄 Loading collab profile for user:', user.id);
         // Get user session token
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session) return;
+        if (!session) {
+          console.log('❌ No session found');
+          setIsLoadingProfile(false);
+          return;
+        }
 
         const response = await fetch('/api/collab-directory', {
           headers: {
             'Authorization': `Bearer ${session.access_token}`
           }
         });
+        
+        console.log('📡 Profile fetch response:', response.status);
+        
         if (response.ok) {
           const data = await response.json();
+          console.log('📦 Profile data received:', data);
+          
           if (data.profile) {
             setDirectoryProfile(data.profile);
+            console.log('✅ Profile loaded successfully:', data.profile.tiktok_username);
             // Pre-fill the form with existing data
             setProfileForm({
               tiktok_username: data.profile.tiktok_username || "",
@@ -424,19 +442,28 @@ function HomeContent() {
               follower_count: data.profile.follower_range || "",
               content_focus: data.profile.content_focus || "",
               bio: data.profile.bio || "",
-              instagram_username: data.profile.instagram_username || "",
-              youtube_username: data.profile.youtube_username || "",
               email_for_collabs: data.profile.email_for_collabs || "",
+              password: "", // Password is never stored or retrieved
             });
+          } else {
+            console.log('⚠️ No profile found in response');
           }
+        } else {
+          console.log('❌ Profile fetch failed:', await response.text());
         }
       } catch (error) {
-        console.error('Error loading collab profile:', error);
+        console.error('❌ Error loading collab profile:', error);
+      } finally {
+        setIsLoadingProfile(false); // Done loading
       }
     };
     
     if (user && !authLoading) {
+      console.log('👤 User detected, loading profile...');
       loadCollabProfile();
+    } else if (!authLoading) {
+      // No user and auth is done loading
+      setIsLoadingProfile(false);
     }
   }, [user, authLoading]);
 
@@ -1206,19 +1233,93 @@ function HomeContent() {
   const handleProfileSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!user) {
-      showNotification("Please sign in to join the network", "warning");
-      return;
-    }
+    console.log('\n' + '='.repeat(60));
+    console.log('🚀 COLLAB PROFILE SUBMISSION STARTED');
+    console.log('='.repeat(60));
+    console.log('User Status:', user ? `✅ SIGNED IN (${user.email})` : '❌ NOT SIGNED IN');
+    console.log('Email in form:', profileForm.email_for_collabs);
+    console.log('Password in form:', profileForm.password ? '✅ PROVIDED' : '❌ EMPTY');
+    console.log('='.repeat(60));
     
-    if (!profileForm.tiktok_username || !profileForm.niche || !profileForm.follower_count || !profileForm.email_for_collabs) {
-      showNotification("Please fill in all required fields", "warning");
-      return;
+    // Validate required fields based on authentication status
+    if (!user) {
+      // New user - validate all fields including email and password
+      if (!profileForm.tiktok_username || !profileForm.niche || !profileForm.follower_count || !profileForm.email_for_collabs || !profileForm.password) {
+        showNotification("Please fill in all required fields", "warning");
+        console.error('❌ Validation failed - missing required fields');
+        return;
+      }
+      
+      // Validate password length
+      if (profileForm.password.length < 6) {
+        showNotification("Password must be at least 6 characters", "warning");
+        console.error('❌ Validation failed - password too short');
+        return;
+      }
+    } else {
+      // Existing user - only validate TikTok fields
+      if (!profileForm.tiktok_username || !profileForm.niche || !profileForm.follower_count) {
+        showNotification("Please fill in all required fields", "warning");
+        console.error('❌ Validation failed - missing TikTok fields');
+        return;
+      }
     }
     
     setIsSubmittingProfile(true);
     
     try {
+      let newUserEmail = null;
+      
+      // Create account if user is not authenticated
+      if (!user) {
+        console.log('='.repeat(50));
+        console.log('🔐 CREATING ACCOUNT');
+        console.log('Email:', profileForm.email_for_collabs);
+        console.log('='.repeat(50));
+        
+        const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+          email: profileForm.email_for_collabs,
+          password: profileForm.password,
+          options: {
+            emailRedirectTo: `${window.location.origin}`,
+          }
+        });
+        
+        console.log('\n📧 SIGNUP RESPONSE:');
+        console.log('User ID:', signUpData?.user?.id);
+        console.log('Email:', signUpData?.user?.email);
+        console.log('Email Confirmed?:', signUpData?.user?.email_confirmed_at ? 'YES' : 'NO');
+        console.log('Session Available?:', signUpData?.session ? 'YES' : 'NO');
+        console.log('Error:', signUpError?.message || 'None');
+        console.log('='.repeat(50));
+        
+        if (signUpError) {
+          // Check for common error: user already exists
+          if (signUpError.message.includes('already registered')) {
+            throw new Error('This email is already registered. Please sign in instead.');
+          }
+          console.error('❌ Signup error:', signUpError);
+          throw new Error(signUpError.message);
+        }
+        
+        if (signUpData.user) {
+          newUserEmail = signUpData.user.email;
+          
+          // Check if email confirmation is required
+          if (!signUpData.session) {
+            console.log('⚠️ NO SESSION - Email confirmation required!');
+            console.log('📬 Check your email inbox and spam folder for verification link');
+          } else {
+            console.log('✅ Session established - email confirmation not required');
+          }
+          
+          // Wait for the session to be established
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        } else {
+          console.error('⚠️ No user returned from signup');
+        }
+      }
+      
       // Parse the follower range to get a representative follower count (use middle of range)
       const followerRange = profileForm.follower_count;
       let followerCountNum: number;
@@ -1235,23 +1336,33 @@ function HomeContent() {
         followerCountNum = parseInt(followerRange.replace(/[^\d]/g, '')) || 1000;
       }
       
-      // Get user session token
+      // Get user session token (will exist for both new and existing users at this point)
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        throw new Error('No active session');
+      
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json'
+      };
+      
+      if (session) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
       }
+
+      // Prepare profile data - use user's email if authenticated
+      const profileData: any = {
+        tiktok_username: profileForm.tiktok_username,
+        display_name: profileForm.display_name,
+        niche: profileForm.niche,
+        follower_count: followerCountNum,
+        follower_range: followerRange,
+        content_focus: profileForm.content_focus,
+        bio: profileForm.bio,
+        email_for_collabs: user?.email || newUserEmail || profileForm.email_for_collabs,
+      };
 
       const response = await fetch('/api/collab-directory', {
         method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${session.access_token}`
-        },
-        body: JSON.stringify({
-          ...profileForm,
-          follower_count: followerCountNum,
-          follower_range: followerRange,
-        }),
+        headers,
+        body: JSON.stringify(profileData),
       });
       
       if (!response.ok) {
@@ -1260,9 +1371,44 @@ function HomeContent() {
       }
       
       const data = await response.json();
-      setDirectoryProfile(data.profile);
+      console.log('📥 Collab profile save response:', data);
+      
+      // Immediately update the directory profile state
+      if (data.profile) {
+        setDirectoryProfile(data.profile);
+        console.log('✅ Profile saved and state updated:', data.profile);
+      } else {
+        console.error('⚠️ No profile in response, checking session...');
+        // Wait a moment and try to reload the profile
+        setTimeout(async () => {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session) {
+            const reloadResponse = await fetch('/api/collab-directory', {
+              headers: {
+                'Authorization': `Bearer ${session.access_token}`
+              }
+            });
+            if (reloadResponse.ok) {
+              const reloadData = await reloadResponse.json();
+              if (reloadData.profile) {
+                setDirectoryProfile(reloadData.profile);
+                console.log('✅ Profile reloaded successfully');
+              }
+            }
+          }
+        }, 1000);
+      }
+      
       setShowJoinDirectory(false);
-      showNotification("Successfully joined the PostReady Collab Network! 🎉", "success");
+      
+      // Show success message based on whether account was created
+      const wasNewUser = !user;
+      if (wasNewUser) {
+        // Show email verification modal instead of notification
+        setShowEmailVerificationModal(true);
+      } else {
+        showNotification("Successfully joined the PostReady Collab Network! 🎉", "success");
+      }
     } catch (error: any) {
       console.error('Profile submit error:', error);
       showNotification(error.message || "Failed to save profile. Please try again.", "error");
@@ -2150,9 +2296,21 @@ function HomeContent() {
     return steps[currentStep] || 0;
   };
 
-  // Generate star data once and memoize it to prevent re-rendering
-  const stars = React.useMemo(() => {
-    return [...Array(40)].map((_, i) => {
+  // Generate star data only on client side to prevent hydration mismatch
+  const [stars, setStars] = useState<Array<{
+    id: number;
+    size: number;
+    top: number;
+    left: number;
+    opacity: number;
+    glowSize: number;
+    duration: number;
+    delay: number;
+  }>>([]);
+
+  useEffect(() => {
+    // Generate stars only once on client side
+    setStars([...Array(40)].map((_, i) => {
       const size = Math.random() * 2.5 + 0.5;
       const brightness = Math.random();
       const opacity = brightness > 0.7 ? 0.6 : 0.3;
@@ -2165,11 +2323,11 @@ function HomeContent() {
         left: Math.random() * 100,
         opacity,
         glowSize,
-        duration: Math.random() * 4 + 3, // Slower: 3-7s instead of 2-5s
+        duration: Math.random() * 4 + 3,
         delay: Math.random() * 2
       };
-    });
-  }, []); // Empty deps = only generate once
+    }));
+  }, []); // Empty deps = only generate once on mount
 
   return (
     <div className="min-h-screen relative" style={{ backgroundColor: 'var(--background)' }}>
@@ -2671,26 +2829,99 @@ function HomeContent() {
             }}
           >
             <div className="text-center mb-6">
-              <h2 className="text-3xl sm:text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                🤝 Collab Engine
-              </h2>
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <svg className="w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 448 512" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 2px rgba(0, 242, 234, 0.3))' }}>
+                  <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#00f2ea" transform="translate(-3, -3)"/>
+                  <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#ff0050" transform="translate(3, 3)"/>
+                  <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#000000"/>
+                </svg>
+                <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: 'var(--secondary)' }}>
+                  TikTok Collab Engine
+                </h2>
+                <span className="text-3xl sm:text-4xl">🤝</span>
+              </div>
               <p className="text-sm sm:text-base" style={{ color: 'var(--text-secondary)' }}>
                 Find real TikTok creators in your niche with similar follower counts to collaborate with
               </p>
             </div>
 
+            {/* Loading state while checking profile */}
+            {isLoadingProfile && (
+              <div 
+                className="mb-6 p-4 rounded-xl border transition-all duration-500 ease-in-out"
+                style={{
+                  backgroundColor: 'var(--card-bg)',
+                  borderColor: 'var(--card-border)',
+                  animation: 'fadeIn 0.5s ease-in-out'
+                }}
+              >
+                <div className="text-center flex items-center justify-center gap-3">
+                  <div 
+                    className="h-5 w-5 border-2 rounded-full"
+                    style={{
+                      borderColor: 'var(--primary)',
+                      borderTopColor: 'transparent',
+                      animation: 'spin 1.5s linear infinite'
+                    }}
+                  ></div>
+                  <span style={{ color: 'var(--text-secondary)' }}>Checking network status...</span>
+                </div>
+              </div>
+            )}
+
             {/* Join Network CTA - for signed in users without profile */}
-            {!directoryProfile && user && (
-              <div className="mb-6 p-4 sm:p-6 rounded-xl border-2 border-dashed" style={{
-                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
-                borderColor: 'rgba(41, 121, 255, 0.3)'
-              }}>
+            {!isLoadingProfile && !directoryProfile && user && (
+              <div 
+                className="mb-6 p-4 sm:p-6 rounded-xl border-2 border-dashed transition-all duration-500 ease-in-out" 
+                style={{
+                  backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
+                  borderColor: 'rgba(41, 121, 255, 0.3)',
+                  animation: 'fadeIn 0.5s ease-in-out'
+                }}
+              >
                 <div className="text-center">
                   <h3 className="text-lg sm:text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                     ✨ Join the PostReady Collab Network
                   </h3>
                   <p className="text-xs sm:text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                    Add your profile so other creators can find and collaborate with you!
+                    Click join, enter your details, and instantly discover creators with similar followings in your niche ready to collaborate!
+                  </p>
+                  <button
+                    onClick={() => {
+                      // Pre-fill email if user is authenticated
+                      if (user && user.email) {
+                        setProfileForm(prev => ({ ...prev, email_for_collabs: user.email || '' }));
+                      }
+                      setShowJoinDirectory(true);
+                    }}
+                    className="w-full sm:w-auto px-6 py-3 rounded-lg font-bold transition-all hover:scale-105 shadow-md"
+                    style={{
+                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                      color: 'white'
+                    }}
+                  >
+                    Join the Network
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Join Network CTA - for non-signed in users */}
+            {!isLoadingProfile && !user && !directoryProfile && (
+              <div 
+                className="mb-6 p-4 sm:p-6 rounded-xl border-2 border-dashed transition-all duration-500 ease-in-out" 
+                style={{
+                  backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
+                  borderColor: 'rgba(41, 121, 255, 0.3)',
+                  animation: 'fadeIn 0.5s ease-in-out'
+                }}
+              >
+                <div className="text-center">
+                  <h3 className="text-lg sm:text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                    ✨ Join the PostReady Collab Network
+                  </h3>
+                  <p className="text-xs sm:text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                    Click join, enter your details, and instantly discover creators with similar followings in your niche ready to collaborate!
                   </p>
                   <button
                     onClick={() => setShowJoinDirectory(true)}
@@ -2706,43 +2937,55 @@ function HomeContent() {
               </div>
             )}
 
-            {/* Join Network CTA - for non-signed in users */}
-            {!user && (
-              <div className="mb-6 p-4 sm:p-6 rounded-xl border-2 border-dashed" style={{
-                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
-                borderColor: 'rgba(41, 121, 255, 0.3)'
-              }}>
-                <div className="text-center">
-                  <h3 className="text-lg sm:text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                    ✨ Join the PostReady Collab Network
-                  </h3>
-                  <p className="text-xs sm:text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                    Connect with real TikTok creators in your niche! Sign in to add your profile.
-                  </p>
-                  <button
-                    onClick={() => openAuthModal('signup')}
-                    className="w-full sm:w-auto px-6 py-3 rounded-lg font-bold transition-all hover:scale-105 shadow-md"
-                    style={{
-                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                      color: 'white'
-                    }}
-                  >
-                    Sign Up to Join
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Join Directory Form */}
+            {/* Join Directory Form Modal */}
             {showJoinDirectory && (
-              <div className="mb-6 p-4 sm:p-6 rounded-xl border" style={{
-                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.08)' : 'rgba(41, 121, 255, 0.05)',
-                borderColor: 'rgba(41, 121, 255, 0.3)'
-              }}>
-                <h3 className="text-xl sm:text-2xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
-                  📝 Create Your Collab Profile
-                </h3>
-                <form onSubmit={handleProfileSubmit} className="space-y-4">
+              <>
+                <style jsx>{`
+                  body {
+                    overflow: hidden !important;
+                  }
+                `}</style>
+                <div 
+                  className="fixed inset-0 z-[99999] flex items-center justify-center p-4 animate-fade-in"
+                  style={{
+                    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+                    backdropFilter: 'blur(16px)',
+                    WebkitBackdropFilter: 'blur(16px)',
+                    margin: 0,
+                    padding: '1rem'
+                  }}
+                  onClick={() => setShowJoinDirectory(false)}
+                >
+                  <div 
+                    className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl animate-scale-in"
+                    style={{
+                      backgroundColor: 'var(--card-bg)',
+                      border: '1px solid var(--card-border)',
+                      position: 'relative',
+                      zIndex: 100000
+                    }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <div className="sticky top-0 z-10 p-6 pb-4 border-b" style={{
+                      backgroundColor: 'var(--card-bg)',
+                      borderColor: 'var(--card-border)'
+                    }}>
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--secondary)' }}>
+                        📝 Create Your Collab Profile
+                      </h3>
+                      <button
+                        type="button"
+                        onClick={() => setShowJoinDirectory(false)}
+                        className="text-2xl w-10 h-10 flex items-center justify-center rounded-full transition-all hover:opacity-70"
+                        style={{ color: 'var(--text-secondary)' }}
+                      >
+                        ×
+                      </button>
+                    </div>
+                  </div>
+                  <div className="p-6">
+                    <form onSubmit={handleProfileSubmit} className="space-y-4">
                   <div className="space-y-2">
                     <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                       Your TikTok Username <span className="text-red-500">*</span>
@@ -2793,11 +3036,9 @@ function HomeContent() {
                       <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                         Niche <span className="text-red-500">*</span>
                       </label>
-                      <input
-                        type="text"
+                      <select
                         value={profileForm.niche}
                         onChange={(e) => setProfileForm({ ...profileForm, niche: e.target.value })}
-                        placeholder="e.g., Fitness, Gaming, Beauty"
                         required
                         className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
                         style={{
@@ -2805,7 +3046,20 @@ function HomeContent() {
                           borderColor: 'var(--card-border)',
                           color: 'var(--text-primary)'
                         }}
-                      />
+                      >
+                        <option value="">Select your niche</option>
+                        <option value="Lifestyle">Lifestyle</option>
+                        <option value="Entertainment">Entertainment</option>
+                        <option value="Comedy">Comedy</option>
+                        <option value="Beauty & Fashion">Beauty & Fashion</option>
+                        <option value="Fitness & Health">Fitness & Health</option>
+                        <option value="Food">Food</option>
+                        <option value="Gaming">Gaming</option>
+                        <option value="Education">Education</option>
+                        <option value="Business">Business</option>
+                        <option value="Experimental">Experimental</option>
+                        <option value="Other">Other</option>
+                      </select>
                     </div>
 
                     <div className="space-y-2">
@@ -2843,18 +3097,27 @@ function HomeContent() {
                     <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
                       Content Focus
                     </label>
-                    <input
-                      type="text"
+                    <select
                       value={profileForm.content_focus}
                       onChange={(e) => setProfileForm({ ...profileForm, content_focus: e.target.value })}
-                      placeholder="e.g., Workout Tutorials, Product Reviews"
                       className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
                       style={{
                         backgroundColor: 'var(--card-bg)',
                         borderColor: 'var(--card-border)',
                         color: 'var(--text-primary)'
                       }}
-                    />
+                    >
+                      <option value="">Select content focus</option>
+                      <option value="Tutorials">Tutorials</option>
+                      <option value="Entertainment">Entertainment</option>
+                      <option value="Comedy">Comedy</option>
+                      <option value="Reviews">Reviews</option>
+                      <option value="Vlogs">Vlogs</option>
+                      <option value="Educational">Educational</option>
+                      <option value="Storytelling">Storytelling</option>
+                      <option value="Experimental">Experimental</option>
+                      <option value="Other">Other</option>
+                    </select>
                   </div>
 
                   <div className="space-y-2">
@@ -2875,114 +3138,206 @@ function HomeContent() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                        Instagram Username
-                      </label>
-                      <input
-                        type="text"
-                        value={profileForm.instagram_username}
-                        onChange={(e) => setProfileForm({ ...profileForm, instagram_username: e.target.value.replace('@', '') })}
-                        placeholder="instagram_handle"
-                        className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
-                        style={{
-                          backgroundColor: 'var(--card-bg)',
-                          borderColor: 'var(--card-border)',
-                          color: 'var(--text-primary)'
-                        }}
-                      />
-                    </div>
+                  {!user && (
+                    <>
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                          Email for Collabs <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="email"
+                          value={profileForm.email_for_collabs}
+                          onChange={(e) => setProfileForm({ ...profileForm, email_for_collabs: e.target.value })}
+                          placeholder="your@email.com"
+                          required
+                          className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                          style={{
+                            backgroundColor: 'var(--card-bg)',
+                            borderColor: 'var(--card-border)',
+                            color: 'var(--text-primary)'
+                          }}
+                        />
+                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                          This email will be stored but NOT displayed to other users for privacy
+                        </p>
+                      </div>
 
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                        YouTube Username
-                      </label>
-                      <input
-                        type="text"
-                        value={profileForm.youtube_username}
-                        onChange={(e) => setProfileForm({ ...profileForm, youtube_username: e.target.value.replace('@', '') })}
-                        placeholder="youtube_channel"
-                        className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
-                        style={{
-                          backgroundColor: 'var(--card-bg)',
-                          borderColor: 'var(--card-border)',
-                          color: 'var(--text-primary)'
-                        }}
-                      />
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                          Password <span className="text-red-500">*</span>
+                        </label>
+                        <input
+                          type="password"
+                          value={profileForm.password}
+                          onChange={(e) => setProfileForm({ ...profileForm, password: e.target.value })}
+                          placeholder="Create a password (min 6 characters)"
+                          required
+                          minLength={6}
+                          className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                          style={{
+                            backgroundColor: 'var(--card-bg)',
+                            borderColor: 'var(--card-border)',
+                            color: 'var(--text-primary)'
+                          }}
+                        />
+                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                          💡 This will create your PostReady account and give you access to all features
+                        </p>
+                      </div>
+                    </>
+                  )}
+
+                  {user && (
+                    <div className="p-4 rounded-lg" style={{
+                      backgroundColor: theme === 'dark' ? 'rgba(111, 255, 210, 0.1)' : 'rgba(111, 255, 210, 0.15)',
+                      border: '1px solid rgba(111, 255, 210, 0.3)'
+                    }}>
+                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                        ✅ You're already signed in to PostReady
+                      </p>
+                      <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                        Just fill out your TikTok info to join the Collab Network!
+                      </p>
                     </div>
+                  )}
+
+                      <div className="flex gap-3 pt-2">
+                        <button
+                          type="submit"
+                          disabled={isSubmittingProfile}
+                          className="flex-1 py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{
+                            background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                            color: 'white'
+                          }}
+                        >
+                          {isSubmittingProfile ? 'Saving...' : directoryProfile ? 'Update Profile' : 'Join Network'}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setShowJoinDirectory(false)}
+                          className="px-6 py-3 rounded-lg font-medium transition-all hover:opacity-80 border"
+                          style={{
+                            borderColor: 'var(--card-border)',
+                            color: 'var(--text-secondary)'
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </form>
                   </div>
+                </div>
+              </div>
+              </>
+            )}
 
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                      Email for Collabs <span className="text-red-500">*</span>
-                    </label>
+            {/* Search Form */}
+            {directoryProfile ? (
+              // Simplified version for users with a profile
+              <div className="space-y-4">
+                <div className="p-4 rounded-lg border" style={{
+                  backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
+                  borderColor: 'rgba(41, 121, 255, 0.3)'
+                }}>
+                  <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
+                    🎯 Searching based on your profile:
+                  </p>
+                  <div className="flex flex-wrap gap-2 text-sm">
+                    <span className="px-3 py-1 rounded-full" style={{
+                      backgroundColor: 'var(--card-bg)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--card-border)'
+                    }}>
+                      @{directoryProfile.tiktok_username}
+                    </span>
+                    <span className="px-3 py-1 rounded-full" style={{
+                      backgroundColor: 'var(--card-bg)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--card-border)'
+                    }}>
+                      {directoryProfile.niche}
+                    </span>
+                    <span className="px-3 py-1 rounded-full" style={{
+                      backgroundColor: 'var(--card-bg)',
+                      color: 'var(--text-primary)',
+                      border: '1px solid var(--card-border)'
+                    }}>
+                      {directoryProfile.follower_range} followers
+                    </span>
+                  </div>
+                </div>
+
+                <button
+                  onClick={(e) => {
+                    e.preventDefault();
+                    // Auto-populate from profile and submit
+                    setCollabUsername(directoryProfile.tiktok_username);
+                    setCollabNiche(directoryProfile.niche);
+                    setCollabFollowerCount(directoryProfile.follower_range);
+                    // Trigger search immediately
+                    handleCollabSearch(e as any);
+                  }}
+                  disabled={isLoadingCollabs}
+                  className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                  style={{
+                    background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                    color: 'white'
+                  }}
+                >
+                  {isLoadingCollabs ? (
+                    <>
+                      <span className="animate-spin">🔄</span>
+                      Finding Collaborators...
+                    </>
+                  ) : (
+                    <>
+                      🔍 Find Collaborators
+                    </>
+                  )}
+                </button>
+              </div>
+            ) : (
+              // Full form for users without a profile
+              <form onSubmit={handleCollabSearch} className="space-y-4">
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                    Your TikTok Username <span className="text-red-500">*</span>
+                  </label>
+                  <div className="relative flex items-center">
+                    <span 
+                      className="absolute left-4 top-1/2 transform -translate-y-1/2 text-lg font-bold pointer-events-none z-10"
+                      style={{ color: 'rgba(255, 107, 107, 0.8)' }}
+                    >
+                      @
+                    </span>
                     <input
-                      type="email"
-                      value={profileForm.email_for_collabs}
-                      onChange={(e) => setProfileForm({ ...profileForm, email_for_collabs: e.target.value })}
-                      placeholder="your@email.com"
+                      type="text"
+                      value={collabUsername}
+                      onChange={(e) => setCollabUsername(e.target.value.replace('@', ''))}
+                      placeholder="yourusername"
                       required
-                      className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                      className="w-full rounded-md px-3 py-2 pl-10 focus:outline-none focus:ring-2 border"
                       style={{
                         backgroundColor: 'var(--card-bg)',
                         borderColor: 'var(--card-border)',
                         color: 'var(--text-primary)'
                       }}
                     />
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                      This email will be stored but NOT displayed to other users for privacy
-                    </p>
                   </div>
+                </div>
 
-                  <div className="flex gap-3">
-                    <button
-                      type="submit"
-                      disabled={isSubmittingProfile}
-                      className="flex-1 py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                      style={{
-                        background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                        color: 'white'
-                      }}
-                    >
-                      {isSubmittingProfile ? 'Saving...' : directoryProfile ? 'Update Profile' : 'Join Network'}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setShowJoinDirectory(false)}
-                      className="px-6 py-3 rounded-lg font-medium transition-all hover:opacity-80 border"
-                      style={{
-                        borderColor: 'var(--card-border)',
-                        color: 'var(--text-secondary)'
-                      }}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                </form>
-              </div>
-            )}
-
-            {/* Search Form */}
-            <form onSubmit={handleCollabSearch} className="space-y-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                  Your TikTok Username <span className="text-red-500">*</span>
-                </label>
-                <div className="relative flex items-center">
-                  <span 
-                    className="absolute left-4 top-1/2 transform -translate-y-1/2 text-lg font-bold pointer-events-none z-10"
-                    style={{ color: 'rgba(255, 107, 107, 0.8)' }}
-                  >
-                    @
-                  </span>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                    Your Niche <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="text"
-                    value={collabUsername}
-                    onChange={(e) => setCollabUsername(e.target.value.replace('@', ''))}
-                    placeholder="yourusername"
+                    value={collabNiche}
+                    onChange={(e) => setCollabNiche(e.target.value)}
+                    placeholder="e.g., Fitness, Gaming, Beauty"
                     required
-                    className="w-full rounded-md px-3 py-2 pl-10 focus:outline-none focus:ring-2 border"
+                    className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
                     style={{
                       backgroundColor: 'var(--card-bg)',
                       borderColor: 'var(--card-border)',
@@ -2990,78 +3345,59 @@ function HomeContent() {
                     }}
                   />
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                  Your Niche <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={collabNiche}
-                  onChange={(e) => setCollabNiche(e.target.value)}
-                  placeholder="e.g., Fitness, Gaming, Beauty"
-                  required
-                  className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
-                  style={{
-                    backgroundColor: 'var(--card-bg)',
-                    borderColor: 'var(--card-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                />
-              </div>
+                <div className="space-y-2">
+                  <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                    Your Follower Count <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    value={collabFollowerCount}
+                    onChange={(e) => setCollabFollowerCount(e.target.value)}
+                    required
+                    className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                    style={{
+                      backgroundColor: 'var(--card-bg)',
+                      borderColor: 'var(--card-border)',
+                      color: 'var(--text-primary)'
+                    }}
+                  >
+                    <option value="">Select follower range</option>
+                    <option value="1-500">1 - 500</option>
+                    <option value="500-1500">500 - 1,500</option>
+                    <option value="2000-5000">2,000 - 5,000</option>
+                    <option value="5000-9000">5,000 - 9,000</option>
+                    <option value="9000-15000">9,000 - 15,000</option>
+                    <option value="15000-25000">15,000 - 25,000</option>
+                    <option value="25000-75000">25,000 - 75,000</option>
+                    <option value="75000-150000">75,000 - 150,000</option>
+                    <option value="150000-300000">150,000 - 300,000</option>
+                    <option value="300000-1000000">300,000 - 1M</option>
+                    <option value="1000000+">1M+</option>
+                  </select>
+                </div>
 
-              <div className="space-y-2">
-                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                  Your Follower Count <span className="text-red-500">*</span>
-                </label>
-                <select
-                  value={collabFollowerCount}
-                  onChange={(e) => setCollabFollowerCount(e.target.value)}
-                  required
-                  className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                <button
+                  type="submit"
+                  disabled={isLoadingCollabs}
+                  className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   style={{
-                    backgroundColor: 'var(--card-bg)',
-                    borderColor: 'var(--card-border)',
-                    color: 'var(--text-primary)'
+                    background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                    color: 'white'
                   }}
                 >
-                  <option value="">Select follower range</option>
-                  <option value="1-500">1 - 500</option>
-                  <option value="500-1500">500 - 1,500</option>
-                  <option value="2000-5000">2,000 - 5,000</option>
-                  <option value="5000-9000">5,000 - 9,000</option>
-                  <option value="9000-15000">9,000 - 15,000</option>
-                  <option value="15000-25000">15,000 - 25,000</option>
-                  <option value="25000-75000">25,000 - 75,000</option>
-                  <option value="75000-150000">75,000 - 150,000</option>
-                  <option value="150000-300000">150,000 - 300,000</option>
-                  <option value="300000-1000000">300,000 - 1M</option>
-                  <option value="1000000+">1M+</option>
-                </select>
-              </div>
-
-              <button
-                type="submit"
-                disabled={isLoadingCollabs}
-                className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                style={{
-                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  color: 'white'
-                }}
-              >
-                {isLoadingCollabs ? (
-                  <>
-                    <span className="animate-spin">🔄</span>
-                    Finding Collaborators...
-                  </>
-                ) : (
-                  <>
-                    🔍 Find Collaborators
-                  </>
-                )}
-              </button>
-            </form>
+                  {isLoadingCollabs ? (
+                    <>
+                      <span className="animate-spin">🔄</span>
+                      Finding Collaborators...
+                    </>
+                  ) : (
+                    <>
+                      🔍 Find Collaborators
+                    </>
+                  )}
+                </button>
+              </form>
+            )}
 
             {/* Results */}
             {collaborators.length > 0 && (
@@ -3247,10 +3583,14 @@ function HomeContent() {
             )}
 
             {directoryProfile && (
-              <div className="mt-6 p-4 rounded-lg border flex items-center justify-between" style={{
-                backgroundColor: theme === 'dark' ? 'rgba(34, 197, 94, 0.08)' : 'rgba(34, 197, 94, 0.05)',
-                borderColor: 'rgba(34, 197, 94, 0.3)'
-              }}>
+              <div 
+                className="mt-6 p-4 rounded-lg border flex items-center justify-between transition-all duration-500 ease-in-out" 
+                style={{
+                  backgroundColor: theme === 'dark' ? 'rgba(34, 197, 94, 0.08)' : 'rgba(34, 197, 94, 0.05)',
+                  borderColor: 'rgba(34, 197, 94, 0.3)',
+                  animation: 'fadeIn 0.5s ease-in-out'
+                }}
+              >
                 <div className="flex items-center gap-3">
                   <span className="text-2xl">✅</span>
                   <div>
@@ -3263,7 +3603,13 @@ function HomeContent() {
                   </div>
                 </div>
                 <button
-                  onClick={() => setShowJoinDirectory(true)}
+                  onClick={() => {
+                    // Pre-fill email if user is authenticated
+                    if (user && user.email) {
+                      setProfileForm(prev => ({ ...prev, email_for_collabs: user.email || '' }));
+                    }
+                    setShowJoinDirectory(true);
+                  }}
                   className="px-4 py-2 rounded-lg font-medium transition-all hover:opacity-80 border"
                   style={{
                     borderColor: 'var(--card-border)',
@@ -6328,8 +6674,23 @@ function HomeContent() {
           {/* CSS Animations */}
           <style jsx>{`
             @keyframes fadeIn {
-              from { opacity: 0; }
-              to { opacity: 1; }
+              from { 
+                opacity: 0;
+                transform: translateY(10px);
+              }
+              to { 
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+            
+            @keyframes spin {
+              from {
+                transform: rotate(0deg);
+              }
+              to {
+                transform: rotate(360deg);
+              }
             }
             
             @keyframes scaleIn {
@@ -6388,6 +6749,18 @@ function HomeContent() {
           {theme === 'light' ? '🌙' : '☀️'}
         </span>
       </button>
+
+      {/* Email Verification Modal */}
+      <Modal
+        isOpen={showEmailVerificationModal}
+        onClose={() => setShowEmailVerificationModal(false)}
+        title="📧 Verify Your Email"
+        message="Please check your email inbox for a message from 'Supabase Auth' and click the verification link.
+
+Once verified, you'll be automatically signed in and can access all PostReady features!"
+        type="info"
+        confirmText="OK, Got It!"
+      />
     </div>
   );
 }

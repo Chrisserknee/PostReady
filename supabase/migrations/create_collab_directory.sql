@@ -66,3 +66,4 @@ CREATE TRIGGER update_collab_directory_updated_at
   FOR EACH ROW
   EXECUTE FUNCTION update_collab_directory_updated_at();
 
+
