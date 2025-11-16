@@ -2679,7 +2679,7 @@ function HomeContent() {
               </p>
             </div>
 
-            {/* Join Network CTA */}
+            {/* Join Network CTA - for signed in users without profile */}
             {!directoryProfile && user && (
               <div className="mb-6 p-4 sm:p-6 rounded-xl border-2 border-dashed" style={{
                 backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
@@ -2701,6 +2701,33 @@ function HomeContent() {
                     }}
                   >
                     Join the Network
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Join Network CTA - for non-signed in users */}
+            {!user && (
+              <div className="mb-6 p-4 sm:p-6 rounded-xl border-2 border-dashed" style={{
+                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
+                borderColor: 'rgba(41, 121, 255, 0.3)'
+              }}>
+                <div className="text-center">
+                  <h3 className="text-lg sm:text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                    ✨ Join the PostReady Collab Network
+                  </h3>
+                  <p className="text-xs sm:text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                    Connect with real TikTok creators in your niche! Sign in to add your profile.
+                  </p>
+                  <button
+                    onClick={() => openAuthModal('signup')}
+                    className="w-full sm:w-auto px-6 py-3 rounded-lg font-bold transition-all hover:scale-105 shadow-md"
+                    style={{
+                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                      color: 'white'
+                    }}
+                  >
+                    Sign Up to Join
                   </button>
                 </div>
               </div>
