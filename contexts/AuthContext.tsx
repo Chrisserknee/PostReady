@@ -27,8 +27,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     console.log('🚀 AuthProvider useEffect mounted');
     
-    // Check what's in localStorage
+    // CRITICAL FIX: Remove auth error hash from URL to prevent session clearing
     if (typeof window !== 'undefined') {
+      const hash = window.location.hash;
+      if (hash.includes('error=') || hash.includes('error_code=')) {
+        console.log('🚨 DETECTED AUTH ERROR IN URL:', hash);
+        console.log('🧹 Clearing error hash to prevent session logout...');
+        
+        // Clear the hash without triggering a page reload
+        const cleanUrl = window.location.href.split('#')[0];
+        window.history.replaceState({}, document.title, cleanUrl);
+        
+        console.log('✅ Error hash cleared from URL');
+      }
+      
       const storedAuth = localStorage.getItem('postready-auth-token');
       console.log('🔍 Checking localStorage for auth token:', storedAuth ? 'FOUND' : 'NOT FOUND');
       if (storedAuth) {
