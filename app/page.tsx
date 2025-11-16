@@ -1190,10 +1190,15 @@ function HomeContent() {
   };
 
   // Collab Engine Handlers
-  const handleCollabSearch = async (e: React.FormEvent) => {
+  const handleCollabSearch = async (e: React.FormEvent, overrideData?: { username: string, niche: string, followerCount: string }) => {
     e.preventDefault();
     
-    if (!collabUsername || !collabNiche || !collabFollowerCount) {
+    // Use override data if provided (for profile-based search), otherwise use state
+    const username = overrideData?.username || collabUsername;
+    const niche = overrideData?.niche || collabNiche;
+    const followerCount = overrideData?.followerCount || collabFollowerCount;
+    
+    if (!username || !niche || !followerCount) {
       showNotification("Please fill in all fields", "warning");
       return;
     }
@@ -1206,9 +1211,9 @@ function HomeContent() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          username: collabUsername,
-          niche: collabNiche,
-          followerCount: parseInt(collabFollowerCount.replace(/,/g, '')),
+          username: username,
+          niche: niche,
+          followerCount: parseInt(followerCount.replace(/,/g, '')),
         }),
       });
       
@@ -3271,12 +3276,12 @@ function HomeContent() {
                 <button
                   onClick={(e) => {
                     e.preventDefault();
-                    // Auto-populate from profile and submit
-                    setCollabUsername(directoryProfile.tiktok_username);
-                    setCollabNiche(directoryProfile.niche);
-                    setCollabFollowerCount(directoryProfile.follower_range);
-                    // Trigger search immediately
-                    handleCollabSearch(e as any);
+                    // Search directly with profile data (no state update needed)
+                    handleCollabSearch(e as any, {
+                      username: directoryProfile.tiktok_username,
+                      niche: directoryProfile.niche,
+                      followerCount: directoryProfile.follower_range
+                    });
                   }}
                   disabled={isLoadingCollabs}
                   className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
@@ -3463,6 +3468,12 @@ function HomeContent() {
                             {collab.niche}
                           </span>
                         </div>
+
+                        {/* User Description Label */}
+                        <p className="text-xs font-semibold mb-2 mt-2" style={{ color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                          User Description
+                        </p>
+
                         {collab.contentFocus && (
                           <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
                             <strong>Focus:</strong> {collab.contentFocus}
@@ -3502,16 +3513,14 @@ function HomeContent() {
                       </div>
                     </div>
 
-                    {collab.whyPerfect && (
-                      <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: 'rgba(41, 121, 255, 0.08)' }}>
-                        <p className="text-sm font-semibold mb-1" style={{ color: 'var(--secondary)' }}>
-                          💡 Why They're Perfect:
-                        </p>
-                        <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                          {collab.whyPerfect}
-                        </p>
-                      </div>
-                    )}
+                    <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: 'rgba(41, 121, 255, 0.08)' }}>
+                      <p className="text-sm font-semibold mb-1" style={{ color: 'var(--secondary)' }}>
+                        💡 Why They're Perfect:
+                      </p>
+                      <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
+                        This creator is in your niche and has a follower count similar to yours, making them a strong match for a collaboration that could significantly boost engagement for both of you.
+                      </p>
+                    </div>
 
                     {collab.collabIdea && (
                       <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: 'rgba(111, 255, 210, 0.08)' }}>
