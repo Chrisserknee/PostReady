@@ -18,16 +18,50 @@ export const getSupabaseClient = (): SupabaseClient => {
       console.error('⚠️ Supabase is not configured! Please set NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY environment variables.');
     }
     
+    console.log('🔧 Initializing Supabase client...');
+    
+    // Create a custom storage adapter that handles mobile browser restrictions
+    const customStorage = typeof window !== 'undefined' ? {
+      getItem: (key: string) => {
+        try {
+          const value = window.localStorage.getItem(key);
+          console.log(`🔍 Storage GET ${key}:`, value ? 'FOUND' : 'NOT FOUND');
+          return value;
+        } catch (e) {
+          console.error('❌ Storage GET error:', e);
+          return null;
+        }
+      },
+      setItem: (key: string, value: string) => {
+        try {
+          window.localStorage.setItem(key, value);
+          console.log(`💾 Storage SET ${key}: SUCCESS`);
+        } catch (e) {
+          console.error('❌ Storage SET error:', e);
+        }
+      },
+      removeItem: (key: string) => {
+        try {
+          window.localStorage.removeItem(key);
+          console.log(`🗑️ Storage REMOVE ${key}: SUCCESS`);
+        } catch (e) {
+          console.error('❌ Storage REMOVE error:', e);
+        }
+      },
+    } : undefined;
+    
     supabaseInstance = createClient(finalUrl, finalKey, {
       auth: {
         persistSession: typeof window !== 'undefined', // Only persist on client
         autoRefreshToken: true,
         detectSessionInUrl: true,
-        storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+        storage: customStorage as any,
         storageKey: 'postready-auth-token',
         flowType: 'pkce', // More secure and mobile-friendly
       }
     });
+    
+    console.log('✅ Supabase client initialized');
   }
   return supabaseInstance;
 };

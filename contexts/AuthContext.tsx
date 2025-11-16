@@ -25,6 +25,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isPro, setIsPro] = useState(false);
 
   useEffect(() => {
+    console.log('🚀 AuthProvider useEffect mounted');
+    
+    // Check what's in localStorage
+    if (typeof window !== 'undefined') {
+      const storedAuth = localStorage.getItem('postready-auth-token');
+      console.log('🔍 Checking localStorage for auth token:', storedAuth ? 'FOUND' : 'NOT FOUND');
+      if (storedAuth) {
+        try {
+          const parsed = JSON.parse(storedAuth);
+          console.log('📦 Stored auth data:', {
+            hasAccessToken: !!parsed?.access_token,
+            hasRefreshToken: !!parsed?.refresh_token,
+            expiresAt: parsed?.expires_at,
+            currentTime: Math.floor(Date.now() / 1000)
+          });
+        } catch (e) {
+          console.error('❌ Failed to parse stored auth:', e);
+        }
+      }
+    }
+    
     let intervalId: NodeJS.Timeout | null = null;
     let failureCount = 0;
 
@@ -62,15 +83,34 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     };
 
     // Check active session
+    console.log('🔄 Calling supabase.auth.getSession()...');
     supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('📡 getSession() response received');
+      
       if (error) {
         console.error('❌ Session retrieval error:', error);
+        console.error('Error details:', {
+          message: error.message,
+          status: error.status,
+          name: error.name
+        });
       }
       
       if (session) {
-        console.log('✅ Session found on load:', session.user?.email);
+        console.log('✅ Session found on load!');
+        console.log('User:', {
+          id: session.user?.id,
+          email: session.user?.email,
+          emailConfirmed: session.user?.email_confirmed_at
+        });
+        console.log('Session:', {
+          expiresAt: session.expires_at,
+          expiresIn: session.expires_in,
+          tokenType: session.token_type
+        });
       } else {
         console.log('⚠️ No session found on load');
+        console.log('This means the user is logged out or session expired');
       }
       
       setSession(session);
@@ -79,13 +119,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         checkProStatus(session.user.id);
       }
       setLoading(false);
+      console.log('✅ Auth loading complete, loading state set to false');
+    }).catch((err) => {
+      console.error('❌ Fatal error during getSession():', err);
+      setLoading(false);
     });
 
     // Listen for auth changes
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((_event, session) => {
-      console.log('🔄 Auth state changed:', _event, session?.user?.email || 'No user');
+      console.log('\n' + '='.repeat(60));
+      console.log('🔄 AUTH STATE CHANGE EVENT');
+      console.log('Event:', _event);
+      console.log('User:', session?.user?.email || 'No user');
+      console.log('Has Session:', !!session);
+      console.log('='.repeat(60) + '\n');
+      
+      // Check localStorage after auth change
+      if (typeof window !== 'undefined') {
+        const storedAuth = localStorage.getItem('postready-auth-token');
+        console.log('📦 localStorage after auth change:', storedAuth ? 'EXISTS' : 'MISSING');
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
@@ -209,10 +265,43 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signInWithPassword({
+    console.log('🔐 signIn called for:', email);
+    
+    // Check storage availability
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('test-storage', 'test');
+        const test = localStorage.getItem('test-storage');
+        localStorage.removeItem('test-storage');
+        console.log('✅ localStorage is accessible:', test === 'test');
+      } catch (e) {
+        console.error('❌ localStorage is NOT accessible:', e);
+        console.error('This could be due to private browsing mode or browser restrictions');
+      }
+    }
+    
+    const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
+
+    if (data?.session) {
+      console.log('✅ Sign in successful!');
+      console.log('Session details:', {
+        expiresAt: data.session.expires_at,
+        expiresIn: data.session.expires_in
+      });
+      
+      // Verify session was stored
+      setTimeout(() => {
+        if (typeof window !== 'undefined') {
+          const storedAuth = localStorage.getItem('postready-auth-token');
+          console.log('🔍 Verifying session storage after sign-in:', storedAuth ? 'STORED' : 'NOT STORED');
+        }
+      }, 1000);
+    } else if (error) {
+      console.error('❌ Sign in failed:', error);
+    }
 
     return { error };
   };
