@@ -1,8 +1,14 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
 
+// Mark this route as public - no authentication required
+export const dynamic = 'force-dynamic';
+export const runtime = 'nodejs';
+
 export async function POST(request: NextRequest) {
   try {
+    console.log('🔍 Hashtag API called');
+    
     const body = await request.json();
     const { niche, platform, batchNumber = 0 } = body as { 
       niche: string;
@@ -10,7 +16,10 @@ export async function POST(request: NextRequest) {
       batchNumber?: number;
     };
 
+    console.log('📥 Request data:', { niche, platform, batchNumber });
+
     if (!niche || !platform) {
+      console.error('❌ Missing required fields:', { niche, platform });
       return NextResponse.json(
         { error: "Missing niche or platform" },
         { status: 400 }
@@ -129,17 +138,43 @@ Return ONLY valid JSON in this exact format:
 
     console.log(`✅ Generated ${hashtagsWithScores.length} AI hashtags for ${niche} on ${platform}`);
 
-    return NextResponse.json({
+    const response = NextResponse.json({
       hashtags: hashtagsWithScores,
       niche,
       platform
     });
 
+    // Add CORS headers to ensure it works for all users
+    response.headers.set('Access-Control-Allow-Origin', '*');
+    response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    return response;
+
   } catch (error: any) {
     console.error("❌ Hashtag generation error:", error);
-    return NextResponse.json(
+    console.error("❌ Error stack:", error.stack);
+    console.error("❌ Error details:", JSON.stringify(error, null, 2));
+    
+    const errorResponse = NextResponse.json(
       { error: error.message || "Failed to generate hashtags" },
       { status: 500 }
     );
+
+    // Add CORS headers to error response too
+    errorResponse.headers.set('Access-Control-Allow-Origin', '*');
+    errorResponse.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    errorResponse.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+
+    return errorResponse;
   }
+}
+
+// Handle OPTIONS request for CORS preflight
+export async function OPTIONS(request: NextRequest) {
+  const response = new NextResponse(null, { status: 200 });
+  response.headers.set('Access-Control-Allow-Origin', '*');
+  response.headers.set('Access-Control-Allow-Methods', 'POST, OPTIONS');
+  response.headers.set('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  return response;
 }
