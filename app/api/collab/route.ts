@@ -80,15 +80,15 @@ export async function POST(request: NextRequest) {
     let searchMin: number, searchMax: number;
     
     if (typeof followerCount === 'number' || !followerCount.includes('-')) {
-      // Single number provided - create a ±50% range
+      // Single number provided - create a wide range (±75% for better matching)
       const count = typeof followerCount === 'number' ? followerCount : parseInt(followerCount.toString().replace(/,/g, ''));
-      searchMin = Math.floor(count * 0.5);
-      searchMax = Math.ceil(count * 1.5);
+      searchMin = Math.floor(count * 0.25); // Search from 25% of the value
+      searchMax = Math.ceil(count * 2);      // Up to 200% of the value
     } else {
-      // Range provided - parse it
+      // Range provided - parse it with wider tolerance
       const { min, max } = parseFollowerRange(followerCount || '10,000-25,000');
-      searchMin = Math.floor(min * 0.5);
-      searchMax = Math.ceil(max * 1.5);
+      searchMin = Math.floor(min * 0.25);
+      searchMax = Math.ceil(max * 2);
     }
 
     console.log(`🔍 Searching for collaborators with ${searchMin.toLocaleString()}-${searchMax.toLocaleString()} followers in niche: ${niche}`);
