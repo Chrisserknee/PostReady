@@ -23,6 +23,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPro, setIsPro] = useState(false);
+  const [checkFailureCount, setCheckFailureCount] = useState(0);
 
   useEffect(() => {
     // Check active session
@@ -43,28 +44,28 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(session?.user ?? null);
       if (session?.user) {
         checkProStatus(session.user.id);
+        setCheckFailureCount(0); // Reset failure count on auth change
       } else {
         setIsPro(false);
       }
     });
 
-    // Periodically check subscription status (every 2 minutes)
-    // This ensures cancelled/expired subscriptions are detected automatically
+    // Periodically check subscription status (every 5 minutes)
+    // Stop checking if failures exceed threshold to prevent error spam
     const statusCheckInterval = setInterval(() => {
-      if (user) {
+      if (user && checkFailureCount < 3) {
         checkProStatus(user.id);
       }
-    }, 120000); // 2 minutes
+    }, 300000); // 5 minutes (increased from 2)
 
     return () => {
       subscription.unsubscribe();
       clearInterval(statusCheckInterval);
     };
-  }, [user]);
+  }, [user, checkFailureCount]);
 
   const checkProStatus = async (userId: string) => {
     try {
-      // Force fresh data by adding timestamp to prevent caching
       const { data, error } = await supabase
         .from('user_profiles')
         .select('is_pro, plan_type')
@@ -72,23 +73,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .single();
 
       if (!error && data) {
-        console.log('✅ Subscription status loaded from database:', { 
-          is_pro: data.is_pro, 
-          plan_type: data.plan_type,
-          userId: userId 
-        });
+        // Success - reset failure count
+        setCheckFailureCount(0);
         
         // Set isPro status
         const proStatus = data.is_pro || false;
         setIsPro(proStatus);
-        
-        // Log if status changed
-        console.log(`User subscription status: ${proStatus ? 'PRO' : 'FREE'} (Plan: ${data.plan_type})`);
       } else if (error) {
-        console.error('❌ Error checking subscription status:', error);
+        // Only log once to avoid spam
+        if (checkFailureCount === 0) {
+          console.error('Subscription check failed - will retry later');
+        }
+        setCheckFailureCount(prev => prev + 1);
       }
     } catch (error) {
-      console.error('❌ Exception checking subscription status:', error);
+      // Only log once to avoid spam
+      if (checkFailureCount === 0) {
+        console.error('Subscription check error - will retry later');
+      }
+      setCheckFailureCount(prev => prev + 1);
     }
   };
 
