@@ -1,41 +1,26 @@
-import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { NextRequest, NextResponse } from "next/server";
+import OpenAI from "openai";
 
 export async function POST(request: NextRequest) {
   try {
-    const { businessInfo, caption, selectedIdea, existingHashtags } = await request.json();
+    const body = await request.json();
+    const { niche, platform, batchNumber = 0 } = body as { 
+      niche: string;
+      platform: string;
+      batchNumber?: number;
+    };
 
-    // Input validation
-    if (!businessInfo) {
+    if (!niche || !platform) {
       return NextResponse.json(
-        { error: 'Business information is required' },
+        { error: "Missing niche or platform" },
         { status: 400 }
       );
     }
-
-    // Validate businessInfo structure
-    if (!businessInfo.businessName || !businessInfo.businessType || !businessInfo.location || !businessInfo.platform) {
-      return NextResponse.json(
-        { error: 'Invalid business information format' },
-        { status: 400 }
-      );
-    }
-
-    // Sanitize and limit input lengths to prevent DoS
-    const sanitizedCaption = caption ? String(caption).trim().substring(0, 2000) : '';
-    const sanitizedBusinessName = String(businessInfo.businessName).trim().substring(0, 200);
-    const sanitizedLocation = String(businessInfo.location).trim().substring(0, 200);
-    const sanitizedBusinessType = String(businessInfo.businessType).trim().substring(0, 100);
-    const sanitizedPlatform = String(businessInfo.platform).trim().substring(0, 50);
-
-    // Validate existingHashtags is an array
-    const sanitizedExistingHashtags = Array.isArray(existingHashtags) 
-      ? existingHashtags.slice(0, 50).map((tag: any) => String(tag).trim().substring(0, 100))
-      : [];
 
     if (!process.env.OPENAI_API_KEY) {
+      console.error("❌ OPENAI_API_KEY is not set in environment variables");
       return NextResponse.json(
-        { error: 'OpenAI API key not configured' },
+        { error: "OpenAI API key not configured" },
         { status: 500 }
       );
     }
@@ -44,88 +29,117 @@ export async function POST(request: NextRequest) {
       apiKey: process.env.OPENAI_API_KEY,
     });
 
-    console.log('🏷️ Generating additional hashtags...');
+    // Build platform-specific prompt
+    const prompt = `You are a social media expert. Generate 8 REAL, VERIFIED hashtags for:
 
-    // Extract existing hashtags to avoid duplicates
-    const existingTags = sanitizedExistingHashtags;
-    const existingTagsLower = existingTags.map((tag: string) => tag.toLowerCase());
+Niche/Topic: ${niche}
+Platform: ${platform}
+Batch Number: ${batchNumber}
 
-    // Get caption text without hashtags for context
-    const captionText = sanitizedCaption ? sanitizedCaption.split('\n\n').filter((line: string) => !line.trim().startsWith('#')).join('\n\n').trim() : '';
-    
-    // Sanitize selectedIdea fields
-    const title = selectedIdea?.title ? String(selectedIdea.title).trim().substring(0, 200) : '';
-    const description = selectedIdea?.description ? String(selectedIdea.description).trim().substring(0, 1000) : '';
+⚠️ CRITICAL - READ CAREFULLY:
+1. NEVER create fake hashtags by mashing words together (e.g., #santarunninglovers, #foodcommunity, #fitnessgoals DO NOT EXIST)
+2. ONLY suggest hashtags you KNOW are real and actively used on ${platform}
+3. Break down multi-word topics into REAL, SEPARATE hashtags:
+   - "Santa Running" → #santa, #running, #christmas, #run, #christmasrun (if real)
+   - "Food Blogger" → #food, #foodie, #foodporn, #instafood, #cooking
+   - "Fitness" → #fitness, #gym, #workout, #fit, #fitfam
+4. Use BROAD, POPULAR hashtags that actually exist - not niche concatenations
+5. Include platform-specific tags: ${platform === 'TikTok' ? '#fyp, #foryou, #viral' : platform === 'Instagram' ? '#reels, #explore, #instagood' : platform === 'YouTube Shorts' ? '#shorts, #youtubeshorts, #youtube' : '#facebook, #viral'}
 
-    const prompt = `You are a social media hashtag expert. Generate 8-12 additional relevant hashtags for this post.
+STRATEGY:
+- Split compound topics into individual, real hashtags
+- Use widely-known platform tags
+- Prioritize hashtags with millions of existing posts
+- Avoid creative/made-up combinations
 
-Business Details:
-- Business Name: ${sanitizedBusinessName}
-- Type: ${sanitizedBusinessType}
-- Location: ${sanitizedLocation}
-- Platform: ${sanitizedPlatform}
-${title ? `- Post Title: ${title}` : ''}
-${description ? `- Post Description: ${description}` : ''}
-${captionText ? `- Caption Content: "${captionText.substring(0, 300)}"` : ''}
-${existingTags.length > 0 ? `- Existing Hashtags (avoid duplicates): ${existingTags.join(', ')}` : ''}
+REACH LEVELS (based on actual post counts):
+- "Very High": 10M+ posts
+- "High": 1M-10M posts
+- "Medium": 100K-1M posts
+- "Low": Under 100K posts
 
-Generate 8-12 NEW hashtags that:
-1. Are highly relevant to the business type, location, and content
-2. Are popular and commonly searched on ${sanitizedPlatform}
-3. Mix broad and niche hashtags for maximum reach
-4. Include location-based hashtags (e.g., #montereyca, #montereycafood)
-5. Include content-specific hashtags based on the post title/description
-6. Are appropriate for ${sanitizedPlatform} platform
-7. Do NOT duplicate any existing hashtags
-8. Are formatted correctly (start with #, no spaces, lowercase)
+COMPETITION LEVELS:
+- "Very High": Extremely saturated, hard to rank
+- "High": Highly competitive
+- "Medium": Moderate competition
+- "Low": Easier to rank, less saturated
 
-Return ONLY the hashtags, separated by spaces, like this:
-#hashtag1 #hashtag2 #hashtag3
-
-Do not include any explanation or other text.`;
+Return ONLY valid JSON in this exact format:
+{
+  "hashtags": [
+    {
+      "tag": "#example",
+      "reach": "High",
+      "competition": "Medium"
+    }
+  ]
+}`;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: "gpt-3.5-turbo",
       messages: [
         {
-          role: 'system',
-          content: 'You are an expert social media hashtag generator. You create relevant, popular hashtags that help posts reach the right audience. Return only hashtags separated by spaces, no other text.',
+          role: "system",
+          content: "You are a social media hashtag expert who only recommends real, verified hashtags that actually exist and are actively used on social platforms. Never create fake or made-up hashtags. Always respond with valid JSON."
         },
         {
-          role: 'user',
-          content: prompt,
-        },
+          role: "user",
+          content: prompt
+        }
       ],
-      temperature: 0.8,
-      max_tokens: 150,
+      temperature: 0.7,
+      max_tokens: 500,
+      response_format: { type: "json_object" }
     });
 
-    const response = completion.choices[0]?.message?.content?.trim();
+    const responseText = completion.choices[0].message.content || "{}";
     
-    if (!response) {
-      throw new Error('No hashtags generated');
+    let result;
+    try {
+      result = JSON.parse(responseText);
+    } catch (parseError) {
+      console.error("❌ JSON parsing error:", parseError);
+      console.error("Raw response:", responseText);
+      throw new Error("Failed to parse AI response as JSON");
     }
 
-    // Parse hashtags from response
-    const newHashtags = response
-      .split(/\s+/)
-      .filter(tag => tag.startsWith('#'))
-      .map(tag => tag.toLowerCase())
-      .filter(tag => !existingTagsLower.includes(tag)); // Remove duplicates
+    // Validate response structure
+    if (!result.hashtags || !Array.isArray(result.hashtags)) {
+      console.error("❌ Invalid response structure:", result);
+      throw new Error("Invalid hashtag data received from AI");
+    }
 
-    console.log('✅ Generated', newHashtags.length, 'new hashtags');
+    // Add scoring to each hashtag
+    const reachLevels = ['Low', 'Medium', 'High', 'Very High'];
+    const competitionLevels = ['Low', 'Medium', 'High', 'Very High'];
+    
+    const calculateScore = (reach: string, competition: string) => {
+      const reachScore = reachLevels.indexOf(reach);
+      const compScore = competitionLevels.indexOf(competition);
+      // High reach + Low competition = Best score
+      return (reachScore * 10) + ((3 - compScore) * 8);
+    };
 
-    return NextResponse.json({ hashtags: newHashtags });
+    const hashtagsWithScores = result.hashtags.map((h: any) => ({
+      tag: h.tag,
+      reach: h.reach || 'Medium',
+      competition: h.competition || 'Medium',
+      score: calculateScore(h.reach || 'Medium', h.competition || 'Medium')
+    })).sort((a: any, b: any) => b.score - a.score);
+
+    console.log(`✅ Generated ${hashtagsWithScores.length} AI hashtags for ${niche} on ${platform}`);
+
+    return NextResponse.json({
+      hashtags: hashtagsWithScores,
+      niche,
+      platform
+    });
+
   } catch (error: any) {
-    console.error('❌ Hashtag generation error:', error);
+    console.error("❌ Hashtag generation error:", error);
     return NextResponse.json(
-      { 
-        error: 'Failed to generate hashtags',
-        details: error?.message || 'Unknown error'
-      },
+      { error: error.message || "Failed to generate hashtags" },
       { status: 500 }
     );
   }
 }
-
-
