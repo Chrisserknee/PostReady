@@ -82,17 +82,27 @@ function createServerSupabaseClient(request: NextRequest) {
  */
 export async function verifyAuth(request: NextRequest): Promise<{ userId: string | null; error: string | null }> {
   try {
+    console.log('🔐 verifyAuth: Creating Supabase client...');
     const supabase = createServerSupabaseClient(request);
     
     // Try to get user from session
+    console.log('🔐 verifyAuth: Getting user from session...');
     const { data: { user }, error } = await supabase.auth.getUser();
     
-    if (error || !user) {
+    if (error) {
+      console.error('❌ verifyAuth: Supabase error:', error.message);
+      return { userId: null, error: 'Unauthorized' };
+    }
+    
+    if (!user) {
+      console.error('❌ verifyAuth: No user found in session');
       return { userId: null, error: 'Unauthorized' };
     }
 
+    console.log('✅ verifyAuth: User authenticated successfully');
     return { userId: user.id, error: null };
-  } catch (error) {
+  } catch (error: any) {
+    console.error('❌ verifyAuth: Exception:', error.message);
     return { userId: null, error: 'Authentication failed' };
   }
 }
