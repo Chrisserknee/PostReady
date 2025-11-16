@@ -1342,7 +1342,14 @@ function HomeContent() {
       }
       
       // Get user session token (will exist for both new and existing users at this point)
-      const { data: { session } } = await supabase.auth.getSession();
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      console.log('🔑 Session check:', {
+        hasSession: !!session,
+        sessionError: sessionError?.message,
+        userId: session?.user?.id,
+        userEmail: session?.user?.email
+      });
       
       const headers: Record<string, string> = {
         'Content-Type': 'application/json'
@@ -1350,6 +1357,9 @@ function HomeContent() {
       
       if (session) {
         headers['Authorization'] = `Bearer ${session.access_token}`;
+        console.log('✅ Authorization header added');
+      } else {
+        console.warn('⚠️ No session available - profile will be created without user_id');
       }
 
       // Prepare profile data - use user's email if authenticated
@@ -1363,6 +1373,11 @@ function HomeContent() {
         bio: profileForm.bio,
         email_for_collabs: user?.email || newUserEmail || profileForm.email_for_collabs,
       };
+
+      console.log('📤 Sending profile data:', {
+        ...profileData,
+        hasAuthHeader: !!headers['Authorization']
+      });
 
       const response = await fetch('/api/collab-directory', {
         method: 'POST',
@@ -1383,25 +1398,7 @@ function HomeContent() {
         setDirectoryProfile(data.profile);
         console.log('✅ Profile saved and state updated:', data.profile);
       } else {
-        console.error('⚠️ No profile in response, checking session...');
-        // Wait a moment and try to reload the profile
-        setTimeout(async () => {
-          const { data: { session } } = await supabase.auth.getSession();
-          if (session) {
-            const reloadResponse = await fetch('/api/collab-directory', {
-              headers: {
-                'Authorization': `Bearer ${session.access_token}`
-              }
-            });
-            if (reloadResponse.ok) {
-              const reloadData = await reloadResponse.json();
-              if (reloadData.profile) {
-                setDirectoryProfile(reloadData.profile);
-                console.log('✅ Profile reloaded successfully');
-              }
-            }
-          }
-        }, 1000);
+        console.error('⚠️ No profile in response');
       }
       
       setShowJoinDirectory(false);
@@ -1413,6 +1410,33 @@ function HomeContent() {
         setShowEmailVerificationModal(true);
       } else {
         showNotification("Successfully joined the PostReady Collab Network! 🎉", "success");
+        
+        // For existing users, reload their profile after a short delay to ensure it's linked
+        setTimeout(async () => {
+          console.log('🔄 Reloading profile for existing user...');
+          const { data: { session: currentSession } } = await supabase.auth.getSession();
+          
+          if (currentSession) {
+            console.log('✅ Session still valid, reloading profile');
+            const reloadResponse = await fetch('/api/collab-directory', {
+              headers: {
+                'Authorization': `Bearer ${currentSession.access_token}`
+              }
+            });
+            if (reloadResponse.ok) {
+              const reloadData = await reloadResponse.json();
+              if (reloadData.profile) {
+                setDirectoryProfile(reloadData.profile);
+                console.log('✅ Profile reloaded and confirmed:', reloadData.profile.tiktok_username);
+              } else {
+                console.warn('⚠️ Profile not found after reload - may need manual refresh');
+              }
+            }
+          } else {
+            console.error('❌ Session lost! User was logged out');
+            showNotification("Your session expired. Please sign in again.", "warning");
+          }
+        }, 1500);
       }
     } catch (error: any) {
       console.error('Profile submit error:', error);
@@ -2823,14 +2847,14 @@ function HomeContent() {
             className="mb-10 rounded-2xl shadow-lg border p-4 sm:p-6 md:p-8 space-y-6 transition-all duration-500"
             style={{
               backgroundColor: theme === 'dark' 
-                ? 'rgba(30, 37, 50, 0.85)' 
+                ? 'rgba(40, 30, 35, 0.85)' 
                 : '#FFFFFF',
               borderColor: theme === 'dark'
-                ? 'var(--card-border)'
-                : 'rgba(41, 121, 255, 0.2)',
+                ? 'rgba(255, 79, 120, 0.3)'
+                : 'rgba(255, 79, 120, 0.25)',
               boxShadow: theme === 'dark'
-                ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'
+                ? '0 8px 32px rgba(255, 79, 120, 0.2), 0 0 0 1px rgba(255, 79, 120, 0.15)'
+                : '0 4px 20px rgba(255, 79, 120, 0.15), 0 0 0 1px rgba(255, 79, 120, 0.1)'
             }}
           >
             <div className="text-center mb-6">
@@ -2864,7 +2888,7 @@ function HomeContent() {
                   <div 
                     className="h-5 w-5 border-2 rounded-full"
                     style={{
-                      borderColor: 'var(--primary)',
+                      borderColor: '#FF4F78',
                       borderTopColor: 'transparent',
                       animation: 'spin 1.5s linear infinite'
                     }}
@@ -2879,8 +2903,8 @@ function HomeContent() {
               <div 
                 className="mb-6 p-4 sm:p-6 rounded-xl border-2 border-dashed transition-all duration-500 ease-in-out" 
                 style={{
-                  backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
-                  borderColor: 'rgba(41, 121, 255, 0.3)',
+                  backgroundColor: theme === 'dark' ? 'rgba(255, 79, 120, 0.08)' : 'rgba(255, 79, 120, 0.05)',
+                  borderColor: 'rgba(255, 79, 120, 0.4)',
                   animation: 'fadeIn 0.5s ease-in-out'
                 }}
               >
@@ -2901,7 +2925,7 @@ function HomeContent() {
                     }}
                     className="w-full sm:w-auto px-6 py-3 rounded-lg font-bold transition-all hover:scale-105 shadow-md"
                     style={{
-                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                      background: 'linear-gradient(135deg, #FF4F78, #FF6B9D, #FF8FB3)',
                       color: 'white'
                     }}
                   >
@@ -2916,8 +2940,8 @@ function HomeContent() {
               <div 
                 className="mb-6 p-4 sm:p-6 rounded-xl border-2 border-dashed transition-all duration-500 ease-in-out" 
                 style={{
-                  backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
-                  borderColor: 'rgba(41, 121, 255, 0.3)',
+                  backgroundColor: theme === 'dark' ? 'rgba(255, 79, 120, 0.08)' : 'rgba(255, 79, 120, 0.05)',
+                  borderColor: 'rgba(255, 79, 120, 0.4)',
                   animation: 'fadeIn 0.5s ease-in-out'
                 }}
               >
@@ -2932,7 +2956,7 @@ function HomeContent() {
                     onClick={() => setShowJoinDirectory(true)}
                     className="w-full sm:w-auto px-6 py-3 rounded-lg font-bold transition-all hover:scale-105 shadow-md"
                     style={{
-                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                      background: 'linear-gradient(135deg, #FF4F78, #FF6B9D, #FF8FB3)',
                       color: 'white'
                     }}
                   >
@@ -3242,8 +3266,8 @@ function HomeContent() {
               // Simplified version for users with a profile
               <div className="space-y-4">
                 <div className="p-4 rounded-lg border" style={{
-                  backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
-                  borderColor: 'rgba(41, 121, 255, 0.3)'
+                  backgroundColor: theme === 'dark' ? 'rgba(255, 79, 120, 0.08)' : 'rgba(255, 79, 120, 0.05)',
+                  borderColor: 'rgba(255, 79, 120, 0.3)'
                 }}>
                   <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
                     🎯 Searching based on your profile:
@@ -3286,7 +3310,7 @@ function HomeContent() {
                   disabled={isLoadingCollabs}
                   className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   style={{
-                    background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                    background: 'linear-gradient(135deg, #FF4F78, #FF6B9D, #FF8FB3)',
                     color: 'white'
                   }}
                 >
@@ -3386,7 +3410,7 @@ function HomeContent() {
                   disabled={isLoadingCollabs}
                   className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                   style={{
-                    background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                    background: 'linear-gradient(135deg, #FF4F78, #FF6B9D, #FF8FB3)',
                     color: 'white'
                   }}
                 >
@@ -3513,8 +3537,8 @@ function HomeContent() {
                       </div>
                     </div>
 
-                    <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: 'rgba(41, 121, 255, 0.08)' }}>
-                      <p className="text-sm font-semibold mb-1" style={{ color: 'var(--secondary)' }}>
+                    <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: 'rgba(255, 79, 120, 0.08)' }}>
+                      <p className="text-sm font-semibold mb-1" style={{ color: '#FF4F78' }}>
                         💡 Why They're Perfect:
                       </p>
                       <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
@@ -3523,8 +3547,8 @@ function HomeContent() {
                     </div>
 
                     {collab.collabIdea && (
-                      <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: 'rgba(111, 255, 210, 0.08)' }}>
-                        <p className="text-sm font-semibold mb-1" style={{ color: '#6FFFD2' }}>
+                      <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: 'rgba(255, 139, 179, 0.08)' }}>
+                        <p className="text-sm font-semibold mb-1" style={{ color: '#FF6B9D' }}>
                           🎬 Collaboration Idea:
                         </p>
                         <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
@@ -3552,8 +3576,8 @@ function HomeContent() {
                           className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                           style={{
                             background: copyingDmIndex === index 
-                              ? 'linear-gradient(to right, #6366f1, #8b5cf6)' 
-                              : 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                              ? 'linear-gradient(135deg, #D63A5F, #E85577)' 
+                              : 'linear-gradient(135deg, #FF4F78, #FF6B9D, #FF8FB3)',
                             color: 'white'
                           }}
                         >
