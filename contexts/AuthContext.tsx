@@ -23,9 +23,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [isPro, setIsPro] = useState(false);
-  const [checkFailureCount, setCheckFailureCount] = useState(0);
 
   useEffect(() => {
+    let intervalId: NodeJS.Timeout | null = null;
+    let failureCount = 0;
+
+    const checkProStatus = async (userId: string) => {
+      try {
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select('is_pro, plan_type')
+          .eq('id', userId)
+          .single();
+
+        if (!error && data) {
+          // Success - reset failure count
+          failureCount = 0;
+          
+          // Set isPro status
+          const proStatus = data.is_pro || false;
+          setIsPro(proStatus);
+        } else if (error) {
+          failureCount++;
+          // Stop checking after 3 failures
+          if (failureCount >= 3 && intervalId) {
+            clearInterval(intervalId);
+            intervalId = null;
+          }
+        }
+      } catch (error) {
+        failureCount++;
+        // Stop checking after 3 failures
+        if (failureCount >= 3 && intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
+      }
+    };
+
     // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSession(session);
@@ -43,57 +78,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        // Reset failure count on auth change
+        failureCount = 0;
         checkProStatus(session.user.id);
-        setCheckFailureCount(0); // Reset failure count on auth change
+        
+        // Clear existing interval if any
+        if (intervalId) {
+          clearInterval(intervalId);
+        }
+        
+        // Start new interval for this user
+        intervalId = setInterval(() => {
+          if (failureCount < 3) {
+            checkProStatus(session.user.id);
+          } else {
+            // Stop interval after 3 failures
+            if (intervalId) {
+              clearInterval(intervalId);
+              intervalId = null;
+            }
+          }
+        }, 300000); // 5 minutes
       } else {
         setIsPro(false);
+        // Clear interval when user logs out
+        if (intervalId) {
+          clearInterval(intervalId);
+          intervalId = null;
+        }
       }
     });
 
-    // Periodically check subscription status (every 5 minutes)
-    // Stop checking if failures exceed threshold to prevent error spam
-    const statusCheckInterval = setInterval(() => {
-      if (user && checkFailureCount < 3) {
-        checkProStatus(user.id);
-      }
-    }, 300000); // 5 minutes (increased from 2)
-
     return () => {
       subscription.unsubscribe();
-      clearInterval(statusCheckInterval);
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
     };
-  }, [user, checkFailureCount]);
-
-  const checkProStatus = async (userId: string) => {
-    try {
-      const { data, error } = await supabase
-        .from('user_profiles')
-        .select('is_pro, plan_type')
-        .eq('id', userId)
-        .single();
-
-      if (!error && data) {
-        // Success - reset failure count
-        setCheckFailureCount(0);
-        
-        // Set isPro status
-        const proStatus = data.is_pro || false;
-        setIsPro(proStatus);
-      } else if (error) {
-        // Only log once to avoid spam
-        if (checkFailureCount === 0) {
-          console.error('Subscription check failed - will retry later');
-        }
-        setCheckFailureCount(prev => prev + 1);
-      }
-    } catch (error) {
-      // Only log once to avoid spam
-      if (checkFailureCount === 0) {
-        console.error('Subscription check error - will retry later');
-      }
-      setCheckFailureCount(prev => prev + 1);
-    }
-  };
+  }, []); // Empty deps - only run once
 
   const signUp = async (email: string, password: string) => {
     try {
