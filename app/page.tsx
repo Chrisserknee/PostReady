@@ -218,6 +218,15 @@ function HomeContent() {
   const [generationCount, setGenerationCount] = useState<number>(0);
   const hashtagSectionRef = useRef<HTMLDivElement>(null);
 
+  // Module Reorder State
+  const [isReorderMode, setIsReorderMode] = useState<boolean>(false);
+  const [moduleOrder, setModuleOrder] = useState<string[]>([
+    'collab-engine',
+    'trend-radar',
+    'idea-generator',
+    'hashtag-research'
+  ]);
+
   // Collab Engine State
   const [collabUsername, setCollabUsername] = useState<string>("");
   const [collabNiche, setCollabNiche] = useState<string>("");
@@ -1188,6 +1197,83 @@ function HomeContent() {
       showNotification(error.message || "Failed to start checkout. Please try again.", "error", "Error");
     }
   };
+
+  // Module Reorder Handlers
+  const loadModuleOrder = async () => {
+    if (!user) return;
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/module-order', {
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.moduleOrder && Array.isArray(data.moduleOrder)) {
+          setModuleOrder(data.moduleOrder);
+          console.log('✅ Loaded module order:', data.moduleOrder);
+        }
+      }
+    } catch (error) {
+      console.error('Error loading module order:', error);
+    }
+  };
+
+  const saveModuleOrder = async (newOrder: string[]) => {
+    if (!user) return;
+
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) return;
+
+      const response = await fetch('/api/module-order', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ moduleOrder: newOrder })
+      });
+
+      if (response.ok) {
+        console.log('✅ Saved module order:', newOrder);
+      }
+    } catch (error) {
+      console.error('Error saving module order:', error);
+    }
+  };
+
+  const moveModule = (moduleId: string, direction: 'up' | 'down') => {
+    const currentIndex = moduleOrder.indexOf(moduleId);
+    if (currentIndex === -1) return;
+
+    const newOrder = [...moduleOrder];
+    
+    if (direction === 'up' && currentIndex > 0) {
+      // Swap with previous item
+      [newOrder[currentIndex - 1], newOrder[currentIndex]] = [newOrder[currentIndex], newOrder[currentIndex - 1]];
+    } else if (direction === 'down' && currentIndex < newOrder.length - 1) {
+      // Swap with next item
+      [newOrder[currentIndex], newOrder[currentIndex + 1]] = [newOrder[currentIndex + 1], newOrder[currentIndex]];
+    } else {
+      return; // Can't move
+    }
+
+    setModuleOrder(newOrder);
+    saveModuleOrder(newOrder);
+  };
+
+  // Load module order when user logs in
+  useEffect(() => {
+    if (user && !authLoading) {
+      loadModuleOrder();
+    }
+  }, [user, authLoading]);
 
   // Collab Engine Handlers
   const handleCollabSearch = async (e: React.FormEvent, overrideData?: { username: string, niche: string, followerCount: string }) => {
@@ -2840,11 +2926,14 @@ function HomeContent() {
           </p>
         </div>
 
+        {/* Modules Container - uses flex to enable reordering */}
+        <div style={{ display: 'flex', flexDirection: 'column' }}>
+
         {/* Collab Engine - Top of Homepage */}
         {currentStep === "form" && (
           <div 
             ref={collabSectionRef}
-            className="mb-10 rounded-2xl shadow-lg border p-4 sm:p-6 md:p-8 space-y-6 transition-all duration-500"
+            className="mb-10 rounded-2xl shadow-lg border p-4 sm:p-6 md:p-8 space-y-6 transition-all duration-500 relative"
             style={{
               backgroundColor: theme === 'dark' 
                 ? 'rgba(40, 30, 35, 0.85)' 
@@ -2854,9 +2943,32 @@ function HomeContent() {
                 : 'rgba(255, 79, 120, 0.25)',
               boxShadow: theme === 'dark'
                 ? '0 8px 32px rgba(255, 79, 120, 0.2), 0 0 0 1px rgba(255, 79, 120, 0.15)'
-                : '0 4px 20px rgba(255, 79, 120, 0.15), 0 0 0 1px rgba(255, 79, 120, 0.1)'
+                : '0 4px 20px rgba(255, 79, 120, 0.15), 0 0 0 1px rgba(255, 79, 120, 0.1)',
+              order: moduleOrder.indexOf('collab-engine')
             }}
           >
+            {/* Reorder Controls */}
+            {isReorderMode && user && (
+              <div className="absolute top-4 right-4 flex gap-2 z-10">
+                <button
+                  onClick={() => moveModule('collab-engine', 'up')}
+                  disabled={moduleOrder.indexOf('collab-engine') === 0}
+                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  title="Move Up"
+                >
+                  ⬆️
+                </button>
+                <button
+                  onClick={() => moveModule('collab-engine', 'down')}
+                  disabled={moduleOrder.indexOf('collab-engine') === moduleOrder.length - 1}
+                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  title="Move Down"
+                >
+                  ⬇️
+                </button>
+              </div>
+            )}
+            
             <div className="text-center mb-6">
               <div className="flex items-center justify-center gap-3 mb-2">
                 <svg className="w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 448 512" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 2px rgba(0, 242, 234, 0.3))' }}>
@@ -3659,7 +3771,7 @@ function HomeContent() {
         {/* Trend Radar - Live trend tracking */}
         {currentStep === "form" && (
           <div 
-            className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500"
+            className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500 relative"
             style={{
               backgroundColor: theme === 'dark' 
                 ? 'rgba(30, 37, 50, 0.85)' 
@@ -3669,9 +3781,32 @@ function HomeContent() {
                 : 'rgba(41, 121, 255, 0.2)',
               boxShadow: theme === 'dark'
                 ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'
+                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('trend-radar')
             }}
           >
+            {/* Reorder Controls */}
+            {isReorderMode && user && (
+              <div className="absolute top-4 right-4 flex gap-2 z-10">
+                <button
+                  onClick={() => moveModule('trend-radar', 'up')}
+                  disabled={moduleOrder.indexOf('trend-radar') === 0}
+                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  title="Move Up"
+                >
+                  ⬆️
+                </button>
+                <button
+                  onClick={() => moveModule('trend-radar', 'down')}
+                  disabled={moduleOrder.indexOf('trend-radar') === moduleOrder.length - 1}
+                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  title="Move Down"
+                >
+                  ⬇️
+                </button>
+              </div>
+            )}
+            
             <div className="flex items-center justify-between mb-6">
               <div className="text-center flex-1">
                 <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
@@ -3832,7 +3967,7 @@ function HomeContent() {
         {/* Viral Video Idea Generator */}
         {currentStep === "form" && (
           <div 
-            className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500"
+            className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500 relative"
             style={{
               backgroundColor: theme === 'dark' 
                 ? 'rgba(30, 37, 50, 0.85)' 
@@ -3842,9 +3977,32 @@ function HomeContent() {
                 : 'rgba(41, 121, 255, 0.2)',
               boxShadow: theme === 'dark'
                 ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'
+                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('idea-generator')
             }}
           >
+            {/* Reorder Controls */}
+            {isReorderMode && user && (
+              <div className="absolute top-4 right-4 flex gap-2 z-10">
+                <button
+                  onClick={() => moveModule('idea-generator', 'up')}
+                  disabled={moduleOrder.indexOf('idea-generator') === 0}
+                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  title="Move Up"
+                >
+                  ⬆️
+                </button>
+                <button
+                  onClick={() => moveModule('idea-generator', 'down')}
+                  disabled={moduleOrder.indexOf('idea-generator') === moduleOrder.length - 1}
+                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  title="Move Down"
+                >
+                  ⬇️
+                </button>
+              </div>
+            )}
+            
             <div className="text-center mb-6">
               <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                 🎥 Viral Video Idea Generator
@@ -3977,7 +4135,7 @@ function HomeContent() {
         {currentStep === "form" && (
           <div 
             ref={hashtagSectionRef}
-            className="mb-10 rounded-2xl shadow-lg border p-6 space-y-4 transition-all duration-500 scroll-mt-4"
+            className="mb-10 rounded-2xl shadow-lg border p-6 space-y-4 transition-all duration-500 scroll-mt-4 relative"
             style={{
               backgroundColor: theme === 'dark' 
                 ? 'rgba(30, 37, 50, 0.85)' 
@@ -3987,9 +4145,32 @@ function HomeContent() {
                 : 'rgba(41, 121, 255, 0.2)',
               boxShadow: theme === 'dark'
                 ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'
+                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('hashtag-research')
             }}
           >
+            {/* Reorder Controls */}
+            {isReorderMode && user && (
+              <div className="absolute top-4 right-4 flex gap-2 z-10">
+                <button
+                  onClick={() => moveModule('hashtag-research', 'up')}
+                  disabled={moduleOrder.indexOf('hashtag-research') === 0}
+                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  title="Move Up"
+                >
+                  ⬆️
+                </button>
+                <button
+                  onClick={() => moveModule('hashtag-research', 'down')}
+                  disabled={moduleOrder.indexOf('hashtag-research') === moduleOrder.length - 1}
+                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                  title="Move Down"
+                >
+                  ⬇️
+                </button>
+              </div>
+            )}
+            
             <div className="text-center mb-4">
               <h2 className="text-3xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                 #️⃣ Hashtag Deep Research Tool
@@ -4414,6 +4595,9 @@ function HomeContent() {
             )}
           </div>
         )}
+
+        </div>
+        {/* End Modules Container */}
 
         {/* Researching State */}
         {currentStep === "researching" && (
@@ -6765,6 +6949,25 @@ function HomeContent() {
             }
           `}</style>
         </div>
+      )}
+
+      {/* Floating Reorder Toggle - Bottom Right (only for logged-in users on homepage) */}
+      {user && currentStep === "form" && (
+        <button
+          onClick={() => setIsReorderMode(!isReorderMode)}
+          className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 p-3 sm:p-4 rounded-full shadow-2xl hover:scale-110 z-50 opacity-70 sm:opacity-100"
+          style={{ 
+            backgroundColor: isReorderMode ? '#2979FF' : 'var(--card-bg)',
+            border: `3px solid ${isReorderMode ? '#2979FF' : 'var(--primary)'}`,
+            transition: 'all 0.3s ease, transform 0.2s ease',
+            color: isReorderMode ? 'white' : 'var(--text-primary)'
+          }}
+          title={isReorderMode ? 'Exit Reorder Mode' : 'Reorder Modules'}
+        >
+          <span className="text-2xl sm:text-3xl" style={{ transition: 'opacity 0.3s ease' }}>
+            {isReorderMode ? '✅' : '⬍'}
+          </span>
+        </button>
       )}
 
       {/* Floating Theme Toggle - Bottom Right */}
