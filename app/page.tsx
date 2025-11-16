@@ -999,7 +999,10 @@ function HomeContent() {
   };
 
   const initiateCheckout = async () => {
+    console.log('🛒 initiateCheckout: Starting checkout process...');
+    
     if (!user) {
+      console.log('❌ initiateCheckout: No user found');
       // User not logged in - guide them to sign up
       setRedirectToCheckoutAfterAuth(true);
       setAuthModalMode('signup');
@@ -1008,18 +1011,31 @@ function HomeContent() {
       return;
     }
 
+    console.log('✅ initiateCheckout: User found:', user.id);
+
     try {
       // Get the current session to include auth token
-      const { data: { session } } = await supabase.auth.getSession();
+      console.log('🔑 initiateCheckout: Getting session...');
+      const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+      
+      if (sessionError) {
+        console.error('❌ initiateCheckout: Session error:', sessionError.message);
+        throw new Error('Failed to get session: ' + sessionError.message);
+      }
       
       if (!session?.access_token) {
+        console.error('❌ initiateCheckout: No access token in session');
         throw new Error('No active session found. Please sign in again.');
       }
       
+      console.log('✅ initiateCheckout: Session valid');
+      
       // Determine which plan the user selected (default to pro if not specified)
       const selectedPlanType = planType || 'pro';
+      console.log('📋 initiateCheckout: Plan type:', selectedPlanType);
       
       // Create Stripe checkout session
+      console.log('💳 initiateCheckout: Calling create-checkout API...');
       const response = await fetch("/api/create-checkout", {
         method: "POST",
         headers: {
@@ -1034,17 +1050,38 @@ function HomeContent() {
         }),
       });
 
+      console.log('📡 initiateCheckout: Response status:', response.status, response.statusText);
+
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || "Failed to create checkout session");
+        let errorMessage = "Failed to create checkout session";
+        try {
+          const errorData = await response.json();
+          console.error('❌ initiateCheckout: Error data:', errorData);
+          errorMessage = errorData.error || errorMessage;
+        } catch (parseError) {
+          console.error('❌ initiateCheckout: Could not parse error response');
+        }
+        throw new Error(errorMessage);
       }
 
-      const { url } = await response.json();
+      const data = await response.json();
+      console.log('✅ initiateCheckout: Got checkout URL');
+      
+      if (!data.url) {
+        console.error('❌ initiateCheckout: No URL in response:', data);
+        throw new Error('No checkout URL received');
+      }
       
       // Redirect to Stripe checkout
-      window.location.href = url;
+      console.log('🚀 initiateCheckout: Redirecting to Stripe...');
+      window.location.href = data.url;
     } catch (error: any) {
-      console.error("Checkout error:", error);
+      console.error("❌ initiateCheckout: Fatal error:", error);
+      console.error("❌ initiateCheckout: Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      });
       showNotification(error.message || "Failed to start checkout. Please try again.", "error", "Error");
     }
   };
