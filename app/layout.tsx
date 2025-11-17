@@ -49,28 +49,6 @@ export default function RootLayout({
             `,
           }}
         />
-        {/* Eruda - Mobile Console for debugging on mobile devices */}
-        <script src="https://cdn.jsdelivr.net/npm/eruda"></script>
-        <script
-          dangerouslySetInnerHTML={{
-            __html: `
-              (function() {
-                // Auto-initialize Eruda on mobile devices or when URL has ?eruda=true
-                const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-                const forceEruda = window.location.search.includes('eruda=true');
-                
-                if (isMobile || forceEruda) {
-                  eruda.init();
-                  console.log('📱 Eruda mobile console initialized! Tap the icon in bottom-right to open.');
-                  
-                  // Add a welcome message
-                  console.log('%c🔍 MOBILE DEBUG MODE ACTIVE', 'color: #00f2ea; font-size: 16px; font-weight: bold;');
-                  console.log('Watch for auth-related logs to debug the sign-out issue');
-                }
-              })();
-            `,
-          }}
-        />
       </head>
       <body className="antialiased" suppressHydrationWarning>
         <ThemeProvider>
