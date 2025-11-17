@@ -229,6 +229,21 @@ function HomeContent() {
   const [draggedModule, setDraggedModule] = useState<string | null>(null);
   const [dragOverModule, setDragOverModule] = useState<string | null>(null);
 
+  // Module Collapse State
+  const [collapsedModules, setCollapsedModules] = useState<Set<string>>(new Set());
+
+  const toggleModuleCollapse = (moduleId: string) => {
+    setCollapsedModules(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(moduleId)) {
+        newSet.delete(moduleId);
+      } else {
+        newSet.add(moduleId);
+      }
+      return newSet;
+    });
+  };
+
   // Collab Engine State
   const [collabUsername, setCollabUsername] = useState<string>("");
   const [collabNiche, setCollabNiche] = useState<string>("");
@@ -2978,13 +2993,14 @@ function HomeContent() {
         {currentStep === "form" && (
           <div 
             ref={collabSectionRef}
-            draggable={isReorderMode && user}
+            draggable={!!(isReorderMode && user)}
             onDragStart={() => handleDragStart('collab-engine')}
             onDragEnd={handleDragEnd}
             onDragOver={(e) => handleDragOver(e, 'collab-engine')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'collab-engine')}
-            className="mb-10 rounded-2xl shadow-lg border p-4 sm:p-6 md:p-8 space-y-6 transition-all duration-500 relative"
+            onClick={() => !isReorderMode && collapsedModules.has('collab-engine') && toggleModuleCollapse('collab-engine')}
+            className="mb-10 rounded-2xl shadow-lg border transition-all duration-500 relative"
             style={{
               backgroundColor: theme === 'dark' 
                 ? 'rgba(40, 30, 35, 0.85)' 
@@ -3000,35 +3016,71 @@ function HomeContent() {
                   ? '0 8px 32px rgba(255, 79, 120, 0.2), 0 0 0 1px rgba(255, 79, 120, 0.15)'
                   : '0 4px 20px rgba(255, 79, 120, 0.15), 0 0 0 1px rgba(255, 79, 120, 0.1)'),
               order: moduleOrder.indexOf('collab-engine'),
-              cursor: isReorderMode && user ? 'move' : 'default',
+              cursor: (isReorderMode && user) ? 'move' : (collapsedModules.has('collab-engine') ? 'pointer' : 'default'),
               opacity: draggedModule === 'collab-engine' ? 0.5 : 1,
-              transform: dragOverModule === 'collab-engine' ? 'scale(1.02)' : 'scale(1)'
+              transform: dragOverModule === 'collab-engine' ? 'scale(1.02)' : 'scale(1)',
+              padding: collapsedModules.has('collab-engine') ? '1rem' : '1rem 1.5rem',
             }}
           >
-            {/* Reorder Controls */}
-            {isReorderMode && user && (
-              <div className="absolute top-4 right-4 flex gap-2 z-10">
-                <button
-                  onClick={() => moveModule('collab-engine', 'up')}
-                  disabled={moduleOrder.indexOf('collab-engine') === 0}
-                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  title="Move Up"
-                >
-                  ⬆️
-                </button>
-                <button
-                  onClick={() => moveModule('collab-engine', 'down')}
-                  disabled={moduleOrder.indexOf('collab-engine') === moduleOrder.length - 1}
-                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  title="Move Down"
-                >
-                  ⬇️
-                </button>
+            {/* Collapsed Bar View */}
+            {collapsedModules.has('collab-engine') ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <svg className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" viewBox="0 0 448 512" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 2px rgba(0, 242, 234, 0.3))' }}>
+                    <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#00f2ea" transform="translate(-3, -3)"/>
+                    <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#ff0050" transform="translate(3, 3)"/>
+                    <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#000000"/>
+                  </svg>
+                  <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
+                    TikTok Collab Engine 🤝
+                  </h3>
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+                </span>
               </div>
-            )}
-            
-            <div className="text-center mb-6">
-              <div className="flex items-center justify-center gap-3 mb-2">
+            ) : (
+              <>
+                {/* Reorder Controls */}
+                {isReorderMode && user && (
+                  <div className="absolute top-4 right-16 flex gap-2 z-10">
+                    <button
+                      onClick={() => moveModule('collab-engine', 'up')}
+                      disabled={moduleOrder.indexOf('collab-engine') === 0}
+                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      title="Move Up"
+                    >
+                      ⬆️
+                    </button>
+                    <button
+                      onClick={() => moveModule('collab-engine', 'down')}
+                      disabled={moduleOrder.indexOf('collab-engine') === moduleOrder.length - 1}
+                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      title="Move Down"
+                    >
+                      ⬇️
+                    </button>
+                  </div>
+                )}
+
+                {/* Minimize Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleModuleCollapse('collab-engine');
+                  }}
+                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
+                  style={{ color: 'var(--text-secondary)' }}
+                  title="Minimize"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  </svg>
+                </button>
+
+                <div className="p-0 sm:p-2 md:p-4 space-y-6">
+                  <div className="text-center mb-6">
+                    <div className="flex items-center justify-center gap-3 mb-2">
                 <svg className="w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 448 512" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 2px rgba(0, 242, 234, 0.3))' }}>
                   <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#00f2ea" transform="translate(-3, -3)"/>
                   <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#ff0050" transform="translate(3, 3)"/>
@@ -3823,19 +3875,23 @@ function HomeContent() {
                 </button>
               </div>
             )}
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {/* Trend Radar - Live trend tracking */}
         {currentStep === "form" && (
           <div 
-            draggable={isReorderMode && user}
+            draggable={!!(isReorderMode && user)}
             onDragStart={() => handleDragStart('trend-radar')}
             onDragEnd={handleDragEnd}
             onDragOver={(e) => handleDragOver(e, 'trend-radar')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'trend-radar')}
-            className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500 relative"
+            onClick={() => !isReorderMode && collapsedModules.has('trend-radar') && toggleModuleCollapse('trend-radar')}
+            className="mb-10 rounded-2xl shadow-lg border transition-all duration-500 relative"
             style={{
               backgroundColor: theme === 'dark' 
                 ? 'rgba(30, 37, 50, 0.85)' 
@@ -3851,34 +3907,66 @@ function HomeContent() {
                   ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
                   : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'),
               order: moduleOrder.indexOf('trend-radar'),
-              cursor: isReorderMode && user ? 'move' : 'default',
+              cursor: (isReorderMode && user) ? 'move' : (collapsedModules.has('trend-radar') ? 'pointer' : 'default'),
               opacity: draggedModule === 'trend-radar' ? 0.5 : 1,
-              transform: dragOverModule === 'trend-radar' ? 'scale(1.02)' : 'scale(1)'
+              transform: dragOverModule === 'trend-radar' ? 'scale(1.02)' : 'scale(1)',
+              padding: collapsedModules.has('trend-radar') ? '1rem' : '2rem',
             }}
           >
-            {/* Reorder Controls */}
-            {isReorderMode && user && (
-              <div className="absolute top-4 right-4 flex gap-2 z-10">
-                <button
-                  onClick={() => moveModule('trend-radar', 'up')}
-                  disabled={moduleOrder.indexOf('trend-radar') === 0}
-                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  title="Move Up"
-                >
-                  ⬆️
-                </button>
-                <button
-                  onClick={() => moveModule('trend-radar', 'down')}
-                  disabled={moduleOrder.indexOf('trend-radar') === moduleOrder.length - 1}
-                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  title="Move Down"
-                >
-                  ⬇️
-                </button>
+            {/* Collapsed Bar View */}
+            {collapsedModules.has('trend-radar') ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">📊</span>
+                  <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
+                    Trend Radar
+                  </h3>
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+                </span>
               </div>
-            )}
-            
-            <div className="flex items-center justify-between mb-6">
+            ) : (
+              <>
+                {/* Reorder Controls */}
+                {isReorderMode && user && (
+                  <div className="absolute top-4 right-16 flex gap-2 z-10">
+                    <button
+                      onClick={() => moveModule('trend-radar', 'up')}
+                      disabled={moduleOrder.indexOf('trend-radar') === 0}
+                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      title="Move Up"
+                    >
+                      ⬆️
+                    </button>
+                    <button
+                      onClick={() => moveModule('trend-radar', 'down')}
+                      disabled={moduleOrder.indexOf('trend-radar') === moduleOrder.length - 1}
+                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      title="Move Down"
+                    >
+                      ⬇️
+                    </button>
+                  </div>
+                )}
+
+                {/* Minimize Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleModuleCollapse('trend-radar');
+                  }}
+                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
+                  style={{ color: 'var(--text-secondary)' }}
+                  title="Minimize"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  </svg>
+                </button>
+
+                <div className="space-y-6">
+                  <div className="flex items-center justify-between mb-6">
               <div className="text-center flex-1">
                 <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                   📊 Trend Radar
@@ -4032,19 +4120,23 @@ function HomeContent() {
                 </p>
               </div>
             )}
+                </div>
+              </>
+            )}
           </div>
         )}
 
         {/* Viral Video Idea Generator */}
         {currentStep === "form" && (
           <div 
-            draggable={isReorderMode && user}
+            draggable={!!(isReorderMode && user)}
             onDragStart={() => handleDragStart('idea-generator')}
             onDragEnd={handleDragEnd}
             onDragOver={(e) => handleDragOver(e, 'idea-generator')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'idea-generator')}
-            className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500 relative"
+            onClick={() => !isReorderMode && collapsedModules.has('idea-generator') && toggleModuleCollapse('idea-generator')}
+            className="mb-10 rounded-2xl shadow-lg border transition-all duration-500 relative"
             style={{
               backgroundColor: theme === 'dark' 
                 ? 'rgba(30, 37, 50, 0.85)' 
@@ -4060,34 +4152,66 @@ function HomeContent() {
                   ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
                   : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'),
               order: moduleOrder.indexOf('idea-generator'),
-              cursor: isReorderMode && user ? 'move' : 'default',
+              cursor: (isReorderMode && user) ? 'move' : (collapsedModules.has('idea-generator') ? 'pointer' : 'default'),
               opacity: draggedModule === 'idea-generator' ? 0.5 : 1,
-              transform: dragOverModule === 'idea-generator' ? 'scale(1.02)' : 'scale(1)'
+              transform: dragOverModule === 'idea-generator' ? 'scale(1.02)' : 'scale(1)',
+              padding: collapsedModules.has('idea-generator') ? '1rem' : '2rem',
             }}
           >
-            {/* Reorder Controls */}
-            {isReorderMode && user && (
-              <div className="absolute top-4 right-4 flex gap-2 z-10">
-                <button
-                  onClick={() => moveModule('idea-generator', 'up')}
-                  disabled={moduleOrder.indexOf('idea-generator') === 0}
-                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  title="Move Up"
-                >
-                  ⬆️
-                </button>
-                <button
-                  onClick={() => moveModule('idea-generator', 'down')}
-                  disabled={moduleOrder.indexOf('idea-generator') === moduleOrder.length - 1}
-                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  title="Move Down"
-                >
-                  ⬇️
-                </button>
+            {/* Collapsed Bar View */}
+            {collapsedModules.has('idea-generator') ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">🎥</span>
+                  <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
+                    Viral Video Idea Generator
+                  </h3>
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+                </span>
               </div>
-            )}
-            
-            <div className="text-center mb-6">
+            ) : (
+              <>
+                {/* Reorder Controls */}
+                {isReorderMode && user && (
+                  <div className="absolute top-4 right-16 flex gap-2 z-10">
+                    <button
+                      onClick={() => moveModule('idea-generator', 'up')}
+                      disabled={moduleOrder.indexOf('idea-generator') === 0}
+                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      title="Move Up"
+                    >
+                      ⬆️
+                    </button>
+                    <button
+                      onClick={() => moveModule('idea-generator', 'down')}
+                      disabled={moduleOrder.indexOf('idea-generator') === moduleOrder.length - 1}
+                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      title="Move Down"
+                    >
+                      ⬇️
+                    </button>
+                  </div>
+                )}
+
+                {/* Minimize Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleModuleCollapse('idea-generator');
+                  }}
+                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
+                  style={{ color: 'var(--text-secondary)' }}
+                  title="Minimize"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  </svg>
+                </button>
+
+                <div className="space-y-6">
+                  <div className="text-center mb-6">
               <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                 🎥 Viral Video Idea Generator
               </h2>
@@ -4212,6 +4336,9 @@ function HomeContent() {
                 ))}
               </div>
             )}
+                </div>
+              </>
+            )}
           </div>
         )}
 
@@ -4219,13 +4346,14 @@ function HomeContent() {
         {currentStep === "form" && (
           <div 
             ref={hashtagSectionRef}
-            draggable={isReorderMode && user}
+            draggable={!!(isReorderMode && user)}
             onDragStart={() => handleDragStart('hashtag-research')}
             onDragEnd={handleDragEnd}
             onDragOver={(e) => handleDragOver(e, 'hashtag-research')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'hashtag-research')}
-            className="mb-10 rounded-2xl shadow-lg border p-6 space-y-4 transition-all duration-500 scroll-mt-4 relative"
+            onClick={() => !isReorderMode && collapsedModules.has('hashtag-research') && toggleModuleCollapse('hashtag-research')}
+            className="mb-10 rounded-2xl shadow-lg border transition-all duration-500 scroll-mt-4 relative"
             style={{
               backgroundColor: theme === 'dark' 
                 ? 'rgba(30, 37, 50, 0.85)' 
@@ -4241,34 +4369,66 @@ function HomeContent() {
                   ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
                   : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'),
               order: moduleOrder.indexOf('hashtag-research'),
-              cursor: isReorderMode && user ? 'move' : 'default',
+              cursor: (isReorderMode && user) ? 'move' : (collapsedModules.has('hashtag-research') ? 'pointer' : 'default'),
               opacity: draggedModule === 'hashtag-research' ? 0.5 : 1,
-              transform: dragOverModule === 'hashtag-research' ? 'scale(1.02)' : 'scale(1)'
+              transform: dragOverModule === 'hashtag-research' ? 'scale(1.02)' : 'scale(1)',
+              padding: collapsedModules.has('hashtag-research') ? '1rem' : '1.5rem',
             }}
           >
-            {/* Reorder Controls */}
-            {isReorderMode && user && (
-              <div className="absolute top-4 right-4 flex gap-2 z-10">
-                <button
-                  onClick={() => moveModule('hashtag-research', 'up')}
-                  disabled={moduleOrder.indexOf('hashtag-research') === 0}
-                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  title="Move Up"
-                >
-                  ⬆️
-                </button>
-                <button
-                  onClick={() => moveModule('hashtag-research', 'down')}
-                  disabled={moduleOrder.indexOf('hashtag-research') === moduleOrder.length - 1}
-                  className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                  title="Move Down"
-                >
-                  ⬇️
-                </button>
+            {/* Collapsed Bar View */}
+            {collapsedModules.has('hashtag-research') ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">#️⃣</span>
+                  <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
+                    Hashtag Deep Research Tool
+                  </h3>
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+                </span>
               </div>
-            )}
-            
-            <div className="text-center mb-4">
+            ) : (
+              <>
+                {/* Reorder Controls */}
+                {isReorderMode && user && (
+                  <div className="absolute top-4 right-16 flex gap-2 z-10">
+                    <button
+                      onClick={() => moveModule('hashtag-research', 'up')}
+                      disabled={moduleOrder.indexOf('hashtag-research') === 0}
+                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      title="Move Up"
+                    >
+                      ⬆️
+                    </button>
+                    <button
+                      onClick={() => moveModule('hashtag-research', 'down')}
+                      disabled={moduleOrder.indexOf('hashtag-research') === moduleOrder.length - 1}
+                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      title="Move Down"
+                    >
+                      ⬇️
+                    </button>
+                  </div>
+                )}
+
+                {/* Minimize Button */}
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleModuleCollapse('hashtag-research');
+                  }}
+                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
+                  style={{ color: 'var(--text-secondary)' }}
+                  title="Minimize"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  </svg>
+                </button>
+
+                <div className="space-y-4">
+                  <div className="text-center mb-4">
               <h2 className="text-3xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                 #️⃣ Hashtag Deep Research Tool
               </h2>
@@ -4689,6 +4849,9 @@ function HomeContent() {
                   Enter your niche and platform to get started
                 </p>
               </div>
+            )}
+                </div>
+              </>
             )}
           </div>
         )}
@@ -7052,18 +7215,75 @@ function HomeContent() {
       {user && currentStep === "form" && (
         <button
           onClick={() => setIsReorderMode(!isReorderMode)}
-          className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 p-3 sm:p-4 rounded-full shadow-2xl hover:scale-110 z-50 opacity-70 sm:opacity-100"
+          className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 rounded-xl z-50 group transition-all duration-200"
           style={{ 
-            backgroundColor: isReorderMode ? '#2979FF' : 'var(--card-bg)',
-            border: `3px solid ${isReorderMode ? '#2979FF' : 'var(--primary)'}`,
-            transition: 'all 0.3s ease, transform 0.2s ease',
-            color: isReorderMode ? 'white' : 'var(--text-primary)'
+            padding: '10px 18px',
+            backgroundColor: isReorderMode ? '#2979FF' : theme === 'dark' ? 'rgba(40, 40, 50, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+            border: `2px solid ${isReorderMode ? '#2979FF' : theme === 'dark' ? 'rgba(111, 255, 210, 0.25)' : 'rgba(41, 121, 255, 0.2)'}`,
+            boxShadow: isReorderMode 
+              ? '0 4px 16px rgba(41, 121, 255, 0.3), 0 12px 32px rgba(41, 121, 255, 0.2)'
+              : theme === 'dark'
+                ? '0 4px 16px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3)'
+                : '0 4px 16px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.12)',
+            backdropFilter: 'blur(16px)',
           }}
-          title={isReorderMode ? 'Exit Reorder Mode (Drag modules to reorder on desktop)' : 'Reorder Modules (Drag & drop on desktop, arrows on mobile)'}
+          title={isReorderMode ? 'Done editing' : 'Edit module order'}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            if (isReorderMode) {
+              e.currentTarget.style.boxShadow = '0 6px 20px rgba(41, 121, 255, 0.4), 0 16px 40px rgba(41, 121, 255, 0.25)';
+            } else {
+              e.currentTarget.style.borderColor = theme === 'dark' ? 'rgba(111, 255, 210, 0.4)' : 'rgba(41, 121, 255, 0.4)';
+              e.currentTarget.style.boxShadow = theme === 'dark'
+                ? '0 6px 20px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.35)'
+                : '0 6px 20px rgba(0, 0, 0, 0.12), 0 12px 32px rgba(0, 0, 0, 0.15)';
+            }
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.borderColor = isReorderMode ? '#2979FF' : theme === 'dark' ? 'rgba(111, 255, 210, 0.25)' : 'rgba(41, 121, 255, 0.2)';
+            e.currentTarget.style.boxShadow = isReorderMode 
+              ? '0 4px 16px rgba(41, 121, 255, 0.3), 0 12px 32px rgba(41, 121, 255, 0.2)'
+              : theme === 'dark'
+                ? '0 4px 16px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3)'
+                : '0 4px 16px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.12)';
+          }}
         >
-          <span className="text-2xl sm:text-3xl" style={{ transition: 'opacity 0.3s ease' }}>
-            {isReorderMode ? '✅' : '↕️'}
-          </span>
+          <div className="flex items-center gap-2.5">
+            <svg 
+              width="16" 
+              height="16" 
+              viewBox="0 0 16 16" 
+              fill="none"
+              style={{ transition: 'transform 0.2s ease' }}
+              className={isReorderMode ? 'rotate-0' : ''}
+            >
+              {isReorderMode ? (
+                <path 
+                  d="M13.5 4.5L6.5 11.5L2.5 7.5" 
+                  stroke="white" 
+                  strokeWidth="2" 
+                  strokeLinecap="round" 
+                  strokeLinejoin="round"
+                />
+              ) : (
+                <>
+                  <rect x="2" y="3" width="12" height="2" rx="1" fill={theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)'} />
+                  <rect x="2" y="7" width="12" height="2" rx="1" fill={theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)'} />
+                  <rect x="2" y="11" width="12" height="2" rx="1" fill={theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)'} />
+                </>
+              )}
+            </svg>
+            <span 
+              className="text-sm font-medium"
+              style={{ 
+                color: isReorderMode ? 'white' : 'var(--text-primary)',
+                letterSpacing: '-0.01em'
+              }}
+            >
+              {isReorderMode ? 'Done' : 'Edit'}
+            </span>
+          </div>
         </button>
       )}
 
