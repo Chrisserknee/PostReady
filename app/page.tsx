@@ -7494,103 +7494,25 @@ function HomeContent() {
             ) : (
               <div className="max-w-3xl mx-auto mb-10">
                 {/* Plan Type Toggle Pill */}
-                <div className="flex justify-center mb-6">
-                  <div className="relative inline-flex rounded-full p-1" style={{
-                    backgroundColor: 'var(--card-bg)',
-                    border: '2px solid var(--card-border)'
-                  }}>
-                    <button
-                      onClick={() => {
-                        if (planType !== 'pro') {
-                          setIsPlanTransitioning(true);
-                          setTimeout(() => {
-                            setPlanType('pro');
-                            setTimeout(() => setIsPlanTransitioning(false), 50);
-                          }, 250);
-                        }
-                      }}
-                      className={`px-6 py-2 rounded-full font-bold text-sm transition-all duration-300 ${
-                        planType === 'pro' ? 'text-white' : ''
-                      }`}
-                      style={{
-                        backgroundColor: planType === 'pro' ? '#2979FF' : 'transparent',
-                        color: planType === 'pro' ? 'white' : 'var(--text-primary)',
-                        transform: isPlanTransitioning && planType === 'pro' ? 'scale(0.95)' : 'scale(1)'
-                      }}
-                    >
-                      Pro Plan
-                    </button>
-                    <button
-                      onClick={() => {
-                        if (planType !== 'creator') {
-                          setIsPlanTransitioning(true);
-                          setTimeout(() => {
-                            setPlanType('creator');
-                            setTimeout(() => setIsPlanTransitioning(false), 50);
-                          }, 250);
-                        }
-                      }}
-                      className={`px-6 py-2 rounded-full font-bold text-sm transition-all duration-300 ${
-                        planType === 'creator' ? 'text-white' : ''
-                      }`}
-                      style={{
-                        backgroundColor: planType === 'creator' ? '#DAA520' : 'transparent',
-                        color: planType === 'creator' ? 'white' : 'var(--text-primary)',
-                        transform: isPlanTransitioning && planType === 'creator' ? 'scale(0.95)' : 'scale(1)'
-                      }}
-                    >
-                      Creator Plan
-                    </button>
-                  </div>
-                </div>
 
                 <div 
-                  className="rounded-2xl p-8 text-white shadow-2xl transition-all duration-500 ease-in-out"
+                  className="rounded-2xl p-8 text-white shadow-2xl"
                   style={{
-                    background: planType === 'creator' 
-                      ? 'linear-gradient(135deg, #DAA520 0%, #FFD700 100%)'
-                      : 'linear-gradient(135deg, #2563eb 0%, #06b6d4 100%)',
-                    boxShadow: isPlanTransitioning
-                      ? planType === 'creator'
-                        ? '0 0 40px rgba(255, 215, 0, 0.6), 0 0 80px rgba(255, 215, 0, 0.4), 0 20px 60px rgba(218, 165, 32, 0.5), 0 0 0 2px rgba(255, 215, 0, 0.5)'
-                        : '0 0 40px rgba(37, 99, 235, 0.6), 0 0 80px rgba(37, 99, 235, 0.4), 0 20px 60px rgba(37, 99, 235, 0.5), 0 0 0 2px rgba(37, 99, 235, 0.5)'
-                      : planType === 'creator'
-                        ? '0 20px 60px rgba(218, 165, 32, 0.4), 0 0 0 1px rgba(255, 215, 0, 0.3)'
-                        : '0 20px 60px rgba(37, 99, 235, 0.3)',
-                    opacity: isPlanTransitioning ? 0.85 : 1,
-                    transform: isPlanTransitioning ? 'scale(0.98) translateY(4px)' : 'scale(1) translateY(0)',
-                    transition: 'all 0.6s cubic-bezier(0.4, 0, 0.2, 1)',
-                    filter: isPlanTransitioning ? 'brightness(1.1)' : 'brightness(1)'
+                    background: 'linear-gradient(135deg, #2563eb 0%, #06b6d4 100%)',
+                    boxShadow: '0 20px 60px rgba(37, 99, 235, 0.3)',
                   }}
                 >
                   <div className="text-center mb-6">
-                    <h3 
-                      className="text-3xl font-bold mb-2 transition-all duration-500"
-                      style={{
-                        opacity: isPlanTransitioning ? 0.5 : 1,
-                        transform: isPlanTransitioning ? 'translateY(-4px)' : 'translateY(0)'
-                      }}
-                    >
-                      {planType === 'creator' ? 'Creator Plan' : 'Pro Plan'}
+                    <h3 className="text-3xl font-bold mb-2">
+                      Pro Plan
                     </h3>
                     <div className="flex items-end justify-center gap-2">
-                      <span 
-                        className="text-5xl font-bold transition-all duration-500"
-                        style={{
-                          opacity: isPlanTransitioning ? 0.5 : 1
-                        }}
-                      >
+                      <span className="text-5xl font-bold">
                         $4.99
                       </span>
                       <span className="text-xl mb-2 opacity-80">/month</span>
                     </div>
-                    <p 
-                      className="mt-2 opacity-90 transition-all duration-500"
-                      style={{
-                        opacity: isPlanTransitioning ? 0.4 : 0.9,
-                        transform: isPlanTransitioning ? 'translateY(4px)' : 'translateY(0)'
-                      }}
-                    >
+                    <p className="mt-2 opacity-90">
                       Everything you need to grow your page
                     </p>
                   </div>
@@ -7637,15 +7559,12 @@ function HomeContent() {
                     onClick={initiateCheckout}
                     className="w-full bg-white rounded-lg px-6 py-4 font-bold text-lg hover:bg-gray-50 transition-all shadow-lg"
                     style={{
-                      color: planType === 'creator' ? '#DAA520' : '#2563eb',
-                      opacity: isPlanTransitioning ? 0.6 : 1,
-                      transform: isPlanTransitioning ? 'scale(0.98)' : 'scale(1)',
-                      transition: 'all 0.5s ease-in-out'
+                      color: '#2563eb'
                     }}
                   >
                     {user 
-                      ? `Subscribe to PostReady ${planType === 'creator' ? 'Creator' : 'Pro'} - $4.99/month` 
-                      : `Sign Up & Subscribe - $4.99/month`}
+                      ? 'Subscribe to PostReady Pro - $4.99/month'
+                      : 'Sign Up & Subscribe - $4.99/month'}
                   </button>
                   <p className="text-center text-sm mt-3 opacity-85">
                     Cancel anytime • Secure payment by Stripe
