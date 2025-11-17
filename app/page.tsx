@@ -3989,14 +3989,9 @@ function HomeContent() {
 
             {!showAdvancedTrends ? (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {[
-                  { topic: 'AI Content Creation', views: '45.2M', growth: '+234%', platform: 'TikTok' },
-                  { topic: 'Winter Fashion 2025', views: '38.7M', growth: '+189%', platform: 'Instagram' },
-                  { topic: 'Quick Recipes', views: '52.1M', growth: '+167%', platform: 'YouTube' },
-                  { topic: 'Productivity Hacks', views: '29.4M', growth: '+145%', platform: 'TikTok' },
-                  { topic: 'Home Workouts', views: '41.3M', growth: '+128%', platform: 'Instagram' },
-                  { topic: 'Tech Reviews', views: '36.8M', growth: '+112%', platform: 'YouTube' },
-                ].map((trend, index) => (
+                {(trendData.length > 0 ? trendData : [
+                  { topic: 'Click "Detect Trends" for real data', views: '0', growth: '+0%', platform: 'N/A' }
+                ]).map((trend, index) => (
                   <div 
                     key={index}
                     className="p-4 rounded-xl border transition-all hover:scale-105 cursor-pointer"
@@ -4043,17 +4038,13 @@ function HomeContent() {
                   }}
                 >
                   <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
-                    🔥 Biggest Trending Topics
+                    🔥 Real-Time Trending Topics with Advanced Insights
                   </h3>
                   <div className="space-y-4">
-                    {[
-                      { topic: 'AI Content Creation', views: 45200000, growth: 234, posts: 1240000 },
-                      { topic: 'Winter Fashion 2025', views: 38700000, growth: 189, posts: 980000 },
-                      { topic: 'Quick Recipes', views: 52100000, growth: 167, posts: 1560000 },
-                      { topic: 'Productivity Hacks', views: 29400000, growth: 145, posts: 750000 },
-                      { topic: 'Home Workouts', views: 41300000, growth: 128, posts: 920000 },
-                    ].map((trend, index) => {
-                      const maxViews = 52100000;
+                    {(trendData.length > 0 ? trendData : [
+                      { topic: 'Click "Detect Trends" to load real-time data', views: 0, growth: 0, posts: 0, platform: 'N/A', description: 'No data loaded yet' }
+                    ]).map((trend, index) => {
+                      const maxViews = trendData.length > 0 ? Math.max(...trendData.map(t => t.views)) : 1;
                       const barWidth = (trend.views / maxViews) * 100;
                       
                       return (
@@ -4090,23 +4081,73 @@ function HomeContent() {
                               </span>
                             </div>
                           </div>
-                          {hoveredTrend === trend && (
+                          {hoveredTrend === trend && trendData.length > 0 && (
                             <div 
-                              className="absolute z-10 mt-2 p-4 rounded-lg shadow-xl border animate-fade-in"
+                              className="absolute z-10 mt-2 p-5 rounded-lg shadow-2xl border animate-fade-in max-w-md"
                               style={{
                                 backgroundColor: 'var(--card-bg)',
                                 borderColor: 'var(--card-border)',
-                                minWidth: '250px'
+                                minWidth: '350px'
                               }}
                             >
-                              <h4 className="font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                              <h4 className="font-bold mb-3 text-lg" style={{ color: 'var(--secondary)' }}>
                                 {trend.topic}
                               </h4>
-                              <div className="space-y-1 text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                <p><strong>Total Views:</strong> {(trend.views / 1000000).toFixed(1)}M</p>
-                                <p><strong>Growth Rate:</strong> +{trend.growth}%</p>
-                                <p><strong>Active Posts:</strong> {(trend.posts / 1000).toFixed(0)}K</p>
-                                <p><strong>Trending on:</strong> TikTok, Instagram, YouTube</p>
+                              
+                              {trend.description && (
+                                <p className="text-sm mb-3 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                                  {trend.description}
+                                </p>
+                              )}
+                              
+                              <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
+                                <div className="p-2 rounded" style={{ backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)' }}>
+                                  <p className="font-semibold" style={{ color: 'var(--secondary)' }}>Total Views</p>
+                                  <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{(trend.views / 1000000).toFixed(1)}M</p>
+                                </div>
+                                <div className="p-2 rounded" style={{ backgroundColor: theme === 'dark' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(34, 197, 94, 0.05)' }}>
+                                  <p className="font-semibold" style={{ color: 'var(--secondary)' }}>Growth Rate</p>
+                                  <p className="text-lg font-bold text-green-500">+{trend.growth}%</p>
+                                </div>
+                                <div className="p-2 rounded" style={{ backgroundColor: theme === 'dark' ? 'rgba(168, 85, 247, 0.1)' : 'rgba(168, 85, 247, 0.05)' }}>
+                                  <p className="font-semibold" style={{ color: 'var(--secondary)' }}>Active Posts</p>
+                                  <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{(trend.posts / 1000).toFixed(0)}K</p>
+                                </div>
+                                <div className="p-2 rounded" style={{ backgroundColor: theme === 'dark' ? 'rgba(251, 146, 60, 0.1)' : 'rgba(251, 146, 60, 0.05)' }}>
+                                  <p className="font-semibold" style={{ color: 'var(--secondary)' }}>Platform</p>
+                                  <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{trend.platform}</p>
+                                </div>
+                              </div>
+                              
+                              {trend.demographics && (
+                                <div className="mb-2 p-2 rounded text-xs" style={{ backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' }}>
+                                  <p><strong style={{ color: 'var(--secondary)' }}>👥 Demographics:</strong> <span style={{ color: 'var(--text-secondary)' }}>{trend.demographics}</span></p>
+                                </div>
+                              )}
+                              
+                              {trend.contentFormat && (
+                                <div className="mb-2 p-2 rounded text-xs" style={{ backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' }}>
+                                  <p><strong style={{ color: 'var(--secondary)' }}>🎬 Content Format:</strong> <span style={{ color: 'var(--text-secondary)' }}>{trend.contentFormat}</span></p>
+                                </div>
+                              )}
+                              
+                              <div className="flex gap-2 mt-3">
+                                {trend.monetization && (
+                                  <span className="px-2 py-1 rounded text-xs font-bold" style={{
+                                    backgroundColor: trend.monetization === 'High' ? 'rgba(34, 197, 94, 0.2)' : trend.monetization === 'Medium' ? 'rgba(251, 146, 60, 0.2)' : 'rgba(156, 163, 175, 0.2)',
+                                    color: trend.monetization === 'High' ? '#22c55e' : trend.monetization === 'Medium' ? '#fb923c' : '#9ca3af'
+                                  }}>
+                                    💰 {trend.monetization} Monetization
+                                  </span>
+                                )}
+                                {trend.longevity && (
+                                  <span className="px-2 py-1 rounded text-xs font-bold" style={{
+                                    backgroundColor: 'rgba(168, 85, 247, 0.2)',
+                                    color: '#a855f7'
+                                  }}>
+                                    ⏳ Lasts {trend.longevity}
+                                  </span>
+                                )}
                               </div>
                             </div>
                           )}
@@ -4116,7 +4157,7 @@ function HomeContent() {
                   </div>
                 </div>
                 <p className="text-sm text-center" style={{ color: 'var(--text-secondary)' }}>
-                  💡 Data updates in real-time. Hover over bars for detailed insights.
+                  💡 Real-time data from live web searches. Hover over bars for deep insights including demographics, content format, monetization potential, and longevity predictions.
                 </p>
               </div>
             )}
@@ -4161,12 +4202,12 @@ function HomeContent() {
             {/* Collapsed Bar View */}
             {collapsedModules.has('idea-generator') ? (
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">🎥</span>
-                  <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
-                    Viral Video Idea Generator
-                  </h3>
-                </div>
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">🎥</span>
+                <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
+                  Intelligent Viral Video Idea Generator
+                </h3>
+              </div>
                 <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
                   {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
                 </span>
@@ -4213,10 +4254,10 @@ function HomeContent() {
                 <div className="space-y-6">
                   <div className="text-center mb-6">
               <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                🎥 Viral Video Idea Generator
+                🎥 Intelligent Viral Video Idea Generator
               </h2>
               <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
-                Get 10 viral-worthy video ideas based on any topic
+                Get 10 strategically engineered video ideas with hooks, viral mechanics, platform recommendations, and production tips
               </p>
             </div>
 
