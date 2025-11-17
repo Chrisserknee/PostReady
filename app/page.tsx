@@ -226,6 +226,8 @@ function HomeContent() {
     'idea-generator',
     'hashtag-research'
   ]);
+  const [draggedModule, setDraggedModule] = useState<string | null>(null);
+  const [dragOverModule, setDragOverModule] = useState<string | null>(null);
 
   // Collab Engine State
   const [collabUsername, setCollabUsername] = useState<string>("");
@@ -1266,6 +1268,49 @@ function HomeContent() {
 
     setModuleOrder(newOrder);
     saveModuleOrder(newOrder);
+  };
+
+  // Drag and Drop Handlers
+  const handleDragStart = (moduleId: string) => {
+    setDraggedModule(moduleId);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedModule(null);
+    setDragOverModule(null);
+  };
+
+  const handleDragOver = (e: React.DragEvent, moduleId: string) => {
+    e.preventDefault();
+    if (draggedModule && draggedModule !== moduleId) {
+      setDragOverModule(moduleId);
+    }
+  };
+
+  const handleDragLeave = () => {
+    setDragOverModule(null);
+  };
+
+  const handleDrop = (e: React.DragEvent, targetModuleId: string) => {
+    e.preventDefault();
+    
+    if (!draggedModule || draggedModule === targetModuleId) {
+      setDragOverModule(null);
+      return;
+    }
+
+    const newOrder = [...moduleOrder];
+    const draggedIndex = newOrder.indexOf(draggedModule);
+    const targetIndex = newOrder.indexOf(targetModuleId);
+
+    // Remove dragged item
+    newOrder.splice(draggedIndex, 1);
+    // Insert at target position
+    newOrder.splice(targetIndex, 0, draggedModule);
+
+    setModuleOrder(newOrder);
+    saveModuleOrder(newOrder);
+    setDragOverModule(null);
   };
 
   // Load module order when user logs in
@@ -2933,18 +2978,31 @@ function HomeContent() {
         {currentStep === "form" && (
           <div 
             ref={collabSectionRef}
+            draggable={isReorderMode && user}
+            onDragStart={() => handleDragStart('collab-engine')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'collab-engine')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'collab-engine')}
             className="mb-10 rounded-2xl shadow-lg border p-4 sm:p-6 md:p-8 space-y-6 transition-all duration-500 relative"
             style={{
               backgroundColor: theme === 'dark' 
                 ? 'rgba(40, 30, 35, 0.85)' 
                 : '#FFFFFF',
-              borderColor: theme === 'dark'
-                ? 'rgba(255, 79, 120, 0.3)'
-                : 'rgba(255, 79, 120, 0.25)',
-              boxShadow: theme === 'dark'
-                ? '0 8px 32px rgba(255, 79, 120, 0.2), 0 0 0 1px rgba(255, 79, 120, 0.15)'
-                : '0 4px 20px rgba(255, 79, 120, 0.15), 0 0 0 1px rgba(255, 79, 120, 0.1)',
-              order: moduleOrder.indexOf('collab-engine')
+              borderColor: dragOverModule === 'collab-engine' 
+                ? '#2979FF'
+                : (theme === 'dark'
+                  ? 'rgba(255, 79, 120, 0.3)'
+                  : 'rgba(255, 79, 120, 0.25)'),
+              boxShadow: dragOverModule === 'collab-engine'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : (theme === 'dark'
+                  ? '0 8px 32px rgba(255, 79, 120, 0.2), 0 0 0 1px rgba(255, 79, 120, 0.15)'
+                  : '0 4px 20px rgba(255, 79, 120, 0.15), 0 0 0 1px rgba(255, 79, 120, 0.1)'),
+              order: moduleOrder.indexOf('collab-engine'),
+              cursor: isReorderMode && user ? 'move' : 'default',
+              opacity: draggedModule === 'collab-engine' ? 0.5 : 1,
+              transform: dragOverModule === 'collab-engine' ? 'scale(1.02)' : 'scale(1)'
             }}
           >
             {/* Reorder Controls */}
@@ -3771,18 +3829,31 @@ function HomeContent() {
         {/* Trend Radar - Live trend tracking */}
         {currentStep === "form" && (
           <div 
+            draggable={isReorderMode && user}
+            onDragStart={() => handleDragStart('trend-radar')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'trend-radar')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'trend-radar')}
             className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500 relative"
             style={{
               backgroundColor: theme === 'dark' 
                 ? 'rgba(30, 37, 50, 0.85)' 
                 : '#FFFFFF',
-              borderColor: theme === 'dark'
-                ? 'var(--card-border)'
-                : 'rgba(41, 121, 255, 0.2)',
-              boxShadow: theme === 'dark'
-                ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
-              order: moduleOrder.indexOf('trend-radar')
+              borderColor: dragOverModule === 'trend-radar'
+                ? '#2979FF'
+                : (theme === 'dark'
+                  ? 'var(--card-border)'
+                  : 'rgba(41, 121, 255, 0.2)'),
+              boxShadow: dragOverModule === 'trend-radar'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : (theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'),
+              order: moduleOrder.indexOf('trend-radar'),
+              cursor: isReorderMode && user ? 'move' : 'default',
+              opacity: draggedModule === 'trend-radar' ? 0.5 : 1,
+              transform: dragOverModule === 'trend-radar' ? 'scale(1.02)' : 'scale(1)'
             }}
           >
             {/* Reorder Controls */}
@@ -3967,18 +4038,31 @@ function HomeContent() {
         {/* Viral Video Idea Generator */}
         {currentStep === "form" && (
           <div 
+            draggable={isReorderMode && user}
+            onDragStart={() => handleDragStart('idea-generator')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'idea-generator')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'idea-generator')}
             className="mb-10 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500 relative"
             style={{
               backgroundColor: theme === 'dark' 
                 ? 'rgba(30, 37, 50, 0.85)' 
                 : '#FFFFFF',
-              borderColor: theme === 'dark'
-                ? 'var(--card-border)'
-                : 'rgba(41, 121, 255, 0.2)',
-              boxShadow: theme === 'dark'
-                ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
-              order: moduleOrder.indexOf('idea-generator')
+              borderColor: dragOverModule === 'idea-generator'
+                ? '#2979FF'
+                : (theme === 'dark'
+                  ? 'var(--card-border)'
+                  : 'rgba(41, 121, 255, 0.2)'),
+              boxShadow: dragOverModule === 'idea-generator'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : (theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'),
+              order: moduleOrder.indexOf('idea-generator'),
+              cursor: isReorderMode && user ? 'move' : 'default',
+              opacity: draggedModule === 'idea-generator' ? 0.5 : 1,
+              transform: dragOverModule === 'idea-generator' ? 'scale(1.02)' : 'scale(1)'
             }}
           >
             {/* Reorder Controls */}
@@ -4135,18 +4219,31 @@ function HomeContent() {
         {currentStep === "form" && (
           <div 
             ref={hashtagSectionRef}
+            draggable={isReorderMode && user}
+            onDragStart={() => handleDragStart('hashtag-research')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'hashtag-research')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'hashtag-research')}
             className="mb-10 rounded-2xl shadow-lg border p-6 space-y-4 transition-all duration-500 scroll-mt-4 relative"
             style={{
               backgroundColor: theme === 'dark' 
                 ? 'rgba(30, 37, 50, 0.85)' 
                 : '#FFFFFF',
-              borderColor: theme === 'dark'
-                ? 'var(--card-border)'
-                : 'rgba(41, 121, 255, 0.2)',
-              boxShadow: theme === 'dark'
-                ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
-              order: moduleOrder.indexOf('hashtag-research')
+              borderColor: dragOverModule === 'hashtag-research'
+                ? '#2979FF'
+                : (theme === 'dark'
+                  ? 'var(--card-border)'
+                  : 'rgba(41, 121, 255, 0.2)'),
+              boxShadow: dragOverModule === 'hashtag-research'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : (theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'),
+              order: moduleOrder.indexOf('hashtag-research'),
+              cursor: isReorderMode && user ? 'move' : 'default',
+              opacity: draggedModule === 'hashtag-research' ? 0.5 : 1,
+              transform: dragOverModule === 'hashtag-research' ? 'scale(1.02)' : 'scale(1)'
             }}
           >
             {/* Reorder Controls */}
@@ -6962,10 +7059,10 @@ function HomeContent() {
             transition: 'all 0.3s ease, transform 0.2s ease',
             color: isReorderMode ? 'white' : 'var(--text-primary)'
           }}
-          title={isReorderMode ? 'Exit Reorder Mode' : 'Reorder Modules'}
+          title={isReorderMode ? 'Exit Reorder Mode (Drag modules to reorder on desktop)' : 'Reorder Modules (Drag & drop on desktop, arrows on mobile)'}
         >
           <span className="text-2xl sm:text-3xl" style={{ transition: 'opacity 0.3s ease' }}>
-            {isReorderMode ? '✅' : '⬍'}
+            {isReorderMode ? '✅' : '↕️'}
           </span>
         </button>
       )}
