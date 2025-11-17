@@ -292,11 +292,10 @@ function HomeContent() {
   // Load Sora usage count
   useEffect(() => {
     const loadSoraUsage = async () => {
-      if (!user) return;
-      
       try {
         // Get usage count from localStorage
-        const usageKey = `sora_usage_${user.id}`;
+        // Use user ID if signed in, otherwise use 'anonymous'
+        const usageKey = user ? `sora_usage_${user.id}` : 'sora_usage_anonymous';
         const usage = localStorage.getItem(usageKey);
         setSoraUsageCount(usage ? parseInt(usage) : 0);
       } catch (error) {
@@ -5366,11 +5365,12 @@ function HomeContent() {
                       const data = await response.json();
                       setSoraPrompts(data.prompts || []);
                       
-                      // Increment usage count (only for free users)
-                      if (user && !isPro) {
+                      // Increment usage count (only for free users and anonymous users)
+                      if (!isPro) {
                         const newCount = soraUsageCount + 1;
                         setSoraUsageCount(newCount);
-                        const usageKey = `sora_usage_${user.id}`;
+                        // Use user ID if signed in, otherwise use 'anonymous'
+                        const usageKey = user ? `sora_usage_${user.id}` : 'sora_usage_anonymous';
                         localStorage.setItem(usageKey, newCount.toString());
                       }
                     } catch (error) {
@@ -8122,7 +8122,10 @@ function HomeContent() {
                 Unlock Unlimited Sora Prompts
               </h2>
               <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
-                You've used your free generation. Upgrade to Pro for unlimited access to the Sora Prompt Generator.
+                {user 
+                  ? "You've used your free generation. Upgrade to Pro for unlimited access to the Sora Prompt Generator."
+                  : "You've used your free generation. Sign in and upgrade to Pro for unlimited access to the Sora Prompt Generator."
+                }
               </p>
             </div>
 
@@ -8175,7 +8178,13 @@ function HomeContent() {
               <button
                 onClick={() => {
                   setShowSoraPaywall(false);
-                  setCurrentStep('premium');
+                  if (user) {
+                    setCurrentStep('premium');
+                  } else {
+                    setCurrentStep('form');
+                    // Scroll to top and show sign in prompt
+                    window.scrollTo(0, 0);
+                  }
                 }}
                 className="flex-1 py-3 rounded-lg font-bold transition-all hover:scale-105"
                 style={{
@@ -8183,7 +8192,7 @@ function HomeContent() {
                   color: 'white',
                 }}
               >
-                Upgrade to Pro
+                {user ? 'Upgrade to Pro' : 'Sign In to Get Pro'}
               </button>
               <button
                 onClick={() => setShowSoraPaywall(false)}
