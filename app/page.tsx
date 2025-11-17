@@ -7671,6 +7671,38 @@ function HomeContent() {
             >
               Let's Get Started! 🎯
             </button>
+
+            {/* Manual Upgrade Button (if not Pro yet) */}
+            {!isPro && user && (
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch('/api/manual-upgrade', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ userId: user.id })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                      alert('Successfully upgraded! Please refresh the page.');
+                      window.location.reload();
+                    } else {
+                      alert('Failed to upgrade: ' + (data.error || 'Unknown error'));
+                    }
+                  } catch (err) {
+                    alert('Error upgrading account. Please try again or contact support.');
+                  }
+                }}
+                className="mt-4 px-6 py-3 rounded-lg font-medium text-sm transition-all hover:scale-105"
+                style={{
+                  backgroundColor: 'rgba(255, 107, 107, 0.2)',
+                  border: '2px solid rgba(255, 107, 107, 0.5)',
+                  color: 'var(--text-primary)',
+                }}
+              >
+                ⚠️ Not seeing Pro features? Click to activate manually
+              </button>
+            )}
           </div>
 
           {/* CSS Animations */}
