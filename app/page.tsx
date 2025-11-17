@@ -7580,7 +7580,7 @@ function HomeContent() {
                           opacity: isPlanTransitioning ? 0.5 : 1
                         }}
                       >
-                        $10
+                        $4.99
                       </span>
                       <span className="text-xl mb-2 opacity-80">/month</span>
                     </div>

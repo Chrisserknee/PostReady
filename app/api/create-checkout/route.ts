@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
               name: `${planName} - Monthly Subscription`,
               description: planDescription,
             },
-            unit_amount: 1000, // $10.00 in cents (same price for both plans)
+            unit_amount: 499, // $4.99 in cents (same price for both plans)
             recurring: {
               interval: "month",
             },
