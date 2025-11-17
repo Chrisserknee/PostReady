@@ -245,6 +245,20 @@ function HomeContent() {
     });
   };
 
+  const collapseAllModules = () => {
+    const allModules = ['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt'];
+    setCollapsedModules(new Set(allModules));
+  };
+
+  const expandAllModules = () => {
+    setCollapsedModules(new Set());
+  };
+
+  const areAllModulesCollapsed = () => {
+    const allModules = ['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt'];
+    return allModules.every(module => collapsedModules.has(module));
+  };
+
   // Collab Engine State
   const [collabUsername, setCollabUsername] = useState<string>("");
   const [collabNiche, setCollabNiche] = useState<string>("");
@@ -5025,6 +5039,12 @@ function HomeContent() {
                 <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
                   Sora Prompt Generator
                 </h3>
+                <span className="px-2 py-1 text-xs font-bold rounded" style={{
+                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                  color: 'white',
+                }}>
+                  PRO
+                </span>
               </div>
               <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
                 {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
@@ -5060,12 +5080,20 @@ function HomeContent() {
 
                 <div className="space-y-6">
                   <div className="text-center relative">
-                    <h2 className="text-3xl sm:text-4xl font-bold mb-2" style={{ 
-                      color: '#8B5CF6',
-                      textShadow: '0 0 20px rgba(139, 92, 246, 0.3)'
-                    }}>
-                      🎬 Sora Prompt Generator
-                    </h2>
+                    <div className="flex items-center justify-center gap-3 mb-2">
+                      <h2 className="text-3xl sm:text-4xl font-bold" style={{ 
+                        color: '#8B5CF6',
+                        textShadow: '0 0 20px rgba(139, 92, 246, 0.3)'
+                      }}>
+                        🎬 Sora Prompt Generator
+                      </h2>
+                      <span className="px-3 py-1 text-sm font-bold rounded" style={{
+                        background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                        color: 'white',
+                      }}>
+                        PRO
+                      </span>
+                    </div>
                     <p className="text-sm sm:text-base" style={{ 
                       color: theme === 'dark' ? 'rgba(139, 92, 246, 0.8)' : 'rgba(99, 102, 241, 0.9)'
                     }}>
@@ -7825,6 +7853,30 @@ function HomeContent() {
             </span>
           </div>
         </button>
+      )}
+
+      {/* Floating Minimize/Maximize All Button */}
+      {!isReorderMode && (
+        <button
+          onClick={() => {
+            if (areAllModulesCollapsed()) {
+              expandAllModules();
+            } else {
+              collapseAllModules();
+            }
+          }}
+          className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 p-3 sm:p-4 rounded-full shadow-2xl hover:scale-110 z-50 opacity-70 sm:opacity-100"
+          style={{ 
+            backgroundColor: 'var(--card-bg)',
+            border: '3px solid var(--primary)',
+            transition: 'all 0.3s ease, transform 0.2s ease'
+          }}
+          title={areAllModulesCollapsed() ? 'Expand All Modules' : 'Collapse All Modules'}
+        >
+        <span className="text-2xl sm:text-3xl" style={{ transition: 'opacity 0.3s ease' }}>
+          {areAllModulesCollapsed() ? '📂' : '📁'}
+        </span>
+      </button>
       )}
 
       {/* Floating Theme Toggle */}
