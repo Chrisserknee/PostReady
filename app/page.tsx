@@ -5295,7 +5295,7 @@ function HomeContent() {
                           e.stopPropagation();
                           setCurrentStep('premium');
                         }}
-                        className="absolute top-0 right-14 px-4 py-2 rounded-lg font-bold transition-all hover:scale-105 flex items-center gap-2 shadow-lg"
+                        className="mt-3 sm:mt-0 sm:absolute sm:top-0 sm:right-14 px-4 py-2 rounded-lg font-bold transition-all hover:scale-105 flex items-center gap-2 shadow-lg mx-auto sm:mx-0"
                         style={{
                           background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
                           color: 'white',
