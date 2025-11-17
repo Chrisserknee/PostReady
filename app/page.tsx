@@ -277,7 +277,35 @@ function HomeContent() {
   const [viralTopic, setViralTopic] = useState<string>("");
   const [viralIdeas, setViralIdeas] = useState<any[]>([]);
   const [isGeneratingViralIdeas, setIsGeneratingViralIdeas] = useState<boolean>(false);
+
+  // Sora Prompt Generator State
+  const [soraVideoIdea, setSoraVideoIdea] = useState<string>("");
+  const [soraStyle, setSoraStyle] = useState<string>("");
+  const [soraCameraMovement, setSoraCameraMovement] = useState<string>("");
+  const [soraMood, setSoraMood] = useState<string>("");
+  const [soraPrompts, setSoraPrompts] = useState<any[]>([]);
+  const [isGeneratingSora, setIsGeneratingSora] = useState<boolean>(false);
+  const [soraUsageCount, setSoraUsageCount] = useState<number>(0);
+  const [showSoraPaywall, setShowSoraPaywall] = useState<boolean>(false);
   
+  // Load Sora usage count
+  useEffect(() => {
+    const loadSoraUsage = async () => {
+      if (!user) return;
+      
+      try {
+        // Get usage count from localStorage
+        const usageKey = `sora_usage_${user.id}`;
+        const usage = localStorage.getItem(usageKey);
+        setSoraUsageCount(usage ? parseInt(usage) : 0);
+      } catch (error) {
+        console.error('Error loading Sora usage:', error);
+      }
+    };
+    
+    loadSoraUsage();
+  }, [user]);
+
   // Watch for platform changes and regenerate hashtags if results exist
   useEffect(() => {
     // Only regenerate if we have results and the platform doesn't match
@@ -2913,13 +2941,13 @@ function HomeContent() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <button
+                  <button 
                     onClick={() => openAuthModal('signin')}
                     className="px-5 py-2.5 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2 whitespace-nowrap"
                     style={{ 
                       borderColor: '#2979FF',
                       color: '#2979FF',
-                      backgroundColor: 'white'
+                      backgroundColor: theme === 'dark' ? 'rgba(30, 37, 50, 0.85)' : 'white'
                     }}
                   >
                     Sign In
@@ -3002,19 +3030,17 @@ function HomeContent() {
             onClick={() => !isReorderMode && collapsedModules.has('collab-engine') && toggleModuleCollapse('collab-engine')}
             className="mb-10 rounded-2xl shadow-lg border transition-all duration-500 relative"
             style={{
-              backgroundColor: theme === 'dark' 
-                ? 'rgba(40, 30, 35, 0.85)' 
-                : '#FFFFFF',
+              backgroundColor: 'var(--card-bg)',
               borderColor: dragOverModule === 'collab-engine' 
                 ? '#2979FF'
-                : (theme === 'dark'
+                : theme === 'dark'
                   ? 'rgba(255, 79, 120, 0.3)'
-                  : 'rgba(255, 79, 120, 0.25)'),
+                  : 'rgba(255, 79, 120, 0.25)',
               boxShadow: dragOverModule === 'collab-engine'
                 ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
-                : (theme === 'dark'
+                : theme === 'dark'
                   ? '0 8px 32px rgba(255, 79, 120, 0.2), 0 0 0 1px rgba(255, 79, 120, 0.15)'
-                  : '0 4px 20px rgba(255, 79, 120, 0.15), 0 0 0 1px rgba(255, 79, 120, 0.1)'),
+                  : '0 4px 20px rgba(255, 79, 120, 0.15), 0 0 0 1px rgba(255, 79, 120, 0.1)',
               order: moduleOrder.indexOf('collab-engine'),
               cursor: (isReorderMode && user) ? 'move' : (collapsedModules.has('collab-engine') ? 'pointer' : 'default'),
               opacity: draggedModule === 'collab-engine' ? 0.5 : 1,
@@ -3064,19 +3090,21 @@ function HomeContent() {
                 )}
 
                 {/* Minimize Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleModuleCollapse('collab-engine');
-                  }}
-                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
-                  style={{ color: 'var(--text-secondary)' }}
-                  title="Minimize"
-                >
+                {!isReorderMode && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleModuleCollapse('collab-engine');
+                    }}
+                    className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
+                    style={{ color: 'var(--text-secondary)' }}
+                    title="Minimize"
+                  >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
                   </svg>
                 </button>
+                )}
 
                 <div className="p-0 sm:p-2 md:p-4 space-y-6">
                   <div className="text-center mb-6">
@@ -3893,41 +3921,66 @@ function HomeContent() {
             onClick={() => !isReorderMode && collapsedModules.has('trend-radar') && toggleModuleCollapse('trend-radar')}
             className="mb-10 rounded-2xl shadow-lg border transition-all duration-500 relative"
             style={{
-              backgroundColor: theme === 'dark' 
-                ? 'rgba(30, 37, 50, 0.85)' 
-                : '#FFFFFF',
+              backgroundColor: 'var(--card-bg)',
               borderColor: dragOverModule === 'trend-radar'
                 ? '#2979FF'
-                : (theme === 'dark'
-                  ? 'var(--card-border)'
-                  : 'rgba(41, 121, 255, 0.2)'),
+                : 'var(--card-border)',
               boxShadow: dragOverModule === 'trend-radar'
                 ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
-                : (theme === 'dark'
+                : theme === 'dark'
                   ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'),
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
               order: moduleOrder.indexOf('trend-radar'),
               cursor: (isReorderMode && user) ? 'move' : (collapsedModules.has('trend-radar') ? 'pointer' : 'default'),
-              opacity: draggedModule === 'trend-radar' ? 0.5 : 1,
+              opacity: draggedModule === 'trend-radar' ? 0.5 : 0.6,
               transform: dragOverModule === 'trend-radar' ? 'scale(1.02)' : 'scale(1)',
               padding: collapsedModules.has('trend-radar') ? '1rem' : '2rem',
+              filter: 'grayscale(0.3)',
             }}
           >
+            {/* Coming Soon Badge */}
+            <div 
+              className="absolute top-4 right-4 px-4 py-2 rounded-lg font-bold text-sm z-20"
+              style={{
+                background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+                color: 'white',
+                boxShadow: '0 4px 15px rgba(139, 92, 246, 0.5)',
+              }}
+            >
+              🚀 Coming Soon
+            </div>
             {/* Collapsed Bar View */}
-            {collapsedModules.has('trend-radar') ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">📊</span>
-                  <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
-                    Trend Radar
-                  </h3>
-                </div>
-                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
-                  {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
-                </span>
+            <div 
+              className="flex items-center justify-between"
+              style={{
+                transition: 'opacity 0.8s ease-in-out',
+                opacity: collapsedModules.has('trend-radar') ? 1 : 0,
+                pointerEvents: collapsedModules.has('trend-radar') ? 'auto' : 'none',
+                position: collapsedModules.has('trend-radar') ? 'relative' : 'absolute',
+                visibility: collapsedModules.has('trend-radar') ? 'visible' : 'hidden',
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">📊</span>
+                <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
+                  Trend Radar
+                </h3>
               </div>
-            ) : (
-              <>
+              <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+              </span>
+            </div>
+
+            {/* Expanded Content */}
+            <div
+              style={{
+                transition: 'opacity 0.8s ease-in-out',
+                opacity: collapsedModules.has('trend-radar') ? 0 : 1,
+                pointerEvents: collapsedModules.has('trend-radar') ? 'none' : 'auto',
+                position: collapsedModules.has('trend-radar') ? 'absolute' : 'relative',
+                visibility: collapsedModules.has('trend-radar') ? 'hidden' : 'visible',
+              }}
+            >
                 {/* Reorder Controls */}
                 {isReorderMode && user && (
                   <div className="absolute top-4 right-16 flex gap-2 z-10">
@@ -3951,219 +4004,139 @@ function HomeContent() {
                 )}
 
                 {/* Minimize Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleModuleCollapse('trend-radar');
-                  }}
-                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
-                  style={{ color: 'var(--text-secondary)' }}
-                  title="Minimize"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                  </svg>
-                </button>
+                {!isReorderMode && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleModuleCollapse('trend-radar');
+                    }}
+                    className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
+                    style={{ color: 'var(--text-secondary)' }}
+                    title="Minimize"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    </svg>
+                  </button>
+                )}
 
                 <div className="space-y-6">
-                  <div className="flex items-center justify-between mb-6">
-              <div className="text-center flex-1">
+                  <div className="text-center mb-6">
                 <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
                   📊 Trend Radar
                 </h2>
                 <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
-                  Discover what's trending right now across social media
+                  Real-time trend analytics across social platforms
                 </p>
               </div>
-              <button
-                onClick={() => setShowAdvancedTrends(!showAdvancedTrends)}
-                className="px-4 py-2 rounded-lg font-semibold transition-all hover:scale-105"
-                style={{
-                  background: showAdvancedTrends ? 'linear-gradient(to right, #6366f1, #8b5cf6)' : 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  color: 'white'
-                }}
-              >
-                {showAdvancedTrends ? '📋 Simple View' : '📈 Advanced'}
-              </button>
-            </div>
 
-            {!showAdvancedTrends ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {(trendData.length > 0 ? trendData : [
-                  { topic: 'Click "Detect Trends" for real data', views: '0', growth: '+0%', platform: 'N/A' }
-                ]).map((trend, index) => (
-                  <div 
-                    key={index}
-                    className="p-4 rounded-xl border transition-all hover:scale-105 cursor-pointer"
-                    style={{
-                      backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
-                      borderColor: 'rgba(41, 121, 255, 0.3)'
-                    }}
-                  >
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="font-bold text-lg" style={{ color: 'var(--secondary)' }}>
-                        {trend.topic}
-                      </h3>
-                      <span 
-                        className="px-2 py-1 rounded-full text-xs font-bold"
-                        style={{ 
-                          backgroundColor: 'rgba(34, 197, 94, 0.2)', 
-                          color: '#22c55e' 
-                        }}
-                      >
-                        🔥 Hot
-                      </span>
-                    </div>
-                    <div className="space-y-1">
-                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                        <strong>{trend.views}</strong> views
-                      </p>
-                      <p className="text-sm font-semibold" style={{ color: '#22c55e' }}>
-                        {trend.growth} growth
-                      </p>
-                      <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                        Top on {trend.platform}
-                      </p>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
+              {/* Analytics Graph */}
               <div className="space-y-6">
+                {/* Trend Metrics Overview */}
+                <div className="grid grid-cols-3 gap-4">
+                  {[
+                    { label: 'Active Trends', value: '2,847', change: '+12.5%', color: '#2979FF' },
+                    { label: 'Avg Growth', value: '18.3%', change: '+3.2%', color: '#6366F1' },
+                    { label: 'Peak Hour', value: '9 PM EST', change: 'Live', color: '#8B5CF6' }
+                  ].map((metric, idx) => (
+                    <div 
+                      key={idx}
+                      className="p-4 rounded-xl border"
+                      style={{
+                        backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
+                        borderColor: 'rgba(41, 121, 255, 0.2)'
+                      }}
+                    >
+                      <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
+                        {metric.label}
+                      </p>
+                      <p className="text-2xl font-bold mb-1" style={{ color: metric.color }}>
+                        {metric.value}
+                      </p>
+                      <p className="text-xs font-semibold" style={{ color: '#22c55e' }}>
+                        {metric.change}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Trend Graph */}
                 <div 
                   className="p-6 rounded-xl border"
                   style={{
-                    backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.08)' : 'rgba(41, 121, 255, 0.05)',
-                    borderColor: 'rgba(41, 121, 255, 0.3)'
+                    backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.03)' : 'rgba(41, 121, 255, 0.02)',
+                    borderColor: 'rgba(41, 121, 255, 0.2)'
                   }}
                 >
-                  <h3 className="text-xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
-                    🔥 Real-Time Trending Topics with Advanced Insights
+                  <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--secondary)' }}>
+                    📈 Trending Topics - Last 7 Days
                   </h3>
-                  <div className="space-y-4">
-                    {(trendData.length > 0 ? trendData : [
-                      { topic: 'Click "Detect Trends" to load real-time data', views: 0, growth: 0, posts: 0, platform: 'N/A', description: 'No data loaded yet' }
-                    ]).map((trend, index) => {
-                      const maxViews = trendData.length > 0 ? Math.max(...trendData.map(t => t.views)) : 1;
-                      const barWidth = (trend.views / maxViews) * 100;
-                      
-                      return (
-                        <div 
-                          key={index}
-                          className="relative"
-                          onMouseEnter={() => setHoveredTrend(trend)}
-                          onMouseLeave={() => setHoveredTrend(null)}
-                        >
-                          <div className="flex items-center justify-between mb-2">
-                            <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                              {trend.topic}
-                            </span>
-                            <span className="text-sm font-bold" style={{ color: '#22c55e' }}>
-                              +{trend.growth}%
-                            </span>
-                          </div>
-                          <div 
-                            className="h-8 rounded-lg relative overflow-hidden cursor-pointer transition-all hover:scale-[1.02]"
-                            style={{ 
-                              backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.05)' 
-                            }}
-                          >
-                            <div 
-                              className="h-full rounded-lg transition-all duration-500"
-                              style={{ 
-                                width: `${barWidth}%`,
-                                background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                              }}
-                            />
-                            <div className="absolute inset-0 flex items-center px-3">
-                              <span className="text-sm font-bold text-white mix-blend-difference">
-                                {(trend.views / 1000000).toFixed(1)}M views
-                              </span>
-                            </div>
-                          </div>
-                          {hoveredTrend === trend && trendData.length > 0 && (
-                            <div 
-                              className="absolute z-10 mt-2 p-5 rounded-lg shadow-2xl border animate-fade-in max-w-md"
-                              style={{
-                                backgroundColor: 'var(--card-bg)',
-                                borderColor: 'var(--card-border)',
-                                minWidth: '350px'
-                              }}
-                            >
-                              <h4 className="font-bold mb-3 text-lg" style={{ color: 'var(--secondary)' }}>
-                                {trend.topic}
-                              </h4>
-                              
-                              {trend.description && (
-                                <p className="text-sm mb-3 leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                                  {trend.description}
-                                </p>
-                              )}
-                              
-                              <div className="grid grid-cols-2 gap-2 mb-3 text-xs">
-                                <div className="p-2 rounded" style={{ backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)' }}>
-                                  <p className="font-semibold" style={{ color: 'var(--secondary)' }}>Total Views</p>
-                                  <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{(trend.views / 1000000).toFixed(1)}M</p>
-                                </div>
-                                <div className="p-2 rounded" style={{ backgroundColor: theme === 'dark' ? 'rgba(34, 197, 94, 0.1)' : 'rgba(34, 197, 94, 0.05)' }}>
-                                  <p className="font-semibold" style={{ color: 'var(--secondary)' }}>Growth Rate</p>
-                                  <p className="text-lg font-bold text-green-500">+{trend.growth}%</p>
-                                </div>
-                                <div className="p-2 rounded" style={{ backgroundColor: theme === 'dark' ? 'rgba(168, 85, 247, 0.1)' : 'rgba(168, 85, 247, 0.05)' }}>
-                                  <p className="font-semibold" style={{ color: 'var(--secondary)' }}>Active Posts</p>
-                                  <p className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>{(trend.posts / 1000).toFixed(0)}K</p>
-                                </div>
-                                <div className="p-2 rounded" style={{ backgroundColor: theme === 'dark' ? 'rgba(251, 146, 60, 0.1)' : 'rgba(251, 146, 60, 0.05)' }}>
-                                  <p className="font-semibold" style={{ color: 'var(--secondary)' }}>Platform</p>
-                                  <p className="text-sm font-bold" style={{ color: 'var(--text-primary)' }}>{trend.platform}</p>
-                                </div>
-                              </div>
-                              
-                              {trend.demographics && (
-                                <div className="mb-2 p-2 rounded text-xs" style={{ backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' }}>
-                                  <p><strong style={{ color: 'var(--secondary)' }}>👥 Demographics:</strong> <span style={{ color: 'var(--text-secondary)' }}>{trend.demographics}</span></p>
-                                </div>
-                              )}
-                              
-                              {trend.contentFormat && (
-                                <div className="mb-2 p-2 rounded text-xs" style={{ backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.03)' }}>
-                                  <p><strong style={{ color: 'var(--secondary)' }}>🎬 Content Format:</strong> <span style={{ color: 'var(--text-secondary)' }}>{trend.contentFormat}</span></p>
-                                </div>
-                              )}
-                              
-                              <div className="flex gap-2 mt-3">
-                                {trend.monetization && (
-                                  <span className="px-2 py-1 rounded text-xs font-bold" style={{
-                                    backgroundColor: trend.monetization === 'High' ? 'rgba(34, 197, 94, 0.2)' : trend.monetization === 'Medium' ? 'rgba(251, 146, 60, 0.2)' : 'rgba(156, 163, 175, 0.2)',
-                                    color: trend.monetization === 'High' ? '#22c55e' : trend.monetization === 'Medium' ? '#fb923c' : '#9ca3af'
-                                  }}>
-                                    💰 {trend.monetization} Monetization
-                                  </span>
-                                )}
-                                {trend.longevity && (
-                                  <span className="px-2 py-1 rounded text-xs font-bold" style={{
-                                    backgroundColor: 'rgba(168, 85, 247, 0.2)',
-                                    color: '#a855f7'
-                                  }}>
-                                    ⏳ Lasts {trend.longevity}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          )}
+                  <div className="space-y-3">
+                    {[
+                      { name: 'AI Content Creation', value: 92, color: '#2979FF' },
+                      { name: 'Sustainable Living', value: 78, color: '#6366F1' },
+                      { name: 'Fitness Challenges', value: 85, color: '#8B5CF6' },
+                      { name: 'Tech Reviews', value: 67, color: '#3B82F6' },
+                      { name: 'Cooking Tutorials', value: 73, color: '#6366F1' },
+                    ].map((trend, idx) => (
+                      <div key={idx}>
+                        <div className="flex items-center justify-between mb-1">
+                          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                            {trend.name}
+                          </span>
+                          <span className="text-sm font-bold" style={{ color: trend.color }}>
+                            {trend.value}%
+                          </span>
                         </div>
-                      );
-                    })}
+                        <div 
+                          className="h-2 rounded-full overflow-hidden"
+                          style={{ backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' }}
+                        >
+                          <div 
+                            className="h-full rounded-full transition-all duration-500"
+                            style={{
+                              width: `${trend.value}%`,
+                              background: `linear-gradient(to right, ${trend.color}, ${trend.color}dd)`,
+                              boxShadow: `0 0 10px ${trend.color}88`
+                            }}
+                          />
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
-                <p className="text-sm text-center" style={{ color: 'var(--text-secondary)' }}>
-                  💡 Real-time data from live web searches. Hover over bars for deep insights including demographics, content format, monetization potential, and longevity predictions.
-                </p>
-              </div>
-            )}
+
+                {/* Platform Breakdown */}
+                <div className="grid grid-cols-2 gap-4">
+                  {[
+                    { platform: 'TikTok', percentage: 38, icon: '🎵', color: '#00f2ea' },
+                    { platform: 'Instagram', percentage: 29, icon: '📸', color: '#E1306C' },
+                    { platform: 'YouTube', percentage: 22, icon: '▶️', color: '#FF0000' },
+                    { platform: 'Twitter/X', percentage: 11, icon: '🐦', color: '#1DA1F2' }
+                  ].map((platform, idx) => (
+                    <div 
+                      key={idx}
+                      className="p-4 rounded-xl border"
+                      style={{
+                        backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
+                        borderColor: 'rgba(41, 121, 255, 0.2)'
+                      }}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="text-2xl">{platform.icon}</span>
+                        <span className="text-lg font-bold" style={{ color: platform.color }}>
+                          {platform.percentage}%
+                        </span>
+                      </div>
+                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
+                        {platform.platform}
+                      </p>
+                    </div>
+                  ))}
                 </div>
-              </>
-            )}
+              </div>
+            </div>
+            </div>
           </div>
         )}
 
@@ -4179,19 +4152,15 @@ function HomeContent() {
             onClick={() => !isReorderMode && collapsedModules.has('idea-generator') && toggleModuleCollapse('idea-generator')}
             className="mb-10 rounded-2xl shadow-lg border transition-all duration-500 relative"
             style={{
-              backgroundColor: theme === 'dark' 
-                ? 'rgba(30, 37, 50, 0.85)' 
-                : '#FFFFFF',
+              backgroundColor: 'var(--card-bg)',
               borderColor: dragOverModule === 'idea-generator'
                 ? '#2979FF'
-                : (theme === 'dark'
-                  ? 'var(--card-border)'
-                  : 'rgba(41, 121, 255, 0.2)'),
+                : 'var(--card-border)',
               boxShadow: dragOverModule === 'idea-generator'
                 ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
-                : (theme === 'dark'
+                : theme === 'dark'
                   ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'),
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
               order: moduleOrder.indexOf('idea-generator'),
               cursor: (isReorderMode && user) ? 'move' : (collapsedModules.has('idea-generator') ? 'pointer' : 'default'),
               opacity: draggedModule === 'idea-generator' ? 0.5 : 1,
@@ -4200,20 +4169,37 @@ function HomeContent() {
             }}
           >
             {/* Collapsed Bar View */}
-            {collapsedModules.has('idea-generator') ? (
-              <div className="flex items-center justify-between">
+            <div 
+              className="flex items-center justify-between"
+              style={{
+                transition: 'opacity 0.8s ease-in-out',
+                opacity: collapsedModules.has('idea-generator') ? 1 : 0,
+                pointerEvents: collapsedModules.has('idea-generator') ? 'auto' : 'none',
+                position: collapsedModules.has('idea-generator') ? 'relative' : 'absolute',
+                visibility: collapsedModules.has('idea-generator') ? 'visible' : 'hidden',
+              }}
+            >
               <div className="flex items-center gap-3">
                 <span className="text-3xl">🎥</span>
                 <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
                   Intelligent Viral Video Idea Generator
                 </h3>
               </div>
-                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
-                  {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
-                </span>
-              </div>
-            ) : (
-              <>
+              <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+              </span>
+            </div>
+
+            {/* Expanded Content */}
+            <div
+              style={{
+                transition: 'opacity 0.8s ease-in-out',
+                opacity: collapsedModules.has('idea-generator') ? 0 : 1,
+                pointerEvents: collapsedModules.has('idea-generator') ? 'none' : 'auto',
+                position: collapsedModules.has('idea-generator') ? 'absolute' : 'relative',
+                visibility: collapsedModules.has('idea-generator') ? 'hidden' : 'visible',
+              }}
+            >
                 {/* Reorder Controls */}
                 {isReorderMode && user && (
                   <div className="absolute top-4 right-16 flex gap-2 z-10">
@@ -4237,19 +4223,21 @@ function HomeContent() {
                 )}
 
                 {/* Minimize Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleModuleCollapse('idea-generator');
-                  }}
-                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
-                  style={{ color: 'var(--text-secondary)' }}
-                  title="Minimize"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                  </svg>
-                </button>
+                {!isReorderMode && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleModuleCollapse('idea-generator');
+                    }}
+                    className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
+                    style={{ color: 'var(--text-secondary)' }}
+                    title="Minimize"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    </svg>
+                  </button>
+                )}
 
                 <div className="space-y-6">
                   <div className="text-center mb-6">
@@ -4378,8 +4366,7 @@ function HomeContent() {
               </div>
             )}
                 </div>
-              </>
-            )}
+            </div>
           </div>
         )}
 
@@ -4396,41 +4383,54 @@ function HomeContent() {
             onClick={() => !isReorderMode && collapsedModules.has('hashtag-research') && toggleModuleCollapse('hashtag-research')}
             className="mb-10 rounded-2xl shadow-lg border transition-all duration-500 scroll-mt-4 relative"
             style={{
-              backgroundColor: theme === 'dark' 
-                ? 'rgba(30, 37, 50, 0.85)' 
-                : '#FFFFFF',
+              backgroundColor: 'var(--card-bg)',
               borderColor: dragOverModule === 'hashtag-research'
                 ? '#2979FF'
-                : (theme === 'dark'
-                  ? 'var(--card-border)'
-                  : 'rgba(41, 121, 255, 0.2)'),
+                : 'var(--card-border)',
               boxShadow: dragOverModule === 'hashtag-research'
                 ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
-                : (theme === 'dark'
+                : theme === 'dark'
                   ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)'),
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
               order: moduleOrder.indexOf('hashtag-research'),
               cursor: (isReorderMode && user) ? 'move' : (collapsedModules.has('hashtag-research') ? 'pointer' : 'default'),
               opacity: draggedModule === 'hashtag-research' ? 0.5 : 1,
               transform: dragOverModule === 'hashtag-research' ? 'scale(1.02)' : 'scale(1)',
-              padding: collapsedModules.has('hashtag-research') ? '1rem' : '1.5rem',
+              padding: collapsedModules.has('hashtag-research') ? '1rem' : '2rem',
             }}
           >
             {/* Collapsed Bar View */}
-            {collapsedModules.has('hashtag-research') ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">#️⃣</span>
-                  <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
-                    Hashtag Deep Research Tool
-                  </h3>
-                </div>
-                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
-                  {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
-                </span>
+            <div 
+              className="flex items-center justify-between"
+              style={{
+                transition: 'opacity 0.8s ease-in-out',
+                opacity: collapsedModules.has('hashtag-research') ? 1 : 0,
+                pointerEvents: collapsedModules.has('hashtag-research') ? 'auto' : 'none',
+                position: collapsedModules.has('hashtag-research') ? 'relative' : 'absolute',
+                visibility: collapsedModules.has('hashtag-research') ? 'visible' : 'hidden',
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">#️⃣</span>
+                <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
+                  Hashtag Deep Research Tool
+                </h3>
               </div>
-            ) : (
-              <>
+              <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+              </span>
+            </div>
+
+            {/* Expanded Content */}
+            <div
+              style={{
+                transition: 'opacity 0.8s ease-in-out',
+                opacity: collapsedModules.has('hashtag-research') ? 0 : 1,
+                pointerEvents: collapsedModules.has('hashtag-research') ? 'none' : 'auto',
+                position: collapsedModules.has('hashtag-research') ? 'absolute' : 'relative',
+                visibility: collapsedModules.has('hashtag-research') ? 'hidden' : 'visible',
+              }}
+            >
                 {/* Reorder Controls */}
                 {isReorderMode && user && (
                   <div className="absolute top-4 right-16 flex gap-2 z-10">
@@ -4454,19 +4454,252 @@ function HomeContent() {
                 )}
 
                 {/* Minimize Button */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleModuleCollapse('hashtag-research');
+                {!isReorderMode && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleModuleCollapse('hashtag-research');
+                    }}
+                    className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
+                    style={{ color: 'var(--text-secondary)' }}
+                    title="Minimize"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    </svg>
+                  </button>
+                )}
+
+                <div className="space-y-6">
+                  <div className="text-center mb-6">
+              <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                🎥 Intelligent Viral Video Idea Generator
+              </h2>
+              <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
+                Get 10 strategically engineered video ideas with hooks, viral mechanics, platform recommendations, and production tips
+              </p>
+            </div>
+
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              if (!viralTopic.trim()) return;
+              
+              setIsGeneratingViralIdeas(true);
+              setViralIdeas([]);
+              
+              try {
+                const response = await fetch('/api/generate-viral-ideas', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ topic: viralTopic }),
+                });
+                
+                if (!response.ok) {
+                  throw new Error('Failed to generate ideas');
+                }
+                
+                const data = await response.json();
+                setViralIdeas(data.ideas || []);
+              } catch (error) {
+                console.error('Error generating viral ideas:', error);
+                showNotification("Failed to generate ideas. Please try again.", "error");
+              } finally {
+                setIsGeneratingViralIdeas(false);
+              }
+            }} className="space-y-4">
+              <div className="space-y-2">
+                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                  What topic do you want video ideas for? <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={viralTopic}
+                  onChange={(e) => setViralTopic(e.target.value)}
+                  placeholder="e.g., AI, Fitness, Cooking, Gaming"
+                  required
+                  className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
+                  style={{
+                    backgroundColor: 'var(--card-bg)',
+                    borderColor: 'var(--card-border)',
+                    color: 'var(--text-primary)'
                   }}
-                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
-                  style={{ color: 'var(--text-secondary)' }}
-                  title="Minimize"
-                >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
-                  </svg>
-                </button>
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={isGeneratingViralIdeas}
+                className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                style={{
+                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                  color: 'white'
+                }}
+              >
+                {isGeneratingViralIdeas ? (
+                  <>
+                    <span className="animate-spin">🔄</span>
+                    Generating Ideas...
+                  </>
+                ) : (
+                  <>
+                    ✨ Generate Video Ideas
+                  </>
+                )}
+              </button>
+            </form>
+
+            {viralIdeas.length > 0 && (
+              <div className="mt-8 space-y-4">
+                <h3 className="text-2xl font-bold text-center" style={{ color: 'var(--secondary)' }}>
+                  🎬 10 Viral Video Ideas
+                </h3>
+                {viralIdeas.map((idea: any, index: number) => (
+                  <div 
+                    key={index}
+                    className="p-6 rounded-xl border transition-all hover:scale-[1.01]"
+                    style={{
+                      backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
+                      borderColor: 'rgba(41, 121, 255, 0.3)'
+                    }}
+                  >
+                    <div className="flex items-start gap-4">
+                      <div 
+                        className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg"
+                        style={{
+                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                          color: 'white'
+                        }}
+                      >
+                        {index + 1}
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-lg font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                          {idea.title}
+                        </h4>
+                        <p className="text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
+                          {idea.description}
+                        </p>
+                        <div 
+                          className="p-4 rounded-lg"
+                          style={{ backgroundColor: theme === 'dark' ? 'rgba(111, 255, 210, 0.08)' : 'rgba(111, 255, 210, 0.05)' }}
+                        >
+                          <p className="text-sm font-semibold mb-1" style={{ color: '#6FFFD2' }}>
+                            💡 Why This Could Go Viral:
+                          </p>
+                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                            {idea.whyViral}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+            </div>
+            </div>
+          </div>
+        )}
+
+        {/* Hashtag Deep Research Tool - Always visible on homepage */}
+        {currentStep === "form" && (
+          <div 
+            ref={hashtagSectionRef}
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('hashtag-research')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'hashtag-research')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'hashtag-research')}
+            onClick={() => !isReorderMode && collapsedModules.has('hashtag-research') && toggleModuleCollapse('hashtag-research')}
+            className="mb-10 rounded-2xl shadow-lg border transition-all duration-500 scroll-mt-4 relative"
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              borderColor: dragOverModule === 'hashtag-research'
+                ? '#2979FF'
+                : 'var(--card-border)',
+              boxShadow: dragOverModule === 'hashtag-research'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('hashtag-research'),
+              cursor: (isReorderMode && user) ? 'move' : (collapsedModules.has('hashtag-research') ? 'pointer' : 'default'),
+              opacity: draggedModule === 'hashtag-research' ? 0.5 : 1,
+              transform: dragOverModule === 'hashtag-research' ? 'scale(1.02)' : 'scale(1)',
+              padding: collapsedModules.has('hashtag-research') ? '1rem' : '1.5rem',
+            }}
+          >
+            {/* Collapsed Bar View */}
+            <div 
+              className="flex items-center justify-between"
+              style={{
+                transition: 'opacity 0.8s ease-in-out',
+                opacity: collapsedModules.has('hashtag-research') ? 1 : 0,
+                pointerEvents: collapsedModules.has('hashtag-research') ? 'auto' : 'none',
+                position: collapsedModules.has('hashtag-research') ? 'relative' : 'absolute',
+                visibility: collapsedModules.has('hashtag-research') ? 'visible' : 'hidden',
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">#️⃣</span>
+                <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
+                  Hashtag Deep Research Tool
+                </h3>
+              </div>
+              <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+              </span>
+            </div>
+
+            {/* Expanded Content */}
+            <div
+              style={{
+                transition: 'opacity 0.8s ease-in-out',
+                opacity: collapsedModules.has('hashtag-research') ? 0 : 1,
+                pointerEvents: collapsedModules.has('hashtag-research') ? 'none' : 'auto',
+                position: collapsedModules.has('hashtag-research') ? 'absolute' : 'relative',
+                visibility: collapsedModules.has('hashtag-research') ? 'hidden' : 'visible',
+              }}
+            >
+                {/* Reorder Controls */}
+                {isReorderMode && user && (
+                  <div className="absolute top-4 right-16 flex gap-2 z-10">
+                    <button
+                      onClick={() => moveModule('hashtag-research', 'up')}
+                      disabled={moduleOrder.indexOf('hashtag-research') === 0}
+                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      title="Move Up"
+                    >
+                      ⬆️
+                    </button>
+                    <button
+                      onClick={() => moveModule('hashtag-research', 'down')}
+                      disabled={moduleOrder.indexOf('hashtag-research') === moduleOrder.length - 1}
+                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                      title="Move Down"
+                    >
+                      ⬇️
+                    </button>
+                  </div>
+                )}
+
+                {/* Minimize Button */}
+                {!isReorderMode && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleModuleCollapse('hashtag-research');
+                    }}
+                    className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
+                    style={{ color: 'var(--text-secondary)' }}
+                    title="Minimize"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    </svg>
+                  </button>
+                )}
 
                 <div className="space-y-4">
                   <div className="text-center mb-4">
@@ -4891,9 +5124,484 @@ function HomeContent() {
                 </p>
               </div>
             )}
-                </div>
-              </>
+            </div>
+            </div>
+          </div>
+        )}
+
+        {/* Sora Prompt Generator */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('sora-prompt')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'sora-prompt')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'sora-prompt')}
+            onClick={() => !isReorderMode && collapsedModules.has('sora-prompt') && toggleModuleCollapse('sora-prompt')}
+            className="mb-10 rounded-2xl shadow-lg border scroll-mt-4 relative overflow-hidden"
+            style={{
+              transition: 'max-height 1.5s cubic-bezier(0.65, 0, 0.35, 1), padding 1.5s cubic-bezier(0.65, 0, 0.35, 1), transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              backgroundColor: theme === 'dark' 
+                ? 'rgba(88, 50, 120, 0.12)' 
+                : 'rgba(139, 92, 246, 0.03)',
+              borderColor: dragOverModule === 'sora-prompt'
+                ? '#8B5CF6'
+                : (isReorderMode && user)
+                  ? (theme === 'dark' ? 'rgba(139, 92, 246, 0.6)' : 'rgba(139, 92, 246, 0.5)')
+                  : (theme === 'dark'
+                    ? 'rgba(139, 92, 246, 0.4)'
+                    : 'rgba(139, 92, 246, 0.3)'),
+              boxShadow: draggedModule === 'sora-prompt'
+                ? '0 16px 48px rgba(139, 92, 246, 0.45), 0 0 0 2px rgba(139, 92, 246, 0.6), 0 0 20px rgba(139, 92, 246, 0.3)'
+                : dragOverModule === 'sora-prompt'
+                  ? '0 0 0 3px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3)'
+                  : (isReorderMode && user)
+                    ? (theme === 'dark'
+                      ? '0 8px 32px rgba(139, 92, 246, 0.4), 0 0 0 2px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.25)'
+                      : '0 8px 32px rgba(139, 92, 246, 0.3), 0 0 0 2px rgba(139, 92, 246, 0.4), 0 0 15px rgba(139, 92, 246, 0.2)')
+                    : (theme === 'dark'
+                      ? '0 4px 20px rgba(139, 92, 246, 0.25), 0 0 15px rgba(139, 92, 246, 0.15)'
+                      : '0 4px 20px rgba(139, 92, 246, 0.15), 0 0 10px rgba(139, 92, 246, 0.1)'),
+              order: moduleOrder.indexOf('sora-prompt'),
+              cursor: (isReorderMode && user) ? (draggedModule === 'sora-prompt' ? 'grabbing' : 'grab') : (collapsedModules.has('sora-prompt') ? 'pointer' : 'default'),
+              opacity: 1,
+              transform: draggedModule === 'sora-prompt' 
+                ? 'scale(1.05) rotate(2deg)' 
+                : 'scale(1)',
+              padding: collapsedModules.has('sora-prompt') ? '1rem' : '1.5rem',
+              zIndex: draggedModule === 'sora-prompt' ? 1000 : 'auto',
+              maxHeight: collapsedModules.has('sora-prompt') ? '80px' : '2000px',
+            }}
+          >
+            {/* Drop Indicator - Top */}
+            {dragOverModule === 'sora-prompt' && dropPosition === 'before' && draggedModule !== 'sora-prompt' && (
+              <div 
+                className="absolute -top-2 left-0 right-0 h-1 rounded-full"
+                style={{
+                  backgroundColor: '#8B5CF6',
+                  boxShadow: '0 0 16px rgba(139, 92, 246, 0.8)',
+                  zIndex: 1001,
+                }}
+              />
             )}
+            
+            {/* Drop Indicator - Bottom */}
+            {dragOverModule === 'sora-prompt' && dropPosition === 'after' && draggedModule !== 'sora-prompt' && (
+              <div 
+                className="absolute -bottom-2 left-0 right-0 h-1 rounded-full"
+                style={{
+                  backgroundColor: '#8B5CF6',
+                  boxShadow: '0 0 16px rgba(139, 92, 246, 0.8)',
+                  zIndex: 1001,
+                }}
+              />
+            )}
+
+            {/* Collapsed Bar View */}
+            <div 
+              className="flex items-center justify-between"
+              style={{
+                transition: 'opacity 0.8s ease-in-out',
+                opacity: collapsedModules.has('sora-prompt') ? 1 : 0,
+                pointerEvents: collapsedModules.has('sora-prompt') ? 'auto' : 'none',
+                position: collapsedModules.has('sora-prompt') ? 'relative' : 'absolute',
+                visibility: collapsedModules.has('sora-prompt') ? 'visible' : 'hidden',
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">🎬</span>
+                <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
+                  Sora Prompt Generator
+                </h3>
+              </div>
+              <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+              </span>
+            </div>
+
+            {/* Expanded Content */}
+            <div
+              style={{
+                transition: 'opacity 0.8s ease-in-out',
+                opacity: collapsedModules.has('sora-prompt') ? 0 : 1,
+                pointerEvents: collapsedModules.has('sora-prompt') ? 'none' : 'auto',
+                position: collapsedModules.has('sora-prompt') ? 'absolute' : 'relative',
+                visibility: collapsedModules.has('sora-prompt') ? 'hidden' : 'visible',
+              }}
+            >
+                {/* Minimize Button */}
+                {!isReorderMode && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleModuleCollapse('sora-prompt');
+                    }}
+                    className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
+                    style={{ color: 'var(--text-secondary)' }}
+                    title="Minimize"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    </svg>
+                  </button>
+                )}
+
+                <div className="space-y-6">
+                  <div className="text-center relative">
+                    <h2 className="text-3xl sm:text-4xl font-bold mb-2" style={{ 
+                      color: '#8B5CF6',
+                      textShadow: '0 0 20px rgba(139, 92, 246, 0.3)'
+                    }}>
+                      🎬 Sora Prompt Generator
+                    </h2>
+                    <p className="text-sm sm:text-base" style={{ 
+                      color: theme === 'dark' ? 'rgba(139, 92, 246, 0.8)' : 'rgba(99, 102, 241, 0.9)'
+                    }}>
+                      Generate professional, detailed video prompts for OpenAI Sora
+                    </p>
+                    
+                    {/* Get Pro Button for Free Users */}
+                    {!isPro && !isReorderMode && (
+                      <button
+                        onClick={() => {
+                          router.push('/home?step=premium');
+                        }}
+                        className="absolute top-0 right-14 px-4 py-2 rounded-lg font-bold transition-all hover:scale-105 flex items-center gap-2 shadow-lg"
+                        style={{
+                          background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+                          color: 'white',
+                          boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4)',
+                        }}
+                      >
+                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        Get Pro
+                      </button>
+                    )}
+                  </div>
+                  
+                  {/* Usage Indicator */}
+                  {!isPro && (
+                    <div className="mt-4 p-3 rounded-lg" style={{
+                      backgroundColor: soraUsageCount >= 1 
+                        ? 'rgba(239, 68, 68, 0.1)' 
+                        : 'rgba(139, 92, 246, 0.1)',
+                      border: `1px solid ${soraUsageCount >= 1 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(139, 92, 246, 0.3)'}`,
+                    }}>
+                      <p className="text-sm font-medium" style={{ 
+                        color: soraUsageCount >= 1 ? '#ef4444' : '#8B5CF6'
+                      }}>
+                        {soraUsageCount === 0 ? 'Free Trial: 1 generation remaining' : 'Upgrade to Pro for unlimited generations'}
+                      </p>
+                    </div>
+                  )}
+                  
+                  {isPro && (
+                    <div className="mt-4 p-3 rounded-lg" style={{
+                      backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                      border: '1px solid rgba(16, 185, 129, 0.3)',
+                    }}>
+                      <p className="text-sm font-medium" style={{ color: '#10b981' }}>
+                        Pro Member: Unlimited generations
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Input Form */}
+                  <form onSubmit={async (e) => {
+                    e.preventDefault();
+                    
+                    // Check if user needs to upgrade to Pro (free users get 1 use)
+                    if (!isPro && soraUsageCount >= 1) {
+                      setShowSoraPaywall(true);
+                      return;
+                    }
+                    
+                    setIsGeneratingSora(true);
+                    
+                    try {
+                      const response = await fetch('/api/generate-sora-prompts', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                          videoIdea: soraVideoIdea,
+                          style: soraStyle,
+                          cameraMovement: soraCameraMovement,
+                          mood: soraMood,
+                        }),
+                      });
+
+                      if (!response.ok) throw new Error('Failed to generate prompts');
+
+                      const data = await response.json();
+                      setSoraPrompts(data.prompts || []);
+                      
+                      // Increment usage count (only for free users)
+                      if (user && !isPro) {
+                        const newCount = soraUsageCount + 1;
+                        setSoraUsageCount(newCount);
+                        const usageKey = `sora_usage_${user.id}`;
+                        localStorage.setItem(usageKey, newCount.toString());
+                      }
+                    } catch (error) {
+                      console.error('Error generating Sora prompts:', error);
+                      alert('Failed to generate prompts. Please try again.');
+                    } finally {
+                      setIsGeneratingSora(false);
+                    }
+                  }} className="space-y-4">
+                    <div className="space-y-2">
+                      <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                        Video Concept <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        value={soraVideoIdea}
+                        onChange={(e) => setSoraVideoIdea(e.target.value)}
+                        placeholder="Describe your video idea... (e.g., 'A serene morning in Tokyo, cherry blossoms falling')"
+                        required
+                        rows={3}
+                        className="w-full rounded-lg px-4 py-3 focus:outline-none border"
+                        style={{
+                          backgroundColor: 'var(--card-bg)',
+                          borderColor: 'rgba(139, 92, 246, 0.3)',
+                          color: 'var(--text-primary)',
+                          resize: 'vertical',
+                          boxShadow: '0 0 0 0 rgba(139, 92, 246, 0)',
+                          transition: 'border-color 0.2s, box-shadow 0.2s',
+                        }}
+                        onFocus={(e) => {
+                          e.currentTarget.style.borderColor = '#8B5CF6';
+                          e.currentTarget.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.2), 0 0 15px rgba(139, 92, 246, 0.3)';
+                        }}
+                        onBlur={(e) => {
+                          e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                          e.currentTarget.style.boxShadow = '0 0 0 0 rgba(139, 92, 246, 0)';
+                        }}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                          Visual Style
+                        </label>
+                        <select
+                          value={soraStyle}
+                          onChange={(e) => setSoraStyle(e.target.value)}
+                          className="w-full rounded-lg px-4 py-3 focus:outline-none border"
+                          style={{
+                            backgroundColor: 'var(--card-bg)',
+                            borderColor: 'rgba(139, 92, 246, 0.3)',
+                            color: 'var(--text-primary)',
+                            boxShadow: '0 0 0 0 rgba(139, 92, 246, 0)',
+                            transition: 'border-color 0.2s, box-shadow 0.2s',
+                          }}
+                          onFocus={(e) => {
+                            e.currentTarget.style.borderColor = '#8B5CF6';
+                            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.2), 0 0 15px rgba(139, 92, 246, 0.3)';
+                          }}
+                          onBlur={(e) => {
+                            e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(139, 92, 246, 0)';
+                          }}
+                        >
+                          <option value="">Select style</option>
+                          <option value="cinematic">Cinematic</option>
+                          <option value="photorealistic">Photorealistic</option>
+                          <option value="animated">Animated</option>
+                          <option value="surreal">Surreal</option>
+                          <option value="documentary">Documentary</option>
+                          <option value="vintage">Vintage Film</option>
+                          <option value="hyperrealistic">Hyperrealistic</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                          Camera Movement
+                        </label>
+                        <select
+                          value={soraCameraMovement}
+                          onChange={(e) => setSoraCameraMovement(e.target.value)}
+                          className="w-full rounded-lg px-4 py-3 focus:outline-none border"
+                          style={{
+                            backgroundColor: 'var(--card-bg)',
+                            borderColor: 'rgba(139, 92, 246, 0.3)',
+                            color: 'var(--text-primary)',
+                            boxShadow: '0 0 0 0 rgba(139, 92, 246, 0)',
+                            transition: 'border-color 0.2s, box-shadow 0.2s',
+                          }}
+                          onFocus={(e) => {
+                            e.currentTarget.style.borderColor = '#8B5CF6';
+                            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.2), 0 0 15px rgba(139, 92, 246, 0.3)';
+                          }}
+                          onBlur={(e) => {
+                            e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(139, 92, 246, 0)';
+                          }}
+                        >
+                          <option value="">Select movement</option>
+                          <option value="static">Static Shot</option>
+                          <option value="slow-pan">Slow Pan</option>
+                          <option value="tracking">Tracking Shot</option>
+                          <option value="aerial">Aerial/Drone</option>
+                          <option value="handheld">Handheld</option>
+                          <option value="crane">Crane Shot</option>
+                          <option value="dolly">Dolly Zoom</option>
+                        </select>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+                          Mood/Tone
+                        </label>
+                        <select
+                          value={soraMood}
+                          onChange={(e) => setSoraMood(e.target.value)}
+                          className="w-full rounded-lg px-4 py-3 focus:outline-none border"
+                          style={{
+                            backgroundColor: 'var(--card-bg)',
+                            borderColor: 'rgba(139, 92, 246, 0.3)',
+                            color: 'var(--text-primary)',
+                            boxShadow: '0 0 0 0 rgba(139, 92, 246, 0)',
+                            transition: 'border-color 0.2s, box-shadow 0.2s',
+                          }}
+                          onFocus={(e) => {
+                            e.currentTarget.style.borderColor = '#8B5CF6';
+                            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.2), 0 0 15px rgba(139, 92, 246, 0.3)';
+                          }}
+                          onBlur={(e) => {
+                            e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
+                            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(139, 92, 246, 0)';
+                          }}
+                        >
+                          <option value="">Select mood</option>
+                          <option value="peaceful">Peaceful</option>
+                          <option value="dramatic">Dramatic</option>
+                          <option value="energetic">Energetic</option>
+                          <option value="mysterious">Mysterious</option>
+                          <option value="uplifting">Uplifting</option>
+                          <option value="melancholic">Melancholic</option>
+                          <option value="suspenseful">Suspenseful</option>
+                          <option value="funny">Funny</option>
+                          <option value="strange">Strange</option>
+                          <option value="hyper-experimental">Hyper Experimental</option>
+                          <option value="hyper-bizarre">Hyper Bizarre</option>
+                        </select>
+                      </div>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={isGeneratingSora || !soraVideoIdea}
+                      className="w-full py-4 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
+                      style={{
+                        background: 'linear-gradient(135deg, #8B5CF6, #6366F1, #3B82F6)',
+                        color: 'white'
+                      }}
+                    >
+                      {isGeneratingSora ? (
+                        <>
+                          <span className="animate-spin">🎬</span>
+                          Generating Prompts...
+                        </>
+                      ) : (
+                        <>
+                          ✨ Generate Sora Prompts
+                        </>
+                      )}
+                    </button>
+                  </form>
+
+                  {/* Generated Prompts */}
+                  {soraPrompts.length > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--secondary)' }}>
+                          <span>📝</span> Generated Prompts
+                        </h3>
+                        <button
+                          onClick={() => setSoraPrompts([])}
+                          className="px-4 py-2 rounded-lg font-medium transition-all hover:scale-105 flex items-center gap-2"
+                          style={{
+                            backgroundColor: theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)',
+                            borderColor: 'rgba(239, 68, 68, 0.3)',
+                            border: '1px solid',
+                            color: '#ef4444'
+                          }}
+                        >
+                          🗑️ Clear Prompts
+                        </button>
+                      </div>
+                      <div className="grid gap-4">
+                        {soraPrompts.map((prompt, index) => (
+                          <div 
+                            key={index}
+                            className="rounded-xl p-5 border-2 relative group"
+                            style={{
+                              backgroundColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.05)' : 'rgba(139, 92, 246, 0.03)',
+                              borderColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.3)' : 'rgba(139, 92, 246, 0.2)'
+                            }}
+                          >
+                            <div className="flex items-start justify-between gap-3 mb-3">
+                              <h4 className="font-bold text-lg" style={{ color: '#8B5CF6' }}>
+                                Prompt {index + 1}: {prompt.title}
+                              </h4>
+                              <button
+                                onClick={() => {
+                                  navigator.clipboard.writeText(prompt.prompt);
+                                }}
+                                className="px-3 py-1.5 rounded-lg transition-all hover:scale-105 flex items-center gap-1.5 text-sm font-medium"
+                                style={{
+                                  background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+                                  color: 'white'
+                                }}
+                              >
+                                📋 Copy
+                              </button>
+                            </div>
+                            <p className="text-sm leading-relaxed mb-3 p-3 rounded-lg" style={{ 
+                              color: 'var(--text-primary)',
+                              backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.5)'
+                            }}>
+                              {prompt.prompt}
+                            </p>
+                            <div className="flex flex-wrap gap-2 text-xs">
+                              {prompt.tags && prompt.tags.map((tag: string, tagIndex: number) => (
+                                <span 
+                                  key={tagIndex}
+                                  className="px-2 py-1 rounded-full"
+                                  style={{
+                                    backgroundColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(139, 92, 246, 0.1)',
+                                    color: '#8B5CF6'
+                                  }}
+                                >
+                                  {tag}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Empty State */}
+                  {soraPrompts.length === 0 && !isGeneratingSora && (
+                    <div className="text-center py-12">
+                      <div className="text-6xl mb-4">🎬</div>
+                      <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
+                        Ready to create stunning video prompts?
+                      </h3>
+                      <p style={{ color: 'var(--text-secondary)' }}>
+                        Describe your video concept and we'll generate professional Sora prompts
+                      </p>
+                    </div>
+                  )}
+                </div>
+            </div>
           </div>
         )}
 
@@ -5541,9 +6249,9 @@ function HomeContent() {
                               rows={3}
                               className="w-full px-3 py-2 rounded-lg border-2 resize-none focus:outline-none text-sm"
                               style={{
-                                backgroundColor: 'white',
+                                backgroundColor: theme === 'dark' ? 'rgba(30, 37, 50, 0.85)' : 'white',
                                 borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)',
-                                color: '#1a1a1a'
+                                color: theme === 'dark' ? 'var(--text-primary)' : '#1a1a1a'
                               }}
                               onFocus={(e) => {
                                 e.target.style.boxShadow = userType === 'creator' 
@@ -5974,9 +6682,9 @@ function HomeContent() {
                               titleAnimation === 'fadeIn' ? 'animate-fade-in' : ''
                             }`}
                             style={{
-                              backgroundColor: 'white',
+                              backgroundColor: theme === 'dark' ? 'rgba(30, 37, 50, 0.85)' : 'white',
                               borderColor: 'rgba(41, 121, 255, 0.25)',
-                              color: '#1a1a1a',
+                              color: theme === 'dark' ? 'var(--text-primary)' : '#1a1a1a',
                               fontSize: '15px'
                             }}
                             placeholder="Enter your post title..."
@@ -6016,9 +6724,9 @@ function HomeContent() {
                               captionAnimation === 'typing' ? 'animate-typing' : ''
                             }`}
                             style={{
-                              backgroundColor: 'white',
+                              backgroundColor: theme === 'dark' ? 'rgba(30, 37, 50, 0.85)' : 'white',
                               borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)',
-                              color: '#1a1a1a',
+                              color: theme === 'dark' ? 'var(--text-primary)' : '#1a1a1a',
                               fontSize: '14.5px',
                               lineHeight: '1.6'
                             }}
@@ -6119,9 +6827,9 @@ function HomeContent() {
                                       rows={3}
                                       className="w-full px-3 py-2 rounded-lg border-2 resize-none focus:outline-none text-sm"
                                       style={{
-                                        backgroundColor: 'white',
+                                        backgroundColor: theme === 'dark' ? 'rgba(30, 37, 50, 0.85)' : 'white',
                                         borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)',
-                                        color: '#1a1a1a'
+                                        color: theme === 'dark' ? 'var(--text-primary)' : '#1a1a1a'
                                       }}
                                       onFocus={(e) => {
                                         e.target.style.boxShadow = userType === 'creator' 
@@ -6721,6 +7429,15 @@ function HomeContent() {
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         </svg>
                         <div>
+                          <p className="font-bold text-lg">Sora Prompt Generator</p>
+                          <p className="text-purple-100 text-sm">Create professional AI video prompts</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start bg-white bg-opacity-10 rounded-lg p-4">
+                        <svg className="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <div>
                           <p className="font-bold text-lg">Premium Experience</p>
                           <p className="text-purple-100 text-sm">Enhanced interface and exclusive features</p>
                         </div>
@@ -6879,6 +7596,13 @@ function HomeContent() {
                         <p className="text-sm opacity-85">Find trending hashtags in your niche</p>
                       </div>
                     </div>
+                    <div className="flex items-start">
+                      <span className="text-2xl mr-3">✓</span>
+                      <div>
+                        <p className="font-bold text-lg">Sora Prompt Generator</p>
+                        <p className="text-sm opacity-85">Create professional AI video prompts</p>
+                      </div>
+                    </div>
                   </div>
 
                   <button
@@ -6892,8 +7616,8 @@ function HomeContent() {
                     }}
                   >
                     {user 
-                      ? `Subscribe to PostReady ${planType === 'creator' ? 'Creator' : 'Pro'} - $10/month` 
-                      : `Sign Up & Subscribe - $10/month`}
+                      ? `Subscribe to PostReady ${planType === 'creator' ? 'Creator' : 'Pro'} - $4.99/month` 
+                      : `Sign Up & Subscribe - $4.99/month`}
                   </button>
                   <p className="text-center text-sm mt-3 opacity-85">
                     Cancel anytime • Secure payment by Stripe
@@ -7252,11 +7976,11 @@ function HomeContent() {
         </div>
       )}
 
-      {/* Floating Reorder Toggle - Bottom Right (only for logged-in users on homepage) */}
-      {user && currentStep === "form" && (
+      {/* Floating Reorder Toggle - Removed per user request */}
+      {false && user && currentStep === "form" && (
         <button
           onClick={() => setIsReorderMode(!isReorderMode)}
-          className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 rounded-xl z-50 group transition-all duration-200"
+          className="hidden md:block fixed bottom-24 right-6 rounded-xl z-50 group transition-all duration-200"
           style={{ 
             padding: '10px 18px',
             backgroundColor: isReorderMode ? '#2979FF' : theme === 'dark' ? 'rgba(40, 40, 50, 0.98)' : 'rgba(255, 255, 255, 0.98)',
@@ -7328,21 +8052,125 @@ function HomeContent() {
         </button>
       )}
 
-      {/* Floating Theme Toggle - Bottom Right */}
-      <button
-        onClick={toggleTheme}
-        className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 p-3 sm:p-4 rounded-full shadow-2xl hover:scale-110 z-50 opacity-70 sm:opacity-100"
-        style={{ 
-          backgroundColor: 'var(--card-bg)',
-          border: '3px solid var(--primary)',
-          transition: 'all 0.3s ease, transform 0.2s ease'
-        }}
-        title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-      >
+      {/* Floating Theme Toggle - Removed per user request */}
+      {false && !isReorderMode && (
+        <button
+          onClick={toggleTheme}
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 p-3 sm:p-4 rounded-full shadow-2xl hover:scale-110 z-50 opacity-70 sm:opacity-100"
+          style={{ 
+            backgroundColor: 'var(--card-bg)',
+            border: '3px solid var(--primary)',
+            transition: 'all 0.3s ease, transform 0.2s ease'
+          }}
+          title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+        >
         <span className="text-2xl sm:text-3xl" style={{ transition: 'opacity 0.3s ease' }}>
           {theme === 'light' ? '🌙' : '☀️'}
         </span>
       </button>
+      )}
+
+      {/* Sora Paywall Modal */}
+      {showSoraPaywall && (
+        <div 
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(12px)',
+          }}
+          onClick={() => setShowSoraPaywall(false)}
+        >
+          <div 
+            className="max-w-lg w-full rounded-2xl p-8 animate-scale-in"
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              border: '2px solid rgba(139, 92, 246, 0.4)',
+              boxShadow: '0 20px 60px rgba(139, 92, 246, 0.3)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold mb-2" style={{ color: '#8B5CF6' }}>
+                Unlock Unlimited Sora Prompts
+              </h2>
+              <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
+                You've used your free generation. Upgrade to Pro for unlimited access to the Sora Prompt Generator.
+              </p>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="p-4 rounded-lg" style={{
+                backgroundColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+              }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#8B5CF6' }}>
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Unlimited Sora Generations
+                  </span>
+                </div>
+                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
+                  Create as many video prompts as you need
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg" style={{
+                backgroundColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)',
+                border: '1px solid rgba(139, 92, 246, 0.3)',
+              }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#8B5CF6' }}>
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Plus All Pro Features
+                  </span>
+                </div>
+                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
+                  Unlimited video ideas, hashtag research, and more
+                </p>
+              </div>
+            </div>
+
+            <div className="text-center mb-4">
+              <div className="text-4xl font-bold mb-2" style={{ color: '#8B5CF6' }}>
+                $4.99<span className="text-lg font-normal">/month</span>
+              </div>
+              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                Cancel anytime • Secure payment by Stripe
+              </p>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowSoraPaywall(false);
+                  router.push('/home?step=premium');
+                }}
+                className="flex-1 py-3 rounded-lg font-bold transition-all hover:scale-105"
+                style={{
+                  background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
+                  color: 'white',
+                }}
+              >
+                Upgrade to Pro
+              </button>
+              <button
+                onClick={() => setShowSoraPaywall(false)}
+                className="px-6 py-3 rounded-lg font-medium transition-all hover:opacity-80 border"
+                style={{
+                  borderColor: 'var(--card-border)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Email Verification Modal */}
       <Modal
