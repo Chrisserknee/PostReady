@@ -7615,6 +7615,17 @@ function HomeContent() {
                     color: 'var(--primary)'
                   }}>Unlimited</div>
                 </div>
+                <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
+                  <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Sora Prompt Generator</div>
+                  <div className="p-4" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-primary)'
+                  }}>1 use</div>
+                  <div className="p-4 font-bold" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>Unlimited</div>
+                </div>
                 <div className="grid grid-cols-3 text-center">
                   <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Support</div>
                   <div className="p-4" style={{ 
