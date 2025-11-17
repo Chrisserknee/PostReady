@@ -36,14 +36,12 @@ export default function RootLayout({
                   if (savedTheme) {
                     document.documentElement.setAttribute('data-theme', savedTheme);
                   } else {
-                    const hour = new Date().getHours();
-                    const isNightTime = hour < 6 || hour >= 18;
-                    const theme = isNightTime ? 'dark' : 'light';
-                    document.documentElement.setAttribute('data-theme', theme);
+                    // Default to dark mode for first-time visitors
+                    document.documentElement.setAttribute('data-theme', 'dark');
                   }
                 } catch (e) {
-                  // Fallback to light mode if error
-                  document.documentElement.setAttribute('data-theme', 'light');
+                  // Fallback to dark mode if error
+                  document.documentElement.setAttribute('data-theme', 'dark');
                 }
               })();
             `,

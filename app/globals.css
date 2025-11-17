@@ -218,6 +218,25 @@
   transform: translateY(0);
 }
 
+/* Default theme (dark mode) - applies before JavaScript runs */
+:root {
+  --background: #0F1419;
+  --foreground: #E7E9EA;
+  --primary: #2979FF;
+  --secondary: #E7E9EA;
+  --accent: #6FFFD2;
+  --card-bg: #1A1F2E;
+  --card-border: #2D3748;
+  --text-primary: #E7E9EA;
+  --text-secondary: #9CA3AF;
+  --hover-bg: rgba(41, 121, 255, 0.15);
+  --text-gray-900: #E7E9EA;
+  --text-gray-800: #D1D5DB;
+  --text-gray-700: #9CA3AF;
+  --text-gray-600: #6B7280;
+  --text-gray-500: #6B7280;
+}
+
 :root[data-theme="light"] {
   --background: #E0E6ED;
   --foreground: #1A1A1A;
@@ -440,12 +459,17 @@ body {
 }
 
 /* Prevent white flash during navigation */
+/* Default to dark mode background before JavaScript runs */
+html {
+  background-color: #0F1419;
+}
+
 html[data-theme="dark"] {
-  background-color: rgb(15, 23, 42);
+  background-color: #0F1419;
 }
 
 html[data-theme="light"] {
-  background-color: rgb(255, 255, 255);
+  background-color: #E0E6ED;
 }
 
 /* Smooth content transitions */

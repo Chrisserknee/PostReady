@@ -12,11 +12,11 @@ interface ThemeContextType {
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
 
 export const ThemeProvider = ({ children }: { children: ReactNode }) => {
-  // Initialize theme from DOM attribute (set by blocking script) or default to light
+  // Initialize theme from DOM attribute (set by blocking script) or default to dark
   const getInitialTheme = (): Theme => {
-    if (typeof window === 'undefined') return 'light';
+    if (typeof window === 'undefined') return 'dark';
     const dataTheme = document.documentElement.getAttribute('data-theme');
-    return (dataTheme === 'dark' || dataTheme === 'light') ? dataTheme : 'light';
+    return (dataTheme === 'dark' || dataTheme === 'light') ? dataTheme : 'dark';
   };
   
   const [theme, setTheme] = useState<Theme>(getInitialTheme);
@@ -29,10 +29,8 @@ export const ThemeProvider = ({ children }: { children: ReactNode }) => {
     if (savedTheme) {
       setTheme(savedTheme);
     } else {
-      // Check time of day (6am-6pm = light, 6pm-6am = dark)
-      const hour = new Date().getHours();
-      const isNightTime = hour < 6 || hour >= 18; // 6pm to 6am is night
-      setTheme(isNightTime ? 'dark' : 'light');
+      // Default to dark mode for first-time visitors
+      setTheme('dark');
     }
   }, []);
 

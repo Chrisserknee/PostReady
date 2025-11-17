@@ -251,16 +251,33 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       if (data.user) {
-        // Create user profile
-        const { error: profileError } = await supabase.from('user_profiles').insert({
-          id: data.user.id,
-          email: data.user.email,
-          is_pro: false,
-        });
+        console.log('👤 Creating user profile for:', data.user.email);
+        
+        // Create user profile with more complete data
+        const { data: profileData, error: profileError } = await supabase
+          .from('user_profiles')
+          .insert({
+            id: data.user.id,
+            email: data.user.email,
+            is_pro: false,
+            plan_type: 'free',
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+          })
+          .select();
 
         if (profileError) {
-          console.error('Error creating user profile:', profileError);
-          // Don't fail signup if profile creation fails - profile can be created later
+          console.error('❌ Error creating user profile:', profileError);
+          console.error('Profile error details:', {
+            code: profileError.code,
+            message: profileError.message,
+            details: profileError.details,
+            hint: profileError.hint
+          });
+          // Profile creation failed - this might cause issues later
+          // but we don't want to block signup
+        } else {
+          console.log('✅ User profile created successfully:', profileData);
         }
       }
 

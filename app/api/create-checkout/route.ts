@@ -79,7 +79,7 @@ export async function POST(request: NextRequest) {
               name: `${planName} - Monthly Subscription`,
               description: planDescription,
             },
-            unit_amount: 499, // $4.99 in cents (same price for both plans)
+            unit_amount: 1, // $0.01 in cents - TEST MODE (change back to 499 for production)
             recurring: {
               interval: "month",
             },
@@ -107,7 +107,7 @@ export async function POST(request: NextRequest) {
           message: 'By subscribing, you authorize PostReady to charge you according to the terms until you cancel.',
         },
       },
-      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}?upgrade=success`,
+      success_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}?upgrade=success&session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000"}?upgrade=cancelled`,
     });
 

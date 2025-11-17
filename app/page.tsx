@@ -596,12 +596,54 @@ function HomeContent() {
         router.replace('/', { scroll: false });
       }, 100);
     } else if (upgrade === 'success') {
-      // Show celebration modal for successful subscription
-      setShowCelebration(true);
-      // Clear URL params after showing celebration
-      setTimeout(() => {
-        router.replace('/', { scroll: false });
-      }, 100);
+      // Get session_id from URL
+      const sessionId = searchParams.get('session_id');
+      
+      console.log('🎉 Upgrade success detected!', { sessionId, hasUser: !!user });
+      
+      // Call checkout success endpoint to ensure user is upgraded
+      if (sessionId) {
+        // Always call the endpoint if we have a session_id
+        console.log('📞 Calling checkout-success endpoint...');
+        
+        fetch('/api/checkout-success', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ sessionId }),
+        })
+          .then(res => res.json())
+          .then(data => {
+            console.log('✅ Checkout-success response:', data);
+            if (data.success) {
+              // Show celebration modal
+              setShowCelebration(true);
+              // Don't auto-reload - let user close the modal manually
+            } else {
+              console.error('⚠️ Upgrade verification failed:', data);
+              // Still show celebration
+              setShowCelebration(true);
+            }
+          })
+          .catch(error => {
+            console.error('❌ Error verifying upgrade:', error);
+            // Still show celebration
+            setShowCelebration(true);
+          });
+        
+        // Clear URL params after calling endpoint (with delay)
+        setTimeout(() => {
+          router.replace('/', { scroll: false });
+        }, 500);
+      } else {
+        // No session_id - just show celebration
+        console.log('⚠️ No session_id found in URL');
+        setShowCelebration(true);
+        
+        // Clear URL params
+        setTimeout(() => {
+          router.replace('/', { scroll: false });
+        }, 100);
+      }
     } else if (premium === 'true' || upgrade === 'true') {
       // Navigate to premium section
       setCurrentStep("premium");
@@ -7658,7 +7700,11 @@ function HomeContent() {
 
             {/* Action Button */}
             <button
-              onClick={() => setShowCelebration(false)}
+              onClick={() => {
+                setShowCelebration(false);
+                // Reload page to refresh Pro status after user closes modal
+                window.location.reload();
+              }}
               className="px-8 py-4 rounded-xl font-bold text-lg text-white transition-all hover:scale-105"
               style={{
                 background: isCreator
@@ -7812,8 +7858,8 @@ function HomeContent() {
         </button>
       )}
 
-      {/* Floating Theme Toggle - Removed per user request */}
-      {false && !isReorderMode && (
+      {/* Floating Theme Toggle */}
+      {!isReorderMode && (
         <button
           onClick={toggleTheme}
           className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 p-3 sm:p-4 rounded-full shadow-2xl hover:scale-110 z-50 opacity-70 sm:opacity-100"
