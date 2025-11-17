@@ -2736,7 +2736,7 @@ function HomeContent() {
                 >
                   Account
                 </button>
-                {!isPro ? (
+                {!isPro && (
                   <button
                     onClick={scrollToPremium}
                     className="flex-1 text-white px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold transition-all shadow-lg hover:scale-105 active:scale-95"
@@ -2745,59 +2745,23 @@ function HomeContent() {
                       boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
                     }}
                   >
-                    Upgrade
-                  </button>
-                ) : (
-                  <button
-                    onClick={handleSignOut}
-                    disabled={isSigningOut}
-                    className="flex-1 px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-md hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                    style={{ 
-                      color: '#dc2626',
-                      backgroundColor: 'rgba(220, 38, 38, 0.15)',
-                      border: '2px solid rgba(220, 38, 38, 0.3)',
-                      boxShadow: '0 2px 8px rgba(220, 38, 38, 0.15)'
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!isSigningOut) {
-                        e.currentTarget.style.backgroundColor = '#dc2626';
-                        e.currentTarget.style.color = 'white';
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.15)';
-                      e.currentTarget.style.color = '#dc2626';
-                    }}
-                  >
-                    {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+                    ★ Get Pro
                   </button>
                 )}
-              </div>
-              {!isPro && (
                 <button
                   onClick={handleSignOut}
                   disabled={isSigningOut}
-                  className="w-full px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-md hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex-1 px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-md hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
                   style={{ 
                     color: '#dc2626',
-                    backgroundColor: 'rgba(220, 38, 38, 0.15)',
-                    border: '2px solid rgba(220, 38, 38, 0.3)',
-                    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.15)'
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!isSigningOut) {
-                      e.currentTarget.style.backgroundColor = '#dc2626';
-                      e.currentTarget.style.color = 'white';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.backgroundColor = 'rgba(220, 38, 38, 0.15)';
-                    e.currentTarget.style.color = '#dc2626';
+                    backgroundColor: 'var(--card-bg)',
+                    border: '2px solid #dc2626',
+                    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.2)'
                   }}
                 >
                   {isSigningOut ? 'Signing Out...' : 'Sign Out'}
                 </button>
-              )}
+              </div>
             </div>
             
             {/* Desktop: Horizontal layout */}
@@ -2839,12 +2803,16 @@ function HomeContent() {
               <button
                 onClick={navigateHome}
                 disabled={isNavigating}
-                className="px-3 py-1.5 text-sm font-medium transition-all disabled:opacity-50 whitespace-nowrap hover:opacity-80"
+                className="px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 whitespace-nowrap hover:scale-105 active:scale-95"
                 style={currentStep === "form" ? { 
-                  color: 'var(--primary)',
-                  fontWeight: 'bold'
+                  color: 'white',
+                  background: 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 100%)',
+                  boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
                 } : { 
-                  color: 'var(--text-secondary)'
+                  color: 'var(--text-primary)',
+                  backgroundColor: 'var(--card-bg)',
+                  border: '2px solid var(--card-border)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
                 }}
               >
                 Home
@@ -2857,33 +2825,40 @@ function HomeContent() {
                   navigateToPortal();
                 }}
                 type="button"
-                className="px-3 py-1.5 text-sm font-medium transition-all hover:opacity-80 cursor-pointer underline decoration-dotted"
-                style={{ color: 'var(--text-secondary)', pointerEvents: 'auto' }}
+                className="px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
+                style={{ 
+                  color: 'var(--text-primary)',
+                  backgroundColor: 'var(--card-bg)',
+                  border: '2px solid var(--card-border)',
+                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
+                  pointerEvents: 'auto' 
+                }}
                 title="Go to User Portal"
               >
-                {user?.email}
+                Account
               </button>
               {!isPro && (
                 <button
                   onClick={scrollToPremium}
-                  className="text-white px-4 py-2 rounded-lg text-sm font-bold transition-all hover:opacity-90 whitespace-nowrap flex-shrink-0"
-                  style={{ background: 'linear-gradient(to right, #2979FF, #6FFFD2)' }}
+                  className="px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0"
+                  style={{ 
+                    color: 'white',
+                    background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
+                  }}
                 >
-                  Upgrade
+                  ★ Get Pro
                 </button>
               )}
               <button
                 onClick={handleSignOut}
                 disabled={isSigningOut}
-                className="text-sm font-medium whitespace-nowrap transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ color: '#dc2626' }}
-                onMouseEnter={(e) => {
-                  if (!isSigningOut) {
-                    e.currentTarget.style.color = '#991b1b';
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.color = '#dc2626';
+                className="px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-105 active:scale-95 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ 
+                  color: '#dc2626',
+                  backgroundColor: 'var(--card-bg)',
+                  border: '2px solid #dc2626',
+                  boxShadow: '0 2px 8px rgba(220, 38, 38, 0.2)'
                 }}
               >
                 {isSigningOut ? 'Signing Out...' : 'Sign Out'}
@@ -5261,6 +5236,8 @@ function HomeContent() {
                           <option value="documentary">Documentary</option>
                           <option value="vintage">Vintage Film</option>
                           <option value="hyperrealistic">Hyperrealistic</option>
+                          <option value="security-camera">Security Camera</option>
+                          <option value="ring-camera">Ring Camera</option>
                         </select>
                       </div>
 
@@ -7267,7 +7244,7 @@ function HomeContent() {
                         </svg>
                         <div>
                           <p className="font-bold text-lg">Sora Prompt Generator</p>
-                          <p className="text-purple-100 text-sm">Create professional AI video prompts</p>
+                          <p className="text-purple-100 text-sm">Unlimited sora video prompts</p>
                         </div>
                       </div>
                       <div className="flex items-start bg-white bg-opacity-10 rounded-lg p-4">
@@ -7340,7 +7317,7 @@ function HomeContent() {
                       <span className="text-2xl mr-3">✓</span>
                       <div>
                         <p className="font-bold text-lg">Sora Prompt Generator</p>
-                        <p className="text-sm opacity-85">Create professional AI video prompts</p>
+                        <p className="text-sm opacity-85">Unlimited sora video prompts</p>
                       </div>
                     </div>
                     <div className="flex items-start">
