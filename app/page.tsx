@@ -291,15 +291,38 @@ function HomeContent() {
   const [soraUsageCount, setSoraUsageCount] = useState<number>(0);
   const [showSoraPaywall, setShowSoraPaywall] = useState<boolean>(false);
   
+  // Generate or retrieve a persistent device ID
+  const getDeviceId = () => {
+    let deviceId = localStorage.getItem('device_id');
+    if (!deviceId) {
+      // Create a unique device ID based on browser characteristics
+      deviceId = `device_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      localStorage.setItem('device_id', deviceId);
+    }
+    return deviceId;
+  };
+
   // Load Sora usage count
   useEffect(() => {
     const loadSoraUsage = async () => {
       try {
-        // Get usage count from localStorage
-        // Use user ID if signed in, otherwise use 'anonymous'
-        const usageKey = user ? `sora_usage_${user.id}` : 'sora_usage_anonymous';
-        const usage = localStorage.getItem(usageKey);
-        setSoraUsageCount(usage ? parseInt(usage) : 0);
+        const deviceId = getDeviceId();
+        
+        // Check both device-based and user-based usage
+        const deviceUsageKey = `sora_usage_${deviceId}`;
+        const userUsageKey = user ? `sora_usage_user_${user.id}` : null;
+        
+        const deviceUsage = localStorage.getItem(deviceUsageKey);
+        const userUsage = userUsageKey ? localStorage.getItem(userUsageKey) : null;
+        
+        // Use the maximum of device or user usage (whichever is higher)
+        // This prevents bypassing by signing in/out
+        const maxUsage = Math.max(
+          deviceUsage ? parseInt(deviceUsage) : 0,
+          userUsage ? parseInt(userUsage) : 0
+        );
+        
+        setSoraUsageCount(maxUsage);
       } catch (error) {
         console.error('Error loading Sora usage:', error);
       }
@@ -5140,9 +5163,17 @@ function HomeContent() {
                       if (!isPro) {
                         const newCount = soraUsageCount + 1;
                         setSoraUsageCount(newCount);
-                        // Use user ID if signed in, otherwise use 'anonymous'
-                        const usageKey = user ? `sora_usage_${user.id}` : 'sora_usage_anonymous';
-                        localStorage.setItem(usageKey, newCount.toString());
+                        
+                        // Save to BOTH device and user storage to prevent bypassing by signing in/out
+                        const deviceId = getDeviceId();
+                        const deviceUsageKey = `sora_usage_${deviceId}`;
+                        localStorage.setItem(deviceUsageKey, newCount.toString());
+                        
+                        // Also save to user-specific key if signed in
+                        if (user) {
+                          const userUsageKey = `sora_usage_user_${user.id}`;
+                          localStorage.setItem(userUsageKey, newCount.toString());
+                        }
                       }
                     } catch (error) {
                       console.error('Error generating Sora prompts:', error);
