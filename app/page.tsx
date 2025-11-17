@@ -228,6 +228,7 @@ function HomeContent() {
   ]);
   const [draggedModule, setDraggedModule] = useState<string | null>(null);
   const [dragOverModule, setDragOverModule] = useState<string | null>(null);
+  const [dropPosition, setDropPosition] = useState<'before' | 'after' | null>(null);
 
   // Module Collapse State
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(new Set());
@@ -1321,17 +1322,30 @@ function HomeContent() {
   const handleDragEnd = () => {
     setDraggedModule(null);
     setDragOverModule(null);
+    setDropPosition(null);
   };
 
   const handleDragOver = (e: React.DragEvent, moduleId: string) => {
     e.preventDefault();
     if (draggedModule && draggedModule !== moduleId) {
       setDragOverModule(moduleId);
+      
+      // Calculate if we should drop before or after based on mouse position
+      const rect = e.currentTarget.getBoundingClientRect();
+      const midpoint = rect.top + rect.height / 2;
+      const mouseY = e.clientY;
+      
+      if (mouseY < midpoint) {
+        setDropPosition('before');
+      } else {
+        setDropPosition('after');
+      }
     }
   };
 
   const handleDragLeave = () => {
     setDragOverModule(null);
+    setDropPosition(null);
   };
 
   const handleDrop = (e: React.DragEvent, targetModuleId: string) => {
@@ -1339,6 +1353,7 @@ function HomeContent() {
     
     if (!draggedModule || draggedModule === targetModuleId) {
       setDragOverModule(null);
+      setDropPosition(null);
       return;
     }
 
@@ -1348,12 +1363,24 @@ function HomeContent() {
 
     // Remove dragged item
     newOrder.splice(draggedIndex, 1);
-    // Insert at target position
-    newOrder.splice(targetIndex, 0, draggedModule);
+    
+    // Calculate insert position based on dropPosition
+    let insertIndex = targetIndex;
+    if (dropPosition === 'after') {
+      // If dragged from before target, targetIndex is already shifted left by 1
+      insertIndex = draggedIndex < targetIndex ? targetIndex : targetIndex + 1;
+    } else {
+      // 'before' position
+      insertIndex = draggedIndex < targetIndex ? targetIndex - 1 : targetIndex;
+    }
+    
+    // Insert at calculated position
+    newOrder.splice(insertIndex, 0, draggedModule);
 
     setModuleOrder(newOrder);
     saveModuleOrder(newOrder);
     setDragOverModule(null);
+    setDropPosition(null);
   };
 
   // Load module order when user logs in
@@ -5264,8 +5291,9 @@ function HomeContent() {
                     {/* Get Pro Button for Free Users */}
                     {!isPro && !isReorderMode && (
                       <button
-                        onClick={() => {
-                          router.push('/home?step=premium');
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setCurrentStep('premium');
                         }}
                         className="absolute top-0 right-14 px-4 py-2 rounded-lg font-bold transition-all hover:scale-105 flex items-center gap-2 shadow-lg"
                         style={{
@@ -8147,7 +8175,7 @@ function HomeContent() {
               <button
                 onClick={() => {
                   setShowSoraPaywall(false);
-                  router.push('/home?step=premium');
+                  setCurrentStep('premium');
                 }}
                 className="flex-1 py-3 rounded-lg font-bold transition-all hover:scale-105"
                 style={{
