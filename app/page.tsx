@@ -2713,71 +2713,6 @@ function HomeContent() {
                 >
                   Home
                 </button>
-                <button
-                  onClick={() => {
-                    setCurrentStep("businesses");
-                    if (user) {
-                      loadHistoryData();
-                    }
-                  }}
-                  className="px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-md hover:scale-105 active:scale-95"
-                  style={currentStep === "businesses" ? { 
-                    color: 'white',
-                    fontWeight: 'bold',
-                    background: 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 100%)',
-                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                  } : { 
-                    color: 'var(--text-primary)',
-                    backgroundColor: 'var(--card-bg)',
-                    border: '2px solid var(--card-border)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-                  }}
-                >
-                  Businesses
-                </button>
-                <button
-                  onClick={() => {
-                    setCurrentStep("history");
-                    if (user) {
-                      loadHistoryData();
-                    }
-                  }}
-                  className="px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-md hover:scale-105 active:scale-95"
-                  style={currentStep === "history" ? { 
-                    color: 'white',
-                    fontWeight: 'bold',
-                    background: 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 100%)',
-                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                  } : { 
-                    color: 'var(--text-primary)',
-                    backgroundColor: 'var(--card-bg)',
-                    border: '2px solid var(--card-border)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-                  }}
-                >
-                  History
-                </button>
-                <button
-                  onClick={() => {
-                    if (currentStep !== "form") {
-                      navigateHome();
-                      setTimeout(() => {
-                        hashtagSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }, 100);
-                    } else {
-                      hashtagSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }
-                  }}
-                  className="px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-md hover:scale-105 active:scale-95"
-                  style={{ 
-                    color: 'var(--text-primary)',
-                    backgroundColor: 'var(--card-bg)',
-                    border: '2px solid var(--card-border)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-                  }}
-                >
-                  Hashtags
-                </button>
               </div>
               {/* User actions */}
               <div className="flex gap-1 sm:gap-2 w-full">
@@ -2913,58 +2848,6 @@ function HomeContent() {
                 }}
               >
                 Home
-              </button>
-              <button
-                onClick={() => {
-                  setCurrentStep("businesses");
-                  if (user) {
-                    loadHistoryData();
-                  }
-                }}
-                className="px-3 py-1.5 text-sm font-medium transition-all whitespace-nowrap hover:opacity-80"
-                style={currentStep === "businesses" ? { 
-                  color: 'var(--primary)',
-                  fontWeight: 'bold'
-                } : { 
-                  color: 'var(--text-secondary)'
-                }}
-              >
-                Businesses
-              </button>
-              <button
-                onClick={() => {
-                  setCurrentStep("history");
-                  if (user) {
-                    loadHistoryData();
-                  }
-                }}
-                className="px-3 py-1.5 text-sm font-medium transition-all whitespace-nowrap hover:opacity-80"
-                style={currentStep === "history" ? { 
-                  color: 'var(--primary)',
-                  fontWeight: 'bold'
-                } : { 
-                  color: 'var(--text-secondary)'
-                }}
-              >
-                History
-              </button>
-              <button
-                onClick={() => {
-                  if (currentStep !== "form") {
-                    navigateHome();
-                    setTimeout(() => {
-                      hashtagSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                    }, 100);
-                  } else {
-                    hashtagSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                  }
-                }}
-                className="px-3 py-1.5 text-sm font-medium transition-all whitespace-nowrap hover:opacity-80"
-                style={{ 
-                  color: 'var(--text-secondary)'
-                }}
-              >
-                #️⃣ Hashtags
               </button>
               <button
                 onClick={(e) => {
