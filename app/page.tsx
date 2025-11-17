@@ -3017,43 +3017,68 @@ function HomeContent() {
               borderColor: 'rgba(41, 121, 255, 0.15)'
             }}>
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                  <div className="flex-shrink-0">
-                    <svg className="w-10 h-10" style={{ color: '#2979FF' }} fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
-                      <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                <div className="flex items-center gap-4 w-full sm:w-auto">
+                  <button
+                    onClick={() => setCurrentStep('form')}
+                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2 whitespace-nowrap"
+                    style={{ 
+                      borderColor: 'var(--card-border)',
+                      color: 'var(--text-primary)',
+                      backgroundColor: 'var(--card-bg)'
+                    }}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
-                  </div>
-                  <div className="text-left">
-                    <h3 className="font-bold text-lg" style={{ color: 'var(--secondary)' }}>
-                      Save Your Work!
-                    </h3>
-                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      Sign up now to save your history and businesses
-                    </p>
+                    Home
+                  </button>
+                  <div className="flex items-center gap-3 flex-1">
+                    <div className="flex-shrink-0">
+                      <svg className="w-10 h-10" style={{ color: '#2979FF' }} fill="currentColor" viewBox="0 0 20 20">
+                        <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z" />
+                        <path fillRule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="text-left">
+                      <h3 className="font-bold text-lg" style={{ color: 'var(--secondary)' }}>
+                        Sign Up Now!
+                      </h3>
+                      <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                        Sign up to get access to more features!
+                      </p>
+                    </div>
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
                   <button 
                     onClick={() => openAuthModal('signin')}
-                    className="px-5 py-2.5 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2 whitespace-nowrap"
+                    className="px-5 py-2.5 rounded-lg font-semibold text-sm transition-all hover:scale-105 whitespace-nowrap border-2"
                     style={{ 
-                      borderColor: '#2979FF',
-                      color: '#2979FF',
-                      backgroundColor: theme === 'dark' ? 'rgba(30, 37, 50, 0.85)' : 'white'
+                      borderColor: 'var(--card-border)',
+                      color: 'var(--text-primary)',
+                      backgroundColor: 'var(--card-bg)'
                     }}
                   >
                     Sign In
                   </button>
                   <button
                     onClick={() => openAuthModal('signup')}
-                    className="px-6 py-3 rounded-lg font-bold text-sm transition-all hover:scale-105 text-white shadow-md whitespace-nowrap flex items-center gap-2"
+                    className="px-5 py-2.5 rounded-lg font-semibold text-sm transition-all hover:scale-105 text-white whitespace-nowrap"
                     style={{ background: 'linear-gradient(to right, #2979FF, #6FFFD2)' }}
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M18 9v3m0 0v3m0-3h3m-3 0h-3m-2-5a4 4 0 11-8 0 4 4 0 018 0zM3 20a6 6 0 0112 0v1H3v-1z" />
-                    </svg>
                     Sign Up Now
+                  </button>
+                  <button 
+                    onClick={() => setCurrentStep('premium')}
+                    className="px-5 py-2.5 rounded-lg font-semibold text-sm transition-all hover:scale-105 whitespace-nowrap flex items-center gap-2"
+                    style={{ 
+                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                      color: 'white',
+                      boxShadow: '0 4px 15px rgba(41, 121, 255, 0.3)'
+                    }}
+                  >
+                    <span>★</span>
+                    Get Pro
                   </button>
                 </div>
               </div>
@@ -4275,8 +4300,14 @@ function HomeContent() {
               <div className="flex items-center gap-3">
                 <span className="text-3xl">🎥</span>
                 <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
-                  Intelligent Viral Video Idea Generator
+                  Viral Video Idea Generator
                 </h3>
+                <span className="px-2 py-1 text-xs font-bold rounded" style={{
+                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                  color: 'white',
+                }}>
+                  PRO
+                </span>
               </div>
               <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
                 {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
@@ -4334,15 +4365,74 @@ function HomeContent() {
 
                 <div className="space-y-6">
                   <div className="text-center mb-6">
-              <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                🎥 Intelligent Viral Video Idea Generator
-              </h2>
+              <div className="flex items-center justify-center gap-3 mb-2">
+                <h2 className="text-4xl font-bold" style={{ color: 'var(--secondary)' }}>
+                  🎥 Viral Video Idea Generator
+                </h2>
+                <span className="px-3 py-1 text-sm font-bold rounded" style={{
+                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                  color: 'white',
+                }}>
+                  PRO
+                </span>
+              </div>
               <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
                 Get 10 strategically engineered video ideas with hooks, viral mechanics, platform recommendations, and production tips
               </p>
             </div>
 
-            <form onSubmit={async (e) => {
+            {/* Pro Feature Paywall */}
+            {!isPro ? (
+              <div className="text-center py-8 px-4">
+                <div className="mb-6">
+                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4"
+                    style={{
+                      backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                      border: '3px solid rgba(41, 121, 255, 0.3)',
+                    }}
+                  >
+                    <span className="text-4xl">🔒</span>
+                  </div>
+                  <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                    Pro Feature
+                  </h3>
+                  <p className="text-base mb-6" style={{ color: 'var(--text-secondary)' }}>
+                    Upgrade to Pro to unlock unlimited access to the Viral Video Idea Generator and all premium features.
+                  </p>
+                  <div className="space-y-3 mb-6">
+                    <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>Unlimited viral video ideas</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>All premium features</span>
+                    </div>
+                    <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                      </svg>
+                      <span>Priority support</span>
+                    </div>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setCurrentStep('premium')}
+                  className="px-8 py-4 rounded-xl font-bold text-lg text-white transition-all hover:scale-105"
+                  style={{
+                    background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                    boxShadow: '0 8px 25px rgba(41, 121, 255, 0.3)',
+                  }}
+                >
+                  Upgrade to Pro - $4.99/mo 🚀
+                </button>
+              </div>
+            ) : (
+              <form onSubmit={async (e) => {
               e.preventDefault();
               if (!viralTopic.trim()) return;
               
@@ -4409,8 +4499,9 @@ function HomeContent() {
                 )}
               </button>
             </form>
+            )}
 
-            {viralIdeas.length > 0 && (
+            {isPro && viralIdeas.length > 0 && (
               <div className="mt-8 space-y-4">
                 <h3 className="text-2xl font-bold text-center" style={{ color: 'var(--secondary)' }}>
                   🎬 10 Viral Video Ideas
@@ -7274,15 +7365,6 @@ function HomeContent() {
                           <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                         </svg>
                         <div>
-                          <p className="font-bold text-lg">Unlimited Video Ideas</p>
-                          <p className="text-purple-100 text-sm">Generate endless content ideas instantly</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start bg-white bg-opacity-10 rounded-lg p-4">
-                        <svg className="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <div>
                           <p className="font-bold text-lg">Unlimited Caption Rewrites & Title Rewords</p>
                           <p className="text-purple-100 text-sm">Perfect your content with unlimited edits</p>
                         </div>
@@ -7303,6 +7385,15 @@ function HomeContent() {
                         <div>
                           <p className="font-bold text-lg">Sora Prompt Generator</p>
                           <p className="text-purple-100 text-sm">Create professional AI video prompts</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start bg-white bg-opacity-10 rounded-lg p-4">
+                        <svg className="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <p className="font-bold text-lg">Viral Video Idea Generator</p>
+                          <p className="text-purple-100 text-sm">Get unlimited viral video ideas with hooks & strategies</p>
                         </div>
                       </div>
                       <div className="flex items-start bg-white bg-opacity-10 rounded-lg p-4">
@@ -7365,22 +7456,8 @@ function HomeContent() {
                     <div className="flex items-start">
                       <span className="text-2xl mr-3">✓</span>
                       <div>
-                        <p className="font-bold text-lg">Unlimited Video Ideas</p>
-                        <p className="text-sm opacity-85">Generate endless content ideas instantly</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-2xl mr-3">✓</span>
-                      <div>
-                        <p className="font-bold text-lg">Advanced Strategy Insights</p>
-                        <p className="text-sm opacity-85">Get deeper analysis to grow your social media</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-2xl mr-3">✓</span>
-                      <div>
-                        <p className="font-bold text-lg">Priority Support</p>
-                        <p className="text-sm opacity-85">Get help when you need it most</p>
+                        <p className="font-bold text-lg">Sora Prompt Generator</p>
+                        <p className="text-sm opacity-85">Create professional AI video prompts</p>
                       </div>
                     </div>
                     <div className="flex items-start">
@@ -7393,8 +7470,22 @@ function HomeContent() {
                     <div className="flex items-start">
                       <span className="text-2xl mr-3">✓</span>
                       <div>
-                        <p className="font-bold text-lg">Sora Prompt Generator</p>
-                        <p className="text-sm opacity-85">Create professional AI video prompts</p>
+                        <p className="font-bold text-lg">Viral Video Idea Generator</p>
+                        <p className="text-sm opacity-85">Get unlimited viral video ideas with hooks & strategies</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-2xl mr-3">✓</span>
+                      <div>
+                        <p className="font-bold text-lg">Priority Support</p>
+                        <p className="text-sm opacity-85">Get help when you need it most</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-2xl mr-3">✓</span>
+                      <div>
+                        <p className="font-bold text-lg">Advanced Strategy Insights</p>
+                        <p className="text-sm opacity-85">Get deeper analysis to grow your social media</p>
                       </div>
                     </div>
                   </div>
@@ -7438,28 +7529,6 @@ function HomeContent() {
                   }}>Pro/Creator</div>
                 </div>
                 <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
-                  <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Video Ideas</div>
-                  <div className="p-4" style={{ 
-                    backgroundColor: 'var(--hover-bg)',
-                    color: 'var(--text-primary)'
-                  }}>6</div>
-                  <div className="p-4 font-bold" style={{ 
-                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                    color: 'var(--primary)'
-                  }}>Unlimited</div>
-                </div>
-                <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
-                  <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Business Deep Research</div>
-                  <div className="p-4" style={{ 
-                    backgroundColor: 'var(--hover-bg)',
-                    color: 'var(--text-primary)'
-                  }}>1 use</div>
-                  <div className="p-4 font-bold" style={{ 
-                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                    color: 'var(--primary)'
-                  }}>Unlimited</div>
-                </div>
-                <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
                   <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Sora Prompt Generator</div>
                   <div className="p-4" style={{ 
                     backgroundColor: 'var(--hover-bg)',
@@ -7470,7 +7539,29 @@ function HomeContent() {
                     color: 'var(--primary)'
                   }}>Unlimited</div>
                 </div>
-                <div className="grid grid-cols-3 text-center">
+                <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
+                  <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Hashtag Deep Research Tool</div>
+                  <div className="p-4" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-secondary)'
+                  }}>Pro Only</div>
+                  <div className="p-4 font-bold" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>Unlimited</div>
+                </div>
+                <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
+                  <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Viral Video Idea Generator</div>
+                  <div className="p-4" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-secondary)'
+                  }}>Pro Only</div>
+                  <div className="p-4 font-bold" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>Unlimited</div>
+                </div>
+                <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
                   <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Support</div>
                   <div className="p-4" style={{ 
                     backgroundColor: 'var(--hover-bg)',
@@ -7480,6 +7571,17 @@ function HomeContent() {
                     backgroundColor: 'rgba(41, 121, 255, 0.1)',
                     color: 'var(--primary)'
                   }}>Priority</div>
+                </div>
+                <div className="grid grid-cols-3 text-center">
+                  <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Advanced Strategy Insights</div>
+                  <div className="p-4" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-secondary)'
+                  }}>Pro Only</div>
+                  <div className="p-4 font-bold" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>Unlimited</div>
                 </div>
               </div>
             </div>
@@ -7528,8 +7630,15 @@ function HomeContent() {
         )}
 
         <div className="text-center py-8 space-y-2">
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            © 2025 PostReady. Built to help local businesses thrive.
+          <p className="text-sm font-semibold" style={{ 
+            background: 'linear-gradient(to right, #2979FF, #6FFFD2, #2979FF)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent',
+            backgroundClip: 'text',
+            textShadow: '0 0 20px rgba(41, 121, 255, 0.3)',
+            filter: 'drop-shadow(0 0 10px rgba(111, 255, 210, 0.2))'
+          }}>
+            © 2025 PostReady. Built to help creators thrive.
           </p>
           <div className="flex flex-wrap justify-center gap-4 text-sm">
             <a
