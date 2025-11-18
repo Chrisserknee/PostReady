@@ -7654,8 +7654,8 @@ function HomeContent() {
                 : 'scale(1)',
               padding: collapsedModules.has('page-analyzer') ? '1rem' : '1.5rem',
               zIndex: draggedModule === 'page-analyzer' ? 1000 : 'auto',
-              maxHeight: collapsedModules.has('page-analyzer') ? '80px' : '2000px',
-              overflow: 'hidden',
+              maxHeight: collapsedModules.has('page-analyzer') ? '80px' : 'none',
+              overflow: collapsedModules.has('page-analyzer') ? 'hidden' : 'visible',
             }}
           >
             {/* Drop Indicators */}
