@@ -3119,12 +3119,17 @@ function HomeContent() {
                       e.stopPropagation();
                       toggleModuleCollapse('collab-engine');
                     }}
-                    className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
-                    style={{ color: 'var(--text-secondary)' }}
+                    className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 sm:p-3 rounded-lg sm:rounded-xl transition-all z-10 hover:scale-110 active:scale-95"
+                    style={{ 
+                      backgroundColor: 'rgba(41, 121, 255, 0.15)',
+                      border: '2px solid rgba(41, 121, 255, 0.4)',
+                      color: '#2979FF',
+                      boxShadow: '0 0 12px rgba(41, 121, 255, 0.3)'
+                    }}
                     title="Minimize"
                   >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
                   </svg>
                 </button>
                 )}
@@ -4034,12 +4039,17 @@ function HomeContent() {
                       e.stopPropagation();
                       toggleModuleCollapse('trend-radar');
                     }}
-                    className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
-                    style={{ color: 'var(--text-secondary)' }}
+                    className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 sm:p-3 rounded-lg sm:rounded-xl transition-all z-10 hover:scale-110 active:scale-95"
+                    style={{ 
+                      backgroundColor: 'rgba(41, 121, 255, 0.15)',
+                      border: '2px solid rgba(41, 121, 255, 0.4)',
+                      color: '#2979FF',
+                      boxShadow: '0 0 12px rgba(41, 121, 255, 0.3)'
+                    }}
                     title="Minimize"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
                     </svg>
                   </button>
                 )}
@@ -4260,12 +4270,17 @@ function HomeContent() {
                       e.stopPropagation();
                       toggleModuleCollapse('idea-generator');
                     }}
-                    className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
-                    style={{ color: 'var(--text-secondary)' }}
+                    className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 sm:p-3 rounded-lg sm:rounded-xl transition-all z-10 hover:scale-110 active:scale-95"
+                    style={{ 
+                      backgroundColor: 'rgba(41, 121, 255, 0.15)',
+                      border: '2px solid rgba(41, 121, 255, 0.4)',
+                      color: '#2979FF',
+                      boxShadow: '0 0 12px rgba(41, 121, 255, 0.3)'
+                    }}
                     title="Minimize"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
                     </svg>
                   </button>
                 )}
@@ -4552,12 +4567,17 @@ function HomeContent() {
                       e.stopPropagation();
                       toggleModuleCollapse('hashtag-research');
                     }}
-                    className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
-                    style={{ color: 'var(--text-secondary)' }}
+                    className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 sm:p-3 rounded-lg sm:rounded-xl transition-all z-10 hover:scale-110 active:scale-95"
+                    style={{ 
+                      backgroundColor: 'rgba(41, 121, 255, 0.15)',
+                      border: '2px solid rgba(41, 121, 255, 0.4)',
+                      color: '#2979FF',
+                      boxShadow: '0 0 12px rgba(41, 121, 255, 0.3)'
+                    }}
                     title="Minimize"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
                     </svg>
                   </button>
                 )}
@@ -5106,12 +5126,17 @@ function HomeContent() {
                       e.stopPropagation();
                       toggleModuleCollapse('sora-prompt');
                     }}
-                    className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
-                    style={{ color: 'var(--text-secondary)' }}
+                    className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 sm:p-3 rounded-lg sm:rounded-xl transition-all z-10 hover:scale-110 active:scale-95"
+                    style={{ 
+                      backgroundColor: 'rgba(41, 121, 255, 0.15)',
+                      border: '2px solid rgba(41, 121, 255, 0.4)',
+                      color: '#2979FF',
+                      boxShadow: '0 0 12px rgba(41, 121, 255, 0.3)'
+                    }}
                     title="Minimize"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                    <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
                     </svg>
                   </button>
                 )}
@@ -5119,45 +5144,34 @@ function HomeContent() {
                 <div className="space-y-6">
                   <div className="text-center relative">
                     <div className="flex items-center justify-center gap-3 mb-2">
-                      <h2 className="text-3xl sm:text-4xl font-bold" style={{ 
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          scrollToPremium();
+                        }}
+                        className="px-4 py-2 text-sm font-bold rounded-lg transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
+                        style={{
+                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                          color: 'white',
+                          boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
+                        }}
+                      >
+                        <span>★</span>
+                        Get Pro
+                      </button>
+                      <h2 className="text-3xl sm:text-4xl font-bold text-center flex-1" style={{ 
                         color: '#8B5CF6',
                         textShadow: '0 0 20px rgba(139, 92, 246, 0.3)'
                       }}>
                         🎬 Sora Prompt Generator
                       </h2>
-                      <span className="px-3 py-1 text-sm font-bold rounded" style={{
-                        background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                        color: 'white',
-                      }}>
-                        PRO
-                      </span>
+                      <div className="w-[100px]"></div>
                     </div>
                     <p className="text-sm sm:text-base" style={{ 
                       color: theme === 'dark' ? 'rgba(139, 92, 246, 0.8)' : 'rgba(99, 102, 241, 0.9)'
                     }}>
                       Generate professional, detailed video prompts for OpenAI Sora
                     </p>
-                    
-                    {/* Get Pro Button for Free Users */}
-                    {!isPro && !isReorderMode && (
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setCurrentStep('premium');
-                        }}
-                        className="mt-3 sm:mt-0 sm:absolute sm:top-0 sm:right-14 px-4 py-2 rounded-lg font-bold transition-all hover:scale-105 flex items-center gap-2 shadow-lg mx-auto sm:mx-0"
-                        style={{
-                          background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
-                          color: 'white',
-                          boxShadow: '0 4px 15px rgba(139, 92, 246, 0.4)',
-                        }}
-                      >
-                        <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        Get Pro
-                      </button>
-                    )}
                   </div>
                   
                   {/* Usage Indicator */}
@@ -7076,12 +7090,17 @@ function HomeContent() {
                     e.stopPropagation();
                     toggleModuleCollapse('page-analyzer');
                   }}
-                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
-                  style={{ color: 'var(--text-secondary)' }}
+                  className="absolute top-4 right-4 p-3 rounded-xl transition-all z-10 hover:scale-110 active:scale-95"
+                  style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.15)',
+                    border: '2px solid rgba(41, 121, 255, 0.4)',
+                    color: '#2979FF',
+                    boxShadow: '0 0 12px rgba(41, 121, 255, 0.3)'
+                  }}
                   title="Minimize"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
                   </svg>
                 </button>
               )}
@@ -8563,17 +8582,22 @@ function HomeContent() {
               collapseAllModules();
             }
           }}
-          className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 p-3 sm:p-4 rounded-full shadow-2xl hover:scale-110 z-50 opacity-70 sm:opacity-100"
+          className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 rounded-full hover:scale-110 z-50 opacity-70 sm:opacity-100"
           style={{ 
-            backgroundColor: 'var(--card-bg)',
-            border: '3px solid var(--primary)',
-            transition: 'all 0.3s ease, transform 0.2s ease'
+            backgroundColor: 'transparent',
+            border: 'none',
+            padding: 0,
+            transition: 'all 0.3s ease, transform 0.2s ease',
+            filter: 'drop-shadow(0 0 8px rgba(41, 121, 255, 0.6)) drop-shadow(0 0 16px rgba(41, 121, 255, 0.4))'
           }}
           title={areAllModulesCollapsed() ? 'Expand All Modules' : 'Collapse All Modules'}
         >
-        <span className="text-2xl sm:text-3xl" style={{ transition: 'opacity 0.3s ease' }}>
-          {areAllModulesCollapsed() ? '📂' : '📁'}
-        </span>
+        <img 
+          src={areAllModulesCollapsed() ? '/icons/maximize.png' : '/icons/minimize.png'}
+          alt={areAllModulesCollapsed() ? 'Expand' : 'Collapse'}
+          className="w-12 h-12 sm:w-14 sm:h-14"
+          style={{ transition: 'opacity 0.3s ease', display: 'block' }}
+        />
       </button>
       )}
 
@@ -8581,17 +8605,22 @@ function HomeContent() {
       {!isReorderMode && (
         <button
           onClick={toggleTheme}
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 p-3 sm:p-4 rounded-full shadow-2xl hover:scale-110 z-50 opacity-70 sm:opacity-100"
+          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 rounded-full hover:scale-110 z-50 opacity-70 sm:opacity-100"
           style={{ 
-            backgroundColor: 'var(--card-bg)',
-            border: '3px solid var(--primary)',
-            transition: 'all 0.3s ease, transform 0.2s ease'
+            backgroundColor: 'transparent',
+            border: 'none',
+            padding: 0,
+            transition: 'all 0.3s ease, transform 0.2s ease',
+            filter: 'drop-shadow(0 0 8px rgba(41, 121, 255, 0.6)) drop-shadow(0 0 16px rgba(41, 121, 255, 0.4))'
           }}
           title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
         >
-        <span className="text-2xl sm:text-3xl" style={{ transition: 'opacity 0.3s ease' }}>
-          {theme === 'light' ? '🌙' : '☀️'}
-        </span>
+        <img 
+          src={theme === 'light' ? '/icons/darkmode.png' : '/icons/lightmode.png'}
+          alt={theme === 'light' ? 'Dark Mode' : 'Light Mode'}
+          className="w-12 h-12 sm:w-14 sm:h-14"
+          style={{ transition: 'opacity 0.3s ease', display: 'block' }}
+        />
       </button>
       )}
 

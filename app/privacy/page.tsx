@@ -130,37 +130,21 @@ export default function PrivacyPolicy() {
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">8. Important Notice About Uploaded Content</h2>
-            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
-              <p className="font-semibold text-yellow-800 mb-2">⚠️ Please Note:</p>
-              <p className="text-yellow-700">
-                Only upload screenshots of <strong>public social media profiles</strong>. Do not upload screenshots containing:
-              </p>
-              <ul className="list-disc pl-6 mt-2 text-yellow-700">
-                <li>Private messages or direct messages</li>
-                <li>Confidential or sensitive information</li>
-                <li>Content you don't have permission to share</li>
-                <li>Personal information of others without consent</li>
-              </ul>
-            </div>
-          </section>
-
-          <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Children's Privacy</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">8. Children's Privacy</h2>
             <p>
               Our services are not intended for users under 13 years of age. We do not knowingly collect personal information from children under 13.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">10. Changes to This Policy</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Changes to This Policy</h2>
             <p>
               We may update this Privacy Policy from time to time. We will notify you of significant changes by posting the new policy on this page and updating the "Last Updated" date.
             </p>
           </section>
 
           <section>
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">11. Contact Us</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">10. Contact Us</h2>
             <p className="mb-4">
               If you have questions about this Privacy Policy or our data practices, please contact us:
             </p>
