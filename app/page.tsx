@@ -222,6 +222,7 @@ function HomeContent() {
   // Module Reorder State
   const [isReorderMode, setIsReorderMode] = useState<boolean>(false);
   const [moduleOrder, setModuleOrder] = useState<string[]>([
+    'music-generator',
     'collab-engine',
     'trend-radar',
     'idea-generator',
@@ -233,7 +234,7 @@ function HomeContent() {
 
   // Module Collapse State
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(
-    new Set(['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'page-analyzer'])
+    new Set(['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'page-analyzer'])
   );
 
   const toggleModuleCollapse = (moduleId: string) => {
@@ -249,7 +250,7 @@ function HomeContent() {
   };
 
   const collapseAllModules = () => {
-    const allModules = ['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'page-analyzer'];
+    const allModules = ['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'page-analyzer'];
     setCollapsedModules(new Set(allModules));
   };
 
@@ -258,7 +259,7 @@ function HomeContent() {
   };
 
   const areAllModulesCollapsed = () => {
-    const allModules = ['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'page-analyzer'];
+    const allModules = ['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'page-analyzer'];
     return allModules.every(module => collapsedModules.has(module));
   };
 
@@ -309,8 +310,76 @@ function HomeContent() {
   const [soraMood, setSoraMood] = useState<string>("");
   const [soraPrompts, setSoraPrompts] = useState<any[]>([]);
   const [isGeneratingSora, setIsGeneratingSora] = useState<boolean>(false);
+
+  // Music Generator State
+  const [musicPrompt, setMusicPrompt] = useState<string>("");
+  const [musicDuration, setMusicDuration] = useState<number>(30);
+  const [musicType, setMusicType] = useState<string>("instrumental");
+  const [isGeneratingMusic, setIsGeneratingMusic] = useState<boolean>(false);
+  const [musicProgress, setMusicProgress] = useState<number>(0);
+  const [generatedMusic, setGeneratedMusic] = useState<any>(null);
+  const [musicHistory, setMusicHistory] = useState<any[]>([]);
+  const [showMusicHistory, setShowMusicHistory] = useState<boolean>(false);
   const [soraUsageCount, setSoraUsageCount] = useState<number>(0);
   const [showSoraPaywall, setShowSoraPaywall] = useState<boolean>(false);
+
+  // Music generation function
+  const generateMusic = async () => {
+    if (!musicPrompt.trim()) {
+      alert('Please describe the music you want to create!');
+      return;
+    }
+
+    setIsGeneratingMusic(true);
+    setMusicProgress(0);
+    
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      setMusicProgress(prev => {
+        if (prev >= 95) {
+          clearInterval(progressInterval);
+          return 95;
+        }
+        return prev + 1;
+      });
+    }, (musicDuration * 1000) / 95);
+
+    try {
+      const response = await fetch('/api/test-music', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          prompt: musicPrompt,
+          duration: musicDuration,
+          type: musicType,
+        }),
+      });
+
+      clearInterval(progressInterval);
+      const data = await response.json();
+
+      if (response.ok) {
+        const musicData = {
+          ...data,
+          timestamp: new Date().toISOString(),
+          id: Date.now(),
+        };
+        setGeneratedMusic(musicData);
+        setMusicHistory(prev => [musicData, ...prev].slice(0, 10)); // Keep last 10
+        setMusicProgress(100);
+      } else {
+        alert(data.error || 'Failed to generate music');
+        setMusicProgress(0);
+      }
+    } catch (error) {
+      clearInterval(progressInterval);
+      console.error('Error generating music:', error);
+      alert('Failed to generate music. Please try again.');
+      setMusicProgress(0);
+    } finally {
+      setIsGeneratingMusic(false);
+    }
+  };
 
   // Page Analyzer State
   const [pageScreenshot, setPageScreenshot] = useState<File | null>(null);
@@ -5171,6 +5240,397 @@ function HomeContent() {
               </div>
             )}
             </div>
+            </div>
+          </div>
+        )}
+
+        {/* Music Generator */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('music-generator')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'music-generator')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'music-generator')}
+            onClick={() => !isReorderMode && collapsedModules.has('music-generator') && toggleModuleCollapse('music-generator')}
+            className="rounded-2xl shadow-lg border scroll-mt-4 relative overflow-hidden"
+            style={{
+              transition: 'max-height 1.5s cubic-bezier(0.65, 0, 0.35, 1), padding 1.5s cubic-bezier(0.65, 0, 0.35, 1), margin-bottom 0.3s ease-out, transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              marginBottom: collapsedModules.has('music-generator') ? '1rem' : '2.5rem',
+              backgroundColor: theme === 'dark' 
+                ? 'rgba(41, 121, 255, 0.12)' 
+                : 'rgba(41, 121, 255, 0.03)',
+              borderColor: dragOverModule === 'music-generator'
+                ? '#2979FF'
+                : (isReorderMode && user)
+                  ? (theme === 'dark' ? 'rgba(41, 121, 255, 0.6)' : 'rgba(41, 121, 255, 0.5)')
+                  : (theme === 'dark'
+                    ? 'rgba(41, 121, 255, 0.4)'
+                    : 'rgba(41, 121, 255, 0.3)'),
+              boxShadow: draggedModule === 'music-generator'
+                ? '0 16px 48px rgba(41, 121, 255, 0.45), 0 0 0 2px rgba(41, 121, 255, 0.6), 0 0 20px rgba(41, 121, 255, 0.3)'
+                : dragOverModule === 'music-generator'
+                  ? '0 0 0 3px rgba(41, 121, 255, 0.5), 0 0 20px rgba(41, 121, 255, 0.3)'
+                  : (isReorderMode && user)
+                    ? (theme === 'dark'
+                      ? '0 8px 32px rgba(41, 121, 255, 0.4), 0 0 0 2px rgba(41, 121, 255, 0.5), 0 0 20px rgba(41, 121, 255, 0.25)'
+                      : '0 8px 32px rgba(41, 121, 255, 0.3), 0 0 0 2px rgba(41, 121, 255, 0.4), 0 0 15px rgba(41, 121, 255, 0.2)')
+                    : (theme === 'dark'
+                      ? '0 4px 20px rgba(41, 121, 255, 0.25), 0 0 15px rgba(41, 121, 255, 0.15)'
+                      : '0 4px 20px rgba(41, 121, 255, 0.15), 0 0 10px rgba(41, 121, 255, 0.1)'),
+              order: moduleOrder.indexOf('music-generator'),
+              cursor: (isReorderMode && user) ? (draggedModule === 'music-generator' ? 'grabbing' : 'grab') : (collapsedModules.has('music-generator') ? 'pointer' : 'default'),
+              opacity: 1,
+              transform: draggedModule === 'music-generator' 
+                ? 'scale(1.05) rotate(2deg)' 
+                : 'scale(1)',
+              padding: collapsedModules.has('music-generator') ? '1rem' : '1.5rem',
+              zIndex: draggedModule === 'music-generator' ? 1000 : 'auto',
+              maxHeight: collapsedModules.has('music-generator') ? '80px' : '2000px',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Drop Indicator - Top */}
+            {dragOverModule === 'music-generator' && dropPosition === 'before' && draggedModule !== 'music-generator' && (
+              <div 
+                className="absolute -top-2 left-0 right-0 h-1 rounded-full"
+                style={{
+                  backgroundColor: '#2979FF',
+                  boxShadow: '0 0 16px rgba(41, 121, 255, 0.8)',
+                  zIndex: 1001,
+                }}
+              />
+            )}
+            
+            {/* Drop Indicator - Bottom */}
+            {dragOverModule === 'music-generator' && dropPosition === 'after' && draggedModule !== 'music-generator' && (
+              <div 
+                className="absolute -bottom-2 left-0 right-0 h-1 rounded-full"
+                style={{
+                  backgroundColor: '#2979FF',
+                  boxShadow: '0 0 16px rgba(41, 121, 255, 0.8)',
+                  zIndex: 1001,
+                }}
+              />
+            )}
+
+            {/* Collapsed Bar View */}
+            <div 
+              className="flex items-center justify-between gap-2"
+              style={{
+                transition: 'opacity 0.8s ease-in-out',
+                opacity: collapsedModules.has('music-generator') ? 1 : 0,
+                pointerEvents: collapsedModules.has('music-generator') ? 'auto' : 'none',
+                position: collapsedModules.has('music-generator') ? 'relative' : 'absolute',
+                visibility: collapsedModules.has('music-generator') ? 'visible' : 'hidden',
+              }}
+            >
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                <span className="text-3xl flex-shrink-0">🎵</span>
+                <h3 className="text-lg sm:text-xl font-bold truncate" style={{ color: 'var(--secondary)' }}>
+                  Music Generator
+                </h3>
+              </div>
+              <span className="text-sm opacity-60 flex-shrink-0 hidden sm:block" style={{ color: 'var(--text-secondary)' }}>
+                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+              </span>
+            </div>
+
+            {/* Expanded Content */}
+            <div
+              style={{
+                transition: 'opacity 0.8s ease-in-out',
+                opacity: collapsedModules.has('music-generator') ? 0 : 1,
+                pointerEvents: collapsedModules.has('music-generator') ? 'none' : 'auto',
+                position: collapsedModules.has('music-generator') ? 'absolute' : 'relative',
+                visibility: collapsedModules.has('music-generator') ? 'hidden' : 'visible',
+              }}
+            >
+              {/* Minimize Button */}
+              {!collapsedModules.has('music-generator') && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleModuleCollapse('music-generator');
+                  }}
+                  className="absolute top-2 right-2 sm:top-4 sm:right-4 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center transition-all hover:scale-110 p-2 sm:p-3"
+                  style={{
+                    backgroundColor: 'rgba(41, 121, 255, 0.15)',
+                    border: '2px solid rgba(41, 121, 255, 0.4)',
+                    color: '#2979FF',
+                    fontSize: '14px',
+                    fontWeight: 'bold',
+                    zIndex: 10,
+                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)',
+                  }}
+                  title="Minimize"
+                >
+                  −
+                </button>
+              )}
+
+              <h2 className="text-3xl sm:text-4xl font-bold text-center mb-2" style={{ 
+                color: '#2979FF',
+                textShadow: '0 0 20px rgba(41, 121, 255, 0.3)'
+              }}>
+                🎵 Music Generator
+              </h2>
+              <p className="text-center mb-6" style={{ color: 'var(--text-secondary)' }}>
+                Create unique music tracks powered by AI
+              </p>
+
+              <div className="space-y-4">
+                {/* Song Duration Slider */}
+                <div>
+                  <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Song Length: {musicDuration}s
+                  </label>
+                  <input
+                    type="range"
+                    min="10"
+                    max="120"
+                    step="10"
+                    value={musicDuration}
+                    onChange={(e) => setMusicDuration(Number(e.target.value))}
+                    disabled={isGeneratingMusic}
+                    className="w-full h-2 rounded-lg appearance-none cursor-pointer"
+                    style={{
+                      background: `linear-gradient(to right, #2979FF 0%, #2979FF ${((musicDuration - 10) / 110) * 100}%, ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} ${((musicDuration - 10) / 110) * 100}%, ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} 100%)`,
+                    }}
+                  />
+                  <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                    <span>10s</span>
+                    <span>120s</span>
+                  </div>
+                </div>
+
+                {/* Music Type Dropdown */}
+                <div>
+                  <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Music Type
+                  </label>
+                  <select
+                    value={musicType}
+                    onChange={(e) => setMusicType(e.target.value)}
+                    disabled={isGeneratingMusic}
+                    className="w-full px-4 py-3 rounded-lg border-2 transition-all"
+                    style={{
+                      backgroundColor: 'var(--input-bg)',
+                      borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.4)' : 'rgba(41, 121, 255, 0.3)',
+                      color: 'var(--text-primary)',
+                    }}
+                  >
+                    <option value="instrumental">Instrumental</option>
+                    <option value="vocals">With Vocals</option>
+                  </select>
+                </div>
+
+                {/* Music Prompt */}
+                <div>
+                  <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Describe Your Music
+                  </label>
+                  <textarea
+                    value={musicPrompt}
+                    onChange={(e) => setMusicPrompt(e.target.value)}
+                    disabled={isGeneratingMusic}
+                    placeholder="E.g., 'Upbeat electronic dance music' or 'Calm acoustic guitar'"
+                    className="w-full px-4 py-3 rounded-lg border-2 transition-all resize-none text-sm sm:text-base"
+                    rows={4}
+                    style={{
+                      backgroundColor: 'var(--input-bg)',
+                      borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.4)' : 'rgba(41, 121, 255, 0.3)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                </div>
+
+                {/* Generate Button */}
+                {!generatedMusic && (
+                  <button
+                    onClick={generateMusic}
+                    disabled={isGeneratingMusic || !musicPrompt.trim()}
+                    className="w-full py-4 rounded-lg font-bold text-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    style={{
+                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                      color: 'white',
+                      boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
+                    }}
+                  >
+                    {isGeneratingMusic ? '🎵 Generating...' : '🎵 Generate Music'}
+                  </button>
+                )}
+
+                {/* Progress Bar */}
+                {isGeneratingMusic && (
+                  <div className="space-y-2">
+                    <div className="w-full h-3 rounded-full overflow-hidden" style={{
+                      backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                    }}>
+                      <div 
+                        className="h-full transition-all duration-300 rounded-full"
+                        style={{
+                          width: `${musicProgress}%`,
+                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                          boxShadow: '0 0 10px rgba(41, 121, 255, 0.5)'
+                        }}
+                      />
+                    </div>
+                    <p className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      Creating your music... {musicProgress}%
+                    </p>
+                  </div>
+                )}
+
+                {/* Audio Player & Download */}
+                {generatedMusic && (
+                  <div className="mt-6 p-4 rounded-lg" style={{
+                    backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
+                    border: '2px solid rgba(41, 121, 255, 0.3)',
+                  }}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="text-2xl">✅</span>
+                      <h3 className="font-bold text-lg" style={{ color: '#2979FF' }}>
+                        Music Generated!
+                      </h3>
+                    </div>
+
+                    {/* Audio Player */}
+                    <audio
+                      controls
+                      className="w-full mb-4"
+                      style={{
+                        borderRadius: '8px',
+                        outline: 'none',
+                      }}
+                    >
+                      <source src={generatedMusic.audio} type="audio/mpeg" />
+                      Your browser does not support the audio element.
+                    </audio>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = generatedMusic.audio;
+                          link.download = `postready-music-${Date.now()}.mp3`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }}
+                        className="flex-1 py-3 px-4 rounded-lg font-bold text-sm sm:text-base transition-all hover:scale-105 active:scale-95"
+                        style={{
+                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                          color: 'white',
+                          boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
+                        }}
+                      >
+                        💾 Download
+                      </button>
+                      <div className="flex gap-3">
+                        <button
+                          onClick={() => {
+                            setGeneratedMusic(null);
+                            setMusicProgress(0);
+                            generateMusic();
+                          }}
+                          disabled={isGeneratingMusic}
+                          className="flex-1 py-3 px-4 rounded-lg font-bold text-sm sm:text-base transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                          style={{
+                            background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                            color: 'white',
+                            boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
+                          }}
+                        >
+                          🎵 Generate New
+                        </button>
+                        {musicHistory.length > 0 && (
+                          <button
+                            onClick={() => setShowMusicHistory(!showMusicHistory)}
+                            className="py-3 px-4 rounded-lg font-bold transition-all hover:scale-105 active:scale-95 flex-shrink-0"
+                            style={{
+                              backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                              color: 'var(--text-primary)',
+                            }}
+                            title="View History"
+                          >
+                            📜
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* Music History Panel */}
+                {showMusicHistory && musicHistory.length > 0 && (
+                  <div className="mt-6 p-4 rounded-lg" style={{
+                    backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
+                    border: '2px solid rgba(41, 121, 255, 0.3)',
+                  }}>
+                    <div className="flex items-center justify-between mb-4">
+                      <h3 className="font-bold text-lg" style={{ color: '#2979FF' }}>
+                        📜 Music History
+                      </h3>
+                      <button
+                        onClick={() => setShowMusicHistory(false)}
+                        className="text-sm opacity-60 hover:opacity-100"
+                        style={{ color: 'var(--text-primary)' }}
+                      >
+                        ✕ Close
+                      </button>
+                    </div>
+                    <div className="space-y-3 max-h-96 overflow-y-auto">
+                      {musicHistory.map((music) => (
+                        <div
+                          key={music.id}
+                          className="p-3 rounded-lg"
+                          style={{
+                            backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                            border: '1px solid rgba(41, 121, 255, 0.2)',
+                          }}
+                        >
+                          <div className="flex items-start justify-between gap-3 mb-2">
+                            <div className="flex-1 min-w-0">
+                              <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
+                                {music.prompt}
+                              </p>
+                              <p className="text-xs opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                                {new Date(music.timestamp).toLocaleString()} • {music.duration}s • {music.type}
+                              </p>
+                            </div>
+                            <button
+                              onClick={() => {
+                                setGeneratedMusic(music);
+                                setShowMusicHistory(false);
+                              }}
+                              className="px-3 py-1 text-xs rounded-lg font-bold transition-all hover:scale-105"
+                              style={{
+                                background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                                color: 'white',
+                              }}
+                            >
+                              Load
+                            </button>
+                          </div>
+                          <audio
+                            controls
+                            className="w-full"
+                            style={{
+                              height: '32px',
+                              borderRadius: '4px',
+                            }}
+                          >
+                            <source src={music.audio} type="audio/mpeg" />
+                          </audio>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
