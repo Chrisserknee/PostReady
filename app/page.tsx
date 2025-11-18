@@ -295,8 +295,12 @@ function HomeContent() {
   const [viralTopic, setViralTopic] = useState<string>("");
   const [viralIdeas, setViralIdeas] = useState<any[]>([]);
   const [isGeneratingViralIdeas, setIsGeneratingViralIdeas] = useState<boolean>(false);
+  const [viralIdeasProgress, setViralIdeasProgress] = useState<number>(0);
   const [viralIdeasUsageCount, setViralIdeasUsageCount] = useState<number>(0);
   const [showViralIdeasPaywall, setShowViralIdeasPaywall] = useState<boolean>(false);
+  const [showGuideInput, setShowGuideInput] = useState<boolean>(false);
+  const [guidePrompt, setGuidePrompt] = useState<string>("");
+  const [isRefining, setIsRefining] = useState<boolean>(false);
 
   // Sora Prompt Generator State
   const [soraVideoIdea, setSoraVideoIdea] = useState<string>("");
@@ -4296,7 +4300,7 @@ function HomeContent() {
                 </span>
               </div>
               <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
-                Get 10 strategically engineered video ideas with hooks, viral mechanics, platform recommendations, and production tips
+                Get strategically engineered video ideas with hooks, viral mechanics, platform recommendations, and production tips
               </p>
             </div>
 
@@ -4357,6 +4361,15 @@ function HomeContent() {
               
               setIsGeneratingViralIdeas(true);
               setViralIdeas([]);
+              setViralIdeasProgress(0);
+              
+              // Simulate progress - slower and more realistic
+              const progressInterval = setInterval(() => {
+                setViralIdeasProgress(prev => {
+                  if (prev >= 85) return prev; // Stop at 85% until complete
+                  return prev + Math.random() * 8; // Slower increments
+                });
+              }, 800); // Slower updates
               
               try {
                 const response = await fetch('/api/generate-viral-ideas', {
@@ -4370,12 +4383,17 @@ function HomeContent() {
                 }
                 
                 const data = await response.json();
+                setViralIdeasProgress(100);
                 setViralIdeas(data.ideas || []);
               } catch (error) {
                 console.error('Error generating viral ideas:', error);
                 showNotification("Failed to generate ideas. Please try again.", "error");
               } finally {
-                setIsGeneratingViralIdeas(false);
+                clearInterval(progressInterval);
+                setTimeout(() => {
+                  setIsGeneratingViralIdeas(false);
+                  setViralIdeasProgress(0);
+                }, 500);
               }
             }} className="space-y-4">
               <div className="space-y-2">
@@ -4396,6 +4414,25 @@ function HomeContent() {
                   }}
                 />
               </div>
+
+              {isGeneratingViralIdeas && (
+                <div className="space-y-2">
+                  <div className="flex justify-between text-sm" style={{ color: 'var(--text-secondary)' }}>
+                    <span>Generating ideas...</span>
+                    <span>{Math.round(viralIdeasProgress)}%</span>
+                  </div>
+                  <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--card-border)' }}>
+                    <div 
+                      className="h-full rounded-full transition-all duration-500 ease-out"
+                      style={{
+                        width: `${viralIdeasProgress}%`,
+                        background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                        boxShadow: '0 0 10px rgba(41, 121, 255, 0.5)'
+                      }}
+                    />
+                  </div>
+                </div>
+              )}
 
               <button
                 type="submit"
@@ -4423,7 +4460,7 @@ function HomeContent() {
             {isPro && viralIdeas.length > 0 && (
               <div className="mt-8 space-y-4">
                 <h3 className="text-2xl font-bold text-center" style={{ color: 'var(--secondary)' }}>
-                  🎬 10 Viral Video Ideas
+                  🎬 Viral Video Ideas
                 </h3>
                 {viralIdeas.map((idea: any, index: number) => (
                   <div 
@@ -4452,7 +4489,7 @@ function HomeContent() {
                           {idea.description}
                         </p>
                         <div 
-                          className="p-4 rounded-lg"
+                          className="p-4 rounded-lg mb-4"
                           style={{ backgroundColor: theme === 'dark' ? 'rgba(111, 255, 210, 0.08)' : 'rgba(111, 255, 210, 0.05)' }}
                         >
                           <p className="text-sm font-semibold mb-1" style={{ color: '#6FFFD2' }}>
@@ -4462,6 +4499,136 @@ function HomeContent() {
                             {idea.whyViral}
                           </p>
                         </div>
+
+                        {/* Guide AI Button */}
+                        {!showGuideInput ? (
+                          <div className="flex justify-center">
+                            <button
+                              onClick={() => setShowGuideInput(true)}
+                              className="py-2 px-4 rounded-lg font-semibold transition-all hover:scale-105 active:scale-95"
+                              style={{
+                                background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                                color: 'white',
+                                boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
+                              }}
+                            >
+                              Guide AI
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-3">
+                            <textarea
+                              value={guidePrompt}
+                              onChange={(e) => setGuidePrompt(e.target.value)}
+                              placeholder="Tell AI how to adjust this idea... (e.g., 'Make it funnier', 'Target younger audience', 'Add more suspense')"
+                              rows={3}
+                              className="w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 border text-sm"
+                              style={{
+                                backgroundColor: 'var(--card-bg)',
+                                borderColor: 'var(--card-border)',
+                                color: 'var(--text-primary)',
+                                resize: 'none'
+                              }}
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={async () => {
+                                  if (!guidePrompt.trim()) return;
+                                  
+                                  setIsRefining(true);
+                                  setViralIdeasProgress(0);
+                                  
+                                  const progressInterval = setInterval(() => {
+                                    setViralIdeasProgress(prev => {
+                                      if (prev >= 85) return prev;
+                                      return prev + Math.random() * 8;
+                                    });
+                                  }, 800);
+                                  
+                                  try {
+                                    const response = await fetch('/api/generate-viral-ideas', {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ 
+                                        topic: viralTopic,
+                                        guidance: guidePrompt,
+                                        previousIdea: idea
+                                      }),
+                                    });
+                                    
+                                    if (!response.ok) throw new Error('Failed to refine idea');
+                                    
+                                    const data = await response.json();
+                                    setViralIdeasProgress(100);
+                                    setViralIdeas(data.ideas || []);
+                                    setGuidePrompt("");
+                                    setShowGuideInput(false);
+                                  } catch (error) {
+                                    console.error('Error refining idea:', error);
+                                    showNotification("Failed to refine idea. Please try again.", "error");
+                                  } finally {
+                                    clearInterval(progressInterval);
+                                    setTimeout(() => {
+                                      setIsRefining(false);
+                                      setViralIdeasProgress(0);
+                                    }, 500);
+                                  }
+                                }}
+                                disabled={isRefining || !guidePrompt.trim()}
+                                className="flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                                style={{
+                                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                                  color: 'white'
+                                }}
+                              >
+                                {isRefining ? (
+                                  <>
+                                    <span className="animate-spin">🔄</span>
+                                    Refining...
+                                  </>
+                                ) : (
+                                  <>
+                                    <span>✨</span>
+                                    Apply Changes
+                                  </>
+                                )}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setShowGuideInput(false);
+                                  setGuidePrompt("");
+                                }}
+                                className="px-4 py-2.5 rounded-lg font-semibold transition-all hover:scale-[1.02]"
+                                style={{
+                                  backgroundColor: 'var(--card-bg)',
+                                  border: '2px solid var(--card-border)',
+                                  color: 'var(--text-secondary)'
+                                }}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                            
+                            {isRefining && (
+                              <div className="space-y-2">
+                                <div className="flex justify-between text-sm" style={{ color: 'var(--text-secondary)' }}>
+                                  <span>Refining idea...</span>
+                                  <span>{Math.round(viralIdeasProgress)}%</span>
+                                </div>
+                                <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--card-border)' }}>
+                                  <div 
+                                    className="h-full rounded-full transition-all duration-500 ease-out"
+                                    style={{
+                                      width: `${viralIdeasProgress}%`,
+                                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                                      boxShadow: '0 0 10px rgba(41, 121, 255, 0.5)'
+                                    }}
+                                  />
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -4795,7 +4962,7 @@ function HomeContent() {
                                 );
                               })()}
                               
-                              <h4 className="text-sm font-bold flex-1 min-w-0 truncate" style={{ color: 'var(--text-primary)' }}>
+                              <h4 className="text-sm font-bold flex-1 min-w-0 break-words" style={{ color: 'var(--text-primary)' }}>
                                 {hashtag.tag}
                               </h4>
                           </div>

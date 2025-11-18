@@ -7,13 +7,13 @@ const openai = new OpenAI({
 
 export async function POST(req: Request) {
   try {
-    const { topic } = await req.json();
+    const { topic, guidance, previousIdea } = await req.json();
 
     if (!topic) {
       return NextResponse.json({ error: "Topic is required" }, { status: 400 });
     }
 
-    console.log(`🎥 Generating INTELLIGENT viral video ideas for topic: ${topic}`);
+    console.log(`🎥 Generating INTELLIGENT viral video ideas for topic: ${topic}${guidance ? ' with guidance' : ''}`);
 
     // Step 1: Analyze the niche and audience deeply
     const analysisCompletion = await openai.chat.completions.create({
@@ -61,18 +61,25 @@ Be specific and strategic. Think like a viral content scientist.`,
           role: "system",
           content: `You are THE BEST viral video strategist in the world. You've created content that has generated billions of views. You don't just suggest ideas - you engineer viral content with scientific precision.
 
+CRITICAL: Generate ideas that are REALISTIC and ACHIEVABLE for regular creators. Ideas should:
+- Require minimal equipment (just a phone camera is fine)
+- Be filmable in one location (bedroom, kitchen, park, etc.)
+- Not require special effects, actors, or expensive props
+- Be doable by one person or with simple help
+- Focus on storytelling, hooks, and editing rather than production value
+
 For each video idea, you must provide:
 
 1. **title**: A magnetic, scroll-stopping title that creates curiosity gap or emotional trigger (max 80 chars)
 
-2. **hook**: The exact first 3 seconds that stop the scroll. This is THE MOST IMPORTANT part. Include the specific words/visual/action that hooks viewers. (2-3 sentences)
+2. **hook**: The exact first 3 seconds that stop the scroll. This is THE MOST IMPORTANT part. Include the specific words/visual/action that hooks viewers. Must be SIMPLE to execute. (2-3 sentences)
 
 3. **description**: Detailed content breakdown including:
-   - Opening (first 3-5 seconds)
+   - Opening (first 3-5 seconds) - keep it SIMPLE
    - Middle structure (how to maintain engagement)
    - Climax/payoff (what keeps them watching)
    - Call-to-action
-   (4-5 sentences)
+   Focus on what's EASY to film, not elaborate productions. (4-5 sentences)
 
 4. **whyViral**: Deep analysis of viral mechanics:
    - Specific psychological triggers (curiosity, FOMO, social proof, controversy, etc.)
@@ -85,27 +92,66 @@ For each video idea, you must provide:
 
 6. **targetAudience**: Specific audience segment and why they'll engage
 
-7. **productionTips**: 2-3 specific, practical tips for filming this successfully
+7. **productionTips**: 2-3 specific, practical tips for filming this successfully WITH MINIMAL EQUIPMENT
 
 8. **estimatedViralPotential**: "High", "Very High", or "Extremely High" with reasoning
 
 Generate ideas that are:
+- SIMPLE and ACHIEVABLE for solo creators with just a phone
 - Novel and fresh (not generic advice everyone gives)
 - Highly specific to the niche
 - Built on proven viral formats but with unique twists
-- Immediately actionable
+- Immediately actionable WITHOUT special equipment or budget
 - Designed for 2024-2025 algorithm preferences
+- Focused on storytelling and hooks, NOT production complexity
 
 CONTEXT FOR THIS TOPIC:
 ${analysis}
 
-Now generate 2 video ideas that are MORE INTELLIGENT than generic ChatGPT responses.`,
+Now generate 1 video idea that is MORE INTELLIGENT than generic ChatGPT responses.`,
         },
         {
           role: "user",
-          content: `Generate 2 ULTRA-INTELLIGENT viral video ideas for: "${topic}"
+          content: guidance && previousIdea 
+            ? `REFINE this existing video idea based on user guidance:
 
-Each idea should be:
+PREVIOUS IDEA:
+Title: ${previousIdea.title}
+Description: ${previousIdea.description}
+Why Viral: ${previousIdea.whyViral}
+
+USER GUIDANCE: "${guidance}"
+
+Generate 1 REFINED video idea that incorporates the user's guidance while maintaining viral potential.
+
+The refined idea should:
+✅ Address the user's specific guidance
+✅ Keep the core viral mechanics that work
+✅ Improve based on the feedback
+✅ Maintain or increase viral potential
+
+Format as JSON with structure:
+{
+  "ideas": [
+    {
+      "title": "...",
+      "hook": "...",
+      "description": "...",
+      "whyViral": "...",
+      "platform": "...",
+      "targetAudience": "...",
+      "productionTips": "...",
+      "estimatedViralPotential": "..."
+    }
+  ]
+}`
+            : `Generate 1 ULTRA-INTELLIGENT viral video idea for: "${topic}"
+
+IMPORTANT: The idea must be SIMPLE and ACHIEVABLE:
+✅ Filmable with just a phone camera
+✅ Doable in one simple location (bedroom, kitchen, etc.)
+✅ No special effects or expensive equipment needed
+✅ Can be done by one person
 ✅ Backed by viral psychology and platform algorithms
 ✅ Novel and fresh (not generic)
 ✅ Immediately actionable with specific hooks
