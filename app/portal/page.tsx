@@ -400,44 +400,6 @@ export default function UserPortal() {
           </h2>
           <div className="space-y-3">
             <button
-              onClick={() => router.push('/?view=businesses')}
-              className="w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-105"
-              style={{ 
-                borderColor: 'var(--card-border)',
-                backgroundColor: 'var(--card-bg)'
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>My Businesses</h3>
-                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>View and manage your saved businesses</p>
-                </div>
-                <span style={{ 
-                  color: isCreator && isPro ? '#DAA520' : 'var(--primary)' 
-                }}>→</span>
-              </div>
-            </button>
-
-            <button
-              onClick={() => router.push('/?view=history')}
-              className="w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-105"
-              style={{ 
-                borderColor: 'var(--card-border)',
-                backgroundColor: 'var(--card-bg)'
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold" style={{ color: 'var(--text-primary)' }}>Post History</h3>
-                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>View all your completed posts</p>
-                </div>
-                <span style={{ 
-                  color: isCreator && isPro ? '#DAA520' : 'var(--primary)' 
-                }}>→</span>
-              </div>
-            </button>
-
-            <button
               onClick={() => setShowSupportModal(true)}
               className="w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-105"
               style={{ 
