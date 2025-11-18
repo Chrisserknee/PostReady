@@ -3189,7 +3189,7 @@ function HomeContent() {
                     e.stopPropagation();
                     toggleModuleCollapse('collab-engine');
                   }}
-                  className="absolute top-1 right-1 sm:top-2 sm:right-2 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
+                  className="absolute top-1 right-2 sm:top-2 sm:right-3 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
                   style={{ 
                     backgroundColor: 'rgba(41, 121, 255, 0.15)',
                     border: '2px solid rgba(41, 121, 255, 0.4)',
