@@ -252,7 +252,7 @@ function HomeContent() {
   };
 
   const collapseAllModules = () => {
-    const allModules = ['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'page-analyzer'];
+    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'page-analyzer'];
     setCollapsedModules(new Set(allModules));
   };
 
@@ -261,7 +261,7 @@ function HomeContent() {
   };
 
   const areAllModulesCollapsed = () => {
-    const allModules = ['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'page-analyzer'];
+    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'page-analyzer'];
     return allModules.every(module => collapsedModules.has(module));
   };
 
@@ -5338,14 +5338,14 @@ function HomeContent() {
               marginBottom: collapsedModules.has('digital-products') ? '1rem' : '2.5rem',
               backgroundColor: theme === 'dark' 
                 ? 'rgba(218, 165, 32, 0.08)' 
-                : 'rgba(255, 215, 0, 0.03)',
+                : 'rgba(218, 165, 32, 0.06)',
               borderColor: dragOverModule === 'digital-products'
                 ? '#DAA520'
                 : (isReorderMode && user)
-                  ? (theme === 'dark' ? 'rgba(218, 165, 32, 0.6)' : 'rgba(218, 165, 32, 0.5)')
+                  ? (theme === 'dark' ? 'rgba(218, 165, 32, 0.6)' : 'rgba(218, 165, 32, 0.6)')
                   : (theme === 'dark'
                     ? 'rgba(218, 165, 32, 0.4)'
-                    : 'rgba(218, 165, 32, 0.3)'),
+                    : 'rgba(218, 165, 32, 0.4)'),
               boxShadow: draggedModule === 'digital-products'
                 ? '0 16px 48px rgba(218, 165, 32, 0.35), 0 0 0 2px rgba(218, 165, 32, 0.5), 0 0 20px rgba(218, 165, 32, 0.25)'
                 : dragOverModule === 'digital-products'
@@ -5353,10 +5353,10 @@ function HomeContent() {
                   : (isReorderMode && user)
                     ? (theme === 'dark'
                       ? '0 8px 32px rgba(218, 165, 32, 0.3), 0 0 0 2px rgba(218, 165, 32, 0.4), 0 0 20px rgba(218, 165, 32, 0.2)'
-                      : '0 8px 32px rgba(218, 165, 32, 0.25), 0 0 0 2px rgba(218, 165, 32, 0.35), 0 0 15px rgba(218, 165, 32, 0.15)')
+                      : '0 8px 32px rgba(218, 165, 32, 0.3), 0 0 0 2px rgba(218, 165, 32, 0.4), 0 0 15px rgba(218, 165, 32, 0.2)')
                     : (theme === 'dark'
                       ? '0 4px 20px rgba(218, 165, 32, 0.2), 0 0 15px rgba(218, 165, 32, 0.12)'
-                      : '0 4px 20px rgba(218, 165, 32, 0.15), 0 0 10px rgba(218, 165, 32, 0.08)'),
+                      : '0 4px 20px rgba(218, 165, 32, 0.25), 0 0 15px rgba(218, 165, 32, 0.15)'),
               order: moduleOrder.indexOf('digital-products'),
               cursor: (isReorderMode && user) ? (draggedModule === 'digital-products' ? 'grabbing' : 'grab') : (collapsedModules.has('digital-products') ? 'pointer' : 'default'),
               opacity: 1,
@@ -5421,11 +5421,11 @@ function HomeContent() {
                     }}
                     className="absolute top-1 right-1 sm:top-2 sm:right-2 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
                     style={{
-                      backgroundColor: 'rgba(218, 165, 32, 0.15)',
-                      border: '2px solid rgba(218, 165, 32, 0.4)',
+                      backgroundColor: theme === 'dark' ? 'rgba(218, 165, 32, 0.15)' : 'rgba(218, 165, 32, 0.2)',
+                      border: `2px solid ${theme === 'dark' ? 'rgba(218, 165, 32, 0.4)' : 'rgba(218, 165, 32, 0.5)'}`,
                       color: '#DAA520',
                       zIndex: 10,
-                      boxShadow: '0 4px 12px rgba(218, 165, 32, 0.3)',
+                      boxShadow: theme === 'dark' ? '0 4px 12px rgba(218, 165, 32, 0.3)' : '0 4px 12px rgba(218, 165, 32, 0.4)',
                     }}
                     title="Minimize"
                   >
@@ -5471,9 +5471,9 @@ function HomeContent() {
                         key={product.id}
                         className="rounded-xl overflow-hidden border-2 transition-all hover:scale-105 hover:shadow-2xl"
                         style={{
-                          backgroundColor: theme === 'dark' ? 'rgba(218, 165, 32, 0.06)' : 'rgba(255, 215, 0, 0.03)',
-                          borderColor: theme === 'dark' ? 'rgba(218, 165, 32, 0.35)' : 'rgba(218, 165, 32, 0.25)',
-                          boxShadow: '0 4px 16px rgba(218, 165, 32, 0.1)',
+                          backgroundColor: theme === 'dark' ? 'rgba(218, 165, 32, 0.06)' : '#FFFEF7',
+                          borderColor: theme === 'dark' ? 'rgba(218, 165, 32, 0.35)' : 'rgba(218, 165, 32, 0.35)',
+                          boxShadow: theme === 'dark' ? '0 4px 16px rgba(218, 165, 32, 0.1)' : '0 4px 16px rgba(218, 165, 32, 0.15)',
                         }}
                       >
                         <div className="relative h-48 overflow-hidden">
@@ -5573,8 +5573,8 @@ function HomeContent() {
                   <div 
                     className="text-center p-4 rounded-lg"
                     style={{
-                      backgroundColor: theme === 'dark' ? 'rgba(218, 165, 32, 0.08)' : 'rgba(255, 215, 0, 0.05)',
-                      border: '1px solid rgba(218, 165, 32, 0.3)',
+                      backgroundColor: theme === 'dark' ? 'rgba(218, 165, 32, 0.08)' : 'rgba(218, 165, 32, 0.08)',
+                      border: `1px solid ${theme === 'dark' ? 'rgba(218, 165, 32, 0.3)' : 'rgba(218, 165, 32, 0.35)'}`,
                     }}
                   >
                     <p className="text-sm font-semibold" style={{ 
