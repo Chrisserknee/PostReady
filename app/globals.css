@@ -450,12 +450,14 @@ textarea::placeholder {
 html {
   background-color: var(--bg-primary);
   transition: background-color 0.2s ease-in-out;
+  overscroll-behavior: none; /* Prevent bounce/overscroll on mobile */
 }
 
 body {
   background-color: var(--bg-primary);
   transition: background-color 0.2s ease-in-out;
   min-height: 100vh;
+  overscroll-behavior: none; /* Prevent bounce/overscroll on mobile */
 }
 
 /* Prevent white flash during navigation */

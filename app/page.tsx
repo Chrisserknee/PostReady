@@ -2672,7 +2672,7 @@ function HomeContent() {
   }, []); // Empty deps = only generate once on mount
 
   return (
-    <div className="min-h-screen relative" style={{ backgroundColor: 'var(--background)' }}>
+    <div className="min-h-screen relative flex flex-col" style={{ backgroundColor: 'var(--background)' }}>
       {/* Tiny Glowing Stars Effect */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
         {/* Generate multiple small stars scattered across the screen */}
