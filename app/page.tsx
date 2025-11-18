@@ -21,6 +21,7 @@ import { saveUserProgress, loadUserProgress } from "@/lib/userProgress";
 import { saveBusiness, loadSavedBusinesses, saveCompletedPost, loadPostHistory, saveVideoIdea, loadSavedVideoIdeas, deleteSavedVideoIdea, SavedVideoIdea } from "@/lib/userHistory";
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import jsPDF from 'jspdf';
 
 type WizardStep = "form" | "researching" | "principles" | "choose-idea" | "record-video" | "generating-caption" | "post-details" | "premium" | "history" | "businesses" | "hashtag-research";
 
@@ -231,7 +232,9 @@ function HomeContent() {
   const [dropPosition, setDropPosition] = useState<'before' | 'after' | null>(null);
 
   // Module Collapse State
-  const [collapsedModules, setCollapsedModules] = useState<Set<string>>(new Set());
+  const [collapsedModules, setCollapsedModules] = useState<Set<string>>(
+    new Set(['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'page-analyzer'])
+  );
 
   const toggleModuleCollapse = (moduleId: string) => {
     setCollapsedModules(prev => {
@@ -246,7 +249,7 @@ function HomeContent() {
   };
 
   const collapseAllModules = () => {
-    const allModules = ['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt'];
+    const allModules = ['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'page-analyzer'];
     setCollapsedModules(new Set(allModules));
   };
 
@@ -255,7 +258,7 @@ function HomeContent() {
   };
 
   const areAllModulesCollapsed = () => {
-    const allModules = ['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt'];
+    const allModules = ['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'page-analyzer'];
     return allModules.every(module => collapsedModules.has(module));
   };
 
@@ -304,6 +307,20 @@ function HomeContent() {
   const [isGeneratingSora, setIsGeneratingSora] = useState<boolean>(false);
   const [soraUsageCount, setSoraUsageCount] = useState<number>(0);
   const [showSoraPaywall, setShowSoraPaywall] = useState<boolean>(false);
+
+  // Page Analyzer State
+  const [pageScreenshot, setPageScreenshot] = useState<File | null>(null);
+  const [pageScreenshotPreview, setPageScreenshotPreview] = useState<string>("");
+  const [pageAnalysis, setPageAnalysis] = useState<any>(null);
+  const [isAnalyzingPage, setIsAnalyzingPage] = useState<boolean>(false);
+  const [pageUserInfo, setPageUserInfo] = useState({
+    username: '',
+    fullName: '',
+    bioLinks: '',
+    followerCount: '',
+    postCount: '',
+    socialLink: '',
+  });
   
   // Generate or retrieve a persistent device ID
   const getDeviceId = () => {
@@ -3005,7 +3022,7 @@ function HomeContent() {
         </div>
 
         {/* Modules Container - uses flex to enable reordering */}
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
         {/* Collab Engine - Top of Homepage */}
         {currentStep === "form" && (
@@ -3018,8 +3035,9 @@ function HomeContent() {
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'collab-engine')}
             onClick={() => !isReorderMode && collapsedModules.has('collab-engine') && toggleModuleCollapse('collab-engine')}
-            className="mb-10 rounded-2xl shadow-lg border transition-all duration-500 relative"
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative"
             style={{
+              marginBottom: collapsedModules.has('collab-engine') ? '1rem' : '2.5rem',
               backgroundColor: 'var(--card-bg)',
               borderColor: dragOverModule === 'collab-engine' 
                 ? '#2979FF'
@@ -3909,8 +3927,9 @@ function HomeContent() {
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'trend-radar')}
             onClick={() => !isReorderMode && collapsedModules.has('trend-radar') && toggleModuleCollapse('trend-radar')}
-            className="mb-10 rounded-2xl shadow-lg border transition-all duration-500 relative"
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative"
             style={{
+              marginBottom: collapsedModules.has('trend-radar') ? '1rem' : '2.5rem',
               backgroundColor: 'var(--card-bg)',
               borderColor: dragOverModule === 'trend-radar'
                 ? '#2979FF'
@@ -4140,8 +4159,9 @@ function HomeContent() {
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'idea-generator')}
             onClick={() => !isReorderMode && collapsedModules.has('idea-generator') && toggleModuleCollapse('idea-generator')}
-            className="mb-10 rounded-2xl shadow-lg border transition-all duration-500 relative"
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative"
             style={{
+              marginBottom: collapsedModules.has('idea-generator') ? '1rem' : '2.5rem',
               backgroundColor: 'var(--card-bg)',
               borderColor: dragOverModule === 'idea-generator'
                 ? '#2979FF'
@@ -4437,8 +4457,9 @@ function HomeContent() {
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'hashtag-research')}
             onClick={() => !isReorderMode && collapsedModules.has('hashtag-research') && toggleModuleCollapse('hashtag-research')}
-            className="mb-10 rounded-2xl shadow-lg border transition-all duration-500 scroll-mt-4 relative"
+            className="rounded-2xl shadow-lg border transition-all duration-500 scroll-mt-4 relative"
             style={{
+              marginBottom: collapsedModules.has('hashtag-research') ? '1rem' : '2.5rem',
               backgroundColor: 'var(--card-bg)',
               borderColor: dragOverModule === 'hashtag-research'
                 ? '#2979FF'
@@ -4964,9 +4985,10 @@ function HomeContent() {
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'sora-prompt')}
             onClick={() => !isReorderMode && collapsedModules.has('sora-prompt') && toggleModuleCollapse('sora-prompt')}
-            className="mb-10 rounded-2xl shadow-lg border scroll-mt-4 relative overflow-hidden"
+            className="rounded-2xl shadow-lg border scroll-mt-4 relative overflow-hidden"
             style={{
-              transition: 'max-height 1.5s cubic-bezier(0.65, 0, 0.35, 1), padding 1.5s cubic-bezier(0.65, 0, 0.35, 1), transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              transition: 'max-height 1.5s cubic-bezier(0.65, 0, 0.35, 1), padding 1.5s cubic-bezier(0.65, 0, 0.35, 1), margin-bottom 0.3s ease-out, transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              marginBottom: collapsedModules.has('sora-prompt') ? '1rem' : '2.5rem',
               backgroundColor: theme === 'dark' 
                 ? 'rgba(88, 50, 120, 0.12)' 
                 : 'rgba(139, 92, 246, 0.03)',
@@ -4997,6 +5019,7 @@ function HomeContent() {
               padding: collapsedModules.has('sora-prompt') ? '1rem' : '1.5rem',
               zIndex: draggedModule === 'sora-prompt' ? 1000 : 'auto',
               maxHeight: collapsedModules.has('sora-prompt') ? '80px' : '2000px',
+              overflow: 'hidden',
             }}
           >
             {/* Drop Indicator - Top */}
@@ -6926,6 +6949,666 @@ function HomeContent() {
                   )}
                 </div>
               )}
+            </div>
+          </div>
+        )}
+
+        {/* Social Media Page Analyzer */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('page-analyzer')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'page-analyzer')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'page-analyzer')}
+            onClick={() => !isReorderMode && collapsedModules.has('page-analyzer') && toggleModuleCollapse('page-analyzer')}
+            className="rounded-2xl shadow-lg border scroll-mt-4 relative overflow-hidden"
+            style={{
+              transition: 'max-height 1.5s cubic-bezier(0.65, 0, 0.35, 1), padding 1.5s cubic-bezier(0.65, 0, 0.35, 1), margin-bottom 0.3s ease-out, transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              marginBottom: collapsedModules.has('page-analyzer') ? '1rem' : '2.5rem',
+              backgroundColor: theme === 'dark' 
+                ? 'rgba(20, 184, 166, 0.08)' 
+                : 'rgba(20, 184, 166, 0.03)',
+              borderColor: dragOverModule === 'page-analyzer'
+                ? '#14B8A6'
+                : (isReorderMode && user)
+                  ? (theme === 'dark' ? 'rgba(20, 184, 166, 0.6)' : 'rgba(20, 184, 166, 0.5)')
+                  : (theme === 'dark'
+                    ? 'rgba(20, 184, 166, 0.4)'
+                    : 'rgba(20, 184, 166, 0.3)'),
+              boxShadow: draggedModule === 'page-analyzer'
+                ? '0 16px 48px rgba(20, 184, 166, 0.45), 0 0 0 2px rgba(20, 184, 166, 0.6), 0 0 20px rgba(20, 184, 166, 0.3)'
+                : dragOverModule === 'page-analyzer'
+                  ? '0 0 0 3px rgba(20, 184, 166, 0.5), 0 0 20px rgba(20, 184, 166, 0.3)'
+                  : (isReorderMode && user)
+                    ? (theme === 'dark'
+                      ? '0 8px 32px rgba(20, 184, 166, 0.4), 0 0 0 2px rgba(20, 184, 166, 0.5), 0 0 20px rgba(20, 184, 166, 0.25)'
+                      : '0 8px 32px rgba(20, 184, 166, 0.3), 0 0 0 2px rgba(20, 184, 166, 0.4), 0 0 15px rgba(20, 184, 166, 0.2)')
+                    : (theme === 'dark'
+                      ? '0 4px 20px rgba(20, 184, 166, 0.25), 0 0 15px rgba(20, 184, 166, 0.15)'
+                      : '0 4px 20px rgba(20, 184, 166, 0.15), 0 0 10px rgba(20, 184, 166, 0.1)'),
+              cursor: (isReorderMode && user) ? (draggedModule === 'page-analyzer' ? 'grabbing' : 'grab') : (collapsedModules.has('page-analyzer') ? 'pointer' : 'default'),
+              opacity: 1,
+              transform: draggedModule === 'page-analyzer' 
+                ? 'scale(1.05) rotate(2deg)' 
+                : 'scale(1)',
+              padding: collapsedModules.has('page-analyzer') ? '1rem' : '1.5rem',
+              zIndex: draggedModule === 'page-analyzer' ? 1000 : 'auto',
+              maxHeight: collapsedModules.has('page-analyzer') ? '80px' : '2000px',
+              overflow: 'hidden',
+            }}
+          >
+            {/* Drop Indicators */}
+            {dragOverModule === 'page-analyzer' && dropPosition === 'before' && draggedModule !== 'page-analyzer' && (
+              <div 
+                className="absolute -top-2 left-0 right-0 h-1 rounded-full"
+                style={{
+                  backgroundColor: '#14B8A6',
+                  boxShadow: '0 0 16px rgba(20, 184, 166, 0.8)',
+                  zIndex: 1001,
+                }}
+              />
+            )}
+            
+            {dragOverModule === 'page-analyzer' && dropPosition === 'after' && draggedModule !== 'page-analyzer' && (
+              <div 
+                className="absolute -bottom-2 left-0 right-0 h-1 rounded-full"
+                style={{
+                  backgroundColor: '#14B8A6',
+                  boxShadow: '0 0 16px rgba(20, 184, 166, 0.8)',
+                  zIndex: 1001,
+                }}
+              />
+            )}
+
+            {/* Collapsed Bar View */}
+            <div 
+              className="flex items-center justify-between"
+              style={{
+                transition: 'opacity 0.8s ease-in-out',
+                opacity: collapsedModules.has('page-analyzer') ? 1 : 0,
+                pointerEvents: collapsedModules.has('page-analyzer') ? 'auto' : 'none',
+                position: collapsedModules.has('page-analyzer') ? 'relative' : 'absolute',
+                visibility: collapsedModules.has('page-analyzer') ? 'visible' : 'hidden',
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">📊</span>
+                <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
+                  Page Analyzer
+                </h3>
+              </div>
+              <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+              </span>
+            </div>
+
+            {/* Expanded Content */}
+            <div
+              style={{
+                transition: 'opacity 0.8s ease-in-out',
+                opacity: collapsedModules.has('page-analyzer') ? 0 : 1,
+                pointerEvents: collapsedModules.has('page-analyzer') ? 'none' : 'auto',
+                position: collapsedModules.has('page-analyzer') ? 'absolute' : 'relative',
+                visibility: collapsedModules.has('page-analyzer') ? 'hidden' : 'visible',
+              }}
+            >
+              {/* Minimize Button */}
+              {!isReorderMode && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleModuleCollapse('page-analyzer');
+                  }}
+                  className="absolute top-4 right-4 p-2 rounded-lg hover:bg-gray-200 dark:hover:bg-gray-700 transition-all z-10"
+                  style={{ color: 'var(--text-secondary)' }}
+                  title="Minimize"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 12H4" />
+                  </svg>
+                </button>
+              )}
+
+              <div className="space-y-6">
+                <div className="text-center">
+                  <h2 className="text-3xl sm:text-4xl font-bold mb-2" style={{ 
+                    color: '#14B8A6',
+                    textShadow: '0 0 20px rgba(20, 184, 166, 0.3)'
+                  }}>
+                    📊 Social Media Page Analyzer
+                  </h2>
+                  <p className="text-sm sm:text-base" style={{ 
+                    color: theme === 'dark' ? 'rgba(20, 184, 166, 0.8)' : 'rgba(20, 184, 166, 0.9)'
+                  }}>
+                    Upload a screenshot of any social media page to get AI-powered insights and actionable improvements
+                  </p>
+                  
+                  {/* Privacy Notice */}
+                  <div className="mt-4 p-3 rounded-lg text-xs text-center" style={{
+                    backgroundColor: theme === 'dark' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.05)',
+                    border: '1px solid rgba(99, 102, 241, 0.2)',
+                    color: 'var(--text-secondary)'
+                  }}>
+                    <p className="flex items-center justify-center gap-2">
+                      <span>🔒</span>
+                      <span>
+                        By using this tool, you agree that we may store extracted data to improve our services. See our{' '}
+                        <a href="/privacy" target="_blank" className="underline hover:opacity-70" style={{ color: 'rgb(99, 102, 241)' }}>
+                          Privacy Policy
+                        </a>
+                        {' '}for details.
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Upload Section */}
+                {!pageAnalysis && (
+                  <div className="space-y-4">
+                    <div 
+                      className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer hover:border-teal-500 transition-all"
+                      style={{
+                        borderColor: theme === 'dark' ? 'rgba(20, 184, 166, 0.4)' : 'rgba(20, 184, 166, 0.3)',
+                        backgroundColor: theme === 'dark' ? 'rgba(20, 184, 166, 0.05)' : 'rgba(20, 184, 166, 0.02)'
+                      }}
+                      onClick={() => document.getElementById('page-screenshot-upload')?.click()}
+                    >
+                      {pageScreenshotPreview ? (
+                        <div className="space-y-4">
+                          <img 
+                            src={pageScreenshotPreview} 
+                            alt="Preview" 
+                            className="max-w-full max-h-64 mx-auto rounded-lg shadow-lg"
+                          />
+                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                            Click to change screenshot
+                          </p>
+                        </div>
+                      ) : (
+                        <div className="space-y-3">
+                          <div className="text-6xl">📸</div>
+                          <div>
+                            <p className="text-lg font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
+                              Upload Screenshot
+                            </p>
+                            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
+                              Click to upload or drag and drop
+                            </p>
+                            <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
+                              PNG, JPG, or WEBP (max 10MB)
+                            </p>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                    <input
+                      id="page-screenshot-upload"
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={async (e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          if (file.size > 10 * 1024 * 1024) {
+                            showNotification("File size must be less than 10MB", "error", "Error");
+                            return;
+                          }
+                          setPageScreenshot(file);
+                          const reader = new FileReader();
+                          reader.onloadend = () => {
+                            setPageScreenshotPreview(reader.result as string);
+                          };
+                          reader.readAsDataURL(file);
+                        }
+                      }}
+                    />
+
+                    {pageScreenshotPreview && (
+                      <button
+                        onClick={async () => {
+                          if (!pageScreenshotPreview) return;
+                          
+                          setIsAnalyzingPage(true);
+                          try {
+                            const response = await fetch('/api/analyze-page', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                              },
+                              body: JSON.stringify({
+                                imageData: pageScreenshotPreview,
+                              }),
+                            });
+
+                            if (!response.ok) {
+                              throw new Error('Failed to analyze page');
+                            }
+
+                            const data = await response.json();
+                            setPageAnalysis(data.analysis);
+                            
+                            // Update user info from AI extraction
+                            if (data.userInfo) {
+                              setPageUserInfo(data.userInfo);
+                            }
+                            
+                            // Save analysis data to database with screenshot
+                            try {
+                              await fetch('/api/save-page-analysis', {
+                                method: 'POST',
+                                headers: {
+                                  'Content-Type': 'application/json',
+                                },
+                                body: JSON.stringify({
+                                  userId: user?.id || null,
+                                  userInfo: data.userInfo || pageUserInfo,
+                                  analysis: data.analysis,
+                                  screenshotData: pageScreenshotPreview, // Send the base64 image data
+                                }),
+                              });
+                              console.log('Analysis and screenshot saved to database');
+                            } catch (saveError) {
+                              console.error('Error saving analysis data:', saveError);
+                              // Don't notify user about save error
+                            }
+                            
+                            showNotification("Analysis complete!", "success", "Success");
+                          } catch (error) {
+                            console.error('Error analyzing page:', error);
+                            showNotification("Failed to analyze page. Please try again.", "error", "Error");
+                          } finally {
+                            setIsAnalyzingPage(false);
+                          }
+                        }}
+                        disabled={isAnalyzingPage}
+                        className="w-full px-8 py-4 rounded-xl font-bold text-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                        style={{
+                          background: isAnalyzingPage 
+                            ? 'linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%)'
+                            : 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+                          color: 'white',
+                          boxShadow: '0 4px 15px rgba(20, 184, 166, 0.4)',
+                        }}
+                      >
+                        {isAnalyzingPage ? (
+                          <span className="flex items-center justify-center gap-2">
+                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+                            </svg>
+                            Analyzing...
+                          </span>
+                        ) : (
+                          '🔍 Analyze Page'
+                        )}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* Analysis Results */}
+                {pageAnalysis && (
+                  <div className="space-y-4">
+                    {/* Extracted User Info Display */}
+                    {(pageUserInfo.username || pageUserInfo.fullName) && (
+                      <div 
+                        className="p-4 rounded-xl"
+                        style={{
+                          backgroundColor: theme === 'dark' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.05)',
+                          border: '1px solid rgba(99, 102, 241, 0.3)',
+                        }}
+                      >
+                        <h3 className="text-sm font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
+                          📊 Detected Page Info
+                        </h3>
+                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
+                          {pageUserInfo.username && (
+                            <div>
+                              <span className="text-xs opacity-70">Username:</span>
+                              <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{pageUserInfo.username}</p>
+                            </div>
+                          )}
+                          {pageUserInfo.fullName && (
+                            <div>
+                              <span className="text-xs opacity-70">Name:</span>
+                              <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{pageUserInfo.fullName}</p>
+                            </div>
+                          )}
+                          {pageUserInfo.followerCount && (
+                            <div>
+                              <span className="text-xs opacity-70">Followers:</span>
+                              <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{pageUserInfo.followerCount}</p>
+                            </div>
+                          )}
+                          {pageUserInfo.postCount && (
+                            <div>
+                              <span className="text-xs opacity-70">Posts:</span>
+                              <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{pageUserInfo.postCount}</p>
+                            </div>
+                          )}
+                          {pageUserInfo.socialLink && (
+                            <div className="col-span-2">
+                              <span className="text-xs opacity-70">Profile:</span>
+                              <a 
+                                href={pageUserInfo.socialLink} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="font-semibold hover:underline block truncate"
+                                style={{ color: 'rgb(99, 102, 241)' }}
+                              >
+                                {pageUserInfo.socialLink}
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
+
+                    <div 
+                      className="p-6 rounded-xl"
+                      style={{
+                        backgroundColor: theme === 'dark' ? 'rgba(20, 184, 166, 0.1)' : 'rgba(20, 184, 166, 0.05)',
+                        border: '1px solid rgba(20, 184, 166, 0.3)',
+                      }}
+                    >
+                      <div className="whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>
+                        {pageAnalysis}
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                      <button
+                        onClick={() => {
+                          setPageAnalysis(null);
+                          setPageScreenshot(null);
+                          setPageScreenshotPreview("");
+                          setPageUserInfo({
+                            username: '',
+                            fullName: '',
+                            bioLinks: '',
+                            followerCount: '',
+                            postCount: '',
+                            socialLink: '',
+                          });
+                        }}
+                        className="px-6 py-3 rounded-lg font-semibold transition-all hover:scale-105"
+                        style={{
+                          backgroundColor: 'var(--card-bg)',
+                          border: '2px solid var(--card-border)',
+                          color: 'var(--text-primary)',
+                        }}
+                      >
+                        Analyze Another
+                      </button>
+                      <button
+                        onClick={() => {
+                          // Generate PDF
+                          const pdf = new jsPDF();
+                          const pageWidth = pdf.internal.pageSize.getWidth();
+                          const pageHeight = pdf.internal.pageSize.getHeight();
+                          const margin = 20;
+                          const maxWidth = pageWidth - (margin * 2);
+                          let yPosition = 20;
+
+                          // Header Background
+                          pdf.setFillColor(41, 121, 255);
+                          pdf.rect(0, 0, pageWidth, 45, 'F');
+
+                          // PostReady Branding
+                          pdf.setTextColor(255, 255, 255);
+                          pdf.setFontSize(26);
+                          pdf.setFont('helvetica', 'bold');
+                          pdf.text('PostReady', margin, 28);
+                          
+                          pdf.setFontSize(11);
+                          pdf.setFont('helvetica', 'normal');
+                          pdf.text('Social Media Page Analysis Report', margin, 37);
+
+                          // Date
+                          pdf.setFontSize(9);
+                          const dateText = `Generated: ${new Date().toLocaleDateString('en-US', { 
+                            year: 'numeric', 
+                            month: 'long', 
+                            day: 'numeric' 
+                          })}`;
+                          const dateWidth = pdf.getTextWidth(dateText);
+                          pdf.text(dateText, pageWidth - margin - dateWidth, 37);
+
+                          yPosition = 60;
+
+                          // Reset text color for content
+                          pdf.setTextColor(0, 0, 0);
+
+                          // Add User Information Section if available
+                          if (pageUserInfo.username || pageUserInfo.fullName) {
+                            pdf.setFillColor(245, 247, 250);
+                            pdf.roundedRect(margin, yPosition - 5, maxWidth, 45, 2, 2, 'F');
+                            
+                            pdf.setFontSize(12);
+                            pdf.setFont('helvetica', 'bold');
+                            pdf.setTextColor(41, 121, 255);
+                            pdf.text('PAGE INFORMATION', margin + 3, yPosition);
+                            yPosition += 8;
+                            
+                            pdf.setFontSize(9);
+                            pdf.setFont('helvetica', 'normal');
+                            pdf.setTextColor(60, 60, 60);
+                            
+                            if (pageUserInfo.username) {
+                              pdf.text(`Username: ${pageUserInfo.username}`, margin + 3, yPosition);
+                              yPosition += 5;
+                            }
+                            if (pageUserInfo.fullName) {
+                              pdf.text(`Name: ${pageUserInfo.fullName}`, margin + 3, yPosition);
+                              yPosition += 5;
+                            }
+                            if (pageUserInfo.followerCount) {
+                              pdf.text(`Followers: ${pageUserInfo.followerCount}`, margin + 3, yPosition);
+                              yPosition += 5;
+                            }
+                            if (pageUserInfo.postCount) {
+                              pdf.text(`Posts: ${pageUserInfo.postCount}`, margin + 3, yPosition);
+                              yPosition += 5;
+                            }
+                            if (pageUserInfo.bioLinks) {
+                              pdf.text(`Bio Links: ${pageUserInfo.bioLinks}`, margin + 3, yPosition);
+                              yPosition += 5;
+                            }
+                            if (pageUserInfo.socialLink) {
+                              pdf.setTextColor(41, 121, 255);
+                              pdf.textWithLink(`Profile: ${pageUserInfo.socialLink}`, margin + 3, yPosition, { url: pageUserInfo.socialLink });
+                              yPosition += 5;
+                            }
+                            
+                            yPosition += 8;
+                            pdf.setTextColor(0, 0, 0);
+                          }
+
+                          // Helper function to remove emojis and clean text
+                          const cleanText = (text: string) => {
+                            return text
+                              .replace(/🎯|✨|⚠️|🚀|💡|📈|🎨|•/g, '')
+                              .replace(/\*\*/g, '')
+                              .trim();
+                          };
+
+                          // Process the analysis text
+                          const lines = pageAnalysis.split('\n');
+                          
+                          lines.forEach((line: string) => {
+                            // Check if we need a new page
+                            if (yPosition > pageHeight - 30) {
+                              pdf.addPage();
+                              yPosition = 20;
+                            }
+
+                            const trimmedLine = line.trim();
+
+                            // Skip separators and empty lines
+                            if (trimmedLine === '' || trimmedLine === '---') {
+                              yPosition += 3;
+                              return;
+                            }
+
+                            // Section headers (detect by ** and emojis)
+                            if (line.includes('**') && (line.includes('🎯') || line.includes('✨') || line.includes('⚠️') || line.includes('🚀') || line.includes('💡') || line.includes('📈') || line.includes('🎨'))) {
+                              yPosition += 8;
+                              
+                              // Add a colored bar on the left
+                              pdf.setFillColor(41, 121, 255);
+                              pdf.rect(margin - 5, yPosition - 6, 3, 12, 'F');
+                              
+                              // Add a subtle background box
+                              pdf.setFillColor(245, 247, 250);
+                              pdf.roundedRect(margin, yPosition - 6, maxWidth, 12, 2, 2, 'F');
+                              
+                              // Section header text
+                              pdf.setFontSize(13);
+                              pdf.setFont('helvetica', 'bold');
+                              pdf.setTextColor(41, 121, 255);
+                              
+                              const cleanLine = cleanText(line).toUpperCase();
+                              pdf.text(cleanLine, margin + 3, yPosition);
+                              
+                              yPosition += 12;
+                              pdf.setTextColor(0, 0, 0);
+                            }
+                            // Numbered action items
+                            else if (line.match(/^\d+\.\s\*\*/)) {
+                              pdf.setFontSize(10);
+                              
+                              // Extract number and text
+                              const match = line.match(/^(\d+)\.\s\*\*(.*?)\*\*\s*-\s*(.*)/);
+                              if (match) {
+                                const [, number, title, description] = match;
+                                
+                                // Number circle with gradient effect
+                                pdf.setFillColor(41, 121, 255);
+                                pdf.circle(margin + 4, yPosition - 2, 4.5, 'F');
+                                
+                                // Inner circle for depth
+                                pdf.setFillColor(60, 140, 255);
+                                pdf.circle(margin + 4, yPosition - 2, 3.5, 'F');
+                                
+                                pdf.setTextColor(255, 255, 255);
+                                pdf.setFontSize(9);
+                                pdf.setFont('helvetica', 'bold');
+                                const numWidth = pdf.getTextWidth(number);
+                                pdf.text(number, margin + 4 - (numWidth / 2), yPosition + 0.8);
+                                
+                                // Title
+                                pdf.setTextColor(0, 0, 0);
+                                pdf.setFontSize(11);
+                                pdf.setFont('helvetica', 'bold');
+                                pdf.text(title.trim(), margin + 12, yPosition);
+                                
+                                // Description
+                                yPosition += 6;
+                                pdf.setFont('helvetica', 'normal');
+                                pdf.setTextColor(60, 60, 60);
+                                pdf.setFontSize(10);
+                                const descWrapped = pdf.splitTextToSize(description.trim(), maxWidth - 12);
+                                descWrapped.forEach((textLine: string) => {
+                                  pdf.text(textLine, margin + 12, yPosition);
+                                  yPosition += 5;
+                                });
+                                
+                                yPosition += 3;
+                                pdf.setTextColor(0, 0, 0);
+                              }
+                            }
+                            // Bullet points (detect by • or starting with -)
+                            else if (trimmedLine.startsWith('•') || (trimmedLine.startsWith('-') && !line.match(/^\d+\./))) {
+                              pdf.setFontSize(10);
+                              pdf.setFont('helvetica', 'normal');
+                              pdf.setTextColor(40, 40, 40);
+                              
+                              // Bullet point circle
+                              pdf.setFillColor(41, 121, 255);
+                              pdf.circle(margin + 2.5, yPosition - 1.5, 1.8, 'F');
+                              
+                              const text = trimmedLine.replace(/^[•-]\s*/, '').trim();
+                              const wrappedText = pdf.splitTextToSize(text, maxWidth - 10);
+                              wrappedText.forEach((textLine: string, index: number) => {
+                                pdf.text(textLine, margin + 8, yPosition);
+                                if (index < wrappedText.length - 1) {
+                                  yPosition += 5;
+                                }
+                              });
+                              
+                              yPosition += 7;
+                              pdf.setTextColor(0, 0, 0);
+                            }
+                            // Regular paragraphs
+                            else if (trimmedLine.length > 0) {
+                              pdf.setFontSize(10);
+                              pdf.setFont('helvetica', 'normal');
+                              pdf.setTextColor(50, 50, 50);
+                              
+                              const wrappedText = pdf.splitTextToSize(trimmedLine, maxWidth);
+                              wrappedText.forEach((textLine: string) => {
+                                pdf.text(textLine, margin, yPosition);
+                                yPosition += 5;
+                              });
+                              yPosition += 2;
+                              pdf.setTextColor(0, 0, 0);
+                            }
+                          });
+
+                          // Footer on every page
+                          const totalPages = pdf.internal.pages.length - 1;
+                          for (let i = 1; i <= totalPages; i++) {
+                            pdf.setPage(i);
+                            
+                            // Footer line
+                            pdf.setDrawColor(200, 200, 200);
+                            pdf.setLineWidth(0.5);
+                            pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
+                            
+                            pdf.setFontSize(8);
+                            pdf.setTextColor(120, 120, 120);
+                            pdf.setFont('helvetica', 'normal');
+                            
+                            // Page number on left
+                            pdf.text(`Page ${i} of ${totalPages}`, margin, pageHeight - 8);
+                            
+                            // PostReady branding on right
+                            const brandText = 'PostReady - Built to help creators thrive';
+                            const brandWidth = pdf.getTextWidth(brandText);
+                            pdf.text(brandText, pageWidth - margin - brandWidth, pageHeight - 8);
+                          }
+
+                          // Save the PDF
+                          pdf.save(`PostReady-Analysis-${new Date().getTime()}.pdf`);
+                          showNotification("PDF downloaded successfully!", "success", "Success");
+                        }}
+                        className="px-6 py-3 rounded-lg font-semibold transition-all hover:scale-105"
+                        style={{
+                          background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
+                          color: 'white',
+                        }}
+                      >
+                        📄 Save as PDF
+                      </button>
+                      <button
+                        onClick={() => {
+                          navigator.clipboard.writeText(pageAnalysis);
+                          showNotification("Analysis copied to clipboard!", "success", "Success");
+                        }}
+                        className="px-6 py-3 rounded-lg font-semibold transition-all hover:scale-105"
+                        style={{
+                          background: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
+                          color: 'white',
+                        }}
+                      >
+                        📋 Copy Analysis
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}

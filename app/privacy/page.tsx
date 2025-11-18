@@ -1,148 +1,178 @@
-"use client";
-
-import React from 'react';
-import { useRouter } from 'next/navigation';
-import { useTheme } from '@/contexts/ThemeContext';
+'use client';
 
 export default function PrivacyPolicy() {
-  const router = useRouter();
-  const { theme } = useTheme();
-
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
-      <div className="max-w-4xl mx-auto px-4 py-10">
-        {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            <img 
-              src="/postready-logo.svg" 
-              alt="PostReady Logo" 
-              className="h-16 w-auto cursor-pointer transition-all hover:scale-105 logo-glow"
-              onClick={() => router.push('/')}
-            />
-            <h1 className="text-3xl font-bold" style={{ color: 'var(--secondary)' }}>
-              Privacy Policy
-            </h1>
-          </div>
-          <button
-            onClick={() => router.push('/')}
-            className="px-5 py-2.5 rounded-lg font-medium transition-all hover:scale-105"
-            style={{
-              backgroundColor: 'var(--card-bg)',
-              borderWidth: '2px',
-              borderStyle: 'solid',
-              borderColor: 'var(--card-border)',
-              color: 'var(--text-primary)'
-            }}
-          >
-            ← Back to Home
-          </button>
-        </div>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto bg-white rounded-lg shadow-sm p-8">
+        <h1 className="text-4xl font-bold text-gray-900 mb-8">Privacy Policy</h1>
+        
+        <p className="text-sm text-gray-500 mb-8">Last Updated: November 18, 2025</p>
 
-        {/* Content */}
-        <div 
-          className="rounded-2xl shadow-lg border p-8 space-y-6"
-          style={{
-            backgroundColor: 'var(--card-bg)',
-            borderColor: 'var(--card-border)'
-          }}
-        >
-          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-            Last updated: {new Date().toLocaleDateString()}
-          </p>
-
-          <section className="space-y-4">
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              1. Information We Collect
-            </h2>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              We collect information that you provide directly to us, including:
+        <div className="space-y-8 text-gray-700">
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">1. Introduction</h2>
+            <p>
+              Welcome to PostReady. We are committed to protecting your privacy and being transparent about how we collect, use, and store your data. This Privacy Policy explains our practices regarding data collection when you use our services.
             </p>
-            <ul className="list-disc list-inside space-y-2 ml-4" style={{ color: 'var(--text-secondary)' }}>
-              <li>Account information (email address, password)</li>
-              <li>Business information you input into the application</li>
-              <li>Payment information processed through Stripe</li>
-              <li>Usage data and preferences</li>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">2. Information We Collect</h2>
+            
+            <h3 className="text-xl font-semibold text-gray-800 mb-3 mt-4">2.1 Account Information</h3>
+            <p className="mb-4">
+              When you create an account, we collect:
+            </p>
+            <ul className="list-disc pl-6 space-y-2 mb-4">
+              <li>Email address</li>
+              <li>Account credentials (encrypted)</li>
+              <li>Profile information you provide</li>
+              <li>Subscription and payment information (processed securely through Stripe)</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold text-gray-800 mb-3 mt-4">2.2 Social Media Page Analysis Data</h3>
+            <p className="mb-4">
+              When you use our Social Media Page Analyzer tool, we collect and store:
+            </p>
+            <ul className="list-disc pl-6 space-y-2 mb-4">
+              <li><strong>Screenshots:</strong> Images you upload for analysis</li>
+              <li><strong>Extracted Information:</strong> Data automatically extracted from screenshots including:
+                <ul className="list-circle pl-6 mt-2 space-y-1">
+                  <li>Usernames and handles</li>
+                  <li>Display names</li>
+                  <li>Follower counts</li>
+                  <li>Post counts</li>
+                  <li>Bio links</li>
+                  <li>Social media profile URLs</li>
+                </ul>
+              </li>
+              <li><strong>AI Analysis Results:</strong> The insights and recommendations generated by our AI</li>
+              <li><strong>Timestamp:</strong> When the analysis was performed</li>
+            </ul>
+
+            <h3 className="text-xl font-semibold text-gray-800 mb-3 mt-4">2.3 Usage Data</h3>
+            <p className="mb-4">
+              We automatically collect:
+            </p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>Device information and browser type</li>
+              <li>IP address and location data</li>
+              <li>Pages visited and features used</li>
+              <li>Session duration and interaction patterns</li>
             </ul>
           </section>
 
-          <section className="space-y-4">
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              2. How We Use Your Information
-            </h2>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              We use the information we collect to:
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-4" style={{ color: 'var(--text-secondary)' }}>
-              <li>Provide, maintain, and improve our services</li>
-              <li>Process transactions and send related information</li>
-              <li>Send you technical notices and support messages</li>
-              <li>Respond to your comments and questions</li>
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">3. How We Use Your Information</h2>
+            <p className="mb-4">We use collected data for:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>Service Delivery:</strong> To provide and improve our AI-powered tools and features</li>
+              <li><strong>Product Improvement:</strong> To analyze usage patterns and enhance our services</li>
+              <li><strong>Quality Assurance:</strong> To train and improve our AI models</li>
+              <li><strong>Customer Support:</strong> To respond to your inquiries and provide assistance</li>
+              <li><strong>Security:</strong> To detect and prevent fraud, abuse, and security issues</li>
+              <li><strong>Legal Compliance:</strong> To comply with legal obligations and enforce our terms</li>
             </ul>
           </section>
 
-          <section className="space-y-4">
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              3. Information Sharing
-            </h2>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              We do not sell, trade, or rent your personal information to third parties. We may share your information only:
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">4. Data Storage and Security</h2>
+            <p className="mb-4">
+              We take data security seriously:
             </p>
-            <ul className="list-disc list-inside space-y-2 ml-4" style={{ color: 'var(--text-secondary)' }}>
-              <li>With service providers who assist us in operating our platform (e.g., Stripe for payments, Supabase for data storage)</li>
-              <li>When required by law or to protect our rights</li>
-              <li>With your consent</li>
+            <ul className="list-disc pl-6 space-y-2">
+              <li>All data is encrypted in transit (HTTPS) and at rest</li>
+              <li>Screenshots are stored in private, access-controlled storage buckets</li>
+              <li>Database access is restricted to authorized personnel only</li>
+              <li>We use industry-standard security practices and regular security audits</li>
+              <li>Payment information is processed securely through Stripe (PCI-DSS compliant)</li>
             </ul>
           </section>
 
-          <section className="space-y-4">
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              4. Data Security
-            </h2>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              We implement appropriate technical and organizational measures to protect your personal information. However, no method of transmission over the internet is 100% secure.
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">5. Data Retention</h2>
+            <p className="mb-4">
+              We retain your data as follows:
             </p>
-          </section>
-
-          <section className="space-y-4">
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              5. Your Rights
-            </h2>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              You have the right to:
-            </p>
-            <ul className="list-disc list-inside space-y-2 ml-4" style={{ color: 'var(--text-secondary)' }}>
-              <li>Access your personal information</li>
-              <li>Correct inaccurate information</li>
-              <li>Delete your account and data</li>
-              <li>Opt-out of certain communications</li>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>Account Data:</strong> Retained while your account is active and for a reasonable period after deletion</li>
+              <li><strong>Analysis Data:</strong> Screenshots and extracted information are retained to improve our services</li>
+              <li><strong>Usage Data:</strong> Aggregated and anonymized for analytics purposes</li>
             </ul>
           </section>
 
-          <section className="space-y-4">
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              6. Cookies and Tracking
-            </h2>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              We use cookies and similar tracking technologies to track activity on our service and hold certain information. You can instruct your browser to refuse all cookies or to indicate when a cookie is being sent.
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">6. Your Rights</h2>
+            <p className="mb-4">You have the right to:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>Access:</strong> Request a copy of your personal data</li>
+              <li><strong>Correction:</strong> Update or correct inaccurate information</li>
+              <li><strong>Deletion:</strong> Request deletion of your data (subject to legal requirements)</li>
+              <li><strong>Opt-Out:</strong> Unsubscribe from marketing communications</li>
+              <li><strong>Data Portability:</strong> Receive your data in a machine-readable format</li>
+            </ul>
+            <p className="mt-4">
+              To exercise these rights, please contact us at: <a href="mailto:privacy@postready.com" className="text-blue-600 hover:underline">privacy@postready.com</a>
             </p>
           </section>
 
-          <section className="space-y-4">
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              7. Changes to This Policy
-            </h2>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              We may update our Privacy Policy from time to time. We will notify you of any changes by posting the new Privacy Policy on this page and updating the "Last updated" date.
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">7. Third-Party Services</h2>
+            <p className="mb-4">We use the following third-party services:</p>
+            <ul className="list-disc pl-6 space-y-2">
+              <li><strong>Stripe:</strong> Payment processing</li>
+              <li><strong>OpenAI:</strong> AI analysis and content generation</li>
+              <li><strong>Supabase:</strong> Database and storage infrastructure</li>
+            </ul>
+            <p className="mt-4">
+              These services have their own privacy policies and we recommend reviewing them.
             </p>
           </section>
 
-          <section className="space-y-4">
-            <h2 className="text-2xl font-bold" style={{ color: 'var(--text-primary)' }}>
-              8. Contact Us
-            </h2>
-            <p style={{ color: 'var(--text-secondary)' }}>
-              If you have any questions about this Privacy Policy, please contact us through the support channels available in the application.
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">8. Important Notice About Uploaded Content</h2>
+            <div className="bg-yellow-50 border-l-4 border-yellow-400 p-4 mb-4">
+              <p className="font-semibold text-yellow-800 mb-2">⚠️ Please Note:</p>
+              <p className="text-yellow-700">
+                Only upload screenshots of <strong>public social media profiles</strong>. Do not upload screenshots containing:
+              </p>
+              <ul className="list-disc pl-6 mt-2 text-yellow-700">
+                <li>Private messages or direct messages</li>
+                <li>Confidential or sensitive information</li>
+                <li>Content you don't have permission to share</li>
+                <li>Personal information of others without consent</li>
+              </ul>
+            </div>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">9. Children's Privacy</h2>
+            <p>
+              Our services are not intended for users under 13 years of age. We do not knowingly collect personal information from children under 13.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">10. Changes to This Policy</h2>
+            <p>
+              We may update this Privacy Policy from time to time. We will notify you of significant changes by posting the new policy on this page and updating the "Last Updated" date.
+            </p>
+          </section>
+
+          <section>
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">11. Contact Us</h2>
+            <p className="mb-4">
+              If you have questions about this Privacy Policy or our data practices, please contact us:
+            </p>
+            <ul className="space-y-2">
+              <li><strong>Email:</strong> <a href="mailto:privacy@postready.com" className="text-blue-600 hover:underline">privacy@postready.com</a></li>
+              <li><strong>Support:</strong> <a href="mailto:support@postready.com" className="text-blue-600 hover:underline">support@postready.com</a></li>
+            </ul>
+          </section>
+
+          <section className="border-t pt-8 mt-8">
+            <p className="text-sm text-gray-500">
+              By using PostReady, you acknowledge that you have read and understood this Privacy Policy and agree to its terms.
             </p>
           </section>
         </div>
@@ -150,5 +180,3 @@ export default function PrivacyPolicy() {
     </div>
   );
 }
-
-
