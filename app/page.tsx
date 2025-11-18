@@ -3029,10 +3029,7 @@ function HomeContent() {
             />
           </div>
           <p className="text-2xl font-medium tracking-wide" style={{ color: 'var(--primary)' }}>
-            Posting made easy.
-          </p>
-          <p className="text-lg mt-4 max-w-3xl mx-auto" style={{ color: 'var(--text-secondary)' }}>
-            PostReady is your all-in-one tool for instant social media growth.
+            Your all-in-one toolkit for social media growth.
           </p>
         </div>
 
