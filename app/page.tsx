@@ -222,10 +222,12 @@ function HomeContent() {
   // Module Reorder State
   const [isReorderMode, setIsReorderMode] = useState<boolean>(false);
   const [moduleOrder, setModuleOrder] = useState<string[]>([
+    'digital-products',
     'music-generator',
     'collab-engine',
     'trend-radar',
     'idea-generator',
+    'sora-prompt',
     'hashtag-research'
   ]);
   const [draggedModule, setDraggedModule] = useState<string | null>(null);
@@ -234,7 +236,7 @@ function HomeContent() {
 
   // Module Collapse State
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(
-    new Set(['collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'page-analyzer'])
+    new Set(['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'page-analyzer'])
   );
 
   const toggleModuleCollapse = (moduleId: string) => {
@@ -321,6 +323,10 @@ function HomeContent() {
   const [musicHistory, setMusicHistory] = useState<any[]>([]);
   const [showMusicHistory, setShowMusicHistory] = useState<boolean>(false);
   const [soraUsageCount, setSoraUsageCount] = useState<number>(0);
+
+  // Digital Products State
+  const [digitalProducts, setDigitalProducts] = useState<any[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState<boolean>(true);
   const [showSoraPaywall, setShowSoraPaywall] = useState<boolean>(false);
 
   // Music generation function
@@ -407,6 +413,74 @@ function HomeContent() {
   };
 
   // Load Sora usage count
+  // Load digital products
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('digital_products')
+          .select('*')
+          .eq('is_active', true)
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+        setDigitalProducts(data || []);
+      } catch (error) {
+        console.error('Error loading products:', error);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+
+    loadProducts();
+  }, []);
+
+  // Handle payment success and download
+  useEffect(() => {
+    const handlePaymentSuccess = async () => {
+      const urlParams = new URLSearchParams(window.location.search);
+      const paymentStatus = urlParams.get('payment');
+      const sessionId = urlParams.get('session_id');
+      const productId = urlParams.get('product_id');
+
+      if (paymentStatus === 'success' && sessionId && productId) {
+        try {
+          const response = await fetch('/api/verify-purchase', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ sessionId, productId }),
+          });
+
+          const data = await response.json();
+
+          if (response.ok && data.downloadUrl) {
+            // Trigger download
+            const link = document.createElement('a');
+            link.href = data.downloadUrl;
+            link.download = data.productTitle || 'download';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+
+            // Show success notification
+            setNotification({
+              isOpen: true,
+              message: `✅ Purchase successful! Your download should start automatically.`,
+              type: 'success',
+            });
+
+            // Clean URL
+            window.history.replaceState({}, '', '/');
+          }
+        } catch (error) {
+          console.error('Error verifying purchase:', error);
+        }
+      }
+    };
+
+    handlePaymentSuccess();
+  }, []);
+
   useEffect(() => {
     const loadSoraUsage = async () => {
       try {
@@ -5245,6 +5319,273 @@ function HomeContent() {
             )}
             </div>
             </div>
+          </div>
+        )}
+
+        {/* Digital Products Module */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('digital-products')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'digital-products')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'digital-products')}
+            onClick={() => !isReorderMode && collapsedModules.has('digital-products') && toggleModuleCollapse('digital-products')}
+            className="rounded-2xl shadow-lg border scroll-mt-4 relative"
+            style={{
+              transition: 'max-height 1.5s cubic-bezier(0.65, 0, 0.35, 1), padding 1.5s cubic-bezier(0.65, 0, 0.35, 1), margin-bottom 0.3s ease-out, transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              marginBottom: collapsedModules.has('digital-products') ? '1rem' : '2.5rem',
+              backgroundColor: theme === 'dark' 
+                ? 'rgba(218, 165, 32, 0.08)' 
+                : 'rgba(255, 215, 0, 0.03)',
+              borderColor: dragOverModule === 'digital-products'
+                ? '#DAA520'
+                : (isReorderMode && user)
+                  ? (theme === 'dark' ? 'rgba(218, 165, 32, 0.6)' : 'rgba(218, 165, 32, 0.5)')
+                  : (theme === 'dark'
+                    ? 'rgba(218, 165, 32, 0.4)'
+                    : 'rgba(218, 165, 32, 0.3)'),
+              boxShadow: draggedModule === 'digital-products'
+                ? '0 16px 48px rgba(218, 165, 32, 0.35), 0 0 0 2px rgba(218, 165, 32, 0.5), 0 0 20px rgba(218, 165, 32, 0.25)'
+                : dragOverModule === 'digital-products'
+                  ? '0 0 0 3px rgba(218, 165, 32, 0.4), 0 0 20px rgba(218, 165, 32, 0.25)'
+                  : (isReorderMode && user)
+                    ? (theme === 'dark'
+                      ? '0 8px 32px rgba(218, 165, 32, 0.3), 0 0 0 2px rgba(218, 165, 32, 0.4), 0 0 20px rgba(218, 165, 32, 0.2)'
+                      : '0 8px 32px rgba(218, 165, 32, 0.25), 0 0 0 2px rgba(218, 165, 32, 0.35), 0 0 15px rgba(218, 165, 32, 0.15)')
+                    : (theme === 'dark'
+                      ? '0 4px 20px rgba(218, 165, 32, 0.2), 0 0 15px rgba(218, 165, 32, 0.12)'
+                      : '0 4px 20px rgba(218, 165, 32, 0.15), 0 0 10px rgba(218, 165, 32, 0.08)'),
+              order: moduleOrder.indexOf('digital-products'),
+              cursor: (isReorderMode && user) ? (draggedModule === 'digital-products' ? 'grabbing' : 'grab') : (collapsedModules.has('digital-products') ? 'pointer' : 'default'),
+              opacity: 1,
+              transform: draggedModule === 'digital-products' 
+                ? 'scale(1.05) rotate(2deg)' 
+                : 'scale(1)',
+              padding: collapsedModules.has('digital-products') ? '1rem' : '1.5rem',
+              zIndex: draggedModule === 'digital-products' ? 1000 : 'auto',
+              maxHeight: collapsedModules.has('digital-products') ? '80px' : 'none',
+              overflow: collapsedModules.has('digital-products') ? 'hidden' : 'visible',
+            }}
+          >
+            {/* Drop Indicators */}
+            {dragOverModule === 'digital-products' && dropPosition === 'before' && draggedModule !== 'digital-products' && (
+              <div 
+                className="absolute -top-2 left-0 right-0 h-1 rounded-full"
+                style={{
+                  backgroundColor: '#DAA520',
+                  boxShadow: '0 0 16px rgba(218, 165, 32, 0.8)',
+                  zIndex: 1001,
+                }}
+              />
+            )}
+            
+            {dragOverModule === 'digital-products' && dropPosition === 'after' && draggedModule !== 'digital-products' && (
+              <div 
+                className="absolute -bottom-2 left-0 right-0 h-1 rounded-full"
+                style={{
+                  backgroundColor: '#DAA520',
+                  boxShadow: '0 0 16px rgba(218, 165, 32, 0.8)',
+                  zIndex: 1001,
+                }}
+              />
+            )}
+
+            {/* Collapsed Bar View */}
+            {collapsedModules.has('digital-products') ? (
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">💎</span>
+                  <h3 className="text-lg sm:text-xl font-bold" style={{ 
+                    background: 'linear-gradient(135deg, #DAA520, #FFD700, #F4C430)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                    backgroundClip: 'text'
+                  }}>
+                    Premium Collection
+                  </h3>
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+                </span>
+              </div>
+            ) : (
+              <>
+                {/* Minimize Button */}
+                {!isReorderMode && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleModuleCollapse('digital-products');
+                    }}
+                    className="absolute top-1 right-1 sm:top-2 sm:right-2 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
+                    style={{
+                      backgroundColor: 'rgba(218, 165, 32, 0.15)',
+                      border: '2px solid rgba(218, 165, 32, 0.4)',
+                      color: '#DAA520',
+                      zIndex: 10,
+                      boxShadow: '0 4px 12px rgba(218, 165, 32, 0.3)',
+                    }}
+                    title="Minimize"
+                  >
+                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                    </svg>
+                  </button>
+                )}
+
+                <div className="space-y-6">
+                  <div className="text-center">
+                    <h2 className="text-3xl sm:text-4xl font-bold mb-2" style={{ 
+                      background: 'linear-gradient(135deg, #DAA520, #FFD700, #F4C430)',
+                      WebkitBackgroundClip: 'text',
+                      WebkitTextFillColor: 'transparent',
+                      backgroundClip: 'text',
+                      textShadow: 'none',
+                      filter: 'drop-shadow(0 2px 8px rgba(218, 165, 32, 0.3))'
+                    }}>
+                      💎 Premium Collection
+                    </h2>
+                    <p className="text-sm sm:text-base font-medium" style={{ 
+                      color: theme === 'dark' ? 'rgba(218, 165, 32, 0.9)' : 'rgba(184, 134, 11, 0.9)'
+                    }}>
+                      Premium resources crafted for creators at the top of their game.
+                    </p>
+                  </div>
+
+                  {/* Products Grid */}
+                  {loadingProducts ? (
+                    <div className="text-center py-12">
+                      <div className="inline-block w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mb-4" style={{ borderColor: '#DAA520', borderTopColor: 'transparent' }}></div>
+                      <p style={{ color: 'var(--text-secondary)' }}>Loading collection...</p>
+                    </div>
+                  ) : digitalProducts.length === 0 ? (
+                    <div className="text-center py-12">
+                      <p style={{ color: 'var(--text-secondary)' }}>No products available yet. Check back soon!</p>
+                    </div>
+                  ) : (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {digitalProducts.map((product) => (
+                      <div 
+                        key={product.id}
+                        className="rounded-xl overflow-hidden border-2 transition-all hover:scale-105 hover:shadow-2xl"
+                        style={{
+                          backgroundColor: theme === 'dark' ? 'rgba(218, 165, 32, 0.06)' : 'rgba(255, 215, 0, 0.03)',
+                          borderColor: theme === 'dark' ? 'rgba(218, 165, 32, 0.35)' : 'rgba(218, 165, 32, 0.25)',
+                          boxShadow: '0 4px 16px rgba(218, 165, 32, 0.1)',
+                        }}
+                      >
+                        <div className="relative h-48 overflow-hidden">
+                          <img 
+                            src={product.image_url} 
+                            alt={product.title}
+                            className="w-full h-full object-cover"
+                            style={{ filter: 'brightness(0.95) saturate(1.1)' }}
+                          />
+                          {product.badge_text && (
+                            <div 
+                              className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold"
+                              style={{
+                                background: product.badge_color || 'linear-gradient(135deg, #DAA520, #FFD700)',
+                                color: theme === 'dark' ? '#1a1a1a' : '#000',
+                                boxShadow: '0 2px 8px rgba(218, 165, 32, 0.4)',
+                              }}
+                            >
+                              {product.badge_text}
+                            </div>
+                          )}
+                        </div>
+                        <div className="p-6">
+                          <h3 className="text-xl font-bold mb-1" style={{ 
+                            background: 'linear-gradient(135deg, #DAA520, #FFD700)',
+                            WebkitBackgroundClip: 'text',
+                            WebkitTextFillColor: 'transparent',
+                            backgroundClip: 'text'
+                          }}>
+                            {product.title}
+                          </h3>
+                          {product.subtitle && (
+                            <p className="text-sm font-semibold mb-3" style={{ color: theme === 'dark' ? '#B8860B' : '#8B6914' }}>
+                              {product.subtitle}
+                            </p>
+                          )}
+                          <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
+                            {product.description}
+                          </p>
+                          <div className="flex items-center gap-2 mb-4">
+                            <span className="text-2xl font-bold" style={{ 
+                              background: 'linear-gradient(135deg, #DAA520, #FFD700)',
+                              WebkitBackgroundClip: 'text',
+                              WebkitTextFillColor: 'transparent',
+                              backgroundClip: 'text'
+                            }}>${product.price}</span>
+                            {product.original_price && (
+                              <span className="text-sm line-through opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                                ${product.original_price}
+                              </span>
+                            )}
+                          </div>
+                          <button
+                            onClick={async () => {
+                              try {
+                                console.log('Creating checkout for product:', product.id);
+                                const response = await fetch('/api/create-checkout', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    productId: product.id,
+                                    userId: user?.id || null,
+                                  }),
+                                });
+
+                                const data = await response.json();
+                                console.log('Checkout response:', data);
+
+                                if (response.ok && data.url) {
+                                  window.location.href = data.url;
+                                } else {
+                                  console.error('Checkout failed:', data);
+                                  alert(`Failed to create checkout session: ${data.error || 'Unknown error'}`);
+                                }
+                              } catch (error) {
+                                console.error('Checkout error:', error);
+                                alert('An error occurred. Please try again.');
+                              }
+                            }}
+                            className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 hover:shadow-xl"
+                            style={{
+                              background: 'linear-gradient(135deg, #DAA520, #FFD700, #F4C430)',
+                              color: theme === 'dark' ? '#1a1a1a' : '#000',
+                              boxShadow: '0 4px 16px rgba(218, 165, 32, 0.4)',
+                              border: '1px solid rgba(255, 215, 0, 0.3)'
+                            }}
+                          >
+                            Buy Now
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  )}
+
+                  {/* Coming Soon Badge */}
+                  <div 
+                    className="text-center p-4 rounded-lg"
+                    style={{
+                      backgroundColor: theme === 'dark' ? 'rgba(218, 165, 32, 0.08)' : 'rgba(255, 215, 0, 0.05)',
+                      border: '1px solid rgba(218, 165, 32, 0.3)',
+                    }}
+                  >
+                    <p className="text-sm font-semibold" style={{ 
+                      color: '#DAA520'
+                    }}>
+                      ✨ More premium content coming soon!
+                    </p>
+                  </div>
+                </div>
+              </>
+            )}
           </div>
         )}
 
