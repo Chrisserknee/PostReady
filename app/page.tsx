@@ -4180,7 +4180,7 @@ function HomeContent() {
           >
             {/* Collapsed Bar View */}
             <div 
-              className="flex items-center justify-between"
+              className="flex items-center justify-between gap-2"
               style={{
                 transition: 'opacity 0.8s ease-in-out',
                 opacity: collapsedModules.has('idea-generator') ? 1 : 0,
@@ -4189,19 +4189,19 @@ function HomeContent() {
                 visibility: collapsedModules.has('idea-generator') ? 'visible' : 'hidden',
               }}
             >
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">🎥</span>
-                <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                <span className="text-3xl flex-shrink-0">🎥</span>
+                <h3 className="text-lg sm:text-xl font-bold truncate" style={{ color: 'var(--secondary)' }}>
                   Viral Video Idea Generator
                 </h3>
-                <span className="px-2 py-1 text-xs font-bold rounded" style={{
+                <span className="px-2 py-1 text-xs font-bold rounded flex-shrink-0" style={{
                   background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
                   color: 'white',
                 }}>
                   PRO
                 </span>
               </div>
-              <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+              <span className="text-sm opacity-60 flex-shrink-0 hidden sm:block" style={{ color: 'var(--text-secondary)' }}>
                 {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
               </span>
             </div>
@@ -5048,7 +5048,7 @@ function HomeContent() {
 
             {/* Collapsed Bar View */}
             <div 
-              className="flex items-center justify-between"
+              className="flex items-center justify-between gap-2"
               style={{
                 transition: 'opacity 0.8s ease-in-out',
                 opacity: collapsedModules.has('sora-prompt') ? 1 : 0,
@@ -5057,19 +5057,19 @@ function HomeContent() {
                 visibility: collapsedModules.has('sora-prompt') ? 'visible' : 'hidden',
               }}
             >
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">🎬</span>
-                <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                <span className="text-3xl flex-shrink-0">🎬</span>
+                <h3 className="text-lg sm:text-xl font-bold truncate" style={{ color: 'var(--secondary)' }}>
                   Sora Prompt Generator
                 </h3>
-                <span className="px-2 py-1 text-xs font-bold rounded" style={{
+                <span className="px-2 py-1 text-xs font-bold rounded flex-shrink-0" style={{
                   background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
                   color: 'white',
                 }}>
                   PRO
                 </span>
               </div>
-              <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+              <span className="text-sm opacity-60 flex-shrink-0 hidden sm:block" style={{ color: 'var(--text-secondary)' }}>
                 {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
               </span>
             </div>
