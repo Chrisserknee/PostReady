@@ -678,10 +678,17 @@ function HomeContent() {
     } else if (premium === 'true' || upgrade === 'true') {
       // Navigate to premium section
       setCurrentStep("premium");
+      // Scroll to top
+      setTimeout(() => {
+        window.scrollTo({
+          top: 0,
+          behavior: 'smooth'
+        });
+      }, 100);
       // Clear URL params after navigation
       setTimeout(() => {
         router.replace('/', { scroll: false });
-      }, 100);
+      }, 200);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams]);
@@ -1997,6 +2004,14 @@ function HomeContent() {
       setPlanType('pro');
     }
     setCurrentStep("premium");
+    
+    // Scroll to top smoothly after a brief delay to ensure content is rendered
+    setTimeout(() => {
+      window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+      });
+    }, 100);
   };
 
   const handleGenerateIdeasWithGuidance = async (guidance: string) => {
