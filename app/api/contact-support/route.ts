@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { Resend } from 'resend';
 
+// Support messages will be sent to postready.app@gmail.com via Resend
 export async function POST(request: NextRequest) {
   try {
     const { subject, message, userEmail, userId } = await request.json();
