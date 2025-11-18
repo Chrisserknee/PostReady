@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getSupabaseClient } from "@/lib/supabase";
 
 export async function POST(request: NextRequest) {
   try {
@@ -34,29 +33,19 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get Supabase client (server-side)
-    const supabase = getSupabaseClient();
+    // Log the support message (you can check your server logs)
+    console.log("📧 ===== NEW SUPPORT MESSAGE =====");
+    console.log(`From: ${sanitizedEmail}`);
+    console.log(`User ID: ${sanitizedUserId || 'N/A'}`);
+    console.log(`Subject: ${sanitizedSubject}`);
+    console.log(`Message: ${sanitizedMessage}`);
+    console.log("=====================================");
 
-    // Save message to Supabase
-    const { data, error } = await supabase
-      .from('contact_messages')
-      .insert({
-        user_id: sanitizedUserId,
-        user_email: sanitizedEmail,
-        subject: sanitizedSubject,
-        message: sanitizedMessage,
-        status: 'new',
-      })
-      .select()
-      .single();
-
-    if (error) {
-      console.error("❌ Supabase insert error:", error);
-      throw new Error(`Failed to save message: ${error.message}`);
-    }
-
-    // Log success without sensitive user data
-    console.log("Contact message saved successfully");
+    // TODO: In the future, you can integrate with an email service like:
+    // - Resend (resend.com)
+    // - SendGrid
+    // - AWS SES
+    // - Or save to a Supabase table
 
     return NextResponse.json({ 
       success: true,
