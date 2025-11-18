@@ -4962,10 +4962,11 @@ function HomeContent() {
                                 );
                               })()}
                               
-                              <h4 className="text-sm font-bold flex-1 min-w-0 break-words" style={{ color: 'var(--text-primary)' }}>
-                                {hashtag.tag}
-                              </h4>
                           </div>
+                          
+                          <h4 className="text-sm font-bold leading-tight line-clamp-2 mt-2" style={{ color: 'var(--text-primary)' }}>
+                            {hashtag.tag}
+                          </h4>
                         </div>
                       );
                     })}
