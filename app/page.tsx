@@ -5354,19 +5354,19 @@ function HomeContent() {
                     e.stopPropagation();
                     toggleModuleCollapse('music-generator');
                   }}
-                  className="absolute top-2 right-2 sm:top-4 sm:right-4 w-5 h-5 sm:w-6 sm:h-6 rounded-full flex items-center justify-center transition-all hover:scale-110 p-2 sm:p-3"
+                  className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 sm:p-3 rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
                   style={{
                     backgroundColor: 'rgba(41, 121, 255, 0.15)',
                     border: '2px solid rgba(41, 121, 255, 0.4)',
                     color: '#2979FF',
-                    fontSize: '14px',
-                    fontWeight: 'bold',
                     zIndex: 10,
                     boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)',
                   }}
                   title="Minimize"
                 >
-                  −
+                  <svg className="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                  </svg>
                 </button>
               )}
 
@@ -5751,12 +5751,13 @@ function HomeContent() {
                       e.stopPropagation();
                       toggleModuleCollapse('sora-prompt');
                     }}
-                    className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 sm:p-3 rounded-lg sm:rounded-xl transition-all z-10 hover:scale-110 active:scale-95"
+                    className="absolute top-2 right-2 sm:top-4 sm:right-4 p-2 sm:p-3 rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
                     style={{ 
                       backgroundColor: 'rgba(41, 121, 255, 0.15)',
                       border: '2px solid rgba(41, 121, 255, 0.4)',
                       color: '#2979FF',
-                      boxShadow: '0 0 12px rgba(41, 121, 255, 0.3)'
+                      zIndex: 10,
+                      boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)'
                     }}
                     title="Minimize"
                   >
