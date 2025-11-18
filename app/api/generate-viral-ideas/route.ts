@@ -99,11 +99,11 @@ Generate ideas that are:
 CONTEXT FOR THIS TOPIC:
 ${analysis}
 
-Now generate 10 video ideas that are MORE INTELLIGENT than generic ChatGPT responses.`,
+Now generate 2 video ideas that are MORE INTELLIGENT than generic ChatGPT responses.`,
         },
         {
           role: "user",
-          content: `Generate 10 ULTRA-INTELLIGENT viral video ideas for: "${topic}"
+          content: `Generate 2 ULTRA-INTELLIGENT viral video ideas for: "${topic}"
 
 Each idea should be:
 ✅ Backed by viral psychology and platform algorithms
