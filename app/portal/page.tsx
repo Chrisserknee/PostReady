@@ -118,7 +118,7 @@ export default function UserPortal() {
       setSupportModalState({
         isOpen: true,
         title: 'Message Sent!',
-        message: data.message || 'Your message has been sent successfully. We\'ll get back to you soon!',
+        message: 'Your message has been sent. Please check your email for a reply within 24 hours.',
         type: 'success',
       });
 
