@@ -8553,8 +8553,8 @@ function HomeContent() {
         </button>
       )}
 
-      {/* Floating Minimize/Maximize All Button */}
-      {!isReorderMode && (
+      {/* Floating Minimize/Maximize All Button - Only on home screen */}
+      {!isReorderMode && currentStep === "form" && (
         <button
           onClick={() => {
             if (areAllModulesCollapsed()) {
