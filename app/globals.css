@@ -10,59 +10,59 @@
   --ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
 }
 
-/* Enhanced Animation Keyframes */
+/* Enhanced Animation Keyframes - Optimized for Mobile */
 @keyframes fadeOut {
   from {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) translateZ(0);
   }
   to {
     opacity: 0;
-    transform: translateY(-10px);
+    transform: translateY(-10px) translateZ(0);
   }
 }
 
 @keyframes fadeIn {
   from {
     opacity: 0;
-    transform: translateY(10px) scale(0.95);
+    transform: translateY(10px) scale(0.95) translateZ(0);
   }
   to {
     opacity: 1;
-    transform: translateY(0) scale(1);
+    transform: translateY(0) scale(1) translateZ(0);
   }
 }
 
 @keyframes fadeInDown {
   from {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-20px) translateZ(0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) translateZ(0);
   }
 }
 
 @keyframes scaleIn {
   from {
     opacity: 0;
-    transform: scale(0.9);
+    transform: scale(0.9) translateZ(0);
   }
   to {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateZ(0);
   }
 }
 
 @keyframes slideInLeft {
   from {
     opacity: 0;
-    transform: translateX(-30px);
+    transform: translateX(-30px) translateZ(0);
   }
   to {
     opacity: 1;
-    transform: translateX(0);
+    transform: translateX(0) translateZ(0);
   }
 }
 
@@ -87,79 +87,84 @@
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(30px);
+    transform: translateY(30px) translateZ(0);
   }
   to {
     opacity: 1;
-    transform: translateY(0);
+    transform: translateY(0) translateZ(0);
   }
 }
 
 @keyframes float {
   0%, 100% {
-    transform: translate(0, 0);
+    transform: translate(0, 0) translateZ(0);
   }
   25% {
-    transform: translate(20px, -20px);
+    transform: translate(20px, -20px) translateZ(0);
   }
   50% {
-    transform: translate(-10px, 10px);
+    transform: translate(-10px, 10px) translateZ(0);
   }
   75% {
-    transform: translate(15px, 5px);
+    transform: translate(15px, 5px) translateZ(0);
   }
 }
 
 @keyframes shimmer {
   0% {
-    transform: translateX(-100%);
+    transform: translateX(-100%) translateZ(0);
   }
   100% {
-    transform: translateX(200%);
+    transform: translateX(200%) translateZ(0);
   }
 }
 
 @keyframes twinkle {
   0%, 100% {
     opacity: 0.3;
-    transform: scale(1);
+    transform: scale(1) translateZ(0);
   }
   50% {
     opacity: 0.7;
-    transform: scale(1.1);
+    transform: scale(1.1) translateZ(0);
   }
 }
 
 @keyframes pulse {
   0%, 100% {
     opacity: 1;
-    transform: scale(1);
+    transform: scale(1) translateZ(0);
   }
   50% {
     opacity: 0.8;
-    transform: scale(1.05);
+    transform: scale(1.05) translateZ(0);
   }
 }
 
-/* Enhanced Animation Classes */
+/* Enhanced Animation Classes - Mobile Optimized */
 .animate-fade-out {
   animation: fadeOut 0.3s var(--ease-out-smooth) forwards;
+  will-change: opacity, transform;
 }
 
 .animate-fade-in {
   animation: fadeIn 0.4s var(--ease-out-smooth) forwards;
+  will-change: opacity, transform;
 }
 
 .animate-fade-in-down {
   animation: fadeInDown 0.4s var(--ease-out-smooth) forwards;
+  will-change: opacity, transform;
 }
 
 .animate-scale-in {
   animation: scaleIn 0.3s var(--ease-out-smooth) forwards;
+  will-change: opacity, transform;
 }
 
 .animate-slide-in-left {
   animation: slideInLeft 0.4s var(--ease-out-smooth) forwards;
+  will-change: opacity, transform;
 }
 
 .animate-typing {
@@ -176,11 +181,11 @@
 /* Notification Animations */
 @keyframes slideInRight {
   from {
-    transform: translateX(400px);
+    transform: translateX(400px) translateZ(0);
     opacity: 0;
   }
   to {
-    transform: translateX(0);
+    transform: translateX(0) translateZ(0);
     opacity: 1;
   }
 }

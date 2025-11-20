@@ -224,6 +224,7 @@ function HomeContent() {
   const [moduleOrder, setModuleOrder] = useState<string[]>([
     'digital-products',
     'music-generator',
+    'voiceover-generator',
     'collab-engine',
     'trend-radar',
     'idea-generator',
@@ -236,7 +237,7 @@ function HomeContent() {
 
   // Module Collapse State
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(
-    new Set(['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'page-analyzer'])
+    new Set(['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer'])
   );
 
   const toggleModuleCollapse = (moduleId: string) => {
@@ -252,7 +253,7 @@ function HomeContent() {
   };
 
   const collapseAllModules = () => {
-    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'page-analyzer'];
+    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer'];
     setCollapsedModules(new Set(allModules));
   };
 
@@ -261,7 +262,7 @@ function HomeContent() {
   };
 
   const areAllModulesCollapsed = () => {
-    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'page-analyzer'];
+    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer'];
     return allModules.every(module => collapsedModules.has(module));
   };
 
@@ -324,10 +325,23 @@ function HomeContent() {
   const [showMusicHistory, setShowMusicHistory] = useState<boolean>(false);
   const [soraUsageCount, setSoraUsageCount] = useState<number>(0);
 
+  // Script and Voiceover Generator State
+  const [voiceoverTopic, setVoiceoverTopic] = useState<string>("");
+  const [voiceoverDuration, setVoiceoverDuration] = useState<number>(30);
+  const [voiceoverVoice, setVoiceoverVoice] = useState<string>("TYkIHhDWzXPHalxGXze5"); // Default voice ID (Trailer Voice)
+  const [voiceoverScript, setVoiceoverScript] = useState<string>("");
+  const [voiceoverGuidance, setVoiceoverGuidance] = useState<string>("");
+  const [showGuidanceInput, setShowGuidanceInput] = useState<boolean>(false);
+  const [isGeneratingVoiceover, setIsGeneratingVoiceover] = useState<boolean>(false);
+  const [voiceoverProgress, setVoiceoverProgress] = useState<number>(0);
+  const [generatedVoiceover, setGeneratedVoiceover] = useState<any>(null);
+  const [showVoiceoverScript, setShowVoiceoverScript] = useState<boolean>(false);
+
   // Digital Products State
   const [digitalProducts, setDigitalProducts] = useState<any[]>([]);
   const [loadingProducts, setLoadingProducts] = useState<boolean>(true);
   const [showSoraPaywall, setShowSoraPaywall] = useState<boolean>(false);
+  const [showVoiceoverPaywall, setShowVoiceoverPaywall] = useState<boolean>(false);
 
   // Music generation function
   const generateMusic = async () => {
@@ -384,6 +398,193 @@ function HomeContent() {
       setMusicProgress(0);
     } finally {
       setIsGeneratingMusic(false);
+    }
+  };
+
+  // Voiceover generation function
+  const generateVoiceover = async () => {
+    // Check if user is Pro
+    if (!isPro) {
+      setShowVoiceoverPaywall(true);
+      return;
+    }
+
+    if (!voiceoverTopic.trim()) {
+      alert('Please enter a topic for your voiceover!');
+      return;
+    }
+
+    setIsGeneratingVoiceover(true);
+    setVoiceoverProgress(0);
+    
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      setVoiceoverProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 2;
+      });
+    }, 300);
+
+    try {
+      // First, generate the script
+      const scriptResponse = await fetch('/api/generate-voiceover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: voiceoverTopic,
+          duration: voiceoverDuration,
+          voice: voiceoverVoice,
+          generateScriptOnly: true,
+        }),
+      });
+
+      clearInterval(progressInterval);
+      const scriptData = await scriptResponse.json();
+
+      if (scriptResponse.ok && scriptData.script) {
+        setVoiceoverScript(scriptData.script);
+        setVoiceoverProgress(100);
+        setTimeout(() => setVoiceoverProgress(0), 500); // Clear progress after a brief moment
+      } else {
+        throw new Error(scriptData.error || 'Failed to generate script');
+      }
+    } catch (error) {
+      clearInterval(progressInterval);
+      console.error('Error generating script:', error);
+      alert('Failed to generate script. Please try again.');
+      setVoiceoverProgress(0);
+    } finally {
+      setIsGeneratingVoiceover(false);
+    }
+  };
+
+  const generateVoiceoverAudio = async () => {
+    // Check if user is Pro
+    if (!isPro) {
+      setShowVoiceoverPaywall(true);
+      return;
+    }
+
+    if (!voiceoverScript.trim()) {
+      alert('Please generate a script first!');
+      return;
+    }
+
+    setIsGeneratingVoiceover(true);
+    setVoiceoverProgress(50);
+    
+    // Continue progress
+    const progressInterval = setInterval(() => {
+      setVoiceoverProgress(prev => {
+        if (prev >= 95) {
+          clearInterval(progressInterval);
+          return 95;
+        }
+        return prev + 1;
+      });
+    }, 200);
+
+    try {
+      const response = await fetch('/api/generate-voiceover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: voiceoverTopic,
+          duration: voiceoverDuration,
+          voice: voiceoverVoice,
+          generateScriptOnly: false,
+        }),
+      });
+
+      clearInterval(progressInterval);
+      const data = await response.json();
+
+      if (response.ok) {
+        const voiceoverData = {
+          ...data,
+          timestamp: new Date().toISOString(),
+          id: Date.now(),
+        };
+        setGeneratedVoiceover(voiceoverData);
+        setVoiceoverProgress(100);
+      } else {
+        alert(data.error || 'Failed to generate voiceover');
+        setVoiceoverProgress(50);
+      }
+    } catch (error) {
+      clearInterval(progressInterval);
+      console.error('Error generating voiceover:', error);
+      alert('Failed to generate voiceover. Please try again.');
+      setVoiceoverProgress(50);
+    } finally {
+      setIsGeneratingVoiceover(false);
+    }
+  };
+
+  const guideVoiceoverScript = async (guidance?: string) => {
+    // Check if user is Pro
+    if (!isPro) {
+      setShowVoiceoverPaywall(true);
+      return;
+    }
+
+    const guidanceText = guidance || voiceoverGuidance;
+    
+    if (!guidanceText.trim()) {
+      alert('Please enter guidance to refine the script!');
+      return;
+    }
+
+    setIsGeneratingVoiceover(true);
+    setVoiceoverProgress(0);
+    
+    // Simulate progress
+    const progressInterval = setInterval(() => {
+      setVoiceoverProgress(prev => {
+        if (prev >= 90) {
+          clearInterval(progressInterval);
+          return 90;
+        }
+        return prev + 2;
+      });
+    }, 300);
+
+    try {
+      const response = await fetch('/api/generate-voiceover', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          topic: voiceoverTopic,
+          duration: voiceoverDuration,
+          voice: voiceoverVoice,
+          generateScriptOnly: true,
+          guidance: guidanceText,
+          currentScript: voiceoverScript,
+        }),
+      });
+
+      clearInterval(progressInterval);
+      const scriptData = await response.json();
+
+      if (response.ok && scriptData.script) {
+        setVoiceoverScript(scriptData.script);
+        setVoiceoverGuidance(''); // Clear guidance after applying
+        setShowGuidanceInput(false); // Hide guidance input
+        setVoiceoverProgress(100);
+        setTimeout(() => setVoiceoverProgress(0), 500); // Clear progress after a brief moment
+      } else {
+        throw new Error(scriptData.error || 'Failed to refine script');
+      }
+    } catch (error) {
+      clearInterval(progressInterval);
+      console.error('Error refining script:', error);
+      alert('Failed to refine script. Please try again.');
+      setVoiceoverProgress(0);
+    } finally {
+      setIsGeneratingVoiceover(false);
     }
   };
 
@@ -3194,7 +3395,7 @@ function HomeContent() {
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'collab-engine')}
             onClick={() => !isReorderMode && collapsedModules.has('collab-engine') && toggleModuleCollapse('collab-engine')}
-            className="rounded-2xl shadow-lg border transition-all duration-500 relative"
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative"
             style={{
               marginBottom: collapsedModules.has('collab-engine') ? '1rem' : '2.5rem',
               backgroundColor: 'var(--card-bg)',
@@ -4092,7 +4293,7 @@ function HomeContent() {
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'trend-radar')}
             onClick={() => !isReorderMode && collapsedModules.has('trend-radar') && toggleModuleCollapse('trend-radar')}
-            className="rounded-2xl shadow-lg border transition-all duration-500 relative"
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative"
             style={{
               marginBottom: collapsedModules.has('trend-radar') ? '1rem' : '2.5rem',
               backgroundColor: 'var(--card-bg)',
@@ -4127,7 +4328,7 @@ function HomeContent() {
             <div 
               className="flex items-center justify-between"
               style={{
-                transition: 'opacity 0.8s ease-in-out',
+                transition: 'opacity 0.3s ease-in-out',
                 opacity: collapsedModules.has('trend-radar') ? 1 : 0,
                 pointerEvents: collapsedModules.has('trend-radar') ? 'auto' : 'none',
                 position: collapsedModules.has('trend-radar') ? 'relative' : 'absolute',
@@ -4148,7 +4349,7 @@ function HomeContent() {
             {/* Expanded Content */}
             <div
               style={{
-                transition: 'opacity 0.8s ease-in-out',
+                transition: 'opacity 0.3s ease-in-out',
                 opacity: collapsedModules.has('trend-radar') ? 0 : 1,
                 pointerEvents: collapsedModules.has('trend-radar') ? 'none' : 'auto',
                 position: collapsedModules.has('trend-radar') ? 'absolute' : 'relative',
@@ -4330,7 +4531,7 @@ function HomeContent() {
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'idea-generator')}
             onClick={() => !isReorderMode && collapsedModules.has('idea-generator') && toggleModuleCollapse('idea-generator')}
-            className="rounded-2xl shadow-lg border transition-all duration-500 relative"
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative"
             style={{
               marginBottom: collapsedModules.has('idea-generator') ? '1rem' : '2.5rem',
               backgroundColor: 'var(--card-bg)',
@@ -4353,7 +4554,7 @@ function HomeContent() {
             <div 
               className="flex items-center justify-between gap-2"
               style={{
-                transition: 'opacity 0.8s ease-in-out',
+                transition: 'opacity 0.3s ease-in-out',
                 opacity: collapsedModules.has('idea-generator') ? 1 : 0,
                 pointerEvents: collapsedModules.has('idea-generator') ? 'auto' : 'none',
                 position: collapsedModules.has('idea-generator') ? 'relative' : 'absolute',
@@ -4380,7 +4581,7 @@ function HomeContent() {
             {/* Expanded Content */}
             <div
               style={{
-                transition: 'opacity 0.8s ease-in-out',
+                transition: 'opacity 0.3s ease-in-out',
                 opacity: collapsedModules.has('idea-generator') ? 0 : 1,
                 pointerEvents: collapsedModules.has('idea-generator') ? 'none' : 'auto',
                 position: collapsedModules.has('idea-generator') ? 'absolute' : 'relative',
@@ -4797,7 +4998,7 @@ function HomeContent() {
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'hashtag-research')}
             onClick={() => !isReorderMode && collapsedModules.has('hashtag-research') && toggleModuleCollapse('hashtag-research')}
-            className="rounded-2xl shadow-lg border transition-all duration-500 scroll-mt-4 relative"
+            className="rounded-2xl shadow-lg border transition-all duration-300 scroll-mt-4 relative"
             style={{
               marginBottom: collapsedModules.has('hashtag-research') ? '1rem' : '2.5rem',
               backgroundColor: 'var(--card-bg)',
@@ -4820,7 +5021,7 @@ function HomeContent() {
             <div 
               className="flex items-center justify-between"
               style={{
-                transition: 'opacity 0.8s ease-in-out',
+                transition: 'opacity 0.3s ease-in-out',
                 opacity: collapsedModules.has('hashtag-research') ? 1 : 0,
                 pointerEvents: collapsedModules.has('hashtag-research') ? 'auto' : 'none',
                 position: collapsedModules.has('hashtag-research') ? 'relative' : 'absolute',
@@ -4841,7 +5042,7 @@ function HomeContent() {
             {/* Expanded Content */}
             <div
               style={{
-                transition: 'opacity 0.8s ease-in-out',
+                transition: 'opacity 0.3s ease-in-out',
                 opacity: collapsedModules.has('hashtag-research') ? 0 : 1,
                 pointerEvents: collapsedModules.has('hashtag-research') ? 'none' : 'auto',
                 position: collapsedModules.has('hashtag-research') ? 'absolute' : 'relative',
@@ -5334,7 +5535,8 @@ function HomeContent() {
             onClick={() => !isReorderMode && collapsedModules.has('digital-products') && toggleModuleCollapse('digital-products')}
             className="rounded-2xl shadow-lg border scroll-mt-4 relative"
             style={{
-              transition: 'max-height 1.5s cubic-bezier(0.65, 0, 0.35, 1), padding 1.5s cubic-bezier(0.65, 0, 0.35, 1), margin-bottom 0.3s ease-out, transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              transition: 'margin-bottom 0.3s ease-out, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              willChange: 'transform',
               marginBottom: collapsedModules.has('digital-products') ? '1rem' : '2.5rem',
               backgroundColor: theme === 'dark' 
                 ? 'rgba(218, 165, 32, 0.08)' 
@@ -5363,10 +5565,9 @@ function HomeContent() {
               transform: draggedModule === 'digital-products' 
                 ? 'scale(1.05) rotate(2deg)' 
                 : 'scale(1)',
-              padding: collapsedModules.has('digital-products') ? '1rem' : '1.5rem',
+              padding: '1.5rem',
               zIndex: draggedModule === 'digital-products' ? 1000 : 'auto',
-              maxHeight: collapsedModules.has('digital-products') ? '80px' : 'none',
-              overflow: collapsedModules.has('digital-products') ? 'hidden' : 'visible',
+              overflow: 'visible',
             }}
           >
             {/* Drop Indicators */}
@@ -5393,24 +5594,44 @@ function HomeContent() {
             )}
 
             {/* Collapsed Bar View */}
-            {collapsedModules.has('digital-products') ? (
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">💎</span>
-                  <h3 className="text-lg sm:text-xl font-bold" style={{ 
-                    background: 'linear-gradient(135deg, #DAA520, #FFD700, #F4C430)',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
-                    backgroundClip: 'text'
-                  }}>
-                    Premium Collection
-                  </h3>
-                </div>
-                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
-                  {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
-                </span>
+            <div 
+              className="flex items-center justify-between"
+              style={{
+                transition: 'opacity 0.2s ease-out',
+                opacity: collapsedModules.has('digital-products') ? 1 : 0,
+                pointerEvents: collapsedModules.has('digital-products') ? 'auto' : 'none',
+                position: collapsedModules.has('digital-products') ? 'relative' : 'absolute',
+                height: collapsedModules.has('digital-products') ? 'auto' : '0',
+              }}
+            >
+              <div className="flex items-center gap-3">
+                <span className="text-3xl">💎</span>
+                <h3 className="text-lg sm:text-xl font-bold" style={{ 
+                  background: 'linear-gradient(135deg, #DAA520, #FFD700, #F4C430)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>
+                  Premium Collection
+                </h3>
               </div>
-            ) : (
+              <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+              </span>
+            </div>
+
+            {/* Expanded Content */}
+            <div
+              style={{
+                transformOrigin: 'top',
+                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out',
+                transform: collapsedModules.has('digital-products') ? 'scaleY(0)' : 'scaleY(1)',
+                opacity: collapsedModules.has('digital-products') ? 0 : 1,
+                height: collapsedModules.has('digital-products') ? '0' : 'auto',
+                overflow: 'hidden',
+                willChange: 'transform, opacity',
+              }}
+            >
               <>
                 {/* Minimize Button */}
                 {!isReorderMode && (
@@ -5585,7 +5806,7 @@ function HomeContent() {
                   </div>
                 </div>
               </>
-            )}
+            </div>
           </div>
         )}
 
@@ -5601,7 +5822,8 @@ function HomeContent() {
             onClick={() => !isReorderMode && collapsedModules.has('music-generator') && toggleModuleCollapse('music-generator')}
             className="rounded-2xl shadow-lg border scroll-mt-4 relative overflow-hidden"
             style={{
-              transition: 'max-height 1.5s cubic-bezier(0.65, 0, 0.35, 1), padding 1.5s cubic-bezier(0.65, 0, 0.35, 1), margin-bottom 0.3s ease-out, transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              transition: 'margin-bottom 0.3s ease-out, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              willChange: 'transform',
               marginBottom: collapsedModules.has('music-generator') ? '1rem' : '2.5rem',
               backgroundColor: theme === 'dark' 
                 ? 'rgba(41, 121, 255, 0.12)' 
@@ -5630,10 +5852,9 @@ function HomeContent() {
               transform: draggedModule === 'music-generator' 
                 ? 'scale(1.05) rotate(2deg)' 
                 : 'scale(1)',
-              padding: collapsedModules.has('music-generator') ? '1rem' : '1.5rem',
+              padding: '1.5rem',
               zIndex: draggedModule === 'music-generator' ? 1000 : 'auto',
-              maxHeight: collapsedModules.has('music-generator') ? '80px' : '2000px',
-              overflow: 'hidden',
+              overflow: 'visible',
             }}
           >
             {/* Drop Indicator - Top */}
@@ -5664,11 +5885,11 @@ function HomeContent() {
             <div 
               className="flex items-center justify-between gap-2"
               style={{
-                transition: 'opacity 0.8s ease-in-out',
+                transition: 'opacity 0.2s ease-out',
                 opacity: collapsedModules.has('music-generator') ? 1 : 0,
                 pointerEvents: collapsedModules.has('music-generator') ? 'auto' : 'none',
                 position: collapsedModules.has('music-generator') ? 'relative' : 'absolute',
-                visibility: collapsedModules.has('music-generator') ? 'visible' : 'hidden',
+                height: collapsedModules.has('music-generator') ? 'auto' : '0',
               }}
             >
               <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
@@ -5685,15 +5906,17 @@ function HomeContent() {
             {/* Expanded Content */}
             <div
               style={{
-                transition: 'opacity 0.8s ease-in-out',
+                transformOrigin: 'top',
+                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out',
+                transform: collapsedModules.has('music-generator') ? 'scaleY(0)' : 'scaleY(1)',
                 opacity: collapsedModules.has('music-generator') ? 0 : 1,
-                pointerEvents: collapsedModules.has('music-generator') ? 'none' : 'auto',
-                position: collapsedModules.has('music-generator') ? 'absolute' : 'relative',
-                visibility: collapsedModules.has('music-generator') ? 'hidden' : 'visible',
+                height: collapsedModules.has('music-generator') ? '0' : 'auto',
+                overflow: 'hidden',
+                willChange: 'transform, opacity',
               }}
             >
               {/* Minimize Button */}
-              {!collapsedModules.has('music-generator') && (
+              {!isReorderMode && (
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -5731,19 +5954,136 @@ function HomeContent() {
                   <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
                     Song Length: {musicDuration}s
                   </label>
-                  <input
-                    type="range"
-                    min="10"
-                    max="120"
-                    step="10"
-                    value={musicDuration}
-                    onChange={(e) => setMusicDuration(Number(e.target.value))}
-                    disabled={isGeneratingMusic}
-                    className="w-full h-2 rounded-lg appearance-none cursor-pointer"
-                    style={{
-                      background: `linear-gradient(to right, #2979FF 0%, #2979FF ${((musicDuration - 10) / 110) * 100}%, ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} ${((musicDuration - 10) / 110) * 100}%, ${theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'} 100%)`,
-                    }}
-                  />
+                  <div className="relative py-3 px-1">
+                    {/* Apple-style Glass container */}
+                    <div className="relative p-5 rounded-3xl overflow-hidden" style={{
+                      background: theme === 'dark' 
+                        ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%)'
+                        : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%)',
+                      backdropFilter: 'blur(40px) saturate(180%)',
+                      WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+                      border: theme === 'dark'
+                        ? '1px solid rgba(255, 255, 255, 0.18)'
+                        : '1px solid rgba(255, 255, 255, 0.8)',
+                      boxShadow: theme === 'dark'
+                        ? '0 8px 32px rgba(0, 0, 0, 0.37), inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 1px 2px rgba(0, 0, 0, 0.2)'
+                        : '0 8px 32px rgba(31, 38, 135, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(0, 0, 0, 0.05)',
+                    }}>
+                      <input
+                        type="range"
+                        min="10"
+                        max="120"
+                        step="10"
+                        value={musicDuration}
+                        onChange={(e) => setMusicDuration(Number(e.target.value))}
+                        disabled={isGeneratingMusic}
+                        className="w-full h-1 rounded-full appearance-none cursor-pointer music-duration-slider"
+                        style={{
+                          background: 'transparent',
+                        }}
+                      />
+                      {/* Apple-style track background */}
+                      <div className="absolute left-5 right-5 top-1/2 -translate-y-1/2 h-1 rounded-full overflow-visible pointer-events-none" style={{
+                        background: theme === 'dark' 
+                          ? 'rgba(255, 255, 255, 0.15)' 
+                          : 'rgba(0, 0, 0, 0.08)',
+                        boxShadow: theme === 'dark'
+                          ? 'inset 0 1px 2px rgba(0, 0, 0, 0.5)'
+                          : 'inset 0 1px 2px rgba(0, 0, 0, 0.12)',
+                      }}>
+                        <div className="h-full rounded-full transition-all duration-500 ease-out" style={{
+                          width: `${((musicDuration - 10) / 110) * 100}%`,
+                          background: 'linear-gradient(90deg, #007AFF 0%, #5AC8FA 100%)',
+                          boxShadow: theme === 'dark'
+                            ? '0 0 8px rgba(0, 122, 255, 0.4), 0 0 16px rgba(90, 200, 250, 0.2)'
+                            : '0 0 6px rgba(0, 122, 255, 0.3), 0 0 12px rgba(90, 200, 250, 0.15)',
+                        }} />
+                      </div>
+                    </div>
+                    <style jsx>{`
+                      .music-duration-slider::-webkit-slider-thumb {
+                        appearance: none;
+                        width: 28px;
+                        height: 28px;
+                        border-radius: 50%;
+                        background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.94) 100%);
+                        cursor: pointer;
+                        position: relative;
+                        z-index: 10;
+                        box-shadow: 
+                          0 2px 8px rgba(0, 0, 0, 0.12),
+                          0 8px 24px rgba(0, 0, 0, 0.08),
+                          0 0 0 0.5px rgba(0, 0, 0, 0.04),
+                          inset 0 1px 1px rgba(255, 255, 255, 0.9),
+                          inset 0 -1px 2px rgba(0, 0, 0, 0.03);
+                        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                        border: 0.5px solid rgba(0, 0, 0, 0.04);
+                      }
+                      .music-duration-slider::-webkit-slider-thumb:hover {
+                        transform: scale(1.08);
+                        box-shadow: 
+                          0 4px 12px rgba(0, 0, 0, 0.14),
+                          0 12px 32px rgba(0, 0, 0, 0.1),
+                          0 0 0 0.5px rgba(0, 0, 0, 0.05),
+                          inset 0 1px 1px rgba(255, 255, 255, 1),
+                          inset 0 -1px 3px rgba(0, 0, 0, 0.04);
+                      }
+                      .music-duration-slider::-webkit-slider-thumb:active {
+                        transform: scale(1.02);
+                        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+                        box-shadow: 
+                          0 1px 4px rgba(0, 0, 0, 0.15),
+                          0 4px 12px rgba(0, 0, 0, 0.1),
+                          0 0 0 0.5px rgba(0, 0, 0, 0.06),
+                          inset 0 1px 1px rgba(255, 255, 255, 0.95),
+                          inset 0 -1px 2px rgba(0, 0, 0, 0.05);
+                      }
+                      .music-duration-slider::-moz-range-thumb {
+                        width: 28px;
+                        height: 28px;
+                        border-radius: 50%;
+                        background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.94) 100%);
+                        cursor: pointer;
+                        border: 0.5px solid rgba(0, 0, 0, 0.04);
+                        box-shadow: 
+                          0 2px 8px rgba(0, 0, 0, 0.12),
+                          0 8px 24px rgba(0, 0, 0, 0.08),
+                          0 0 0 0.5px rgba(0, 0, 0, 0.04),
+                          inset 0 1px 1px rgba(255, 255, 255, 0.9),
+                          inset 0 -1px 2px rgba(0, 0, 0, 0.03);
+                        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                      }
+                      .music-duration-slider::-moz-range-thumb:hover {
+                        transform: scale(1.08);
+                        box-shadow: 
+                          0 4px 12px rgba(0, 0, 0, 0.14),
+                          0 12px 32px rgba(0, 0, 0, 0.1),
+                          0 0 0 0.5px rgba(0, 0, 0, 0.05),
+                          inset 0 1px 1px rgba(255, 255, 255, 1),
+                          inset 0 -1px 3px rgba(0, 0, 0, 0.04);
+                      }
+                      .music-duration-slider::-moz-range-thumb:active {
+                        transform: scale(1.02);
+                        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+                        box-shadow: 
+                          0 1px 4px rgba(0, 0, 0, 0.15),
+                          0 4px 12px rgba(0, 0, 0, 0.1),
+                          0 0 0 0.5px rgba(0, 0, 0, 0.06),
+                          inset 0 1px 1px rgba(255, 255, 255, 0.95),
+                          inset 0 -1px 2px rgba(0, 0, 0, 0.05);
+                      }
+                      @media (max-width: 640px) {
+                        .music-duration-slider::-webkit-slider-thumb {
+                          width: 36px;
+                          height: 36px;
+                        }
+                        .music-duration-slider::-moz-range-thumb {
+                          width: 36px;
+                          height: 36px;
+                        }
+                      }
+                    `}</style>
+                  </div>
                   <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
                     <span>10s</span>
                     <span>120s</span>
@@ -5980,6 +6320,636 @@ function HomeContent() {
           </div>
         )}
 
+        {/* Script and Voiceover Generator */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('voiceover-generator')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'voiceover-generator')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'voiceover-generator')}
+            onClick={() => !isReorderMode && collapsedModules.has('voiceover-generator') && toggleModuleCollapse('voiceover-generator')}
+            className="rounded-2xl shadow-lg border scroll-mt-4 relative overflow-hidden"
+            style={{
+              transition: 'margin-bottom 0.3s ease-out, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              willChange: 'transform',
+              marginBottom: collapsedModules.has('voiceover-generator') ? '1rem' : '2.5rem',
+              backgroundColor: theme === 'dark' 
+                ? 'rgba(41, 121, 255, 0.12)' 
+                : 'rgba(41, 121, 255, 0.03)',
+              borderColor: dragOverModule === 'voiceover-generator'
+                ? '#2979FF'
+                : (isReorderMode && user)
+                  ? (theme === 'dark' ? 'rgba(41, 121, 255, 0.6)' : 'rgba(41, 121, 255, 0.5)')
+                  : (theme === 'dark'
+                    ? 'rgba(41, 121, 255, 0.4)'
+                    : 'rgba(41, 121, 255, 0.3)'),
+              boxShadow: draggedModule === 'voiceover-generator'
+                ? '0 16px 48px rgba(41, 121, 255, 0.45), 0 0 0 2px rgba(41, 121, 255, 0.6), 0 0 20px rgba(41, 121, 255, 0.3)'
+                : dragOverModule === 'voiceover-generator'
+                  ? '0 0 0 3px rgba(41, 121, 255, 0.5), 0 0 20px rgba(41, 121, 255, 0.3)'
+                  : (isReorderMode && user)
+                    ? (theme === 'dark'
+                      ? '0 8px 32px rgba(41, 121, 255, 0.4), 0 0 0 2px rgba(41, 121, 255, 0.5), 0 0 20px rgba(41, 121, 255, 0.25)'
+                      : '0 8px 32px rgba(41, 121, 255, 0.3), 0 0 0 2px rgba(41, 121, 255, 0.4), 0 0 15px rgba(41, 121, 255, 0.2)')
+                    : (theme === 'dark'
+                      ? '0 4px 20px rgba(41, 121, 255, 0.25), 0 0 15px rgba(41, 121, 255, 0.15)'
+                      : '0 4px 20px rgba(41, 121, 255, 0.15), 0 0 10px rgba(41, 121, 255, 0.1)'),
+              order: moduleOrder.indexOf('voiceover-generator'),
+              cursor: (isReorderMode && user) ? (draggedModule === 'voiceover-generator' ? 'grabbing' : 'grab') : (collapsedModules.has('voiceover-generator') ? 'pointer' : 'default'),
+              opacity: 1,
+              transform: draggedModule === 'voiceover-generator' 
+                ? 'scale(1.05) rotate(2deg)' 
+                : 'scale(1)',
+              padding: '1.5rem',
+              zIndex: draggedModule === 'voiceover-generator' ? 1000 : 'auto',
+              overflow: 'visible',
+            }}
+          >
+            {/* Drop Indicator - Top */}
+            {dragOverModule === 'voiceover-generator' && dropPosition === 'before' && draggedModule !== 'voiceover-generator' && (
+              <div 
+                className="absolute -top-2 left-0 right-0 h-1 rounded-full"
+                style={{
+                  backgroundColor: '#2979FF',
+                  boxShadow: '0 0 16px rgba(41, 121, 255, 0.8)',
+                  zIndex: 1001,
+                }}
+              />
+            )}
+            
+            {/* Drop Indicator - Bottom */}
+            {dragOverModule === 'voiceover-generator' && dropPosition === 'after' && draggedModule !== 'voiceover-generator' && (
+              <div 
+                className="absolute -bottom-2 left-0 right-0 h-1 rounded-full"
+                style={{
+                  backgroundColor: '#2979FF',
+                  boxShadow: '0 0 16px rgba(41, 121, 255, 0.8)',
+                  zIndex: 1001,
+                }}
+              />
+            )}
+
+            {/* Collapsed Bar View */}
+            <div 
+              className="flex items-center justify-between gap-2"
+              style={{
+                transition: 'opacity 0.2s ease-out',
+                opacity: collapsedModules.has('voiceover-generator') ? 1 : 0,
+                pointerEvents: collapsedModules.has('voiceover-generator') ? 'auto' : 'none',
+                position: collapsedModules.has('voiceover-generator') ? 'relative' : 'absolute',
+                height: collapsedModules.has('voiceover-generator') ? 'auto' : '0',
+              }}
+            >
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                <span className="text-3xl flex-shrink-0">🎙️</span>
+                <h3 className="text-lg sm:text-xl font-bold truncate" style={{ color: 'var(--secondary)' }}>
+                  Script and Voiceover Generator
+                </h3>
+                <span className="px-2 py-1 text-xs font-bold rounded flex-shrink-0" style={{
+                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                  color: 'white',
+                }}>
+                  PRO
+                </span>
+              </div>
+              <span className="text-sm opacity-60 flex-shrink-0 hidden sm:block" style={{ color: 'var(--text-secondary)' }}>
+                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+              </span>
+            </div>
+
+            {/* Expanded Content */}
+            <div
+              style={{
+                transformOrigin: 'top',
+                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out',
+                transform: collapsedModules.has('voiceover-generator') ? 'scaleY(0)' : 'scaleY(1)',
+                opacity: collapsedModules.has('voiceover-generator') ? 0 : 1,
+                height: collapsedModules.has('voiceover-generator') ? '0' : 'auto',
+                overflow: 'hidden',
+                willChange: 'transform, opacity',
+              }}
+            >
+              {/* Minimize Button */}
+              {!isReorderMode && (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleModuleCollapse('voiceover-generator');
+                  }}
+                  className="absolute top-1 right-1 sm:top-2 sm:right-2 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
+                  style={{
+                    backgroundColor: 'rgba(41, 121, 255, 0.15)',
+                    border: '2px solid rgba(41, 121, 255, 0.4)',
+                    color: '#2979FF',
+                    zIndex: 10,
+                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)',
+                  }}
+                  title="Minimize"
+                >
+                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
+                  </svg>
+                </button>
+              )}
+
+              <h2 className="text-3xl sm:text-4xl font-bold text-center mb-2" style={{ 
+                color: '#2979FF',
+                textShadow: '0 0 20px rgba(41, 121, 255, 0.3)'
+              }}>
+                🎙️ Script and Voiceover Generator
+              </h2>
+              <p className="text-center mb-6" style={{ color: 'var(--text-secondary)' }}>
+                Create professional AI voiceovers with generated scripts
+              </p>
+
+              <div className="space-y-4">
+                {/* Topic Input */}
+                <div>
+                  <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Voiceover Topic
+                  </label>
+                  <textarea
+                    value={voiceoverTopic}
+                    onChange={(e) => setVoiceoverTopic(e.target.value)}
+                    disabled={isGeneratingVoiceover}
+                    placeholder="E.g., 'Product demo for eco-friendly water bottles' or 'Welcome message for a yoga studio'"
+                    className="w-full px-4 py-3 rounded-lg border-2 transition-all resize-none text-sm sm:text-base"
+                    rows={3}
+                    style={{
+                      backgroundColor: 'var(--input-bg)',
+                      borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.4)' : 'rgba(41, 121, 255, 0.3)',
+                      color: 'var(--text-primary)',
+                    }}
+                  />
+                </div>
+
+                {/* Duration Slider */}
+                <div>
+                  <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Duration: {voiceoverDuration}s
+                  </label>
+                  <div className="relative py-3 px-1">
+                    {/* Apple-style Glass container */}
+                    <div className="relative p-5 rounded-3xl overflow-hidden" style={{
+                      background: theme === 'dark' 
+                        ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%)'
+                        : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%)',
+                      backdropFilter: 'blur(40px) saturate(180%)',
+                      WebkitBackdropFilter: 'blur(40px) saturate(180%)',
+                      border: theme === 'dark'
+                        ? '1px solid rgba(255, 255, 255, 0.18)'
+                        : '1px solid rgba(255, 255, 255, 0.8)',
+                      boxShadow: theme === 'dark'
+                        ? '0 8px 32px rgba(0, 0, 0, 0.37), inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 1px 2px rgba(0, 0, 0, 0.2)'
+                        : '0 8px 32px rgba(31, 38, 135, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(0, 0, 0, 0.05)',
+                    }}>
+                      <input
+                        type="range"
+                        min="15"
+                        max="120"
+                        step="15"
+                        value={voiceoverDuration}
+                        onChange={(e) => setVoiceoverDuration(Number(e.target.value))}
+                        disabled={isGeneratingVoiceover}
+                        className="w-full h-1 rounded-full appearance-none cursor-pointer voiceover-duration-slider"
+                        style={{
+                          background: 'transparent',
+                        }}
+                      />
+                      {/* Apple-style track background */}
+                      <div className="absolute left-5 right-5 top-1/2 -translate-y-1/2 h-1 rounded-full overflow-visible pointer-events-none" style={{
+                        background: theme === 'dark' 
+                          ? 'rgba(255, 255, 255, 0.15)' 
+                          : 'rgba(0, 0, 0, 0.08)',
+                        boxShadow: theme === 'dark'
+                          ? 'inset 0 1px 2px rgba(0, 0, 0, 0.5)'
+                          : 'inset 0 1px 2px rgba(0, 0, 0, 0.12)',
+                      }}>
+                        <div className="h-full rounded-full transition-all duration-500 ease-out" style={{
+                          width: `${((voiceoverDuration - 15) / 105) * 100}%`,
+                          background: 'linear-gradient(90deg, #007AFF 0%, #5AC8FA 100%)',
+                          boxShadow: theme === 'dark'
+                            ? '0 0 8px rgba(0, 122, 255, 0.4), 0 0 16px rgba(90, 200, 250, 0.2)'
+                            : '0 0 6px rgba(0, 122, 255, 0.3), 0 0 12px rgba(90, 200, 250, 0.15)',
+                        }} />
+                      </div>
+                    </div>
+                    <style jsx>{`
+                      .voiceover-duration-slider::-webkit-slider-thumb {
+                        appearance: none;
+                        width: 28px;
+                        height: 28px;
+                        border-radius: 50%;
+                        background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.94) 100%);
+                        cursor: pointer;
+                        position: relative;
+                        z-index: 10;
+                        box-shadow: 
+                          0 2px 8px rgba(0, 0, 0, 0.12),
+                          0 8px 24px rgba(0, 0, 0, 0.08),
+                          0 0 0 0.5px rgba(0, 0, 0, 0.04),
+                          inset 0 1px 1px rgba(255, 255, 255, 0.9),
+                          inset 0 -1px 2px rgba(0, 0, 0, 0.03);
+                        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                        border: 0.5px solid rgba(0, 0, 0, 0.04);
+                      }
+                      .voiceover-duration-slider::-webkit-slider-thumb:hover {
+                        transform: scale(1.08);
+                        box-shadow: 
+                          0 4px 12px rgba(0, 0, 0, 0.14),
+                          0 12px 32px rgba(0, 0, 0, 0.1),
+                          0 0 0 0.5px rgba(0, 0, 0, 0.05),
+                          inset 0 1px 1px rgba(255, 255, 255, 1),
+                          inset 0 -1px 3px rgba(0, 0, 0, 0.04);
+                      }
+                      .voiceover-duration-slider::-webkit-slider-thumb:active {
+                        transform: scale(1.02);
+                        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+                        box-shadow: 
+                          0 1px 4px rgba(0, 0, 0, 0.15),
+                          0 4px 12px rgba(0, 0, 0, 0.1),
+                          0 0 0 0.5px rgba(0, 0, 0, 0.06),
+                          inset 0 1px 1px rgba(255, 255, 255, 0.95),
+                          inset 0 -1px 2px rgba(0, 0, 0, 0.05);
+                      }
+                      .voiceover-duration-slider::-moz-range-thumb {
+                        width: 28px;
+                        height: 28px;
+                        border-radius: 50%;
+                        background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.94) 100%);
+                        cursor: pointer;
+                        border: 0.5px solid rgba(0, 0, 0, 0.04);
+                        box-shadow: 
+                          0 2px 8px rgba(0, 0, 0, 0.12),
+                          0 8px 24px rgba(0, 0, 0, 0.08),
+                          0 0 0 0.5px rgba(0, 0, 0, 0.04),
+                          inset 0 1px 1px rgba(255, 255, 255, 0.9),
+                          inset 0 -1px 2px rgba(0, 0, 0, 0.03);
+                        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+                      }
+                      .voiceover-duration-slider::-moz-range-thumb:hover {
+                        transform: scale(1.08);
+                        box-shadow: 
+                          0 4px 12px rgba(0, 0, 0, 0.14),
+                          0 12px 32px rgba(0, 0, 0, 0.1),
+                          0 0 0 0.5px rgba(0, 0, 0, 0.05),
+                          inset 0 1px 1px rgba(255, 255, 255, 1),
+                          inset 0 -1px 3px rgba(0, 0, 0, 0.04);
+                      }
+                      .voiceover-duration-slider::-moz-range-thumb:active {
+                        transform: scale(1.02);
+                        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+                        box-shadow: 
+                          0 1px 4px rgba(0, 0, 0, 0.15),
+                          0 4px 12px rgba(0, 0, 0, 0.1),
+                          0 0 0 0.5px rgba(0, 0, 0, 0.06),
+                          inset 0 1px 1px rgba(255, 255, 255, 0.95),
+                          inset 0 -1px 2px rgba(0, 0, 0, 0.05);
+                      }
+                      @media (max-width: 640px) {
+                        .voiceover-duration-slider::-webkit-slider-thumb {
+                          width: 36px;
+                          height: 36px;
+                        }
+                        .voiceover-duration-slider::-moz-range-thumb {
+                          width: 36px;
+                          height: 36px;
+                        }
+                      }
+                    `}</style>
+                  </div>
+                  <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
+                    <span>15s</span>
+                    <span>120s</span>
+                  </div>
+                </div>
+
+                {/* Voice Selection */}
+                <div>
+                  <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Voice Selection
+                  </label>
+                  <select
+                    value={voiceoverVoice}
+                    onChange={(e) => setVoiceoverVoice(e.target.value)}
+                    disabled={isGeneratingVoiceover}
+                    className="w-full px-4 py-3 rounded-lg border-2 transition-all"
+                    style={{
+                      backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff',
+                      borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.4)' : 'rgba(41, 121, 255, 0.3)',
+                      color: theme === 'dark' ? '#ffffff' : '#000000',
+                    }}
+                  >
+                    <option value="TYkIHhDWzXPHalxGXze5" style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#000000' }}>🎬 Trailer Voice</option>
+                    <option value="6sFKzaJr574YWVu4UuJF" style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#000000' }}>🎙️ Cornelius</option>
+                    <option value="jqcCZkN6Knx8BJ5TBdYR" style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#000000' }}>🎙️ Zara</option>
+                    <option value="dXtC3XhB9GtPusIpNtQx" style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#000000' }}>🎙️ Hale</option>
+                  </select>
+                </div>
+
+                {/* Generate Script Button */}
+                {!voiceoverScript && (
+                  <button
+                    onClick={generateVoiceover}
+                    disabled={isGeneratingVoiceover || !voiceoverTopic.trim()}
+                    className="w-full py-4 rounded-lg font-bold text-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                    style={{
+                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                      color: 'white',
+                      boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
+                    }}
+                  >
+                    {isGeneratingVoiceover ? '✍️ Generating Script...' : '✍️ Generate Script'}
+                  </button>
+                )}
+
+                {/* Progress Bar */}
+                {isGeneratingVoiceover && !generatedVoiceover && (
+                  <div className="space-y-2">
+                    <div className="w-full h-3 rounded-full overflow-hidden" style={{
+                      backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
+                    }}>
+                      <div 
+                        className="h-full transition-all duration-300 rounded-full"
+                        style={{
+                          width: `${voiceoverProgress}%`,
+                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                          boxShadow: '0 0 10px rgba(41, 121, 255, 0.5)'
+                        }}
+                      />
+                    </div>
+                    <p className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
+                      {voiceoverProgress < 50 ? 'Crafting your script...' : 'Converting to voiceover...'} {voiceoverProgress}%
+                    </p>
+                  </div>
+                )}
+
+                {/* Generated Script Display */}
+                {voiceoverScript && !generatedVoiceover && (
+                  <div className="mt-6 p-4 rounded-lg" style={{
+                    backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
+                    border: '2px solid rgba(41, 121, 255, 0.3)',
+                  }}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="text-2xl">📝</span>
+                      <h3 className="font-bold text-lg" style={{ color: '#2979FF' }}>
+                        Your Script
+                      </h3>
+                      <span className="text-xs opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                        (Editable)
+                      </span>
+                    </div>
+
+                    {/* Editable Script */}
+                    <div className="mb-3">
+                      <textarea
+                        value={voiceoverScript}
+                        onChange={(e) => setVoiceoverScript(e.target.value)}
+                        disabled={isGeneratingVoiceover}
+                        className="w-full px-4 py-3 rounded-lg border-2 transition-all resize-none text-sm"
+                        rows={8}
+                        style={{
+                          backgroundColor: 'var(--input-bg)',
+                          borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.4)' : 'rgba(41, 121, 255, 0.3)',
+                          color: 'var(--text-primary)',
+                          lineHeight: '1.6',
+                        }}
+                      />
+                    </div>
+
+                    {/* Guide AI Section */}
+                    <div className="relative mb-4" style={{ zIndex: 10 }}>
+                      <button
+                        onClick={() => setShowGuidanceInput(true)}
+                        disabled={isGeneratingVoiceover}
+                        className="px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
+                        style={{
+                          background: 'linear-gradient(to right, #6FFFD2, #2979FF)',
+                          color: 'white',
+                          boxShadow: '0 2px 8px rgba(111, 255, 210, 0.4)'
+                        }}
+                      >
+                        <span>🤖</span>
+                        <span>Guide AI</span>
+                      </button>
+
+                      {/* Floating Dialog Overlay */}
+                      {showGuidanceInput && (
+                        <>
+                          {/* Backdrop */}
+                          <div 
+                            onClick={() => {
+                              setShowGuidanceInput(false);
+                              setVoiceoverGuidance('');
+                            }}
+                            style={{
+                              position: 'fixed',
+                              top: 0,
+                              left: 0,
+                              right: 0,
+                              bottom: 0,
+                              backgroundColor: 'rgba(0, 0, 0, 0.3)',
+                              zIndex: 999,
+                            }}
+                          />
+                          
+                          {/* Dialog Box */}
+                          <div 
+                            className="p-4 rounded-lg shadow-2xl animate-in"
+                            style={{
+                              position: 'absolute',
+                              top: '100%',
+                              left: 0,
+                              right: 0,
+                              marginTop: '0.5rem',
+                              backgroundColor: theme === 'dark' ? 'rgba(26, 26, 26, 0.98)' : 'rgba(255, 255, 255, 0.98)',
+                              border: '2px solid rgba(111, 255, 210, 0.5)',
+                              boxShadow: '0 8px 32px rgba(111, 255, 210, 0.3), 0 0 0 1px rgba(111, 255, 210, 0.2)',
+                              backdropFilter: 'blur(10px)',
+                              zIndex: 1000,
+                            }}
+                          >
+                            <label className="block mb-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
+                              🤖 How would you like to refine the script?
+                            </label>
+                            <textarea
+                              value={voiceoverGuidance}
+                              onChange={(e) => setVoiceoverGuidance(e.target.value)}
+                              disabled={isGeneratingVoiceover}
+                              placeholder="E.g., 'Make it more exciting', 'Add a call to action', 'Make it shorter and punchier'"
+                              className="w-full px-3 py-2 rounded-lg border-2 transition-all resize-none text-sm mb-3"
+                              rows={2}
+                              autoFocus
+                              style={{
+                                backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff',
+                                borderColor: theme === 'dark' ? 'rgba(111, 255, 210, 0.5)' : 'rgba(111, 255, 210, 0.4)',
+                                color: 'var(--text-primary)',
+                              }}
+                            />
+                            <div className="flex gap-2">
+                              <button
+                                onClick={() => {
+                                  if (voiceoverGuidance.trim()) {
+                                    guideVoiceoverScript(voiceoverGuidance);
+                                    setShowGuidanceInput(false);
+                                  }
+                                }}
+                                disabled={isGeneratingVoiceover || !voiceoverGuidance.trim()}
+                                className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                                style={{
+                                  background: 'linear-gradient(to right, #6FFFD2, #2979FF)',
+                                  color: 'white',
+                                  boxShadow: '0 2px 8px rgba(111, 255, 210, 0.4)'
+                                }}
+                              >
+                                {isGeneratingVoiceover ? '🤖 Refining...' : '✨ Apply'}
+                              </button>
+                              <button
+                                onClick={() => {
+                                  setShowGuidanceInput(false);
+                                  setVoiceoverGuidance('');
+                                }}
+                                disabled={isGeneratingVoiceover}
+                                className="py-2 px-3 rounded-lg font-semibold text-sm transition-all hover:scale-105 active:scale-95"
+                                style={{
+                                  backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                                  color: 'var(--text-primary)',
+                                }}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+
+                    {/* Generate Voiceover Button */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={generateVoiceoverAudio}
+                        disabled={isGeneratingVoiceover || !voiceoverScript.trim()}
+                        className="flex-1 py-3 px-4 rounded-lg font-bold text-sm sm:text-base transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                          color: 'white',
+                          boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
+                        }}
+                      >
+                        {isGeneratingVoiceover ? '🎙️ Generating...' : '🎙️ Generate Voiceover'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setVoiceoverScript('');
+                          setVoiceoverProgress(0);
+                        }}
+                        className="py-3 px-4 rounded-lg font-bold text-sm sm:text-base transition-all hover:scale-105 active:scale-95"
+                        style={{
+                          backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                          color: 'var(--text-primary)',
+                        }}
+                      >
+                        🔄 Regenerate Script
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Audio Player & Download */}
+                {generatedVoiceover && (
+                  <div className="mt-6 p-4 rounded-lg" style={{
+                    backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
+                    border: '2px solid rgba(41, 121, 255, 0.3)',
+                  }}>
+                    <div className="flex items-center gap-3 mb-4">
+                      <span className="text-2xl">✅</span>
+                      <h3 className="font-bold text-lg" style={{ color: '#2979FF' }}>
+                        Voiceover Generated!
+                      </h3>
+                    </div>
+
+                    {/* Show/Hide Script Toggle */}
+                    <button
+                      onClick={() => setShowVoiceoverScript(!showVoiceoverScript)}
+                      className="w-full py-2 px-3 rounded-lg mb-3 text-sm font-semibold transition-all hover:scale-102"
+                      style={{
+                        backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                        color: 'var(--text-primary)',
+                      }}
+                    >
+                      {showVoiceoverScript ? '👁️ Hide Script' : '👁️ View Script'}
+                    </button>
+
+                    {/* Script Display */}
+                    {showVoiceoverScript && (
+                      <div className="p-3 rounded-lg mb-4" style={{
+                        backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+                        maxHeight: '200px',
+                        overflowY: 'auto',
+                      }}>
+                        <p style={{ color: 'var(--text-primary)', lineHeight: '1.6', fontSize: '0.9rem' }}>
+                          {generatedVoiceover.script}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Audio Player */}
+                    <audio
+                      controls
+                      className="w-full mb-4"
+                      style={{
+                        borderRadius: '8px',
+                        outline: 'none',
+                      }}
+                    >
+                      <source src={generatedVoiceover.audio} type="audio/mpeg" />
+                      Your browser does not support the audio element.
+                    </audio>
+
+                    {/* Action Buttons */}
+                    <div className="flex flex-col sm:flex-row gap-3">
+                      <button
+                        onClick={() => {
+                          const link = document.createElement('a');
+                          link.href = generatedVoiceover.audio;
+                          link.download = `postready-voiceover-${Date.now()}.mp3`;
+                          document.body.appendChild(link);
+                          link.click();
+                          document.body.removeChild(link);
+                        }}
+                        className="flex-1 py-3 px-4 rounded-lg font-bold text-sm sm:text-base transition-all hover:scale-105 active:scale-95"
+                        style={{
+                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                          color: 'white',
+                          boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
+                        }}
+                      >
+                        💾 Download Voiceover
+                      </button>
+                      <button
+                        onClick={() => {
+                          setGeneratedVoiceover(null);
+                          setVoiceoverScript('');
+                          setVoiceoverProgress(0);
+                        }}
+                        className="py-3 px-4 rounded-lg font-bold text-sm sm:text-base transition-all hover:scale-105 active:scale-95"
+                        style={{
+                          backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
+                          color: 'var(--text-primary)',
+                        }}
+                      >
+                        🎙️ Generate New
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* Sora Prompt Generator */}
         {currentStep === "form" && (
           <div 
@@ -5992,7 +6962,8 @@ function HomeContent() {
             onClick={() => !isReorderMode && collapsedModules.has('sora-prompt') && toggleModuleCollapse('sora-prompt')}
             className="rounded-2xl shadow-lg border scroll-mt-4 relative overflow-hidden"
             style={{
-              transition: 'max-height 1.5s cubic-bezier(0.65, 0, 0.35, 1), padding 1.5s cubic-bezier(0.65, 0, 0.35, 1), margin-bottom 0.3s ease-out, transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              transition: 'margin-bottom 0.3s ease-out, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              willChange: 'transform',
               marginBottom: collapsedModules.has('sora-prompt') ? '1rem' : '2.5rem',
               backgroundColor: theme === 'dark' 
                 ? 'rgba(88, 50, 120, 0.12)' 
@@ -6021,10 +6992,9 @@ function HomeContent() {
               transform: draggedModule === 'sora-prompt' 
                 ? 'scale(1.05) rotate(2deg)' 
                 : 'scale(1)',
-              padding: collapsedModules.has('sora-prompt') ? '1rem' : '1.5rem',
+              padding: '1.5rem',
               zIndex: draggedModule === 'sora-prompt' ? 1000 : 'auto',
-              maxHeight: collapsedModules.has('sora-prompt') ? '80px' : '2000px',
-              overflow: 'hidden',
+              overflow: 'visible',
             }}
           >
             {/* Drop Indicator - Top */}
@@ -6055,11 +7025,11 @@ function HomeContent() {
             <div 
               className="flex items-center justify-between gap-2"
               style={{
-                transition: 'opacity 0.8s ease-in-out',
+                transition: 'opacity 0.2s ease-out',
                 opacity: collapsedModules.has('sora-prompt') ? 1 : 0,
                 pointerEvents: collapsedModules.has('sora-prompt') ? 'auto' : 'none',
                 position: collapsedModules.has('sora-prompt') ? 'relative' : 'absolute',
-                visibility: collapsedModules.has('sora-prompt') ? 'visible' : 'hidden',
+                height: collapsedModules.has('sora-prompt') ? 'auto' : '0',
               }}
             >
               <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
@@ -6082,11 +7052,13 @@ function HomeContent() {
             {/* Expanded Content */}
             <div
               style={{
-                transition: 'opacity 0.8s ease-in-out',
+                transformOrigin: 'top',
+                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out',
+                transform: collapsedModules.has('sora-prompt') ? 'scaleY(0)' : 'scaleY(1)',
                 opacity: collapsedModules.has('sora-prompt') ? 0 : 1,
-                pointerEvents: collapsedModules.has('sora-prompt') ? 'none' : 'auto',
-                position: collapsedModules.has('sora-prompt') ? 'absolute' : 'relative',
-                visibility: collapsedModules.has('sora-prompt') ? 'hidden' : 'visible',
+                height: collapsedModules.has('sora-prompt') ? '0' : 'auto',
+                overflow: 'hidden',
+                willChange: 'transform, opacity',
               }}
             >
                 {/* Minimize Button */}
@@ -7965,7 +8937,8 @@ function HomeContent() {
             onClick={() => !isReorderMode && collapsedModules.has('page-analyzer') && toggleModuleCollapse('page-analyzer')}
             className="rounded-2xl shadow-lg border scroll-mt-4 relative overflow-hidden"
             style={{
-              transition: 'max-height 1.5s cubic-bezier(0.65, 0, 0.35, 1), padding 1.5s cubic-bezier(0.65, 0, 0.35, 1), margin-bottom 0.3s ease-out, transform 0.3s ease-out, box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              transition: 'margin-bottom 0.3s ease-out, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease-out, border-color 0.3s ease-out',
+              willChange: 'transform',
               marginBottom: collapsedModules.has('page-analyzer') ? '1rem' : '2.5rem',
               backgroundColor: theme === 'dark' 
                 ? 'rgba(20, 184, 166, 0.08)' 
@@ -7993,10 +8966,9 @@ function HomeContent() {
               transform: draggedModule === 'page-analyzer' 
                 ? 'scale(1.05) rotate(2deg)' 
                 : 'scale(1)',
-              padding: collapsedModules.has('page-analyzer') ? '1rem' : '1.5rem',
+              padding: '1.5rem',
               zIndex: draggedModule === 'page-analyzer' ? 1000 : 'auto',
-              maxHeight: collapsedModules.has('page-analyzer') ? '80px' : 'none',
-              overflow: collapsedModules.has('page-analyzer') ? 'hidden' : 'visible',
+              overflow: 'visible',
             }}
           >
             {/* Drop Indicators */}
@@ -8026,11 +8998,11 @@ function HomeContent() {
             <div 
               className="flex items-center justify-between"
               style={{
-                transition: 'opacity 0.8s ease-in-out',
+                transition: 'opacity 0.2s ease-out',
                 opacity: collapsedModules.has('page-analyzer') ? 1 : 0,
                 pointerEvents: collapsedModules.has('page-analyzer') ? 'auto' : 'none',
                 position: collapsedModules.has('page-analyzer') ? 'relative' : 'absolute',
-                visibility: collapsedModules.has('page-analyzer') ? 'visible' : 'hidden',
+                height: collapsedModules.has('page-analyzer') ? 'auto' : '0',
               }}
             >
               <div className="flex items-center gap-3">
@@ -8047,11 +9019,13 @@ function HomeContent() {
             {/* Expanded Content */}
             <div
               style={{
-                transition: 'opacity 0.8s ease-in-out',
+                transformOrigin: 'top',
+                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out',
+                transform: collapsedModules.has('page-analyzer') ? 'scaleY(0)' : 'scaleY(1)',
                 opacity: collapsedModules.has('page-analyzer') ? 0 : 1,
-                pointerEvents: collapsedModules.has('page-analyzer') ? 'none' : 'auto',
-                position: collapsedModules.has('page-analyzer') ? 'absolute' : 'relative',
-                visibility: collapsedModules.has('page-analyzer') ? 'hidden' : 'visible',
+                height: collapsedModules.has('page-analyzer') ? '0' : 'auto',
+                overflow: 'hidden',
+                willChange: 'transform, opacity',
               }}
             >
               {/* Minimize Button */}
@@ -9694,6 +10668,125 @@ function HomeContent() {
               </button>
               <button
                 onClick={() => setShowSoraPaywall(false)}
+                className="px-6 py-3 rounded-lg font-medium transition-all hover:opacity-80 border"
+                style={{
+                  borderColor: 'var(--card-border)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Voiceover Generator Paywall Modal */}
+      {showVoiceoverPaywall && (
+        <div 
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(12px)',
+          }}
+          onClick={() => setShowVoiceoverPaywall(false)}
+        >
+          <div 
+            className="max-w-lg w-full rounded-2xl p-8 animate-scale-in"
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              border: '2px solid rgba(41, 121, 255, 0.4)',
+              boxShadow: '0 20px 60px rgba(41, 121, 255, 0.3)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold mb-2" style={{ color: '#2979FF' }}>
+                🎙️ Pro Feature: Script & Voiceover Generator
+              </h2>
+              <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
+                {user 
+                  ? "The Script and Voiceover Generator is a Pro-only feature. Upgrade to Pro to create professional AI voiceovers with generated scripts."
+                  : "The Script and Voiceover Generator is a Pro-only feature. Sign in and upgrade to Pro to create professional AI voiceovers with generated scripts."
+                }
+              </p>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="p-4 rounded-lg" style={{
+                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
+                border: '1px solid rgba(41, 121, 255, 0.3)',
+              }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    AI Script Generation
+                  </span>
+                </div>
+                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
+                  Get professional scripts tailored to your content
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg" style={{
+                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
+                border: '1px solid rgba(41, 121, 255, 0.3)',
+              }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Professional Voice Options
+                  </span>
+                </div>
+                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
+                  Access to Trailer Voice, Cornelius, Zara, and Hale
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg" style={{
+                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
+                border: '1px solid rgba(41, 121, 255, 0.3)',
+              }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Unlimited Voiceovers
+                  </span>
+                </div>
+                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
+                  Create as many voiceovers as you need
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowVoiceoverPaywall(false);
+                  if (user) {
+                    setCurrentStep('premium');
+                  } else {
+                    setCurrentStep('form');
+                    // Scroll to top and show sign in prompt
+                    window.scrollTo(0, 0);
+                  }
+                }}
+                className="flex-1 py-3 rounded-lg font-bold transition-all hover:scale-105"
+                style={{
+                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                  color: 'white',
+                }}
+              >
+                {user ? 'Upgrade to Pro' : 'Sign In to Get Pro'}
+              </button>
+              <button
+                onClick={() => setShowVoiceoverPaywall(false)}
                 className="px-6 py-3 rounded-lg font-medium transition-all hover:opacity-80 border"
                 style={{
                   borderColor: 'var(--card-border)',
