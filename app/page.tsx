@@ -5925,6 +5925,12 @@ function HomeContent() {
                 <h3 className="text-lg sm:text-xl font-bold truncate" style={{ color: 'var(--secondary)' }}>
                   Music Generator
                 </h3>
+                <span className="px-2 py-1 text-xs font-bold rounded flex-shrink-0" style={{
+                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                  color: 'white',
+                }}>
+                  PRO
+                </span>
               </div>
               <span className="text-sm opacity-60 flex-shrink-0 hidden sm:block" style={{ color: 'var(--text-secondary)' }}>
                 {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
@@ -5966,22 +5972,88 @@ function HomeContent() {
                 </button>
               )}
 
-              <h2 className="text-3xl sm:text-4xl font-bold text-center mb-2" style={{ 
-                color: '#2979FF',
-                textShadow: '0 0 20px rgba(41, 121, 255, 0.3)'
-              }}>
-                🎵 Music Generator
-              </h2>
-              <p className="text-center mb-6" style={{ color: 'var(--text-secondary)' }}>
-                Create unique music tracks powered by AI
-              </p>
+              <div className="text-center mb-6">
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#2979FF' }}>
+                    🎵 Music Generator
+                  </h2>
+                  <span className="px-3 py-1 text-sm font-bold rounded" style={{
+                    background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                    color: 'white',
+                  }}>
+                    PRO
+                  </span>
+                </div>
+                <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
+                  Create unique music tracks powered by AI
+                </p>
+              </div>
 
-              <div className="space-y-4">
-                {/* Song Duration Slider */}
-                <div>
-                  <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Song Length: {musicDuration}s
-                  </label>
+              {/* Pro Feature Paywall */}
+              {!isPro ? (
+                <div className="text-center py-8 px-4">
+                  <div className="mb-6">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4"
+                      style={{
+                        backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                        border: '3px solid rgba(41, 121, 255, 0.3)',
+                      }}
+                    >
+                      <span className="text-4xl">🔒</span>
+                    </div>
+                    <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                      Pro Feature
+                    </h3>
+                    <p className="text-base mb-6" style={{ color: 'var(--text-secondary)' }}>
+                      Upgrade to Pro to unlock unlimited access to the AI Music Generator and create custom music and sound effects for your content.
+                    </p>
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span>AI-powered music generation</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span>Custom duration (10-120 seconds)</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span>Unlimited music generation</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (user) {
+                        setCurrentStep('premium');
+                      } else {
+                        setCurrentStep('form');
+                        setShowMusicPaywall(true);
+                      }
+                    }}
+                    className="px-8 py-4 rounded-lg font-bold text-lg transition-all hover:scale-105 active:scale-95"
+                    style={{
+                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                      color: 'white',
+                      boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
+                    }}
+                  >
+                    {user ? '🚀 Upgrade to Pro' : '🔐 Sign In to Upgrade'}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Song Duration Slider */}
+                  <div>
+                    <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      Song Length: {musicDuration}s
+                    </label>
                   <div className="relative py-3 px-1">
                     {/* Apple-style Glass container */}
                     <div className="relative p-5 rounded-3xl overflow-hidden" style={{
@@ -6344,6 +6416,7 @@ function HomeContent() {
                   </div>
                 )}
               </div>
+              )}
             </div>
           </div>
         )}
@@ -6482,23 +6555,89 @@ function HomeContent() {
                 </button>
               )}
 
-              <h2 className="text-3xl sm:text-4xl font-bold text-center mb-2" style={{ 
-                color: '#2979FF',
-                textShadow: '0 0 20px rgba(41, 121, 255, 0.3)'
-              }}>
-                🎙️ Script and Voiceover Generator
-              </h2>
-              <p className="text-center mb-6" style={{ color: 'var(--text-secondary)' }}>
-                Create professional AI voiceovers with generated scripts
-              </p>
+              <div className="text-center mb-6">
+                <div className="flex items-center justify-center gap-3 mb-2">
+                  <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#2979FF' }}>
+                    🎙️ Script and Voiceover Generator
+                  </h2>
+                  <span className="px-3 py-1 text-sm font-bold rounded" style={{
+                    background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                    color: 'white',
+                  }}>
+                    PRO
+                  </span>
+                </div>
+                <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
+                  Create professional AI voiceovers with generated scripts
+                </p>
+              </div>
 
-              <div className="space-y-4">
-                {/* Topic Input */}
-                <div>
-                  <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Voiceover Topic
-                  </label>
-                  <textarea
+              {/* Pro Feature Paywall */}
+              {!isPro ? (
+                <div className="text-center py-8 px-4">
+                  <div className="mb-6">
+                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4"
+                      style={{
+                        backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                        border: '3px solid rgba(41, 121, 255, 0.3)',
+                      }}
+                    >
+                      <span className="text-4xl">🔒</span>
+                    </div>
+                    <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
+                      Pro Feature
+                    </h3>
+                    <p className="text-base mb-6" style={{ color: 'var(--text-secondary)' }}>
+                      Upgrade to Pro to unlock unlimited access to the Script and Voiceover Generator with AI-powered script writing and professional voice synthesis.
+                    </p>
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span>AI script generation (15-120 seconds)</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span>Professional voice options (4 voices)</span>
+                      </div>
+                      <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
+                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <span>Unlimited voiceover generation</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button
+                    onClick={() => {
+                      if (user) {
+                        setCurrentStep('premium');
+                      } else {
+                        setCurrentStep('form');
+                        setShowVoiceoverPaywall(true);
+                      }
+                    }}
+                    className="px-8 py-4 rounded-lg font-bold text-lg transition-all hover:scale-105 active:scale-95"
+                    style={{
+                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                      color: 'white',
+                      boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
+                    }}
+                  >
+                    {user ? '🚀 Upgrade to Pro' : '🔐 Sign In to Upgrade'}
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {/* Topic Input */}
+                  <div>
+                    <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
+                      Voiceover Topic
+                    </label>
+                    <textarea
                     value={voiceoverTopic}
                     onChange={(e) => setVoiceoverTopic(e.target.value)}
                     disabled={isGeneratingVoiceover}
@@ -6974,6 +7113,7 @@ function HomeContent() {
                   </div>
                 )}
               </div>
+              )}
             </div>
           </div>
         )}
