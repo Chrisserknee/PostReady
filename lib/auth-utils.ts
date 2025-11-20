@@ -125,3 +125,66 @@ export async function verifyUserOwnership(request: NextRequest, targetUserId: st
   }
 }
 
+/**
+ * Verify that the authenticated user has Pro subscription
+ * SECURITY: This prevents non-Pro users from accessing Pro features
+ * 
+ * @returns { isPro: boolean, userId: string | null, error: string | null }
+ */
+export async function verifyProAccess(request: NextRequest): Promise<{ 
+  isPro: boolean; 
+  userId: string | null; 
+  error: string | null 
+}> {
+  try {
+    const supabase = createServerSupabaseClient(request);
+    
+    // Get authenticated user
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return { 
+        isPro: false, 
+        userId: null, 
+        error: 'Authentication required. Please sign in to access this feature.' 
+      };
+    }
+
+    // Get user profile to check Pro status
+    const { data: profile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('is_pro, plan_type')
+      .eq('id', user.id)
+      .maybeSingle();
+
+    if (profileError) {
+      console.error('Error fetching user profile:', profileError);
+      return { 
+        isPro: false, 
+        userId: user.id, 
+        error: 'Failed to verify subscription status' 
+      };
+    }
+
+    // Check if user has Pro access
+    const isPro = profile?.is_pro === true;
+    
+    if (!isPro) {
+      return { 
+        isPro: false, 
+        userId: user.id, 
+        error: 'This feature requires a Pro subscription. Please upgrade to continue.' 
+      };
+    }
+
+    return { isPro: true, userId: user.id, error: null };
+  } catch (error) {
+    console.error('Pro verification error:', error);
+    return { 
+      isPro: false, 
+      userId: null, 
+      error: 'Failed to verify subscription status' 
+    };
+  }
+}
+

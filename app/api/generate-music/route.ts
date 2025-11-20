@@ -1,7 +1,18 @@
-import { NextResponse } from "next/server";
+import { NextRequest, NextResponse } from "next/server";
+import { verifyProAccess } from "@/lib/auth-utils";
 
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
   try {
+    // SECURITY: Verify user has Pro subscription
+    const { isPro, error: proError } = await verifyProAccess(req);
+    
+    if (!isPro) {
+      return NextResponse.json({ 
+        error: proError || "Pro subscription required",
+        requiresUpgrade: true 
+      }, { status: 403 });
+    }
+
     const { prompt, duration, type } = await req.json();
 
     if (!prompt) {

@@ -342,9 +342,16 @@ function HomeContent() {
   const [loadingProducts, setLoadingProducts] = useState<boolean>(true);
   const [showSoraPaywall, setShowSoraPaywall] = useState<boolean>(false);
   const [showVoiceoverPaywall, setShowVoiceoverPaywall] = useState<boolean>(false);
+  const [showMusicPaywall, setShowMusicPaywall] = useState<boolean>(false);
 
   // Music generation function
   const generateMusic = async () => {
+    // Check if user is Pro
+    if (!isPro) {
+      setShowMusicPaywall(true);
+      return;
+    }
+
     if (!musicPrompt.trim()) {
       alert('Please describe the music you want to create!');
       return;
@@ -365,7 +372,7 @@ function HomeContent() {
     }, (musicDuration * 1000) / 95);
 
     try {
-      const response = await fetch('/api/test-music', {
+      const response = await fetch('/api/generate-music', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -377,6 +384,13 @@ function HomeContent() {
 
       clearInterval(progressInterval);
       const data = await response.json();
+
+      // Handle backend paywall
+      if (response.status === 403 || data.requiresUpgrade) {
+        setShowMusicPaywall(true);
+        setMusicProgress(0);
+        return;
+      }
 
       if (response.ok) {
         const musicData = {
@@ -444,6 +458,13 @@ function HomeContent() {
       clearInterval(progressInterval);
       const scriptData = await scriptResponse.json();
 
+      // Handle backend paywall
+      if (scriptResponse.status === 403 || scriptData.requiresUpgrade) {
+        setShowVoiceoverPaywall(true);
+        setVoiceoverProgress(0);
+        return;
+      }
+
       if (scriptResponse.ok && scriptData.script) {
         setVoiceoverScript(scriptData.script);
         setVoiceoverProgress(100);
@@ -501,6 +522,13 @@ function HomeContent() {
 
       clearInterval(progressInterval);
       const data = await response.json();
+
+      // Handle backend paywall
+      if (response.status === 403 || data.requiresUpgrade) {
+        setShowVoiceoverPaywall(true);
+        setVoiceoverProgress(0);
+        return;
+      }
 
       if (response.ok) {
         const voiceoverData = {
@@ -10787,6 +10815,125 @@ function HomeContent() {
               </button>
               <button
                 onClick={() => setShowVoiceoverPaywall(false)}
+                className="px-6 py-3 rounded-lg font-medium transition-all hover:opacity-80 border"
+                style={{
+                  borderColor: 'var(--card-border)',
+                  color: 'var(--text-secondary)',
+                }}
+              >
+                Maybe Later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Music Generator Paywall Modal */}
+      {showMusicPaywall && (
+        <div 
+          className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
+          style={{
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(12px)',
+          }}
+          onClick={() => setShowMusicPaywall(false)}
+        >
+          <div 
+            className="max-w-lg w-full rounded-2xl p-8 animate-scale-in"
+            style={{
+              backgroundColor: 'var(--card-bg)',
+              border: '2px solid rgba(41, 121, 255, 0.4)',
+              boxShadow: '0 20px 60px rgba(41, 121, 255, 0.3)',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="text-center mb-6">
+              <h2 className="text-2xl font-bold mb-2" style={{ color: '#2979FF' }}>
+                🎵 Pro Feature: AI Music Generator
+              </h2>
+              <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
+                {user 
+                  ? "The AI Music Generator is a Pro-only feature. Upgrade to Pro to create custom music and sound effects for your content."
+                  : "The AI Music Generator is a Pro-only feature. Sign in and upgrade to Pro to create custom music and sound effects for your content."
+                }
+              </p>
+            </div>
+
+            <div className="space-y-4 mb-6">
+              <div className="p-4 rounded-lg" style={{
+                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
+                border: '1px solid rgba(41, 121, 255, 0.3)',
+              }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    AI-Powered Music Creation
+                  </span>
+                </div>
+                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
+                  Generate custom background music from text descriptions
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg" style={{
+                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
+                border: '1px solid rgba(41, 121, 255, 0.3)',
+              }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Custom Durations & Styles
+                  </span>
+                </div>
+                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
+                  Choose music type and duration (5-22 seconds)
+                </p>
+              </div>
+
+              <div className="p-4 rounded-lg" style={{
+                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
+                border: '1px solid rgba(41, 121, 255, 0.3)',
+              }}>
+                <div className="flex items-center gap-3 mb-2">
+                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
+                    Unlimited Generation
+                  </span>
+                </div>
+                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
+                  Create as much music as you need for your content
+                </p>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setShowMusicPaywall(false);
+                  if (user) {
+                    setCurrentStep('premium');
+                  } else {
+                    setCurrentStep('form');
+                    // Scroll to top and show sign in prompt
+                    window.scrollTo(0, 0);
+                  }
+                }}
+                className="flex-1 py-3 rounded-lg font-bold transition-all hover:scale-105"
+                style={{
+                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
+                  color: 'white',
+                }}
+              >
+                {user ? 'Upgrade to Pro' : 'Sign In to Get Pro'}
+              </button>
+              <button
+                onClick={() => setShowMusicPaywall(false)}
                 className="px-6 py-3 rounded-lg font-medium transition-all hover:opacity-80 border"
                 style={{
                   borderColor: 'var(--card-border)',
