@@ -6033,8 +6033,9 @@ function HomeContent() {
                       if (user) {
                         setCurrentStep('premium');
                       } else {
-                        setCurrentStep('form');
-                        setShowMusicPaywall(true);
+                        // Open auth modal for sign up/sign in
+                        setAuthModalMode('signup');
+                        setAuthModalOpen(true);
                       }
                     }}
                     className="px-8 py-4 rounded-lg font-bold text-lg transition-all hover:scale-105 active:scale-95"
@@ -6616,8 +6617,9 @@ function HomeContent() {
                       if (user) {
                         setCurrentStep('premium');
                       } else {
-                        setCurrentStep('form');
-                        setShowVoiceoverPaywall(true);
+                        // Open auth modal for sign up/sign in
+                        setAuthModalMode('signup');
+                        setAuthModalOpen(true);
                       }
                     }}
                     className="px-8 py-4 rounded-lg font-bold text-lg transition-all hover:scale-105 active:scale-95"
@@ -10940,9 +10942,9 @@ function HomeContent() {
                   if (user) {
                     setCurrentStep('premium');
                   } else {
-                    setCurrentStep('form');
-                    // Scroll to top and show sign in prompt
-                    window.scrollTo(0, 0);
+                    // Open auth modal for sign up/sign in
+                    setAuthModalMode('signup');
+                    setAuthModalOpen(true);
                   }
                 }}
                 className="flex-1 py-3 rounded-lg font-bold transition-all hover:scale-105"
@@ -11059,9 +11061,9 @@ function HomeContent() {
                   if (user) {
                     setCurrentStep('premium');
                   } else {
-                    setCurrentStep('form');
-                    // Scroll to top and show sign in prompt
-                    window.scrollTo(0, 0);
+                    // Open auth modal for sign up/sign in
+                    setAuthModalMode('signup');
+                    setAuthModalOpen(true);
                   }
                 }}
                 className="flex-1 py-3 rounded-lg font-bold transition-all hover:scale-105"
