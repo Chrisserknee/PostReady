@@ -255,6 +255,7 @@ function HomeContent() {
   const [isReorderMode, setIsReorderMode] = useState<boolean>(false);
   const [moduleOrder, setModuleOrder] = useState<string[]>([
     'digital-products',
+    'red-flag-detector',
     'comment-bait',
     'brainworm-generator',
     'sugar-daddy-messages',
@@ -265,7 +266,6 @@ function HomeContent() {
     'idea-generator',
     'sora-prompt',
     'hashtag-research',
-    'red-flag-detector',
     'cringe-couple-caption',
     'comment-fight-starter',
     'poor-life-choices-advisor',
@@ -293,7 +293,7 @@ function HomeContent() {
   };
 
   const collapseAllModules = () => {
-    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'red-flag-detector', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
+    const allModules = ['digital-products', 'red-flag-detector', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
     setCollapsedModules(new Set(allModules));
   };
 
