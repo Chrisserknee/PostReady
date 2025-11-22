@@ -7,13 +7,25 @@ import { TextAreaField } from "@/components/TextAreaField";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { useAuth } from "@/contexts/AuthContext";
+
+// ElevenLabs Voice Mapping
+const ELEVENLABS_VOICES = {
+  "TYkIHhDWzXPHalxGXze5": "Trailer Voice",
+  "pNInz6obpgDQGcFmaJgB": "Adam",
+  "EXAVITQu4vr4xnSDxMaL": "Bella",
+  "21m00Tcm4TlvDq8ikWAM": "Rachel",
+  // Add more ElevenLabs voice IDs here as needed
+  // Format: "voice_id": "Display Name"
+};
 
 export function VoiceoverGeneratorTool() {
   const { isPro } = useAuth();
   const [topic, setTopic] = useState("");
   const [duration, setDuration] = useState("30");
-  const [voice, setVoice] = useState("Adam");
+  const [voice, setVoice] = useState("TYkIHhDWzXPHalxGXze5"); // Default to Trailer Voice
   const [script, setScript] = useState("");
   const [audioUrl, setAudioUrl] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
@@ -87,13 +99,23 @@ export function VoiceoverGeneratorTool() {
                 required
               />
               
-              <SelectField
-                label="Voice"
-                value={voice}
-                onChange={setVoice}
-                options={["Adam", "Bella", "Rachel", "Josh", "Sam"]}
-                required
-              />
+              <div className="space-y-2">
+                <Label className="text-sm font-medium text-muted-foreground">
+                  Voice <span className="text-red-500">*</span>
+                </Label>
+                <Select value={voice} onValueChange={setVoice} required>
+                  <SelectTrigger className="w-full bg-card text-foreground border-input">
+                    <SelectValue placeholder="Select a voice" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {Object.entries(ELEVENLABS_VOICES).map(([voiceId, voiceName]) => (
+                      <SelectItem key={voiceId} value={voiceId}>
+                        {voiceName}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
             {script && (

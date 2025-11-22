@@ -16,6 +16,12 @@ export type UserProgressData = {
   sugarDaddyCount?: number;
   brainwormCount?: number;
   commentBaitCount?: number;
+  trendRadarCount?: number;
+  redFlagTranslatorCount?: number;
+  cringeCoupleCaptionCount?: number;
+  commentFightStarterCount?: number;
+  poorLifeChoicesAdvisorCount?: number;
+  randomExcuseCount?: number;
 };
 
 export async function saveUserProgress(
@@ -40,6 +46,12 @@ export async function saveUserProgress(
         sugar_daddy_count: progress.sugarDaddyCount ?? 0,
         brainworm_count: progress.brainwormCount ?? 0,
         comment_bait_count: progress.commentBaitCount ?? 0,
+        trend_radar_count: progress.trendRadarCount ?? 0,
+        red_flag_translator_count: progress.redFlagTranslatorCount ?? 0,
+        cringe_couple_caption_count: progress.cringeCoupleCaptionCount ?? 0,
+        comment_fight_starter_count: progress.commentFightStarterCount ?? 0,
+        poor_life_choices_advisor_count: progress.poorLifeChoicesAdvisorCount ?? 0,
+        random_excuse_count: progress.randomExcuseCount ?? 0,
         updated_at: new Date().toISOString(),
       },
       {
@@ -88,6 +100,12 @@ export async function loadUserProgress(userId: string): Promise<{
       sugarDaddyCount: data.sugar_daddy_count ?? 0,
       brainwormCount: data.brainworm_count ?? 0,
       commentBaitCount: data.comment_bait_count ?? 0,
+      trendRadarCount: data.trend_radar_count ?? 0,
+      redFlagTranslatorCount: data.red_flag_translator_count ?? 0,
+      cringeCoupleCaptionCount: data.cringe_couple_caption_count ?? 0,
+      commentFightStarterCount: data.comment_fight_starter_count ?? 0,
+      poorLifeChoicesAdvisorCount: data.poor_life_choices_advisor_count ?? 0,
+      randomExcuseCount: data.random_excuse_count ?? 0,
     };
 
     return { data: progress, error: null };

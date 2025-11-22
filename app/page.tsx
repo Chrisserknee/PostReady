@@ -160,6 +160,11 @@ function HomeContent() {
     'sora-prompt': 'sora-prompt',
     'hashtag-research': 'hashtag-research',
     'page-analyzer': 'page-analyzer',
+    'red-flag-translator': 'red-flag-translator',
+    'cringe-couple-caption': 'cringe-couple-caption-generator',
+    'comment-fight-starter': 'comment-fight-starter-generator',
+    'poor-life-choices-advisor': 'poor-life-choices-advisor',
+    'random-excuse': 'random-excuse-generator',
   };
 
   const getModuleUrl = (moduleId: string): string => {
@@ -259,7 +264,12 @@ function HomeContent() {
     'trend-radar',
     'idea-generator',
     'sora-prompt',
-    'hashtag-research'
+    'hashtag-research',
+    'red-flag-translator',
+    'cringe-couple-caption',
+    'comment-fight-starter',
+    'poor-life-choices-advisor',
+    'random-excuse'
   ]);
   const [draggedModule, setDraggedModule] = useState<string | null>(null);
   const [dragOverModule, setDragOverModule] = useState<string | null>(null);
@@ -267,7 +277,7 @@ function HomeContent() {
 
   // Module Collapse State
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(
-    new Set(['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages'])
+    new Set(['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'red-flag-translator', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'])
   );
 
   const toggleModuleCollapse = (moduleId: string) => {
@@ -283,7 +293,7 @@ function HomeContent() {
   };
 
   const collapseAllModules = () => {
-    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator'];
+    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'red-flag-translator', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
     setCollapsedModules(new Set(allModules));
   };
 
@@ -3508,10 +3518,9 @@ function HomeContent() {
                   : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
               order: moduleOrder.indexOf('trend-radar'),
               cursor: (isReorderMode && user) ? 'move' : 'pointer',
-              opacity: draggedModule === 'trend-radar' ? 0.5 : 0.6,
+              opacity: draggedModule === 'trend-radar' ? 0.5 : 1,
               transform: dragOverModule === 'trend-radar' ? 'scale(1.02)' : 'scale(1)',
               padding: '1rem',
-              filter: 'grayscale(0.3)',
             }}
           >
             <Link 
@@ -3659,6 +3668,321 @@ function HomeContent() {
                     </h3>
                     <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
                       Research and analyze hashtags to find the best ones for your content strategy
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* Red Flag Translator */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('red-flag-translator')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'red-flag-translator')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'red-flag-translator')}
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('red-flag-translator'));
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: dragOverModule === 'red-flag-translator'
+                ? '#2979FF'
+                : 'var(--card-border)',
+              boxShadow: dragOverModule === 'red-flag-translator'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('red-flag-translator'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'red-flag-translator' ? 0.5 : 1,
+              transform: dragOverModule === 'red-flag-translator' ? 'scale(1.02)' : 'scale(1)',
+              padding: '1rem',
+            }}
+          >
+            <Link 
+              href={getModuleUrl('red-flag-translator')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
+              }}
+              className="block"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🚩</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                      Red Flag Translator
+                    </h3>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Decode hidden meanings and identify red flags in text messages and conversations
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* Cringe Couple Caption Generator */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('cringe-couple-caption')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'cringe-couple-caption')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'cringe-couple-caption')}
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('cringe-couple-caption'));
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: dragOverModule === 'cringe-couple-caption'
+                ? '#2979FF'
+                : 'var(--card-border)',
+              boxShadow: dragOverModule === 'cringe-couple-caption'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('cringe-couple-caption'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'cringe-couple-caption' ? 0.5 : 1,
+              transform: dragOverModule === 'cringe-couple-caption' ? 'scale(1.02)' : 'scale(1)',
+              padding: '1rem',
+            }}
+          >
+            <Link 
+              href={getModuleUrl('cringe-couple-caption')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
+              }}
+              className="block"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">💑</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                      Cringe Couple Caption Generator
+                    </h3>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Generate hilariously cringeworthy couple captions for memes and entertainment
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* Comment Fight Starter Generator */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('comment-fight-starter')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'comment-fight-starter')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'comment-fight-starter')}
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('comment-fight-starter'));
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: dragOverModule === 'comment-fight-starter'
+                ? '#2979FF'
+                : 'var(--card-border)',
+              boxShadow: dragOverModule === 'comment-fight-starter'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('comment-fight-starter'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'comment-fight-starter' ? 0.5 : 1,
+              transform: dragOverModule === 'comment-fight-starter' ? 'scale(1.02)' : 'scale(1)',
+              padding: '1rem',
+            }}
+          >
+            <Link 
+              href={getModuleUrl('comment-fight-starter')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
+              }}
+              className="block"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">💥</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                      Comment Fight Starter Generator
+                    </h3>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Generate controversial comments designed to spark debates and boost engagement
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* Poor Life Choices Advisor */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('poor-life-choices-advisor')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'poor-life-choices-advisor')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'poor-life-choices-advisor')}
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('poor-life-choices-advisor'));
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: dragOverModule === 'poor-life-choices-advisor'
+                ? '#2979FF'
+                : 'var(--card-border)',
+              boxShadow: dragOverModule === 'poor-life-choices-advisor'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('poor-life-choices-advisor'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'poor-life-choices-advisor' ? 0.5 : 1,
+              transform: dragOverModule === 'poor-life-choices-advisor' ? 'scale(1.02)' : 'scale(1)',
+              padding: '1rem',
+            }}
+          >
+            <Link 
+              href={getModuleUrl('poor-life-choices-advisor')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
+              }}
+              className="block"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🤦</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                      Poor Life Choices Advisor
+                    </h3>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Get humorous, sarcastic advice about poor life choices for entertainment
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* Random Excuse Generator */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('random-excuse')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'random-excuse')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'random-excuse')}
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('random-excuse'));
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: dragOverModule === 'random-excuse'
+                ? '#2979FF'
+                : 'var(--card-border)',
+              boxShadow: dragOverModule === 'random-excuse'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('random-excuse'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'random-excuse' ? 0.5 : 1,
+              transform: dragOverModule === 'random-excuse' ? 'scale(1.02)' : 'scale(1)',
+              padding: '1rem',
+            }}
+          >
+            <Link 
+              href={getModuleUrl('random-excuse')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
+              }}
+              className="block"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🎭</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                      Random Excuse Generator
+                    </h3>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Generate creative excuses for any situation - believable or hilariously unbelievable
                     </p>
                   </div>
                 </div>
