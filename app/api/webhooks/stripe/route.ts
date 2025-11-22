@@ -133,7 +133,8 @@ export async function POST(request: NextRequest) {
         // This ensures users keep access for the FULL MONTH they paid for
         const isCanceledAtPeriodEnd = subscription.cancel_at_period_end === true;
         const now = Math.floor(Date.now() / 1000);
-        const isPastPeriodEnd = subscription.current_period_end && subscription.current_period_end < now;
+        const periodEnd = (subscription as any).current_period_end as number | undefined;
+        const isPastPeriodEnd = periodEnd && periodEnd < now;
         
         // User keeps Pro access if:
         // 1. Subscription is active/trialing (includes canceled subscriptions that haven't reached period_end yet)
@@ -162,9 +163,9 @@ export async function POST(request: NextRequest) {
           console.log(`📋 Subscription ${subscription.status} - access ended, clearing subscription ID`);
         } else {
           updateData.stripe_subscription_id = subscription.id;
-          if (isCanceledAtPeriodEnd) {
-            const periodEndDate = new Date(subscription.current_period_end * 1000);
-            const daysRemaining = Math.ceil((subscription.current_period_end - now) / (60 * 60 * 24));
+          if (isCanceledAtPeriodEnd && periodEnd) {
+            const periodEndDate = new Date(periodEnd * 1000);
+            const daysRemaining = Math.ceil((periodEnd - now) / (60 * 60 * 24));
             console.log(`📋 Subscription canceled but user keeps Pro access until: ${periodEndDate.toLocaleString()}`);
             console.log(`   - Days remaining: ${daysRemaining}`);
             console.log(`   - User paid for full month, access continues until period end`);
@@ -183,9 +184,9 @@ export async function POST(request: NextRequest) {
           console.log(`   - is_pro: ${isActive}`);
           console.log(`   - plan_type: ${isActive ? (userProfile.plan_type || 'pro') : 'free'}`);
           console.log(`   - cancel_at_period_end: ${isCanceledAtPeriodEnd}`);
-          if (isCanceledAtPeriodEnd && subscription.current_period_end) {
-            const periodEndDate = new Date(subscription.current_period_end * 1000);
-            const daysRemaining = Math.ceil((subscription.current_period_end - now) / (60 * 60 * 24));
+          if (isCanceledAtPeriodEnd && periodEnd) {
+            const periodEndDate = new Date(periodEnd * 1000);
+            const daysRemaining = Math.ceil((periodEnd - now) / (60 * 60 * 24));
             console.log(`   - Access ends on: ${periodEndDate.toLocaleString()} (${daysRemaining} days remaining)`);
           }
         }
