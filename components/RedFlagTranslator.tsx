@@ -33,7 +33,6 @@ export function RedFlagTranslator() {
   const [hasRedFlags, setHasRedFlags] = useState(false);
   const [showResult, setShowResult] = useState(false);
   const [showPopup, setShowPopup] = useState(false);
-  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   const fetchUsage = async () => {
     try {
@@ -53,15 +52,6 @@ export function RedFlagTranslator() {
     fetchUsage();
   }, [user]);
 
-  // Cleanup audio URL on unmount
-  useEffect(() => {
-    return () => {
-      if (audioUrl) {
-        URL.revokeObjectURL(audioUrl);
-      }
-    };
-  }, [audioUrl]);
-
   const handleTranslate = async () => {
     if (!text.trim()) {
       setError("Please enter some text to analyze");
@@ -74,10 +64,6 @@ export function RedFlagTranslator() {
     setHasRedFlags(false);
     setShowResult(false);
     setShowPopup(false);
-    if (audioUrl) {
-      URL.revokeObjectURL(audioUrl);
-      setAudioUrl(null);
-    }
 
     try {
       // Get access token from Supabase session for API authentication
@@ -128,35 +114,10 @@ export function RedFlagTranslator() {
       const flagsDetected = data.redFlags && data.redFlags.length > 0;
       setHasRedFlags(flagsDetected);
       
-      // If red flags detected, show popup and play voice
+      // If red flags detected, show popup animation
       if (flagsDetected) {
         // Show popup animation
         setShowPopup(true);
-        
-        // Fetch and play voice
-        try {
-          const voiceResponse = await fetch('/api/red-flag-voice', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-          });
-          
-          if (voiceResponse.ok) {
-            const voiceData = await voiceResponse.json();
-            if (voiceData.audio) {
-              // Play audio directly from data URL
-              const audio = new Audio(voiceData.audio);
-              audio.volume = 0.8;
-              audio.play().catch(err => console.error('Audio play error:', err));
-              
-              // Clean up after playback
-              audio.onended = () => {
-                setAudioUrl(null);
-              };
-            }
-          }
-        } catch (err) {
-          console.error('Error fetching voice:', err);
-        }
         
         // Hide popup after 3 seconds
         setTimeout(() => {
@@ -178,13 +139,14 @@ export function RedFlagTranslator() {
   };
 
   return (
-    <div className="space-y-6 relative">
+    <div className="space-y-6 relative overflow-x-hidden max-w-full">
       {/* Hovering Popup Animation */}
       {showPopup && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+          className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none overflow-hidden"
           style={{
             animation: 'fadeInScale 0.5s ease-out',
+            maxWidth: '100vw',
           }}
         >
           <div 

@@ -25,7 +25,7 @@ export function ToolPageLayout({
   backLabel = 'Back to Home'
 }: ToolPageLayoutProps) {
   return (
-    <div className="min-h-screen relative" style={{ backgroundColor: 'var(--background)' }}>
+    <div className="min-h-screen relative overflow-x-hidden max-w-full" style={{ backgroundColor: 'var(--background)' }}>
       {/* Tiny Glowing Stars Effect */}
       <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
         {Array.from({ length: 50 }).map((_, i) => (
