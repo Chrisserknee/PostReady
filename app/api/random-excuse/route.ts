@@ -41,10 +41,13 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { situation, believability, count } = body;
+    
+    // Enforce max limit of 3
+    const validCount = Math.min(Math.max(parseInt(count) || 3, 1), 3);
 
     const systemPrompt = `You are a Random Excuse Generator - an expert at creating creative, believable (or hilariously unbelievable) excuses for various situations. You can generate both realistic excuses and over-the-top, funny excuses.`;
 
-    const userPrompt = `Generate ${count || 5} excuses${situation ? ` for: ${situation}` : ''}${believability ? ` with ${believability} believability` : ''}.
+    const userPrompt = `Generate ${validCount} excuses${situation ? ` for: ${situation}` : ''}${believability ? ` with ${believability} believability` : ''}.
 
 Each excuse should:
 - Be creative and unique

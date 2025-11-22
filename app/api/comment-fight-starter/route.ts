@@ -41,10 +41,13 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { topic, platform, tone, count } = body;
+    
+    // Enforce max limit of 3
+    const validCount = Math.min(Math.max(parseInt(count) || 3, 1), 3);
 
     const systemPrompt = `You are a Comment Fight Starter Generator - an expert at creating controversial, debate-provoking comments designed to spark arguments and engagement in social media comment sections. These comments should be provocative but not hateful, designed to get people talking and debating.`;
 
-    const userPrompt = `Generate ${count || 5} comment fight starters${topic ? ` about: ${topic}` : ''}${platform ? ` for ${platform}` : ''}${tone ? ` with a ${tone} tone` : ''}.
+    const userPrompt = `Generate ${validCount} comment fight starters${topic ? ` about: ${topic}` : ''}${platform ? ` for ${platform}` : ''}${tone ? ` with a ${tone} tone` : ''}.
 
 Each comment should:
 - Be controversial or provocative

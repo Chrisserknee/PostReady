@@ -16,7 +16,7 @@ export function RandomExcuseGenerator() {
   const router = useRouter();
   const [situation, setSituation] = useState("");
   const [believability, setBelievability] = useState("believable");
-  const [count, setCount] = useState("5");
+  const [count, setCount] = useState("3");
   const [isLoading, setIsLoading] = useState(false);
   const [excuses, setExcuses] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -58,7 +58,7 @@ export function RandomExcuseGenerator() {
         body: JSON.stringify({ 
           situation, 
           believability, 
-          count: parseInt(count) || 5 
+          count: Math.min(Math.max(parseInt(count) || 3, 1), 3) 
         }),
       });
 
@@ -127,9 +127,17 @@ export function RandomExcuseGenerator() {
               id="count"
               type="number"
               min="1"
-              max="10"
+              max="3"
               value={count}
-              onChange={(e) => setCount(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                const numValue = parseInt(value);
+                if (value === '' || (numValue >= 1 && numValue <= 3)) {
+                  setCount(value);
+                } else if (numValue > 3) {
+                  setCount('3');
+                }
+              }}
             />
           </div>
 

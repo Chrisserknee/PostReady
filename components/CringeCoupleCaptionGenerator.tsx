@@ -15,7 +15,7 @@ export function CringeCoupleCaptionGenerator() {
   const { isPro, user } = useAuth();
   const router = useRouter();
   const [style, setStyle] = useState("");
-  const [count, setCount] = useState("5");
+  const [count, setCount] = useState("3");
   const [isLoading, setIsLoading] = useState(false);
   const [captions, setCaptions] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -54,7 +54,7 @@ export function CringeCoupleCaptionGenerator() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
-        body: JSON.stringify({ style, count: parseInt(count) || 5 }),
+        body: JSON.stringify({ style, count: Math.min(Math.max(parseInt(count) || 3, 1), 3) }),
       });
 
       if (!response.ok) {
@@ -108,9 +108,17 @@ export function CringeCoupleCaptionGenerator() {
               id="count"
               type="number"
               min="1"
-              max="10"
+              max="3"
               value={count}
-              onChange={(e) => setCount(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                const numValue = parseInt(value);
+                if (value === '' || (numValue >= 1 && numValue <= 3)) {
+                  setCount(value);
+                } else if (numValue > 3) {
+                  setCount('3');
+                }
+              }}
             />
           </div>
 

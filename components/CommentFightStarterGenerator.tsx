@@ -17,7 +17,7 @@ export function CommentFightStarterGenerator() {
   const [topic, setTopic] = useState("");
   const [platform, setPlatform] = useState("");
   const [tone, setTone] = useState("");
-  const [count, setCount] = useState("5");
+  const [count, setCount] = useState("3");
   const [isLoading, setIsLoading] = useState(false);
   const [comments, setComments] = useState<string[]>([]);
   const [error, setError] = useState("");
@@ -60,7 +60,7 @@ export function CommentFightStarterGenerator() {
           topic, 
           platform, 
           tone, 
-          count: parseInt(count) || 5 
+          count: Math.min(Math.max(parseInt(count) || 3, 1), 3) 
         }),
       });
 
@@ -135,9 +135,17 @@ export function CommentFightStarterGenerator() {
               id="count"
               type="number"
               min="1"
-              max="10"
+              max="3"
               value={count}
-              onChange={(e) => setCount(e.target.value)}
+              onChange={(e) => {
+                const value = e.target.value;
+                const numValue = parseInt(value);
+                if (value === '' || (numValue >= 1 && numValue <= 3)) {
+                  setCount(value);
+                } else if (numValue > 3) {
+                  setCount('3');
+                }
+              }}
             />
           </div>
 

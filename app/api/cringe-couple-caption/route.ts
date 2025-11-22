@@ -41,10 +41,13 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
     const { style, count } = body;
+    
+    // Enforce max limit of 3
+    const validCount = Math.min(Math.max(parseInt(count) || 3, 1), 3);
 
     const systemPrompt = `You are a Cringe Couple Caption Generator - an expert at creating hilariously cringeworthy couple captions for social media posts. These captions should be overly romantic, cheesy, and perfect for making fun of or creating intentionally cringe content.`;
 
-    const userPrompt = `Generate ${count || 5} cringe couple captions${style ? ` in the style of: ${style}` : ''}.
+    const userPrompt = `Generate ${validCount} cringe couple captions${style ? ` in the style of: ${style}` : ''}.
 
 Each caption should be:
 - Overly romantic and cheesy
