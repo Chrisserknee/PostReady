@@ -13,6 +13,9 @@ export type UserProgressData = {
   rewordTitleCount?: number;
   hashtagCount?: number;
   guideAICount?: number;
+  sugarDaddyCount?: number;
+  brainwormCount?: number;
+  commentBaitCount?: number;
 };
 
 export async function saveUserProgress(
@@ -34,6 +37,9 @@ export async function saveUserProgress(
         reword_title_count: progress.rewordTitleCount ?? 0,
         hashtag_count: progress.hashtagCount ?? 0,
         guide_ai_count: progress.guideAICount ?? 0,
+        sugar_daddy_count: progress.sugarDaddyCount ?? 0,
+        brainworm_count: progress.brainwormCount ?? 0,
+        comment_bait_count: progress.commentBaitCount ?? 0,
         updated_at: new Date().toISOString(),
       },
       {
@@ -79,6 +85,9 @@ export async function loadUserProgress(userId: string): Promise<{
       rewordTitleCount: data.reword_title_count ?? 0,
       hashtagCount: data.hashtag_count ?? 0,
       guideAICount: data.guide_ai_count ?? 0,
+      sugarDaddyCount: data.sugar_daddy_count ?? 0,
+      brainwormCount: data.brainworm_count ?? 0,
+      commentBaitCount: data.comment_bait_count ?? 0,
     };
 
     return { data: progress, error: null };
@@ -101,5 +110,3 @@ export async function clearUserProgress(userId: string): Promise<{ error: any }>
     return { error };
   }
 }
-
-

@@ -1,14 +1,49 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
 import { SugarDaddyMessageRequest, SugarDaddyMessageResponse, SugarDaddyMessageItem } from '@/types';
+import { createServerSupabaseClient, verifyProAccess } from '@/lib/auth-utils';
+import { loadUserProgress, saveUserProgress } from '@/lib/userProgress';
 
 // Initialize OpenAI
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
+    const response = NextResponse.next();
+    
+    // 1. Check Authentication (Optional)
+    const supabase = createServerSupabaseClient(request);
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+
+    let isPro = false;
+    let usageCount = 0;
+    const FREE_LIMIT = 1;
+    let userProgressData: any = null;
+
+    if (user) {
+      // User is logged in - check Pro status and user_progress table
+      const proCheck = await verifyProAccess(request);
+      isPro = proCheck.isPro;
+      
+      const { data: progress } = await loadUserProgress(user.id);
+      userProgressData = progress;
+      usageCount = progress?.sugarDaddyCount || 0;
+    } else {
+      // User is NOT logged in - check cookie usage
+      const usageCookie = request.cookies.get('sd_usage');
+      usageCount = usageCookie ? parseInt(usageCookie.value) : 0;
+    }
+
+    // 2. Check Usage Limit
+    if (!isPro && usageCount >= FREE_LIMIT) {
+      return NextResponse.json({ 
+        error: "You've used your free generation. Upgrade to Pro for unlimited access!",
+        requiresUpgrade: true 
+      }, { status: 403 });
+    }
+
     const body: SugarDaddyMessageRequest = await request.json();
     const { situation, tone, relationship, amount, count } = body;
 
@@ -65,7 +100,7 @@ export async function POST(request: Request) {
       toneTag: item.toneTag || tone
     }));
 
-    const response: SugarDaddyMessageResponse = {
+    const jsonResponse = {
       items,
       metadata: {
         situation,
@@ -76,7 +111,32 @@ export async function POST(request: Request) {
       }
     };
 
-    return NextResponse.json(response);
+    // 3. Increment Usage Count (if not Pro)
+    const finalResponse = NextResponse.json(jsonResponse);
+
+    if (!isPro) {
+      const newCount = usageCount + 1;
+      
+      if (user) {
+        // Update user_progress table
+        const updatedProgress = {
+          ...(userProgressData || {}),
+          sugarDaddyCount: newCount,
+          currentStep: userProgressData?.currentStep || 'tool_usage' // Ensure required field
+        };
+        await saveUserProgress(user.id, updatedProgress);
+      } else {
+        // Update cookie
+        finalResponse.cookies.set('sd_usage', newCount.toString(), {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 60 * 60 * 24 * 365, // 1 year
+          path: '/',
+        });
+      }
+    }
+
+    return finalResponse;
 
   } catch (error: any) {
     console.error('Error in Sugar Daddy Message Generator:', error);
@@ -86,4 +146,3 @@ export async function POST(request: Request) {
     );
   }
 }
-

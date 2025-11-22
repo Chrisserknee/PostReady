@@ -35,7 +35,7 @@ export async function POST(req: NextRequest) {
                 name: "PostReady Pro",
                 description: "Unlimited AI-powered content creation tools",
               },
-              unit_amount: 499, // $4.99
+              unit_amount: 50, // $0.50 (for testing)
               recurring: {
                 interval: "month",
               },

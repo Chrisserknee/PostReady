@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -10,8 +10,15 @@ import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BrainwormItem, BrainwormRequest, BrainwormResponse } from '@/types';
+import { useAuth } from '@/contexts/AuthContext';
+import { Lock } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export function BrainwormGenerator() {
+  // Auth
+  const { isPro, user } = useAuth();
+  const router = useRouter();
+
   // Form State
   const [context, setContext] = useState("");
   const [vibe, setVibe] = useState("Suspense / Mystery");
@@ -21,10 +28,36 @@ export function BrainwormGenerator() {
   const [isLoading, setIsLoading] = useState(false);
   const [results, setResults] = useState<BrainwormItem[]>([]);
   const [error, setError] = useState("");
+  const [requiresUpgrade, setRequiresUpgrade] = useState(false);
+  const [usageRemaining, setUsageRemaining] = useState<number | null>(null);
+
+  // Function to navigate to the premium page
+  const navigateToPremium = () => {
+    router.push('/?premium=true');
+  };
+
+  // Fetch usage on mount and after generation
+  const fetchUsage = async () => {
+    try {
+      const response = await fetch('/api/brainworm/usage');
+      if (response.ok) {
+        const data = await response.json();
+        const remaining = Math.max(0, data.limit - data.usageCount);
+        setUsageRemaining(remaining);
+      }
+    } catch (err) {
+      console.error('Error fetching usage:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchUsage();
+  }, [user]); // Re-fetch usage when user changes (login/logout)
 
   const handleGenerate = async () => {
     setIsLoading(true);
     setError("");
+    setRequiresUpgrade(false);
     setResults([]);
 
     try {
@@ -37,16 +70,27 @@ export function BrainwormGenerator() {
       const response = await fetch('/api/brainworm', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
+        credentials: 'include', // Include cookies for authentication
         body: JSON.stringify(requestBody)
       });
 
       if (!response.ok) {
         const errorData = await response.json();
+
+        if (errorData.requiresUpgrade) {
+          setRequiresUpgrade(true);
+          setUsageRemaining(0); // Ensure UI reflects 0
+          throw new Error(errorData.error || "This is a Pro feature. Please upgrade to use.");
+        }
+
         throw new Error(errorData.error || 'Failed to generate brainworms');
       }
 
       const data: BrainwormResponse = await response.json();
       setResults(data.items);
+
+      // Refresh usage count
+      fetchUsage();
     } catch (err: any) {
       setError(err.message || "An unexpected error occurred.");
     } finally {
@@ -75,6 +119,28 @@ export function BrainwormGenerator() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           {/* LEFT: Form */}
           <div className="space-y-6">
+            {/* Usage Badge */}
+            {!isPro && usageRemaining !== null && (
+              <div className={`flex items-center justify-between p-3 rounded-lg border ${usageRemaining > 0 ? 'bg-blue-50 border-blue-200 text-blue-800' : 'bg-orange-50 border-orange-200 text-orange-800'}`}>
+                <div className="flex items-center gap-2">
+                  <span className="font-medium text-sm">Free Uses Remaining:</span>
+                  <Badge variant={usageRemaining > 0 ? "default" : "destructive"} className="text-xs">
+                    {usageRemaining}
+                  </Badge>
+                </div>
+                {usageRemaining === 0 && (
+                  <Button
+                    variant="link"
+                    size="sm"
+                    className="h-auto p-0 text-orange-800 font-bold"
+                    onClick={navigateToPremium}
+                  >
+                    Unlock Unlimited
+                  </Button>
+                )}
+              </div>
+            )}
+
             <div className="space-y-2">
               <Label htmlFor="context">Video Context (Optional)</Label>
               <Input 
@@ -122,13 +188,18 @@ export function BrainwormGenerator() {
               className="w-full font-bold" 
               size="lg" 
               onClick={handleGenerate}
-              disabled={isLoading}
+              disabled={isLoading || (!isPro && usageRemaining === 0)}
               style={{ background: 'linear-gradient(135deg, #8B5CF6, #D946EF)' }}
             >
               {isLoading ? (
                 <>
                   <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
                   Infecting Minds...
+                </>
+              ) : !isPro && usageRemaining === 0 ? (
+                <>
+                  <Lock className="mr-2 h-4 w-4" />
+                  Upgrade to Generate
                 </>
               ) : (
                 "Generate Brainworms 🧠"
@@ -138,7 +209,19 @@ export function BrainwormGenerator() {
             {error && (
               <Alert variant="destructive">
                 <AlertTitle>Error</AlertTitle>
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription className="flex flex-col gap-3">
+                  <p>{error}</p>
+                  {requiresUpgrade && (
+                    <Button
+                      variant="secondary"
+                      className="w-full mt-2 font-bold gap-2 bg-white text-destructive hover:bg-white/90"
+                      onClick={navigateToPremium}
+                    >
+                      <Lock className="w-4 h-4" />
+                      Upgrade to Unlimited
+                    </Button>
+                  )}
+                </AlertDescription>
               </Alert>
             )}
           </div>

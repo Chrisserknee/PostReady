@@ -118,7 +118,7 @@ export async function POST(request: NextRequest) {
         // Find user by subscription ID
         const { data: userProfile, error: findError } = await supabase
           .from("user_profiles")
-          .select("id")
+          .select("id, plan_type")
           .eq("stripe_subscription_id", subscription.id)
           .single();
 
@@ -127,21 +127,67 @@ export async function POST(request: NextRequest) {
           break;
         }
 
-        // Update subscription status based on Stripe status
-        const isActive = ["active", "trialing"].includes(subscription.status);
+        // Determine if subscription is active
+        // IMPORTANT: When a user cancels through billing portal, Stripe sets cancel_at_period_end=true
+        // The subscription status remains "active" until current_period_end
+        // This ensures users keep access for the FULL MONTH they paid for
+        const isCanceledAtPeriodEnd = subscription.cancel_at_period_end === true;
+        const now = Math.floor(Date.now() / 1000);
+        const isPastPeriodEnd = subscription.current_period_end && subscription.current_period_end < now;
+        
+        // User keeps Pro access if:
+        // 1. Subscription is active/trialing (includes canceled subscriptions that haven't reached period_end yet)
+        // 2. When cancel_at_period_end=true, status stays "active" until period_end
+        const isActive = 
+          subscription.status === "active" || 
+          subscription.status === "trialing" ||
+          (subscription.status === "canceled" && !isPastPeriodEnd); // Edge case: manually canceled but still in period
+        
+        // Only truly inactive if unpaid, past due, or canceled AND past period end
+        const isTrulyInactive = 
+          subscription.status === "unpaid" || 
+          subscription.status === "past_due" ||
+          (subscription.status === "canceled" && isPastPeriodEnd);
+        
+        const updateData: any = {
+          is_pro: isActive,
+          plan_type: isActive ? (userProfile.plan_type || 'pro') : 'free',
+          updated_at: new Date().toISOString(),
+        };
+        
+        // If subscription is truly inactive (past period end or unpaid), clear subscription ID
+        // Otherwise, keep it (even if canceled, they still have access until period_end)
+        if (isTrulyInactive) {
+          updateData.stripe_subscription_id = null;
+          console.log(`📋 Subscription ${subscription.status} - access ended, clearing subscription ID`);
+        } else {
+          updateData.stripe_subscription_id = subscription.id;
+          if (isCanceledAtPeriodEnd) {
+            const periodEndDate = new Date(subscription.current_period_end * 1000);
+            const daysRemaining = Math.ceil((subscription.current_period_end - now) / (60 * 60 * 24));
+            console.log(`📋 Subscription canceled but user keeps Pro access until: ${periodEndDate.toLocaleString()}`);
+            console.log(`   - Days remaining: ${daysRemaining}`);
+            console.log(`   - User paid for full month, access continues until period end`);
+          }
+        }
         
         const { error: updateError } = await supabase
           .from("user_profiles")
-          .update({
-            is_pro: isActive,
-            updated_at: new Date().toISOString(),
-          })
+          .update(updateData)
           .eq("id", userProfile.id);
 
         if (updateError) {
           console.error("❌ Failed to update subscription status:", updateError);
         } else {
-          console.log("✅ Subscription status updated for user:", userProfile.id);
+          console.log(`✅ Subscription status updated for user ${userProfile.id}: ${subscription.status}`);
+          console.log(`   - is_pro: ${isActive}`);
+          console.log(`   - plan_type: ${isActive ? (userProfile.plan_type || 'pro') : 'free'}`);
+          console.log(`   - cancel_at_period_end: ${isCanceledAtPeriodEnd}`);
+          if (isCanceledAtPeriodEnd && subscription.current_period_end) {
+            const periodEndDate = new Date(subscription.current_period_end * 1000);
+            const daysRemaining = Math.ceil((subscription.current_period_end - now) / (60 * 60 * 24));
+            console.log(`   - Access ends on: ${periodEndDate.toLocaleString()} (${daysRemaining} days remaining)`);
+          }
         }
         break;
       }
@@ -159,14 +205,45 @@ export async function POST(request: NextRequest) {
 
         if (findError || !userProfile) {
           console.error("❌ User not found for subscription:", subscription.id);
+          // Try to find by customer ID as fallback
+          const customerId = subscription.customer as string;
+          const { data: fallbackProfile, error: fallbackError } = await supabase
+            .from("user_profiles")
+            .select("id")
+            .eq("stripe_customer_id", customerId)
+            .single();
+          
+          if (fallbackError || !fallbackProfile) {
+            console.error("❌ User not found by customer ID either:", customerId);
+            break;
+          }
+          
+          // Use fallback profile
+          const { error: updateError } = await supabase
+            .from("user_profiles")
+            .update({
+              is_pro: false,
+              plan_type: 'free',
+              stripe_subscription_id: null,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", fallbackProfile.id);
+
+          if (updateError) {
+            console.error("❌ Failed to downgrade user:", updateError);
+          } else {
+            console.log("✅ User downgraded to free (found by customer ID):", fallbackProfile.id);
+          }
           break;
         }
 
-        // Downgrade user to free
+        // Downgrade user to free - clear subscription ID and set plan to free
         const { error: updateError } = await supabase
           .from("user_profiles")
           .update({
             is_pro: false,
+            plan_type: 'free',
+            stripe_subscription_id: null, // Clear subscription ID since it's cancelled
             updated_at: new Date().toISOString(),
           })
           .eq("id", userProfile.id);
@@ -175,6 +252,9 @@ export async function POST(request: NextRequest) {
           console.error("❌ Failed to downgrade user:", updateError);
         } else {
           console.log("✅ User downgraded to free:", userProfile.id);
+          console.log("   - is_pro: false");
+          console.log("   - plan_type: free");
+          console.log("   - stripe_subscription_id: cleared");
         }
         break;
       }

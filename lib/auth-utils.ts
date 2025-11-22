@@ -4,7 +4,7 @@ import { createClient } from '@supabase/supabase-js';
 /**
  * Create a server-side Supabase client with cookies for authentication
  */
-function createServerSupabaseClient(request: NextRequest) {
+export function createServerSupabaseClient(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
@@ -26,11 +26,22 @@ function createServerSupabaseClient(request: NextRequest) {
   
   if (!accessToken) {
     // Try different cookie names used by Supabase
+    // Supabase stores session in cookies with format: sb-<project-ref>-auth-token
+    const projectRef = supabaseUrl.split('//')[1]?.split('.')[0];
     const possibleCookieNames = [
       'sb-access-token',
       'supabase-auth-token',
-      `sb-${supabaseUrl.split('//')[1]?.split('.')[0]}-auth-token`
+      `sb-${projectRef}-auth-token`,
+      `sb-${projectRef}-auth-token-code-verifier`
     ];
+    
+    // Also check for Supabase session cookie (newer format)
+    const allCookieNames = Object.keys(cookies);
+    const supabaseCookies = allCookieNames.filter(name => 
+      name.includes('supabase') || name.startsWith('sb-')
+    );
+    
+    console.log('🔍 createServerSupabaseClient: Found Supabase cookies:', supabaseCookies);
     
     for (const cookieName of possibleCookieNames) {
       if (cookies[cookieName]) {
@@ -142,7 +153,14 @@ export async function verifyProAccess(request: NextRequest): Promise<{
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
     
+    console.log('🔍 verifyProAccess: User check:', { 
+      hasUser: !!user, 
+      userId: user?.id, 
+      authError: authError?.message 
+    });
+    
     if (authError || !user) {
+      console.log('❌ verifyProAccess: No user found or auth error');
       return { 
         isPro: false, 
         userId: null, 
@@ -157,8 +175,15 @@ export async function verifyProAccess(request: NextRequest): Promise<{
       .eq('id', user.id)
       .maybeSingle();
 
+    console.log('🔍 verifyProAccess: Profile check:', { 
+      hasProfile: !!profile, 
+      is_pro: profile?.is_pro, 
+      plan_type: profile?.plan_type,
+      profileError: profileError?.message 
+    });
+
     if (profileError) {
-      console.error('Error fetching user profile:', profileError);
+      console.error('❌ verifyProAccess: Error fetching user profile:', profileError);
       return { 
         isPro: false, 
         userId: user.id, 
@@ -168,6 +193,12 @@ export async function verifyProAccess(request: NextRequest): Promise<{
 
     // Check if user has Pro access
     const isPro = profile?.is_pro === true;
+    
+    console.log('✅ verifyProAccess: Final result:', { 
+      userId: user.id, 
+      isPro, 
+      is_pro_value: profile?.is_pro 
+    });
     
     if (!isPro) {
       return { 
@@ -179,7 +210,7 @@ export async function verifyProAccess(request: NextRequest): Promise<{
 
     return { isPro: true, userId: user.id, error: null };
   } catch (error) {
-    console.error('Pro verification error:', error);
+    console.error('❌ verifyProAccess: Exception:', error);
     return { 
       isPro: false, 
       userId: null, 
@@ -187,4 +218,3 @@ export async function verifyProAccess(request: NextRequest): Promise<{
     };
   }
 }
-

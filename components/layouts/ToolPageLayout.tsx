@@ -1,8 +1,11 @@
+"use client";
+
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
+import { Navbar } from '@/components/Navbar';
 
 interface ToolPageLayoutProps {
   title: string;
@@ -41,6 +44,11 @@ export function ToolPageLayout({
             }}
           />
         ))}
+      </div>
+
+      {/* Navbar */}
+      <div className="relative" style={{ zIndex: 10 }}>
+        <Navbar />
       </div>
 
       <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>

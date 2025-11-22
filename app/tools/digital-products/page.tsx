@@ -201,6 +201,19 @@ export default function DigitalProductsPage() {
           </div>
         )}
       </div>
+      
+      <div className="mt-8 pt-8 border-t border-border px-4">
+        <h2 className="text-2xl font-bold mb-4">Premium Digital Products by the PostReady Team</h2>
+        <p className="mb-4 text-muted-foreground">
+          At PostReady, we've created a growing collection of premium digital products designed to help creators, entrepreneurs, and social media strategists turn attention into real income. Each resource inside our Premium Collection is carefully crafted to provide practical frameworks, proven systems, and creative strategies you can actually apply — not just theory.
+        </p>
+        <p className="mb-8 text-muted-foreground">
+          From monetization guides to growth playbooks and advanced content tools, our products are built to complement the PostReady platform and accelerate your ability to convert ideas into measurable results. Whether you're scaling your personal brand or building digital revenue streams, this collection is designed to give you a smarter advantage.
+        </p>
+        <p className="text-muted-foreground">
+          Created and curated by the PostReady Team to support creators who take their growth seriously.
+        </p>
+      </div>
     </ToolPageLayout>
   );
 }

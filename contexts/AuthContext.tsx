@@ -340,19 +340,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const upgradeToPro = async () => {
-    if (!user) return;
-
-    try {
-      const { error } = await supabase
-        .from('user_profiles')
-        .update({ is_pro: true, updated_at: new Date().toISOString() })
-        .eq('id', user.id);
-
-      if (!error) {
-        setIsPro(true);
-      }
-    } catch (error) {
-      console.error('Error upgrading to pro:', error);
+    // Navigate to premium page
+    if (typeof window !== 'undefined') {
+      window.location.href = '/?premium=true';
     }
   };
 

@@ -234,6 +234,7 @@ function HomeContent() {
   const [generateIdeasCount, setGenerateIdeasCount] = useState<number>(0);
   const [hasLoadedUsageCounts, setHasLoadedUsageCounts] = useState<boolean>(false);
   const [billingLoading, setBillingLoading] = useState<boolean>(false);
+  const [checkoutLoading, setCheckoutLoading] = useState<boolean>(false);
   
   // Hashtag Deep Research Tool State
   const [hashtagResearchNiche, setHashtagResearchNiche] = useState<string>("");
@@ -1667,6 +1668,7 @@ function HomeContent() {
 
   const initiateCheckout = async () => {
     console.log('🛒 initiateCheckout: Starting checkout process...');
+    console.log('🛒 initiateCheckout: User state:', user ? `Logged in as ${user.email}` : 'Not logged in');
     
     if (!user) {
       console.log('❌ initiateCheckout: No user found');
@@ -1678,7 +1680,8 @@ function HomeContent() {
       return;
     }
 
-    console.log('✅ initiateCheckout: User found:', user.id);
+    setCheckoutLoading(true);
+    console.log('✅ initiateCheckout: User found:', user.id, user.email);
 
     try {
       // Get the current session to include auth token
@@ -1702,7 +1705,13 @@ function HomeContent() {
       console.log('📋 initiateCheckout: Plan type:', selectedPlanType);
       
       // Create Stripe checkout session
-      console.log('💳 initiateCheckout: Calling create-checkout API...');
+      const requestBody = {
+        userId: user.id,
+        userEmail: user.email,
+        planType: selectedPlanType,
+      };
+      console.log('💳 initiateCheckout: Calling create-checkout API with body:', requestBody);
+      
       const response = await fetch("/api/create-checkout", {
         method: "POST",
         headers: {
@@ -1710,38 +1719,44 @@ function HomeContent() {
           "Authorization": `Bearer ${session.access_token}`,
         },
         credentials: 'include',
-        body: JSON.stringify({
-          userId: user.id,
-          userEmail: user.email,
-          planType: selectedPlanType,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       console.log('📡 initiateCheckout: Response status:', response.status, response.statusText);
+      console.log('📡 initiateCheckout: Response headers:', Object.fromEntries(response.headers.entries()));
 
       if (!response.ok) {
         let errorMessage = "Failed to create checkout session";
+        let errorDetails = null;
         try {
           const errorData = await response.json();
           console.error('❌ initiateCheckout: Error data:', errorData);
           errorMessage = errorData.error || errorMessage;
+          errorDetails = errorData.details || null;
         } catch (parseError) {
-          console.error('❌ initiateCheckout: Could not parse error response');
+          console.error('❌ initiateCheckout: Could not parse error response. Response text:', await response.text());
         }
-        throw new Error(errorMessage);
+        throw new Error(errorDetails ? `${errorMessage}: ${errorDetails}` : errorMessage);
       }
 
       const data = await response.json();
-      console.log('✅ initiateCheckout: Got checkout URL');
+      console.log('✅ initiateCheckout: Response data:', data);
+      console.log('✅ initiateCheckout: URL type:', typeof data.url);
+      console.log('✅ initiateCheckout: URL value:', data.url);
       
       if (!data.url) {
-        console.error('❌ initiateCheckout: No URL in response:', data);
-        throw new Error('No checkout URL received');
+        console.error('❌ initiateCheckout: No URL in response. Full response:', JSON.stringify(data, null, 2));
+        throw new Error('No checkout URL received from server. Please check the console for details.');
       }
       
       // Redirect to Stripe checkout
-      console.log('🚀 initiateCheckout: Redirecting to Stripe...');
-      window.location.href = data.url;
+      console.log('🚀 initiateCheckout: Redirecting to Stripe checkout URL:', data.url);
+      if (data.url && typeof data.url === 'string' && data.url.startsWith('http')) {
+        window.location.href = data.url;
+      } else {
+        console.error('❌ initiateCheckout: Invalid URL format:', data.url);
+        throw new Error(`Invalid checkout URL format: ${data.url}`);
+      }
     } catch (error: any) {
       console.error("❌ initiateCheckout: Fatal error:", error);
       console.error("❌ initiateCheckout: Error details:", {
@@ -1749,6 +1764,7 @@ function HomeContent() {
         stack: error.stack,
         name: error.name
       });
+      setCheckoutLoading(false);
       showNotification(error.message || "Failed to start checkout. Please try again.", "error", "Error");
     }
   };
@@ -4162,6 +4178,282 @@ function HomeContent() {
 
 {/* Join Network CTA - moved inside module */}
 
+        {/* Premium Subscription Page - Accessible from any step */}
+        {currentStep === "premium" && (
+          <div className="animate-fade-in">
+            {isPro ? (
+              <div className="max-w-3xl mx-auto mb-10">
+                <div className="bg-gradient-to-br from-blue-600 to-cyan-400 rounded-2xl p-8 text-white shadow-2xl relative overflow-hidden">
+                  {/* Premium Background Pattern */}
+                  <div className="absolute inset-0 opacity-10">
+                    <div className="absolute top-0 right-0 w-64 h-64 rounded-full" style={{
+                      background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)',
+                      filter: 'blur(40px)'
+                    }}></div>
+                  </div>
+                  
+                  <div className="relative z-10">
+                    <div className="text-center mb-6">
+                      <div className="inline-flex items-center gap-2 mb-4">
+                        <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
+                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                        </svg>
+                        <h3 className="text-3xl font-bold">You're a Pro Member!</h3>
+                      </div>
+                      <p className="text-lg opacity-90">Thank you for supporting PostReady</p>
+                    </div>
+
+                    <div className="space-y-4 mb-6">
+                      <div className="flex items-start bg-white bg-opacity-10 rounded-lg p-4">
+                        <svg className="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <p className="font-bold text-lg">Unlimited Video Ideas</p>
+                          <p className="text-purple-100 text-sm">Generate endless content ideas instantly</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start bg-white bg-opacity-10 rounded-lg p-4">
+                        <svg className="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <p className="font-bold text-lg">Unlimited Caption Rewrites & Title Rewords</p>
+                          <p className="text-purple-100 text-sm">Perfect your content with unlimited edits</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start bg-white bg-opacity-10 rounded-lg p-4">
+                        <svg className="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <p className="font-bold text-lg">Priority Support</p>
+                          <p className="text-purple-100 text-sm">Get help when you need it most</p>
+                        </div>
+                      </div>
+                      <div className="flex items-start bg-white bg-opacity-10 rounded-lg p-4">
+                        <svg className="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                        </svg>
+                        <div>
+                          <p className="font-bold text-lg">Premium Experience</p>
+                          <p className="text-purple-100 text-sm">Enhanced interface and exclusive features</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="text-center">
+                      <button
+                        onClick={handleManageBilling}
+                        disabled={billingLoading}
+                        className="bg-white text-blue-600 rounded-lg px-8 py-3 font-bold hover:bg-gray-50 transition-all shadow-lg inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        {billingLoading ? 'Loading...' : 'Manage Subscription'}
+                      </button>
+                      <p className="text-purple-100 text-sm mt-3">
+                        Update payment method, view invoices, or cancel subscription
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="max-w-3xl mx-auto mb-10">
+                <div 
+                  className="rounded-2xl p-8 text-white shadow-2xl"
+                  style={{
+                    background: 'linear-gradient(135deg, #2563eb 0%, #06b6d4 100%)',
+                    boxShadow: '0 20px 60px rgba(37, 99, 235, 0.3)'
+                  }}
+                >
+                  <div className="text-center mb-6">
+                    <h3 className="text-3xl font-bold mb-2">
+                      Pro Plan
+                    </h3>
+                    <div className="flex items-end justify-center gap-2">
+                      <span className="text-5xl font-bold">
+                        $10
+                      </span>
+                      <span className="text-xl mb-2 opacity-80">/ month</span>
+                    </div>
+                    <p className="mt-2 opacity-90">
+                      Everything you need to grow faster and unlock new ways to earn.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4 mb-8">
+                    <div className="flex items-start">
+                      <span className="text-2xl mr-3">✓</span>
+                      <div>
+                        <p className="font-bold text-lg">Unlimited access to all tools on PostReady</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-2xl mr-3">✓</span>
+                      <div>
+                        <p className="font-bold text-lg">Built for creators, brands, and online earners</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-2xl mr-3">✓</span>
+                      <div>
+                        <p className="font-bold text-lg">Grow visibility, engagement, and income</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-2xl mr-3">✓</span>
+                      <div>
+                        <p className="font-bold text-lg">Smart automation that removes friction</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-2xl mr-3">✓</span>
+                      <div>
+                        <p className="font-bold text-lg">Continuous upgrades & monetization features</p>
+                      </div>
+                    </div>
+                    <div className="flex items-start">
+                      <span className="text-2xl mr-3">✓</span>
+                      <div>
+                        <p className="font-bold text-lg">Priority performance experience</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={(e) => {
+                      e.preventDefault();
+                      console.log('🔘 Button clicked - calling initiateCheckout');
+                      initiateCheckout();
+                    }}
+                    disabled={checkoutLoading}
+                    className="w-full bg-white rounded-lg px-6 py-4 font-bold text-lg hover:bg-gray-50 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{
+                      color: '#2563eb'
+                    }}
+                  >
+                    {checkoutLoading ? (
+                      <>
+                        <span className="mr-2 inline-block h-4 w-4 animate-spin rounded-full border-2 border-b-transparent border-blue-600"></span>
+                        Processing...
+                      </>
+                    ) : (
+                      'Unlock Pro Access – $10/month'
+                    )}
+                  </button>
+                  <p className="text-center text-sm mt-3 opacity-85">
+                    Cancel anytime • Secure payment via Stripe
+                  </p>
+                </div>
+              </div>
+            )}
+
+            {/* Feature Comparison */}
+            <div className="max-w-4xl mx-auto mb-8">
+              <h3 className="text-2xl font-bold mb-4 text-center" style={{ color: 'var(--secondary)' }}>
+                Free vs Pro Comparison
+              </h3>
+              <div className="rounded-lg border-2 overflow-hidden" style={{ 
+                backgroundColor: 'var(--card-bg)',
+                borderColor: 'var(--card-border)'
+              }}>
+                <div className="grid grid-cols-3 text-center border-b-2" style={{ borderColor: 'var(--card-border)' }}>
+                  <div className="p-5 font-bold text-lg" style={{ color: 'var(--text-primary)' }}>Feature</div>
+                  <div className="p-5 font-bold text-lg" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-primary)'
+                  }}>Free</div>
+                  <div className="p-5 font-bold text-lg" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>Pro</div>
+                </div>
+                <div className="grid grid-cols-3 border-b" style={{ borderColor: 'var(--card-border)' }}>
+                  <div className="p-5 text-left font-semibold" style={{ color: 'var(--text-primary)' }}>Tool Access</div>
+                  <div className="p-5" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-primary)'
+                  }}>Limited trial access</div>
+                  <div className="p-5 font-bold" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>Unlimited access to all tools</div>
+                </div>
+                <div className="grid grid-cols-3 border-b" style={{ borderColor: 'var(--card-border)' }}>
+                  <div className="p-5 text-left font-semibold" style={{ color: 'var(--text-primary)' }}>Usage Limits</div>
+                  <div className="p-5" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-primary)'
+                  }}>Restricted</div>
+                  <div className="p-5 font-bold" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>Unlimited usage</div>
+                </div>
+                <div className="grid grid-cols-3 border-b" style={{ borderColor: 'var(--card-border)' }}>
+                  <div className="p-5 text-left font-semibold" style={{ color: 'var(--text-primary)' }}>Advanced Features</div>
+                  <div className="p-5" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-primary)'
+                  }}>Locked</div>
+                  <div className="p-5 font-bold" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>Fully unlocked</div>
+                </div>
+                <div className="grid grid-cols-3 border-b" style={{ borderColor: 'var(--card-border)' }}>
+                  <div className="p-5 text-left font-semibold" style={{ color: 'var(--text-primary)' }}>Performance</div>
+                  <div className="p-5" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-primary)'
+                  }}>Standard speed</div>
+                  <div className="p-5 font-bold" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>Priority performance</div>
+                </div>
+                <div className="grid grid-cols-3 border-b" style={{ borderColor: 'var(--card-border)' }}>
+                  <div className="p-5 text-left font-semibold" style={{ color: 'var(--text-primary)' }}>Updates & New Tools</div>
+                  <div className="p-5" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-primary)'
+                  }}>Basic access</div>
+                  <div className="p-5 font-bold" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>All current & future tools included</div>
+                </div>
+                <div className="grid grid-cols-3">
+                  <div className="p-5 text-left font-semibold" style={{ color: 'var(--text-primary)' }}>Support</div>
+                  <div className="p-5" style={{ 
+                    backgroundColor: 'var(--hover-bg)',
+                    color: 'var(--text-primary)'
+                  }}>Email support</div>
+                  <div className="p-5 font-bold" style={{ 
+                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
+                    color: 'var(--primary)'
+                  }}>Priority support</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Back Button */}
+            <div className="text-center">
+              <button
+                onClick={handlePreviousStep}
+                className="font-medium transition-colors hover:scale-105"
+                style={{ color: 'var(--text-secondary)' }}
+              >
+                ← Back to Main Page
+              </button>
+            </div>
+          </div>
+        )}
+
         {/* End Modules Container */}
         </div>
 
@@ -4204,6 +4496,32 @@ function HomeContent() {
           </div>
         </div>
 
+        {/* Auth Modal */}
+        <AuthModal
+          isOpen={authModalOpen}
+          onClose={() => {
+            setAuthModalOpen(false);
+            setRedirectToCheckoutAfterAuth(false);
+          }}
+          mode={authModalMode}
+        />
+
+        {/* Sign Out Confirmation Modal */}
+        <Modal
+          isOpen={modalState.isOpen}
+          onClose={() => {
+            setModalState({ ...modalState, isOpen: false });
+            if (modalState.onCancel) {
+              modalState.onCancel();
+            }
+          }}
+          title={modalState.title}
+          message={modalState.message}
+          type={modalState.type}
+          onConfirm={modalState.onConfirm}
+          confirmText={modalState.confirmText || 'Confirm'}
+        />
+
         {/* Email Verification Modal */}
         <Modal
           isOpen={showEmailVerificationModal}
@@ -4214,6 +4532,15 @@ function HomeContent() {
 Once verified, you'll be automatically signed in and can access all PostReady features!"
           type="info"
           confirmText="OK, Got It!"
+        />
+
+        {/* Notification */}
+        <Notification
+          isOpen={notification.isOpen}
+          onClose={() => setNotification({ ...notification, isOpen: false })}
+          message={notification.message}
+          type={notification.type}
+          title={notification.title}
         />
       </div>
     </div>
