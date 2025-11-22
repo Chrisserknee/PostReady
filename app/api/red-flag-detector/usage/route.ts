@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       const { data: userProgress } = await loadUserProgress(user.id);
       usageCount = userProgress?.redFlagTranslatorCount ?? 0;
     } else {
-      const usageCookie = request.cookies.get('rft_usage');
+      const usageCookie = request.cookies.get('rfd_usage');
       usageCount = usageCookie ? parseInt(usageCookie.value) : 0;
     }
 

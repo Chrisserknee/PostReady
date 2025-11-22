@@ -36,7 +36,7 @@ export function RedFlagTranslator() {
 
   const fetchUsage = async () => {
     try {
-      const response = await fetch('/api/red-flag-translator/usage', {
+      const response = await fetch('/api/red-flag-detector/usage', {
         credentials: 'include',
       });
       if (response.ok) {
@@ -75,7 +75,7 @@ export function RedFlagTranslator() {
         headers['Authorization'] = `Bearer ${session.access_token}`;
       }
 
-      const response = await fetch('/api/red-flag-translator', {
+      const response = await fetch('/api/red-flag-detector', {
         method: 'POST',
         headers,
         credentials: 'include',

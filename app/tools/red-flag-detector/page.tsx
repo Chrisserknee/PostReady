@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   description: 'Detect hidden meanings and identify red flags in text messages, social media posts, and conversations.',
 };
 
-export default function RedFlagTranslatorPage() {
+export default function RedFlagDetectorPage() {
   return (
     <ToolPageLayout
       title="Red Flag Detector"

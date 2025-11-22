@@ -160,7 +160,7 @@ function HomeContent() {
     'sora-prompt': 'sora-prompt',
     'hashtag-research': 'hashtag-research',
     'page-analyzer': 'page-analyzer',
-    'red-flag-translator': 'red-flag-translator',
+    'red-flag-detector': 'red-flag-detector',
     'cringe-couple-caption': 'cringe-couple-caption-generator',
     'comment-fight-starter': 'comment-fight-starter-generator',
     'poor-life-choices-advisor': 'poor-life-choices-advisor',
@@ -265,7 +265,7 @@ function HomeContent() {
     'idea-generator',
     'sora-prompt',
     'hashtag-research',
-    'red-flag-translator',
+    'red-flag-detector',
     'cringe-couple-caption',
     'comment-fight-starter',
     'poor-life-choices-advisor',
@@ -277,7 +277,7 @@ function HomeContent() {
 
   // Module Collapse State
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(
-    new Set(['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'red-flag-translator', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'])
+    new Set(['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'red-flag-detector', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'])
   );
 
   const toggleModuleCollapse = (moduleId: string) => {
@@ -293,7 +293,7 @@ function HomeContent() {
   };
 
   const collapseAllModules = () => {
-    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'red-flag-translator', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
+    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'red-flag-detector', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
     setCollapsedModules(new Set(allModules));
   };
 
@@ -3683,38 +3683,38 @@ function HomeContent() {
         {currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
-            onDragStart={() => handleDragStart('red-flag-translator')}
+            onDragStart={() => handleDragStart('red-flag-detector')}
             onDragEnd={handleDragEnd}
-            onDragOver={(e) => handleDragOver(e, 'red-flag-translator')}
+            onDragOver={(e) => handleDragOver(e, 'red-flag-detector')}
             onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, 'red-flag-translator')}
+            onDrop={(e) => handleDrop(e, 'red-flag-detector')}
             onClick={(e) => {
               if (!isReorderMode) {
                 e.preventDefault();
-                router.push(getModuleUrl('red-flag-translator'));
+                router.push(getModuleUrl('red-flag-detector'));
               }
             }}
             className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
             style={{
               marginBottom: '1rem',
               backgroundColor: 'var(--card-bg)',
-              borderColor: dragOverModule === 'red-flag-translator'
+              borderColor: dragOverModule === 'red-flag-detector'
                 ? '#2979FF'
                 : 'var(--card-border)',
-              boxShadow: dragOverModule === 'red-flag-translator'
+              boxShadow: dragOverModule === 'red-flag-detector'
                 ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
                 : theme === 'dark'
                   ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
                   : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
-              order: moduleOrder.indexOf('red-flag-translator'),
+              order: moduleOrder.indexOf('red-flag-detector'),
               cursor: (isReorderMode && user) ? 'move' : 'pointer',
-              opacity: draggedModule === 'red-flag-translator' ? 0.5 : 1,
-              transform: dragOverModule === 'red-flag-translator' ? 'scale(1.02)' : 'scale(1)',
+              opacity: draggedModule === 'red-flag-detector' ? 0.5 : 1,
+              transform: dragOverModule === 'red-flag-detector' ? 'scale(1.02)' : 'scale(1)',
               padding: '1rem',
             }}
           >
             <Link 
-              href={getModuleUrl('red-flag-translator')}
+              href={getModuleUrl('red-flag-detector')}
               onClick={(e) => {
                 if (isReorderMode && user) {
                   e.preventDefault();
