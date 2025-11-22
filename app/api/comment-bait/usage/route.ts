@@ -1,10 +1,10 @@
-import { createClient } from '@/lib/supabase';
 import { NextRequest, NextResponse } from 'next/server';
+import { createServerSupabaseClient } from '@/lib/auth-utils';
 import { loadUserProgress } from '@/lib/userProgress';
 
 export async function GET(request: NextRequest) {
   try {
-    const supabase = createClient();
+    const supabase = createServerSupabaseClient(request);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
 
     let usageCount = 0;
