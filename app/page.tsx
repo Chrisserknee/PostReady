@@ -277,7 +277,7 @@ function HomeContent() {
 
   // Module Collapse State
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(
-    new Set(['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'red-flag-detector', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'])
+    new Set(['digital-products', 'red-flag-detector', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'])
   );
 
   const toggleModuleCollapse = (moduleId: string) => {
