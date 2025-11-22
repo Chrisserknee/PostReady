@@ -1,4 +1,12 @@
 import React from "react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 
 interface SelectFieldProps {
   label: string;
@@ -17,28 +25,22 @@ export function SelectField({
 }: SelectFieldProps) {
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+      <Label className="text-sm font-medium text-muted-foreground">
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-      <select
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        required={required}
-        className="rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 border"
-        style={{
-          backgroundColor: 'var(--card-bg)',
-          borderColor: 'var(--card-border)',
-          color: 'var(--text-primary)'
-        }}
-      >
-        <option value="">Select an option</option>
-        {options.map((option) => (
-          <option key={option} value={option}>
-            {option}
-          </option>
-        ))}
-      </select>
+      </Label>
+      <Select value={value} onValueChange={onChange} required={required}>
+        <SelectTrigger className="w-full bg-card text-foreground border-input">
+          <SelectValue placeholder="Select an option" />
+        </SelectTrigger>
+        <SelectContent>
+          {options.map((option) => (
+            <SelectItem key={option} value={option}>
+              {option}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
     </div>
   );
 }

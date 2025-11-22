@@ -1,4 +1,6 @@
 import React from "react";
+import { Textarea } from "@/components/ui/textarea";
+import { Label } from "@/components/ui/label";
 
 interface TextAreaFieldProps {
   label: string;
@@ -19,22 +21,17 @@ export function TextAreaField({
 }: TextAreaFieldProps) {
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
+      <Label className="text-sm font-medium text-muted-foreground">
         {label}
         {required && <span className="text-red-500 ml-1">*</span>}
-      </label>
-      <textarea
+      </Label>
+      <Textarea
         value={value}
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         rows={rows}
         required={required}
-        className="rounded-md px-3 py-2 w-full focus:outline-none focus:ring-2 resize-vertical border"
-        style={{
-          backgroundColor: 'var(--card-bg)',
-          borderColor: 'var(--card-border)',
-          color: 'var(--text-primary)'
-        }}
+        className="w-full bg-card text-foreground border-input resize-vertical focus-visible:ring-2 focus-visible:ring-primary"
       />
     </div>
   );

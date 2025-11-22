@@ -2,12 +2,14 @@
 
 import React, { useState, useRef, useEffect, Suspense, useCallback } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import Link from "next/link";
 import { BusinessInfo, StrategyResult, PostDetails, ContentIdea } from "@/types";
 import { generateStrategyAndIdeas } from "@/lib/strategy";
 import { generatePostDetailsWithAI, generatePostDetails } from "@/lib/post";
 import { SectionCard } from "@/components/SectionCard";
 import { PrimaryButton } from "@/components/PrimaryButton";
 import { SecondaryButton } from "@/components/SecondaryButton";
+import { Button } from "@/components/ui/button";
 import { InputField } from "@/components/InputField";
 import { SelectField } from "@/components/SelectField";
 import { TextAreaField } from "@/components/TextAreaField";
@@ -22,6 +24,10 @@ import { saveBusiness, loadSavedBusinesses, saveCompletedPost, loadPostHistory, 
 import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 import jsPDF from 'jspdf';
+
+import { CommentBaitGenerator } from "@/components/CommentBaitGenerator";
+import { SugarDaddyMessageGenerator } from "@/components/SugarDaddyMessageGenerator";
+import { BrainwormGenerator } from "@/components/BrainwormGenerator";
 
 type WizardStep = "form" | "researching" | "principles" | "choose-idea" | "record-video" | "generating-caption" | "post-details" | "premium" | "history" | "businesses" | "hashtag-research";
 
@@ -139,6 +145,26 @@ function HomeContent() {
   const { theme, toggleTheme } = useTheme();
   const searchParams = useSearchParams();
   const router = useRouter();
+
+  // Module ID to URL slug mapping for SEO-friendly URLs
+  const moduleUrlMap: Record<string, string> = {
+    'digital-products': 'digital-products',
+    'comment-bait': 'comment-bait-generator',
+    'brainworm-generator': 'brainworm-phrase-generator',
+    'sugar-daddy-messages': 'sugar-daddy-message-generator',
+    'music-generator': 'music-generator',
+    'voiceover-generator': 'voiceover-generator',
+    'collab-engine': 'collab-engine',
+    'trend-radar': 'trend-radar',
+    'idea-generator': 'idea-generator',
+    'sora-prompt': 'sora-prompt',
+    'hashtag-research': 'hashtag-research',
+    'page-analyzer': 'page-analyzer',
+  };
+
+  const getModuleUrl = (moduleId: string): string => {
+    return `/tools/${moduleUrlMap[moduleId] || moduleId}`;
+  };
   
   const [businessInfo, setBusinessInfo] = useState<BusinessInfo>({
     businessName: "",
@@ -223,6 +249,9 @@ function HomeContent() {
   const [isReorderMode, setIsReorderMode] = useState<boolean>(false);
   const [moduleOrder, setModuleOrder] = useState<string[]>([
     'digital-products',
+    'comment-bait',
+    'brainworm-generator',
+    'sugar-daddy-messages',
     'music-generator',
     'voiceover-generator',
     'collab-engine',
@@ -237,7 +266,7 @@ function HomeContent() {
 
   // Module Collapse State
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(
-    new Set(['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer'])
+    new Set(['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages'])
   );
 
   const toggleModuleCollapse = (moduleId: string) => {
@@ -253,7 +282,7 @@ function HomeContent() {
   };
 
   const collapseAllModules = () => {
-    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer'];
+    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator'];
     setCollapsedModules(new Set(allModules));
   };
 
@@ -262,7 +291,7 @@ function HomeContent() {
   };
 
   const areAllModulesCollapsed = () => {
-    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer'];
+    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator'];
     return allModules.every(module => collapsedModules.has(module));
   };
 
@@ -3117,28 +3146,22 @@ function HomeContent() {
               )}
               {/* Navigation buttons */}
               <div className="grid grid-cols-4 gap-1 sm:gap-2 w-full">
-                <button
+                <Button
                   onClick={navigateHome}
                   disabled={isNavigating}
-                  className="px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all disabled:opacity-50 shadow-md hover:scale-105 active:scale-95"
-                  style={currentStep === "form" ? { 
-                    color: 'white',
-                    fontWeight: 'bold',
-                    background: 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 100%)',
-                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                  } : { 
-                    color: 'var(--text-primary)',
-                    backgroundColor: 'var(--card-bg)',
-                    border: '2px solid var(--card-border)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-                  }}
+                  variant={currentStep === "form" ? "default" : "outline"}
+                  className={`w-full px-1.5 sm:px-4 py-2 sm:py-2.5 h-auto text-[10px] sm:text-sm font-semibold shadow-md hover:scale-105 active:scale-95 ${
+                    currentStep === "form" 
+                      ? "bg-primary text-primary-foreground hover:bg-primary/90" 
+                      : "bg-card text-card-foreground border-input hover:bg-accent hover:text-accent-foreground"
+                  }`}
                 >
                   Home
-                </button>
+                </Button>
               </div>
               {/* User actions */}
               <div className="flex gap-1 sm:gap-2 w-full">
-                <button
+                <Button
                   onClick={(e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -3146,43 +3169,28 @@ function HomeContent() {
                     navigateToPortal();
                   }}
                   type="button"
-                  className="flex-1 px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all cursor-pointer shadow-md hover:scale-105 active:scale-95"
-                  style={{ 
-                    color: 'var(--text-primary)', 
-                    pointerEvents: 'auto',
-                    backgroundColor: 'var(--card-bg)',
-                    border: '2px solid var(--card-border)',
-                    boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-                  }}
+                  variant="outline"
+                  className="flex-1 px-1.5 sm:px-4 py-2 sm:py-2.5 h-auto rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold shadow-md hover:scale-105 active:scale-95 bg-card text-card-foreground border-input"
                   title="Go to User Portal"
                 >
                   Account
-                </button>
+                </Button>
                 {!isPro && (
-                  <button
+                  <Button
                     onClick={scrollToPremium}
-                    className="flex-1 text-white px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold transition-all shadow-lg hover:scale-105 active:scale-95"
-                    style={{ 
-                      background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)',
-                      boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                    }}
+                    className="flex-1 px-1.5 sm:px-4 py-2 sm:py-2.5 h-auto rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold shadow-lg hover:scale-105 active:scale-95 text-white border-none bg-[linear-gradient(135deg,#2979FF_0%,#6FFFD2_100%)] hover:opacity-90"
                   >
                     ★ Get Pro
-                  </button>
+                  </Button>
                 )}
-                <button
+                <Button
                   onClick={handleSignOut}
                   disabled={isSigningOut}
-                  className="flex-1 px-1.5 sm:px-4 py-2 sm:py-2.5 rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold transition-all shadow-md hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{ 
-                    color: '#dc2626',
-                    backgroundColor: 'var(--card-bg)',
-                    border: '2px solid #dc2626',
-                    boxShadow: '0 2px 8px rgba(220, 38, 38, 0.2)'
-                  }}
+                  variant="outline"
+                  className="flex-1 px-1.5 sm:px-4 py-2 sm:py-2.5 h-auto rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold shadow-md hover:scale-105 active:scale-95 text-destructive border-destructive hover:bg-destructive/10 bg-card"
                 >
                   {isSigningOut ? 'Signing Out...' : 'Sign Out'}
-                </button>
+                </Button>
               </div>
             </div>
             
@@ -3222,24 +3230,19 @@ function HomeContent() {
                   </span>
                 </span>
               )}
-              <button
+              <Button
                 onClick={navigateHome}
                 disabled={isNavigating}
-                className="px-4 py-2 rounded-lg text-sm font-semibold transition-all disabled:opacity-50 whitespace-nowrap hover:scale-105 active:scale-95"
-                style={currentStep === "form" ? { 
-                  color: 'white',
-                  background: 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 100%)',
-                  boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                } : { 
-                  color: 'var(--text-primary)',
-                  backgroundColor: 'var(--card-bg)',
-                  border: '2px solid var(--card-border)',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)'
-                }}
+                variant={currentStep === "form" ? "default" : "outline"}
+                className={`px-4 py-2 h-auto rounded-lg text-sm font-semibold shadow-md hover:scale-105 active:scale-95 whitespace-nowrap ${
+                  currentStep === "form" 
+                    ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_12px_rgba(41,121,255,0.4)]" 
+                    : "bg-card text-card-foreground border-input hover:bg-accent hover:text-accent-foreground"
+                }`}
               >
                 Home
-              </button>
-              <button
+              </Button>
+              <Button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -3247,44 +3250,28 @@ function HomeContent() {
                   navigateToPortal();
                 }}
                 type="button"
-                className="px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-105 active:scale-95 cursor-pointer"
-                style={{ 
-                  color: 'var(--text-primary)',
-                  backgroundColor: 'var(--card-bg)',
-                  border: '2px solid var(--card-border)',
-                  boxShadow: '0 2px 8px rgba(0, 0, 0, 0.1)',
-                  pointerEvents: 'auto' 
-                }}
+                variant="outline"
+                className="px-4 py-2 h-auto rounded-lg text-sm font-semibold shadow-md hover:scale-105 active:scale-95 cursor-pointer bg-card text-card-foreground border-input"
                 title="Go to User Portal"
               >
                 Account
-              </button>
+              </Button>
               {!isPro && (
-                <button
+                <Button
                   onClick={scrollToPremium}
-                  className="px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0"
-                  style={{ 
-                    color: 'white',
-                    background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                  }}
+                  className="px-4 py-2 h-auto rounded-lg text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 text-white border-none bg-[linear-gradient(to_right,#2979FF,#6FFFD2)] shadow-[0_4px_12px_rgba(41,121,255,0.4)] hover:opacity-90"
                 >
                   ★ Get Pro
-                </button>
+                </Button>
               )}
-              <button
+              <Button
                 onClick={handleSignOut}
                 disabled={isSigningOut}
-                className="px-4 py-2 rounded-lg text-sm font-semibold transition-all hover:scale-105 active:scale-95 whitespace-nowrap disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{ 
-                  color: '#dc2626',
-                  backgroundColor: 'var(--card-bg)',
-                  border: '2px solid #dc2626',
-                  boxShadow: '0 2px 8px rgba(220, 38, 38, 0.2)'
-                }}
+                variant="outline"
+                className="px-4 py-2 h-auto rounded-lg text-sm font-semibold shadow-md hover:scale-105 active:scale-95 whitespace-nowrap text-destructive border-destructive hover:bg-destructive/10 bg-card"
               >
                 {isSigningOut ? 'Signing Out...' : 'Sign Out'}
-              </button>
+              </Button>
             </div>
           </div>
         )}
@@ -3298,20 +3285,16 @@ function HomeContent() {
             }}>
               <div className="flex flex-col sm:flex-row items-center justify-between gap-4">
                 <div className="flex items-center gap-4 w-full sm:w-auto">
-                  <button
+                  <Button
                     onClick={() => setCurrentStep('form')}
-                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2 whitespace-nowrap"
-                    style={{ 
-                      borderColor: 'var(--card-border)',
-                      color: 'var(--text-primary)',
-                      backgroundColor: 'var(--card-bg)'
-                    }}
+                    variant="outline"
+                    className="flex items-center gap-2 px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 whitespace-nowrap bg-card text-card-foreground border-input"
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
                     </svg>
                     Home
-                  </button>
+                  </Button>
                   <div className="flex items-center gap-3 flex-1">
                     <div className="flex-shrink-0">
                       <svg className="w-10 h-10" style={{ color: '#2979FF' }} fill="currentColor" viewBox="0 0 20 20">
@@ -3329,37 +3312,27 @@ function HomeContent() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button 
+                <div className="flex items-center gap-2">
+                  <Button 
                     onClick={() => openAuthModal('signin')}
-                    className="px-5 py-2.5 rounded-lg font-semibold text-sm transition-all hover:scale-105 whitespace-nowrap border-2"
-                    style={{ 
-                      borderColor: 'var(--card-border)',
-                      color: 'var(--text-primary)',
-                      backgroundColor: 'var(--card-bg)'
-                    }}
+                    variant="outline"
+                    className="px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 whitespace-nowrap bg-card text-card-foreground border-input"
                   >
                     Sign In
-                  </button>
-                  <button
+                  </Button>
+                  <Button
                     onClick={() => openAuthModal('signup')}
-                    className="px-5 py-2.5 rounded-lg font-semibold text-sm transition-all hover:scale-105 text-white whitespace-nowrap"
-                    style={{ background: 'linear-gradient(to right, #2979FF, #6FFFD2)' }}
+                    className="px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 text-white whitespace-nowrap border-none bg-[linear-gradient(to_right,#2979FF,#6FFFD2)] hover:opacity-90"
                   >
                     Sign Up Now
-                  </button>
-                  <button 
+                  </Button>
+                  <Button 
                     onClick={() => setCurrentStep('premium')}
-                    className="px-5 py-2.5 rounded-lg font-semibold text-sm transition-all hover:scale-105 whitespace-nowrap flex items-center gap-2"
-                    style={{ 
-                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                      color: 'white',
-                      boxShadow: '0 4px 15px rgba(41, 121, 255, 0.3)'
-                    }}
+                    className="px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 whitespace-nowrap flex items-center gap-2 text-white border-none bg-[linear-gradient(to_right,#2979FF,#6FFFD2)] shadow-[0_4px_15px_rgba(41,121,255,0.3)] hover:opacity-90"
                   >
                     <span>★</span>
                     Get Pro
-                  </button>
+                  </Button>
                 </div>
               </div>
             </div>
@@ -3407,6 +3380,7 @@ function HomeContent() {
           <p className="text-2xl font-medium tracking-wide" style={{ color: 'var(--primary)' }}>
             Your all-in-one toolkit for social media growth.
           </p>
+{/* All Tools Button Removed */}
         </div>
 
         {/* Modules Container - uses flex to enable reordering */}
@@ -3417,15 +3391,32 @@ function HomeContent() {
           <div 
             ref={collabSectionRef}
             draggable={!!(isReorderMode && user)}
-            onDragStart={() => handleDragStart('collab-engine')}
+            onDragStart={(e) => {
+              if (isReorderMode && user) {
+                handleDragStart('collab-engine');
+              } else {
+                e.preventDefault();
+              }
+            }}
             onDragEnd={handleDragEnd}
-            onDragOver={(e) => handleDragOver(e, 'collab-engine')}
+            onDragOver={(e) => {
+              if (isReorderMode && user) {
+                handleDragOver(e, 'collab-engine');
+              } else {
+                e.preventDefault();
+              }
+            }}
             onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, 'collab-engine')}
-            onClick={() => !isReorderMode && collapsedModules.has('collab-engine') && toggleModuleCollapse('collab-engine')}
-            className="rounded-2xl shadow-lg border transition-all duration-300 relative"
+            onDrop={(e) => {
+              if (isReorderMode && user) {
+                handleDrop(e, 'collab-engine');
+              } else {
+                e.preventDefault();
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
             style={{
-              marginBottom: collapsedModules.has('collab-engine') ? '1rem' : '2.5rem',
+              marginBottom: '1rem',
               backgroundColor: 'var(--card-bg)',
               borderColor: dragOverModule === 'collab-engine' 
                 ? '#2979FF'
@@ -3438,16 +3429,23 @@ function HomeContent() {
                   ? '0 8px 32px rgba(255, 79, 120, 0.2), 0 0 0 1px rgba(255, 79, 120, 0.15)'
                   : '0 4px 20px rgba(255, 79, 120, 0.15), 0 0 0 1px rgba(255, 79, 120, 0.1)',
               order: moduleOrder.indexOf('collab-engine'),
-              cursor: (isReorderMode && user) ? 'move' : (collapsedModules.has('collab-engine') ? 'pointer' : 'default'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
               opacity: draggedModule === 'collab-engine' ? 0.5 : 1,
               transform: dragOverModule === 'collab-engine' ? 'scale(1.02)' : 'scale(1)',
-              padding: collapsedModules.has('collab-engine') ? '1rem' : '1rem 1.5rem',
+              padding: '1rem 1.5rem',
             }}
           >
-            {/* Collapsed Bar View */}
-            {collapsedModules.has('collab-engine') ? (
+            <Link 
+              href={getModuleUrl('collab-engine')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
+              }}
+              className="block"
+            >
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <svg className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" viewBox="0 0 448 512" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 2px rgba(0, 242, 234, 0.3))' }}>
                     <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#00f2ea" transform="translate(-3, -3)"/>
                     <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#ff0050" transform="translate(3, 3)"/>
@@ -3458,856 +3456,10 @@ function HomeContent() {
                   </h3>
                 </div>
                 <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
-                  {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
                 </span>
               </div>
-            ) : (
-              <>
-                {/* Reorder Controls */}
-                {isReorderMode && user && (
-                  <div className="absolute top-4 right-16 flex gap-2 z-10">
-                    <button
-                      onClick={() => moveModule('collab-engine', 'up')}
-                      disabled={moduleOrder.indexOf('collab-engine') === 0}
-                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      title="Move Up"
-                    >
-                      ⬆️
-                    </button>
-                    <button
-                      onClick={() => moveModule('collab-engine', 'down')}
-                      disabled={moduleOrder.indexOf('collab-engine') === moduleOrder.length - 1}
-                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      title="Move Down"
-                    >
-                      ⬇️
-                    </button>
-                  </div>
-                )}
-
-                {/* Minimize Button */}
-                {!isReorderMode && (
-                  <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleModuleCollapse('collab-engine');
-                  }}
-                  className="absolute top-1 right-2 sm:top-2 sm:right-3 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
-                  style={{ 
-                    backgroundColor: 'rgba(41, 121, 255, 0.15)',
-                    border: '2px solid rgba(41, 121, 255, 0.4)',
-                    color: '#2979FF',
-                    zIndex: 10,
-                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)'
-                  }}
-                  title="Minimize"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                  </svg>
-                </button>
-                )}
-
-                <div className="p-0 sm:p-2 md:p-4 space-y-6">
-                  <div className="text-center mb-6">
-                    <div className="flex items-center justify-center gap-3 mb-2">
-                <svg className="w-8 h-8 sm:w-10 sm:h-10" viewBox="0 0 448 512" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 2px rgba(0, 242, 234, 0.3))' }}>
-                  <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#00f2ea" transform="translate(-3, -3)"/>
-                  <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#ff0050" transform="translate(3, 3)"/>
-                  <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#000000"/>
-                </svg>
-                <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: 'var(--secondary)' }}>
-                  TikTok Collab Engine
-                </h2>
-                <span className="text-3xl sm:text-4xl">🤝</span>
-              </div>
-              <p className="text-sm sm:text-base" style={{ color: 'var(--text-secondary)' }}>
-                Find real TikTok creators in your niche with similar follower counts to collaborate with
-              </p>
-            </div>
-
-            {/* Loading state while checking profile */}
-            {isLoadingProfile && (
-              <div 
-                className="mb-6 p-4 rounded-xl border transition-all duration-500 ease-in-out"
-                style={{
-                  backgroundColor: 'var(--card-bg)',
-                  borderColor: 'var(--card-border)',
-                  animation: 'fadeIn 0.5s ease-in-out'
-                }}
-              >
-                <div className="text-center flex items-center justify-center gap-3">
-                  <div 
-                    className="h-5 w-5 border-2 rounded-full"
-                    style={{
-                      borderColor: '#FF4F78',
-                      borderTopColor: 'transparent',
-                      animation: 'spin 1.5s linear infinite'
-                    }}
-                  ></div>
-                  <span style={{ color: 'var(--text-secondary)' }}>Checking network status...</span>
-                </div>
-              </div>
-            )}
-
-            {/* Join Network CTA - for signed in users without profile */}
-            {!isLoadingProfile && !directoryProfile && user && (
-              <div 
-                className="mb-6 p-4 sm:p-6 rounded-xl border-2 border-dashed transition-all duration-500 ease-in-out" 
-                style={{
-                  backgroundColor: theme === 'dark' ? 'rgba(255, 79, 120, 0.08)' : 'rgba(255, 79, 120, 0.05)',
-                  borderColor: 'rgba(255, 79, 120, 0.4)',
-                  animation: 'fadeIn 0.5s ease-in-out'
-                }}
-              >
-                <div className="text-center">
-                  <h3 className="text-lg sm:text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                    ✨ Join the PostReady Collab Network
-                  </h3>
-                  <p className="text-xs sm:text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                    Click join, enter your details, and instantly discover creators with similar followings in your niche ready to collaborate!
-                  </p>
-                  <button
-                    onClick={() => {
-                      // Pre-fill email if user is authenticated
-                      if (user && user.email) {
-                        setProfileForm(prev => ({ ...prev, email_for_collabs: user.email || '' }));
-                      }
-                      setShowJoinDirectory(true);
-                    }}
-                    className="w-full sm:w-auto px-6 py-3 rounded-lg font-bold transition-all hover:scale-105 shadow-md"
-                    style={{
-                      background: 'linear-gradient(135deg, #FF4F78, #FF6B9D, #FF8FB3)',
-                      color: 'white'
-                    }}
-                  >
-                    Join the Network
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Join Network CTA - for non-signed in users */}
-            {!isLoadingProfile && !user && !directoryProfile && (
-              <div 
-                className="mb-6 p-4 sm:p-6 rounded-xl border-2 border-dashed transition-all duration-500 ease-in-out" 
-                style={{
-                  backgroundColor: theme === 'dark' ? 'rgba(255, 79, 120, 0.08)' : 'rgba(255, 79, 120, 0.05)',
-                  borderColor: 'rgba(255, 79, 120, 0.4)',
-                  animation: 'fadeIn 0.5s ease-in-out'
-                }}
-              >
-                <div className="text-center">
-                  <h3 className="text-lg sm:text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                    ✨ Join the PostReady Collab Network
-                  </h3>
-                  <p className="text-xs sm:text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                    Click join, enter your details, and instantly discover creators with similar followings in your niche ready to collaborate!
-                  </p>
-                  <button
-                    onClick={() => setShowJoinDirectory(true)}
-                    className="w-full sm:w-auto px-6 py-3 rounded-lg font-bold transition-all hover:scale-105 shadow-md"
-                    style={{
-                      background: 'linear-gradient(135deg, #FF4F78, #FF6B9D, #FF8FB3)',
-                      color: 'white'
-                    }}
-                  >
-                    Join the Network
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Join Directory Form Modal */}
-            {showJoinDirectory && (
-              <>
-                <style jsx>{`
-                  body {
-                    overflow: hidden !important;
-                  }
-                `}</style>
-                <div 
-                  className="fixed inset-0 z-[99999] flex items-center justify-center p-4 animate-fade-in"
-                  style={{
-                    backgroundColor: 'rgba(0, 0, 0, 0.75)',
-                    backdropFilter: 'blur(16px)',
-                    WebkitBackdropFilter: 'blur(16px)',
-                    margin: 0,
-                    padding: '1rem'
-                  }}
-                  onClick={() => setShowJoinDirectory(false)}
-                >
-                  <div 
-                    className="w-full max-w-2xl max-h-[90vh] overflow-y-auto rounded-2xl shadow-2xl animate-scale-in"
-                    style={{
-                      backgroundColor: 'var(--card-bg)',
-                      border: '1px solid var(--card-border)',
-                      position: 'relative',
-                      zIndex: 100000
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <div className="sticky top-0 z-10 p-6 pb-4 border-b" style={{
-                      backgroundColor: 'var(--card-bg)',
-                      borderColor: 'var(--card-border)'
-                    }}>
-                    <div className="flex items-center justify-between">
-                      <h3 className="text-xl sm:text-2xl font-bold" style={{ color: 'var(--secondary)' }}>
-                        📝 Create Your Collab Profile
-                      </h3>
-                      <button
-                        type="button"
-                        onClick={() => setShowJoinDirectory(false)}
-                        className="text-2xl w-10 h-10 flex items-center justify-center rounded-full transition-all hover:opacity-70"
-                        style={{ color: 'var(--text-secondary)' }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  </div>
-                  <div className="p-6">
-                    <form onSubmit={handleProfileSubmit} className="space-y-4">
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                      Your TikTok Username <span className="text-red-500">*</span>
-                    </label>
-                    <div className="relative flex items-center">
-                      <span 
-                        className="absolute left-4 top-1/2 transform -translate-y-1/2 text-lg font-bold pointer-events-none z-10"
-                        style={{ color: 'rgba(255, 107, 107, 0.8)' }}
-                      >
-                        @
-                      </span>
-                      <input
-                        type="text"
-                        value={profileForm.tiktok_username}
-                        onChange={(e) => setProfileForm({ ...profileForm, tiktok_username: e.target.value.replace('@', '') })}
-                        placeholder="yourusername"
-                        required
-                        className="w-full rounded-md px-3 py-2 pl-10 focus:outline-none focus:ring-2 border"
-                        style={{
-                          backgroundColor: 'var(--card-bg)',
-                          borderColor: 'var(--card-border)',
-                          color: 'var(--text-primary)'
-                        }}
-                      />
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                      Display Name
-                    </label>
-                    <input
-                      type="text"
-                      value={profileForm.display_name}
-                      onChange={(e) => setProfileForm({ ...profileForm, display_name: e.target.value })}
-                      placeholder="Your Name"
-                      className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
-                      style={{
-                        backgroundColor: 'var(--card-bg)',
-                        borderColor: 'var(--card-border)',
-                        color: 'var(--text-primary)'
-                      }}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                        Niche <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={profileForm.niche}
-                        onChange={(e) => setProfileForm({ ...profileForm, niche: e.target.value })}
-                        required
-                        className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
-                        style={{
-                          backgroundColor: 'var(--card-bg)',
-                          borderColor: 'var(--card-border)',
-                          color: 'var(--text-primary)'
-                        }}
-                      >
-                        <option value="">Select your niche</option>
-                        <option value="Lifestyle">Lifestyle</option>
-                        <option value="Entertainment">Entertainment</option>
-                        <option value="Comedy">Comedy</option>
-                        <option value="Beauty & Fashion">Beauty & Fashion</option>
-                        <option value="Fitness & Health">Fitness & Health</option>
-                        <option value="Food">Food</option>
-                        <option value="Gaming">Gaming</option>
-                        <option value="Education">Education</option>
-                        <option value="Business">Business</option>
-                        <option value="Experimental">Experimental</option>
-                        <option value="Other">Other</option>
-                      </select>
-                    </div>
-
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                        Follower Count <span className="text-red-500">*</span>
-                      </label>
-                      <select
-                        value={profileForm.follower_count}
-                        onChange={(e) => setProfileForm({ ...profileForm, follower_count: e.target.value })}
-                        required
-                        className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
-                        style={{
-                          backgroundColor: 'var(--card-bg)',
-                          borderColor: 'var(--card-border)',
-                          color: 'var(--text-primary)'
-                        }}
-                      >
-                        <option value="">Select follower range</option>
-                        <option value="1-500">1 - 500</option>
-                        <option value="500-1500">500 - 1,500</option>
-                        <option value="2000-5000">2,000 - 5,000</option>
-                        <option value="5000-9000">5,000 - 9,000</option>
-                        <option value="9000-15000">9,000 - 15,000</option>
-                        <option value="15000-25000">15,000 - 25,000</option>
-                        <option value="25000-75000">25,000 - 75,000</option>
-                        <option value="75000-150000">75,000 - 150,000</option>
-                        <option value="150000-300000">150,000 - 300,000</option>
-                        <option value="300000-1000000">300,000 - 1M</option>
-                        <option value="1000000+">1M+</option>
-                      </select>
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                      Content Focus
-                    </label>
-                    <select
-                      value={profileForm.content_focus}
-                      onChange={(e) => setProfileForm({ ...profileForm, content_focus: e.target.value })}
-                      className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
-                      style={{
-                        backgroundColor: 'var(--card-bg)',
-                        borderColor: 'var(--card-border)',
-                        color: 'var(--text-primary)'
-                      }}
-                    >
-                      <option value="">Select content focus</option>
-                      <option value="Tutorials">Tutorials</option>
-                      <option value="Entertainment">Entertainment</option>
-                      <option value="Comedy">Comedy</option>
-                      <option value="Reviews">Reviews</option>
-                      <option value="Vlogs">Vlogs</option>
-                      <option value="Educational">Educational</option>
-                      <option value="Storytelling">Storytelling</option>
-                      <option value="Experimental">Experimental</option>
-                      <option value="Other">Other</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                      Bio
-                    </label>
-                    <textarea
-                      value={profileForm.bio}
-                      onChange={(e) => setProfileForm({ ...profileForm, bio: e.target.value })}
-                      placeholder="Tell other creators about yourself..."
-                      rows={3}
-                      className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
-                      style={{
-                        backgroundColor: 'var(--card-bg)',
-                        borderColor: 'var(--card-border)',
-                        color: 'var(--text-primary)'
-                      }}
-                    />
-                  </div>
-
-                  {!user && (
-                    <>
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                          Email for Collabs <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="email"
-                          value={profileForm.email_for_collabs}
-                          onChange={(e) => setProfileForm({ ...profileForm, email_for_collabs: e.target.value })}
-                          placeholder="your@email.com"
-                          required
-                          className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
-                          style={{
-                            backgroundColor: 'var(--card-bg)',
-                            borderColor: 'var(--card-border)',
-                            color: 'var(--text-primary)'
-                          }}
-                        />
-                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                          This email will be stored but NOT displayed to other users for privacy
-                        </p>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                          Password <span className="text-red-500">*</span>
-                        </label>
-                        <input
-                          type="password"
-                          value={profileForm.password}
-                          onChange={(e) => setProfileForm({ ...profileForm, password: e.target.value })}
-                          placeholder="Create a password (min 6 characters)"
-                          required
-                          minLength={6}
-                          className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
-                          style={{
-                            backgroundColor: 'var(--card-bg)',
-                            borderColor: 'var(--card-border)',
-                            color: 'var(--text-primary)'
-                          }}
-                        />
-                        <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                          💡 This will create your PostReady account and give you access to all features
-                        </p>
-                      </div>
-                    </>
-                  )}
-
-                  {user && (
-                    <div className="p-4 rounded-lg" style={{
-                      backgroundColor: theme === 'dark' ? 'rgba(111, 255, 210, 0.1)' : 'rgba(111, 255, 210, 0.15)',
-                      border: '1px solid rgba(111, 255, 210, 0.3)'
-                    }}>
-                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                        ✅ You're already signed in to PostReady
-                      </p>
-                      <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                        Just fill out your TikTok info to join the Collab Network!
-                      </p>
-                    </div>
-                  )}
-
-                      <div className="flex gap-3 pt-2">
-                        <button
-                          type="submit"
-                          disabled={isSubmittingProfile}
-                          className="flex-1 py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                          style={{
-                            background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                            color: 'white'
-                          }}
-                        >
-                          {isSubmittingProfile ? 'Saving...' : directoryProfile ? 'Update Profile' : 'Join Network'}
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => setShowJoinDirectory(false)}
-                          className="px-6 py-3 rounded-lg font-medium transition-all hover:opacity-80 border"
-                          style={{
-                            borderColor: 'var(--card-border)',
-                            color: 'var(--text-secondary)'
-                          }}
-                        >
-                          Cancel
-                        </button>
-                      </div>
-                    </form>
-                  </div>
-                </div>
-              </div>
-              </>
-            )}
-
-            {/* Search Form */}
-            {directoryProfile ? (
-              // Simplified version for users with a profile
-              <div className="space-y-4">
-                <div className="p-4 rounded-lg border" style={{
-                  backgroundColor: theme === 'dark' ? 'rgba(255, 79, 120, 0.08)' : 'rgba(255, 79, 120, 0.05)',
-                  borderColor: 'rgba(255, 79, 120, 0.3)'
-                }}>
-                  <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
-                    🎯 Searching based on your profile:
-                  </p>
-                  <div className="flex flex-wrap gap-2 text-sm">
-                    <span className="px-3 py-1 rounded-full" style={{
-                      backgroundColor: 'var(--card-bg)',
-                      color: 'var(--text-primary)',
-                      border: '1px solid var(--card-border)'
-                    }}>
-                      @{directoryProfile.tiktok_username}
-                    </span>
-                    <span className="px-3 py-1 rounded-full" style={{
-                      backgroundColor: 'var(--card-bg)',
-                      color: 'var(--text-primary)',
-                      border: '1px solid var(--card-border)'
-                    }}>
-                      {directoryProfile.niche}
-                    </span>
-                    <span className="px-3 py-1 rounded-full" style={{
-                      backgroundColor: 'var(--card-bg)',
-                      color: 'var(--text-primary)',
-                      border: '1px solid var(--card-border)'
-                    }}>
-                      {directoryProfile.follower_range} followers
-                    </span>
-                  </div>
-                </div>
-
-                <button
-                  onClick={(e) => {
-                    e.preventDefault();
-                    // Search directly with profile data (no state update needed)
-                    handleCollabSearch(e as any, {
-                      username: directoryProfile.tiktok_username,
-                      niche: directoryProfile.niche,
-                      followerCount: directoryProfile.follower_range
-                    });
-                  }}
-                  disabled={isLoadingCollabs}
-                  className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  style={{
-                    background: 'linear-gradient(135deg, #FF4F78, #FF6B9D, #FF8FB3)',
-                    color: 'white'
-                  }}
-                >
-                  {isLoadingCollabs ? (
-                    <>
-                      <span className="animate-spin">🔄</span>
-                      Finding Collaborators...
-                    </>
-                  ) : (
-                    <>
-                      🔍 Find Collaborators
-                    </>
-                  )}
-                </button>
-              </div>
-            ) : (
-              // Full form for users without a profile
-              <form onSubmit={handleCollabSearch} className="space-y-4">
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                    Your TikTok Username <span className="text-red-500">*</span>
-                  </label>
-                  <div className="relative flex items-center">
-                    <span 
-                      className="absolute left-4 top-1/2 transform -translate-y-1/2 text-lg font-bold pointer-events-none z-10"
-                      style={{ color: 'rgba(255, 107, 107, 0.8)' }}
-                    >
-                      @
-                    </span>
-                    <input
-                      type="text"
-                      value={collabUsername}
-                      onChange={(e) => setCollabUsername(e.target.value.replace('@', ''))}
-                      placeholder="yourusername"
-                      required
-                      className="w-full rounded-md px-3 py-2 pl-10 focus:outline-none focus:ring-2 border"
-                      style={{
-                        backgroundColor: 'var(--card-bg)',
-                        borderColor: 'var(--card-border)',
-                        color: 'var(--text-primary)'
-                      }}
-                    />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                    Your Niche <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    value={collabNiche}
-                    onChange={(e) => setCollabNiche(e.target.value)}
-                    placeholder="e.g., Fitness, Gaming, Beauty"
-                    required
-                    className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
-                    style={{
-                      backgroundColor: 'var(--card-bg)',
-                      borderColor: 'var(--card-border)',
-                      color: 'var(--text-primary)'
-                    }}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                    Your Follower Count <span className="text-red-500">*</span>
-                  </label>
-                  <select
-                    value={collabFollowerCount}
-                    onChange={(e) => setCollabFollowerCount(e.target.value)}
-                    required
-                    className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
-                    style={{
-                      backgroundColor: 'var(--card-bg)',
-                      borderColor: 'var(--card-border)',
-                      color: 'var(--text-primary)'
-                    }}
-                  >
-                    <option value="">Select follower range</option>
-                    <option value="1-500">1 - 500</option>
-                    <option value="500-1500">500 - 1,500</option>
-                    <option value="2000-5000">2,000 - 5,000</option>
-                    <option value="5000-9000">5,000 - 9,000</option>
-                    <option value="9000-15000">9,000 - 15,000</option>
-                    <option value="15000-25000">15,000 - 25,000</option>
-                    <option value="25000-75000">25,000 - 75,000</option>
-                    <option value="75000-150000">75,000 - 150,000</option>
-                    <option value="150000-300000">150,000 - 300,000</option>
-                    <option value="300000-1000000">300,000 - 1M</option>
-                    <option value="1000000+">1M+</option>
-                  </select>
-                </div>
-
-                <button
-                  type="submit"
-                  disabled={isLoadingCollabs}
-                  className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                  style={{
-                    background: 'linear-gradient(135deg, #FF4F78, #FF6B9D, #FF8FB3)',
-                    color: 'white'
-                  }}
-                >
-                  {isLoadingCollabs ? (
-                    <>
-                      <span className="animate-spin">🔄</span>
-                      Finding Collaborators...
-                    </>
-                  ) : (
-                    <>
-                      🔍 Find Collaborators
-                    </>
-                  )}
-                </button>
-              </form>
-            )}
-
-            {/* Results */}
-            {collaborators.length > 0 && (
-              <div className="mt-8 space-y-4">
-                <h3 className="text-2xl font-bold" style={{ color: 'var(--secondary)' }}>
-                  ✨ Perfect Matches ({collaborators.length})
-                </h3>
-                {collaborators.map((collab, index) => (
-                  <div 
-                    key={index}
-                    className="p-6 rounded-xl border transition-all hover:scale-[1.02]"
-                    style={{
-                      backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
-                      borderColor: collab.isRealUser ? 'rgba(34, 197, 94, 0.4)' : 'rgba(41, 121, 255, 0.3)'
-                    }}
-                  >
-                    <div className="flex items-start justify-between mb-4">
-                      <div className="flex-1">
-                        <div className="flex items-center gap-3 mb-2">
-                          <a
-                            href={`https://www.tiktok.com/@${collab.username.replace('@', '')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-xl font-bold hover:underline"
-                            style={{ color: 'var(--secondary)' }}
-                          >
-                            @{collab.username.replace('@', '')}
-                          </a>
-                          {collab.isRealUser && (
-                            <span 
-                              className="px-3 py-1 rounded-full text-xs font-bold"
-                              style={{ 
-                                backgroundColor: 'rgba(34, 197, 94, 0.2)', 
-                                color: '#22c55e' 
-                              }}
-                            >
-                              ✅ REAL USER
-                            </span>
-                          )}
-                        </div>
-                        {collab.displayName && (
-                          <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
-                            {collab.displayName}
-                          </p>
-                        )}
-                        <div className="flex flex-wrap gap-2 mb-3">
-                          <span 
-                            className="px-3 py-1 rounded-full text-xs font-semibold"
-                            style={{ 
-                              backgroundColor: 'rgba(41, 121, 255, 0.15)', 
-                              color: 'var(--secondary)' 
-                            }}
-                          >
-                            {collab.followerCount.toLocaleString()} followers
-                          </span>
-                          <span 
-                            className="px-3 py-1 rounded-full text-xs font-semibold"
-                            style={{ 
-                              backgroundColor: 'rgba(111, 255, 210, 0.15)', 
-                              color: '#6FFFD2' 
-                            }}
-                          >
-                            {collab.niche}
-                          </span>
-                        </div>
-
-                        {/* User Description Label */}
-                        <p className="text-xs font-semibold mb-2 mt-2" style={{ color: 'var(--text-secondary)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-                          User Description
-                        </p>
-
-                        {collab.contentFocus && (
-                          <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
-                            <strong>Focus:</strong> {collab.contentFocus}
-                          </p>
-                        )}
-                        {collab.bio && (
-                          <p className="text-sm mb-3" style={{ color: 'var(--text-secondary)' }}>
-                            {collab.bio}
-                          </p>
-                        )}
-                        {collab.isRealUser && (collab.instagram || collab.youtube) && (
-                          <div className="flex gap-3 mb-3">
-                            {collab.instagram && (
-                              <a
-                                href={`https://instagram.com/${collab.instagram}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm hover:underline"
-                                style={{ color: '#E1306C' }}
-                              >
-                                📷 Instagram
-                              </a>
-                            )}
-                            {collab.youtube && (
-                              <a
-                                href={`https://youtube.com/@${collab.youtube}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="text-sm hover:underline"
-                                style={{ color: '#FF0000' }}
-                              >
-                                ▶️ YouTube
-                              </a>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-
-                    <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: 'rgba(255, 79, 120, 0.08)' }}>
-                      <p className="text-sm font-semibold mb-1" style={{ color: '#FF4F78' }}>
-                        💡 Why They're Perfect:
-                      </p>
-                      <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                        This creator is in your niche and has a follower count similar to yours, making them a strong match for a collaboration that could significantly boost engagement for both of you.
-                      </p>
-                    </div>
-
-                    {collab.collabIdea && (
-                      <div className="mb-4 p-4 rounded-lg" style={{ backgroundColor: 'rgba(255, 139, 179, 0.08)' }}>
-                        <p className="text-sm font-semibold mb-1" style={{ color: '#FF6B9D' }}>
-                          🎬 Collaboration Idea:
-                        </p>
-                        <p className="text-sm" style={{ color: 'var(--text-primary)' }}>
-                          {collab.collabIdea}
-                        </p>
-                      </div>
-                    )}
-
-                    {collab.dm && (
-                      <div className="space-y-3">
-                        <div className="p-4 rounded-lg border" style={{ 
-                          backgroundColor: 'var(--card-bg)',
-                          borderColor: 'var(--card-border)'
-                        }}>
-                          <p className="text-sm font-semibold mb-2" style={{ color: 'var(--secondary)' }}>
-                            💬 Personalized DM:
-                          </p>
-                          <p className="text-sm whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>
-                            {collab.dm}
-                          </p>
-                        </div>
-                        <button
-                          onClick={() => handleCopyDmAndVisit(collab.dm, collab.username, index)}
-                          disabled={copyingDmIndex === index}
-                          className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-75 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                          style={{
-                            background: copyingDmIndex === index 
-                              ? 'linear-gradient(135deg, #D63A5F, #E85577)' 
-                              : 'linear-gradient(135deg, #FF4F78, #FF6B9D, #FF8FB3)',
-                            color: 'white'
-                          }}
-                        >
-                          {copyingDmIndex === index ? (
-                            <>
-                              <span className="animate-spin">⏳</span>
-                              Redirecting...
-                            </>
-                          ) : (
-                            <>
-                              📋 Copy DM & Visit Profile
-                            </>
-                          )}
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                ))}
-              </div>
-            )}
-
-            {!isLoadingCollabs && collaborators.length === 0 && collabNiche && (
-              <div className="mt-6 p-6 rounded-xl text-center" style={{
-                backgroundColor: theme === 'dark' ? 'rgba(255, 165, 0, 0.08)' : 'rgba(255, 165, 0, 0.05)',
-                borderWidth: '2px',
-                borderStyle: 'dashed',
-                borderColor: 'rgba(255, 165, 0, 0.3)'
-              }}>
-                <p className="text-lg font-semibold mb-2" style={{ color: '#FFA500' }}>
-                  No matches found yet
-                </p>
-                <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                  Try adjusting your filters, or be the first to join the network in your niche!
-                </p>
-              </div>
-            )}
-
-            {directoryProfile && (
-              <div 
-                className="mt-6 p-4 rounded-lg border flex items-center justify-between transition-all duration-500 ease-in-out" 
-                style={{
-                  backgroundColor: theme === 'dark' ? 'rgba(34, 197, 94, 0.08)' : 'rgba(34, 197, 94, 0.05)',
-                  borderColor: 'rgba(34, 197, 94, 0.3)',
-                  animation: 'fadeIn 0.5s ease-in-out'
-                }}
-              >
-                <div className="flex items-center gap-3">
-                  <span className="text-2xl">✅</span>
-                  <div>
-                    <p className="font-bold" style={{ color: 'var(--secondary)' }}>
-                      You're in the network!
-                    </p>
-                    <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      Other creators can now find you
-                    </p>
-                  </div>
-                </div>
-                <button
-                  onClick={() => {
-                    // Pre-fill email if user is authenticated
-                    if (user && user.email) {
-                      setProfileForm(prev => ({ ...prev, email_for_collabs: user.email || '' }));
-                    }
-                    setShowJoinDirectory(true);
-                  }}
-                  className="px-4 py-2 rounded-lg font-medium transition-all hover:opacity-80 border"
-                  style={{
-                    borderColor: 'var(--card-border)',
-                    color: 'var(--secondary)'
-                  }}
-                >
-                  Edit Profile
-                </button>
-              </div>
-            )}
-                </div>
-              </>
-            )}
+            </Link>
           </div>
         )}
 
@@ -4320,10 +3472,15 @@ function HomeContent() {
             onDragOver={(e) => handleDragOver(e, 'trend-radar')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'trend-radar')}
-            onClick={() => !isReorderMode && collapsedModules.has('trend-radar') && toggleModuleCollapse('trend-radar')}
-            className="rounded-2xl shadow-lg border transition-all duration-300 relative"
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('trend-radar'));
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
             style={{
-              marginBottom: collapsedModules.has('trend-radar') ? '1rem' : '2.5rem',
+              marginBottom: '1rem',
               backgroundColor: 'var(--card-bg)',
               borderColor: dragOverModule === 'trend-radar'
                 ? '#2979FF'
@@ -4334,218 +3491,39 @@ function HomeContent() {
                   ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
                   : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
               order: moduleOrder.indexOf('trend-radar'),
-              cursor: (isReorderMode && user) ? 'move' : (collapsedModules.has('trend-radar') ? 'pointer' : 'default'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
               opacity: draggedModule === 'trend-radar' ? 0.5 : 0.6,
               transform: dragOverModule === 'trend-radar' ? 'scale(1.02)' : 'scale(1)',
-              padding: collapsedModules.has('trend-radar') ? '1rem' : '2rem',
+              padding: '1rem',
               filter: 'grayscale(0.3)',
             }}
           >
-            {/* Coming Soon Badge */}
-            <div 
-              className="absolute top-4 right-4 px-4 py-2 rounded-lg font-bold text-sm z-20"
-              style={{
-                background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
-                color: 'white',
-                boxShadow: '0 4px 15px rgba(139, 92, 246, 0.5)',
+            <Link 
+              href={getModuleUrl('trend-radar')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
               }}
+              className="block"
             >
-              🚀 Coming Soon
-            </div>
-            {/* Collapsed Bar View */}
-            <div 
-              className="flex items-center justify-between"
-              style={{
-                transition: 'opacity 0.3s ease-in-out',
-                opacity: collapsedModules.has('trend-radar') ? 1 : 0,
-                pointerEvents: collapsedModules.has('trend-radar') ? 'auto' : 'none',
-                position: collapsedModules.has('trend-radar') ? 'relative' : 'absolute',
-                visibility: collapsedModules.has('trend-radar') ? 'visible' : 'hidden',
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">📊</span>
-                <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
-                  Trend Radar
-                </h3>
-              </div>
-              <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
-                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
-              </span>
-            </div>
-
-            {/* Expanded Content */}
-            <div
-              style={{
-                transition: 'opacity 0.3s ease-in-out',
-                opacity: collapsedModules.has('trend-radar') ? 0 : 1,
-                pointerEvents: collapsedModules.has('trend-radar') ? 'none' : 'auto',
-                position: collapsedModules.has('trend-radar') ? 'absolute' : 'relative',
-                visibility: collapsedModules.has('trend-radar') ? 'hidden' : 'visible',
-              }}
-            >
-                {/* Reorder Controls */}
-                {isReorderMode && user && (
-                  <div className="absolute top-4 right-16 flex gap-2 z-10">
-                    <button
-                      onClick={() => moveModule('trend-radar', 'up')}
-                      disabled={moduleOrder.indexOf('trend-radar') === 0}
-                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      title="Move Up"
-                    >
-                      ⬆️
-                    </button>
-                    <button
-                      onClick={() => moveModule('trend-radar', 'down')}
-                      disabled={moduleOrder.indexOf('trend-radar') === moduleOrder.length - 1}
-                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      title="Move Down"
-                    >
-                      ⬇️
-                    </button>
-                  </div>
-                )}
-
-                {/* Minimize Button */}
-                {!isReorderMode && (
-                  <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleModuleCollapse('trend-radar');
-                  }}
-                  className="absolute top-1 right-1 sm:top-2 sm:right-2 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
-                  style={{ 
-                    backgroundColor: 'rgba(41, 121, 255, 0.15)',
-                    border: '2px solid rgba(41, 121, 255, 0.4)',
-                    color: '#2979FF',
-                    zIndex: 10,
-                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)'
-                  }}
-                  title="Minimize"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                    </svg>
-                  </button>
-                )}
-
-                <div className="space-y-6">
-                  <div className="text-center mb-6">
-                <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                  📊 Trend Radar
-                </h2>
-                <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
-                  Real-time trend analytics across social platforms
-                </p>
-              </div>
-
-              {/* Analytics Graph */}
-              <div className="space-y-6">
-                {/* Trend Metrics Overview */}
-                <div className="grid grid-cols-3 gap-4">
-                  {[
-                    { label: 'Active Trends', value: '2,847', change: '+12.5%', color: '#2979FF' },
-                    { label: 'Avg Growth', value: '18.3%', change: '+3.2%', color: '#6366F1' },
-                    { label: 'Peak Hour', value: '9 PM EST', change: 'Live', color: '#8B5CF6' }
-                  ].map((metric, idx) => (
-                    <div 
-                      key={idx}
-                      className="p-4 rounded-xl border"
-                      style={{
-                        backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
-                        borderColor: 'rgba(41, 121, 255, 0.2)'
-                      }}
-                    >
-                      <p className="text-xs font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>
-                        {metric.label}
-                      </p>
-                      <p className="text-2xl font-bold mb-1" style={{ color: metric.color }}>
-                        {metric.value}
-                      </p>
-                      <p className="text-xs font-semibold" style={{ color: '#22c55e' }}>
-                        {metric.change}
-                      </p>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Trend Graph */}
-                <div 
-                  className="p-6 rounded-xl border"
-                  style={{
-                    backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.03)' : 'rgba(41, 121, 255, 0.02)',
-                    borderColor: 'rgba(41, 121, 255, 0.2)'
-                  }}
-                >
-                  <h3 className="text-lg font-bold mb-4" style={{ color: 'var(--secondary)' }}>
-                    📈 Trending Topics - Last 7 Days
-                  </h3>
-                  <div className="space-y-3">
-                    {[
-                      { name: 'AI Content Creation', value: 92, color: '#2979FF' },
-                      { name: 'Sustainable Living', value: 78, color: '#6366F1' },
-                      { name: 'Fitness Challenges', value: 85, color: '#8B5CF6' },
-                      { name: 'Tech Reviews', value: 67, color: '#3B82F6' },
-                      { name: 'Cooking Tutorials', value: 73, color: '#6366F1' },
-                    ].map((trend, idx) => (
-                      <div key={idx}>
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                            {trend.name}
-                          </span>
-                          <span className="text-sm font-bold" style={{ color: trend.color }}>
-                            {trend.value}%
-                          </span>
-                        </div>
-                        <div 
-                          className="h-2 rounded-full overflow-hidden"
-                          style={{ backgroundColor: theme === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)' }}
-                        >
-                          <div 
-                            className="h-full rounded-full transition-all duration-500"
-                            style={{
-                              width: `${trend.value}%`,
-                              background: `linear-gradient(to right, ${trend.color}, ${trend.color}dd)`,
-                              boxShadow: `0 0 10px ${trend.color}88`
-                            }}
-                          />
-                        </div>
-                      </div>
-                    ))}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">📡</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                      Trend Radar
+                    </h3>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Discover trending topics and hashtags across social media platforms
+                    </p>
                   </div>
                 </div>
-
-                {/* Platform Breakdown */}
-                <div className="grid grid-cols-2 gap-4">
-                  {[
-                    { platform: 'TikTok', percentage: 38, icon: '🎵', color: '#00f2ea' },
-                    { platform: 'Instagram', percentage: 29, icon: '📸', color: '#E1306C' },
-                    { platform: 'YouTube', percentage: 22, icon: '▶️', color: '#FF0000' },
-                    { platform: 'Twitter/X', percentage: 11, icon: '🐦', color: '#1DA1F2' }
-                  ].map((platform, idx) => (
-                    <div 
-                      key={idx}
-                      className="p-4 rounded-xl border"
-                      style={{
-                        backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
-                        borderColor: 'rgba(41, 121, 255, 0.2)'
-                      }}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="text-2xl">{platform.icon}</span>
-                        <span className="text-lg font-bold" style={{ color: platform.color }}>
-                          {platform.percentage}%
-                        </span>
-                      </div>
-                      <p className="text-sm font-medium" style={{ color: 'var(--text-primary)' }}>
-                        {platform.platform}
-                      </p>
-                    </div>
-                  ))}
-                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
               </div>
-            </div>
-            </div>
+            </Link>
           </div>
         )}
 
@@ -4558,10 +3536,15 @@ function HomeContent() {
             onDragOver={(e) => handleDragOver(e, 'idea-generator')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'idea-generator')}
-            onClick={() => !isReorderMode && collapsedModules.has('idea-generator') && toggleModuleCollapse('idea-generator')}
-            className="rounded-2xl shadow-lg border transition-all duration-300 relative"
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('idea-generator'));
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
             style={{
-              marginBottom: collapsedModules.has('idea-generator') ? '1rem' : '2.5rem',
+              marginBottom: '1rem',
               backgroundColor: 'var(--card-bg)',
               borderColor: dragOverModule === 'idea-generator'
                 ? '#2979FF'
@@ -4572,446 +3555,38 @@ function HomeContent() {
                   ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
                   : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
               order: moduleOrder.indexOf('idea-generator'),
-              cursor: (isReorderMode && user) ? 'move' : (collapsedModules.has('idea-generator') ? 'pointer' : 'default'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
               opacity: draggedModule === 'idea-generator' ? 0.5 : 1,
               transform: dragOverModule === 'idea-generator' ? 'scale(1.02)' : 'scale(1)',
-              padding: collapsedModules.has('idea-generator') ? '1rem' : '2rem',
+              padding: '1rem',
             }}
           >
-            {/* Collapsed Bar View */}
-            <div 
-              className="flex items-center justify-between gap-2"
-              style={{
-                transition: 'opacity 0.3s ease-in-out',
-                opacity: collapsedModules.has('idea-generator') ? 1 : 0,
-                pointerEvents: collapsedModules.has('idea-generator') ? 'auto' : 'none',
-                position: collapsedModules.has('idea-generator') ? 'relative' : 'absolute',
-                visibility: collapsedModules.has('idea-generator') ? 'visible' : 'hidden',
-              }}
-            >
-              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                <span className="text-3xl flex-shrink-0">🎥</span>
-                <h3 className="text-lg sm:text-xl font-bold truncate" style={{ color: 'var(--secondary)' }}>
-                  Viral Video Idea Generator
-                </h3>
-                <span className="px-2 py-1 text-xs font-bold rounded flex-shrink-0" style={{
-                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  color: 'white',
-                }}>
-                  PRO
-                </span>
-              </div>
-              <span className="text-sm opacity-60 flex-shrink-0 hidden sm:block" style={{ color: 'var(--text-secondary)' }}>
-                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
-              </span>
-            </div>
-
-            {/* Expanded Content */}
-            <div
-              style={{
-                transition: 'opacity 0.3s ease-in-out',
-                opacity: collapsedModules.has('idea-generator') ? 0 : 1,
-                pointerEvents: collapsedModules.has('idea-generator') ? 'none' : 'auto',
-                position: collapsedModules.has('idea-generator') ? 'absolute' : 'relative',
-                visibility: collapsedModules.has('idea-generator') ? 'hidden' : 'visible',
-              }}
-            >
-                {/* Reorder Controls */}
-                {isReorderMode && user && (
-                  <div className="absolute top-4 right-16 flex gap-2 z-10">
-                    <button
-                      onClick={() => moveModule('idea-generator', 'up')}
-                      disabled={moduleOrder.indexOf('idea-generator') === 0}
-                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      title="Move Up"
-                    >
-                      ⬆️
-                    </button>
-                    <button
-                      onClick={() => moveModule('idea-generator', 'down')}
-                      disabled={moduleOrder.indexOf('idea-generator') === moduleOrder.length - 1}
-                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      title="Move Down"
-                    >
-                      ⬇️
-                    </button>
-                  </div>
-                )}
-
-                {/* Minimize Button */}
-                {!isReorderMode && (
-                  <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleModuleCollapse('idea-generator');
-                  }}
-                  className="absolute top-1 right-1 sm:top-2 sm:right-2 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
-                  style={{ 
-                    backgroundColor: 'rgba(41, 121, 255, 0.15)',
-                    border: '2px solid rgba(41, 121, 255, 0.4)',
-                    color: '#2979FF',
-                    zIndex: 10,
-                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)'
-                  }}
-                  title="Minimize"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                    </svg>
-                  </button>
-                )}
-
-                <div className="space-y-6">
-                  <div className="text-center mb-6">
-              <div className="flex items-center justify-center gap-3 mb-2">
-                <h2 className="text-4xl font-bold" style={{ color: 'var(--secondary)' }}>
-                  🎥 Viral Video Idea Generator
-                </h2>
-                <span className="px-3 py-1 text-sm font-bold rounded" style={{
-                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  color: 'white',
-                }}>
-                  PRO
-                </span>
-              </div>
-              <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
-                Get strategically engineered video ideas with hooks, viral mechanics, platform recommendations, and production tips
-              </p>
-            </div>
-
-            {/* Pro Feature Paywall */}
-            {!isPro ? (
-              <div className="text-center py-8 px-4">
-                <div className="mb-6">
-                  <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4"
-                    style={{
-                      backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                      border: '3px solid rgba(41, 121, 255, 0.3)',
-                    }}
-                  >
-                    <span className="text-4xl">🔒</span>
-                  </div>
-                  <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-                    Pro Feature
-                  </h3>
-                  <p className="text-base mb-6" style={{ color: 'var(--text-secondary)' }}>
-                    Upgrade to Pro to unlock unlimited access to the Viral Video Idea Generator and all premium features.
-                  </p>
-                  <div className="space-y-3 mb-6">
-                    <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      <span>Unlimited viral video ideas</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      <span>All premium features</span>
-                    </div>
-                    <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                        <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                      </svg>
-                      <span>Priority support</span>
-                    </div>
-                  </div>
-                </div>
-                <button
-                  onClick={() => setCurrentStep('premium')}
-                  className="px-8 py-4 rounded-xl font-bold text-lg text-white transition-all hover:scale-105"
-                  style={{
-                    background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                    boxShadow: '0 8px 25px rgba(41, 121, 255, 0.3)',
-                  }}
-                >
-                  Upgrade to Pro - $4.99/mo 🚀
-                </button>
-              </div>
-            ) : (
-              <form onSubmit={async (e) => {
-              e.preventDefault();
-              if (!viralTopic.trim()) return;
-              
-              setIsGeneratingViralIdeas(true);
-              setViralIdeas([]);
-              setViralIdeasProgress(0);
-              
-              // Simulate progress - slower and more realistic
-              const progressInterval = setInterval(() => {
-                setViralIdeasProgress(prev => {
-                  if (prev >= 85) return prev; // Stop at 85% until complete
-                  return prev + Math.random() * 8; // Slower increments
-                });
-              }, 800); // Slower updates
-              
-              try {
-                const response = await fetch('/api/generate-viral-ideas', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ topic: viralTopic }),
-                });
-                
-                if (!response.ok) {
-                  throw new Error('Failed to generate ideas');
+            <Link 
+              href={getModuleUrl('idea-generator')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
                 }
-                
-                const data = await response.json();
-                setViralIdeasProgress(100);
-                setViralIdeas(data.ideas || []);
-              } catch (error) {
-                console.error('Error generating viral ideas:', error);
-                showNotification("Failed to generate ideas. Please try again.", "error");
-              } finally {
-                clearInterval(progressInterval);
-                setTimeout(() => {
-                  setIsGeneratingViralIdeas(false);
-                  setViralIdeasProgress(0);
-                }, 500);
-              }
-            }} className="space-y-4">
-              <div className="space-y-2">
-                <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                  What topic do you want video ideas for? <span className="text-red-500">*</span>
-                </label>
-                <input
-                  type="text"
-                  value={viralTopic}
-                  onChange={(e) => setViralTopic(e.target.value)}
-                  placeholder="e.g., AI, Fitness, Cooking, Gaming"
-                  required
-                  className="w-full rounded-md px-3 py-2 focus:outline-none focus:ring-2 border"
-                  style={{
-                    backgroundColor: 'var(--card-bg)',
-                    borderColor: 'var(--card-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                />
-              </div>
-
-              {isGeneratingViralIdeas && (
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    <span>Generating ideas...</span>
-                    <span>{Math.round(viralIdeasProgress)}%</span>
-                  </div>
-                  <div className="w-full h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--card-border)' }}>
-                    <div 
-                      className="h-full rounded-full transition-all duration-500 ease-out"
-                      style={{
-                        width: `${viralIdeasProgress}%`,
-                        background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                        boxShadow: '0 0 10px rgba(41, 121, 255, 0.5)'
-                      }}
-                    />
+              }}
+              className="block"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">💡</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                      Viral Video Idea Generator
+                    </h3>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Get AI-powered video ideas designed to go viral based on your niche and goals
+                    </p>
                   </div>
                 </div>
-              )}
-
-              <button
-                type="submit"
-                disabled={isGeneratingViralIdeas}
-                className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                style={{
-                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  color: 'white'
-                }}
-              >
-                {isGeneratingViralIdeas ? (
-                  <>
-                    <span className="animate-spin">🔄</span>
-                    Generating Ideas...
-                  </>
-                ) : (
-                  <>
-                    ✨ Generate Video Ideas
-                  </>
-                )}
-              </button>
-            </form>
-            )}
-
-            {isPro && viralIdeas.length > 0 && (
-              <div className="mt-8 space-y-4">
-                <h3 className="text-2xl font-bold text-center" style={{ color: 'var(--secondary)' }}>
-                  🎬 Viral Video Ideas
-                </h3>
-                {viralIdeas.map((idea: any, index: number) => (
-                  <div 
-                    key={index}
-                    className="p-6 rounded-xl border transition-all hover:scale-[1.01]"
-                    style={{
-                      backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
-                      borderColor: 'rgba(41, 121, 255, 0.3)'
-                    }}
-                  >
-                    <div className="flex items-start gap-4">
-                      <div 
-                        className="flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center font-bold text-lg"
-                        style={{
-                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                          color: 'white'
-                        }}
-                      >
-                        {index + 1}
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="text-lg font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                          {idea.title}
-                        </h4>
-                        <p className="text-sm mb-3" style={{ color: 'var(--text-primary)' }}>
-                          {idea.description}
-                        </p>
-                        <div 
-                          className="p-4 rounded-lg mb-4"
-                          style={{ backgroundColor: theme === 'dark' ? 'rgba(111, 255, 210, 0.08)' : 'rgba(111, 255, 210, 0.05)' }}
-                        >
-                          <p className="text-sm font-semibold mb-1" style={{ color: '#6FFFD2' }}>
-                            💡 Why This Could Go Viral:
-                          </p>
-                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                            {idea.whyViral}
-                          </p>
-                        </div>
-
-                        {/* Guide AI Button */}
-                        {!showGuideInput ? (
-                          <div className="flex justify-center">
-                            <button
-                              onClick={() => setShowGuideInput(true)}
-                              className="py-2 px-4 rounded-lg font-semibold transition-all hover:scale-105 active:scale-95"
-                              style={{
-                                background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                                color: 'white',
-                                boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                              }}
-                            >
-                              Guide AI
-                            </button>
-                          </div>
-                        ) : (
-                          <div className="space-y-3">
-                            <textarea
-                              value={guidePrompt}
-                              onChange={(e) => setGuidePrompt(e.target.value)}
-                              placeholder="Tell AI how to adjust this idea... (e.g., 'Make it funnier', 'Target younger audience', 'Add more suspense')"
-                              rows={3}
-                              className="w-full rounded-lg px-4 py-3 focus:outline-none focus:ring-2 border text-sm"
-                              style={{
-                                backgroundColor: 'var(--card-bg)',
-                                borderColor: 'var(--card-border)',
-                                color: 'var(--text-primary)',
-                                resize: 'none'
-                              }}
-                            />
-                            <div className="flex gap-2">
-                              <button
-                                onClick={async () => {
-                                  if (!guidePrompt.trim()) return;
-                                  
-                                  setIsRefining(true);
-                                  setViralIdeasProgress(0);
-                                  
-                                  const progressInterval = setInterval(() => {
-                                    setViralIdeasProgress(prev => {
-                                      if (prev >= 85) return prev;
-                                      return prev + Math.random() * 8;
-                                    });
-                                  }, 800);
-                                  
-                                  try {
-                                    const response = await fetch('/api/generate-viral-ideas', {
-                                      method: 'POST',
-                                      headers: { 'Content-Type': 'application/json' },
-                                      body: JSON.stringify({ 
-                                        topic: viralTopic,
-                                        guidance: guidePrompt,
-                                        previousIdea: idea
-                                      }),
-                                    });
-                                    
-                                    if (!response.ok) throw new Error('Failed to refine idea');
-                                    
-                                    const data = await response.json();
-                                    setViralIdeasProgress(100);
-                                    setViralIdeas(data.ideas || []);
-                                    setGuidePrompt("");
-                                    setShowGuideInput(false);
-                                  } catch (error) {
-                                    console.error('Error refining idea:', error);
-                                    showNotification("Failed to refine idea. Please try again.", "error");
-                                  } finally {
-                                    clearInterval(progressInterval);
-                                    setTimeout(() => {
-                                      setIsRefining(false);
-                                      setViralIdeasProgress(0);
-                                    }, 500);
-                                  }
-                                }}
-                                disabled={isRefining || !guidePrompt.trim()}
-                                className="flex-1 py-2.5 px-4 rounded-lg font-semibold transition-all hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
-                                style={{
-                                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                                  color: 'white'
-                                }}
-                              >
-                                {isRefining ? (
-                                  <>
-                                    <span className="animate-spin">🔄</span>
-                                    Refining...
-                                  </>
-                                ) : (
-                                  <>
-                                    <span>✨</span>
-                                    Apply Changes
-                                  </>
-                                )}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setShowGuideInput(false);
-                                  setGuidePrompt("");
-                                }}
-                                className="px-4 py-2.5 rounded-lg font-semibold transition-all hover:scale-[1.02]"
-                                style={{
-                                  backgroundColor: 'var(--card-bg)',
-                                  border: '2px solid var(--card-border)',
-                                  color: 'var(--text-secondary)'
-                                }}
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                            
-                            {isRefining && (
-                              <div className="space-y-2">
-                                <div className="flex justify-between text-sm" style={{ color: 'var(--text-secondary)' }}>
-                                  <span>Refining idea...</span>
-                                  <span>{Math.round(viralIdeasProgress)}%</span>
-                                </div>
-                                <div className="w-full h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--card-border)' }}>
-                                  <div 
-                                    className="h-full rounded-full transition-all duration-500 ease-out"
-                                    style={{
-                                      width: `${viralIdeasProgress}%`,
-                                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                                      boxShadow: '0 0 10px rgba(41, 121, 255, 0.5)'
-                                    }}
-                                  />
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                ))}
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
               </div>
-            )}
-                </div>
-            </div>
+            </Link>
           </div>
         )}
 
@@ -5025,10 +3600,15 @@ function HomeContent() {
             onDragOver={(e) => handleDragOver(e, 'hashtag-research')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'hashtag-research')}
-            onClick={() => !isReorderMode && collapsedModules.has('hashtag-research') && toggleModuleCollapse('hashtag-research')}
-            className="rounded-2xl shadow-lg border transition-all duration-300 scroll-mt-4 relative"
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('hashtag-research'));
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
             style={{
-              marginBottom: collapsedModules.has('hashtag-research') ? '1rem' : '2.5rem',
+              marginBottom: '1rem',
               backgroundColor: 'var(--card-bg)',
               borderColor: dragOverModule === 'hashtag-research'
                 ? '#2979FF'
@@ -5039,515 +3619,38 @@ function HomeContent() {
                   ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
                   : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
               order: moduleOrder.indexOf('hashtag-research'),
-              cursor: (isReorderMode && user) ? 'move' : (collapsedModules.has('hashtag-research') ? 'pointer' : 'default'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
               opacity: draggedModule === 'hashtag-research' ? 0.5 : 1,
               transform: dragOverModule === 'hashtag-research' ? 'scale(1.02)' : 'scale(1)',
-              padding: collapsedModules.has('hashtag-research') ? '1rem' : '1.5rem',
+              padding: '1rem',
             }}
           >
-            {/* Collapsed Bar View */}
-            <div 
-              className="flex items-center justify-between"
-              style={{
-                transition: 'opacity 0.3s ease-in-out',
-                opacity: collapsedModules.has('hashtag-research') ? 1 : 0,
-                pointerEvents: collapsedModules.has('hashtag-research') ? 'auto' : 'none',
-                position: collapsedModules.has('hashtag-research') ? 'relative' : 'absolute',
-                visibility: collapsedModules.has('hashtag-research') ? 'visible' : 'hidden',
-              }}
-            >
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">#️⃣</span>
-                <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
-                  Hashtag Deep Research Tool
-                </h3>
-              </div>
-              <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
-                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
-              </span>
-            </div>
-
-            {/* Expanded Content */}
-            <div
-              style={{
-                transition: 'opacity 0.3s ease-in-out',
-                opacity: collapsedModules.has('hashtag-research') ? 0 : 1,
-                pointerEvents: collapsedModules.has('hashtag-research') ? 'none' : 'auto',
-                position: collapsedModules.has('hashtag-research') ? 'absolute' : 'relative',
-                visibility: collapsedModules.has('hashtag-research') ? 'hidden' : 'visible',
-              }}
-            >
-                {/* Reorder Controls */}
-                {isReorderMode && user && (
-                  <div className="absolute top-4 right-16 flex gap-2 z-10">
-                    <button
-                      onClick={() => moveModule('hashtag-research', 'up')}
-                      disabled={moduleOrder.indexOf('hashtag-research') === 0}
-                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      title="Move Up"
-                    >
-                      ⬆️
-                    </button>
-                    <button
-                      onClick={() => moveModule('hashtag-research', 'down')}
-                      disabled={moduleOrder.indexOf('hashtag-research') === moduleOrder.length - 1}
-                      className="p-2 rounded-lg bg-blue-500 text-white hover:bg-blue-600 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                      title="Move Down"
-                    >
-                      ⬇️
-                    </button>
-                  </div>
-                )}
-
-                {/* Minimize Button */}
-                {!isReorderMode && (
-                  <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleModuleCollapse('hashtag-research');
-                  }}
-                  className="absolute top-1 right-1 sm:top-2 sm:right-2 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
-                  style={{ 
-                    backgroundColor: 'rgba(41, 121, 255, 0.15)',
-                    border: '2px solid rgba(41, 121, 255, 0.4)',
-                    color: '#2979FF',
-                    zIndex: 10,
-                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)'
-                  }}
-                  title="Minimize"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                    </svg>
-                  </button>
-                )}
-
-                <div className="space-y-4">
-                  <div className="text-center mb-4">
-              <h2 className="text-3xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                #️⃣ Hashtag Deep Research Tool
-              </h2>
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                Discover the best hashtags for your niche and platform
-              </p>
-            </div>
-
-            {/* Research Form */}
-            <form onSubmit={async (e) => {
-              e.preventDefault();
-              if (!hashtagResearchNiche.trim()) return;
-              
-              setIsResearchingHashtags(true);
-              setSelectedHashtags([]); // Clear selection on new search
-              setGenerationCount(0); // Reset generation count
-              
-              try {
-                // Call AI-powered hashtag generation API
-                const response = await fetch('/api/generate-hashtags', {
-                  method: 'POST',
-                  headers: {
-                    'Content-Type': 'application/json',
-                  },
-                  body: JSON.stringify({
-                    niche: hashtagResearchNiche,
-                    platform: hashtagResearchPlatform,
-                    batchNumber: 0
-                  })
-                });
-
-                if (!response.ok) {
-                  throw new Error('Failed to generate hashtags');
+            <Link 
+              href={getModuleUrl('hashtag-research')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
                 }
-
-                const data = await response.json();
-                
-                setHashtagResults({
-                  niche: hashtagResearchNiche,
-                  platform: hashtagResearchPlatform,
-                  hashtags: data.hashtags
-                });
-                setGenerationCount(1);
-              } catch (error) {
-                console.error('Hashtag generation error:', error);
-                showNotification('Failed to generate hashtags. Please try again.', 'error', 'Error');
-              } finally {
-                setIsResearchingHashtags(false);
-              }
-            }} className="space-y-4">
-              <InputField
-                label="Your Niche or Topic"
-                value={hashtagResearchNiche}
-                onChange={(value) => setHashtagResearchNiche(value)}
-                placeholder="e.g., Fitness, Food, Travel, Fashion"
-                required
-              />
-
-              <SelectField
-                label="Platform"
-                value={hashtagResearchPlatform}
-                onChange={(value) => setHashtagResearchPlatform(value)}
-                options={["Instagram", "TikTok", "YouTube Shorts", "Facebook", "X (Twitter)"]}
-                required
-              />
-
-              <button 
-                type="submit" 
-                disabled={isResearchingHashtags || !hashtagResearchNiche.trim()}
-                className="w-full px-8 py-4 rounded-xl font-bold text-lg transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed hover:scale-[1.02] active:scale-[0.98] shadow-lg hover:shadow-xl relative overflow-hidden"
-                style={{
-                  background: isResearchingHashtags || !hashtagResearchNiche.trim()
-                    ? 'linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%)'
-                    : 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)',
-                  color: 'white',
-                  border: 'none',
-                  boxShadow: isResearchingHashtags || !hashtagResearchNiche.trim()
-                    ? '0 4px 15px rgba(0, 0, 0, 0.1)'
-                    : '0 8px 32px rgba(41, 121, 255, 0.3)'
-                }}
-              >
-                <span className="relative z-10 flex items-center justify-center gap-2">
-                  {isResearchingHashtags ? (
-                    <>
-                      <span className="inline-block animate-spin text-xl">🔍</span>
-                      <span>Researching Hashtags...</span>
-                    </>
-                  ) : (
-                    <>
-                      <span className="text-xl">🔍</span>
-                      <span>Research Hashtags</span>
-                    </>
-                  )}
-                </span>
-              </button>
-            </form>
-
-            {/* Results Section */}
-            {hashtagResults && (
-              <div className="mt-8 space-y-4 animate-fade-in">
-                <div className="border-t pt-6" style={{ borderColor: 'var(--card-border)' }}>
-                  <div className="flex items-start justify-between mb-4">
-                    <div>
-                      <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                        📊 Recommended Hashtags for {hashtagResults.niche}
-                      </h3>
-                      <p style={{ color: 'var(--text-secondary)' }}>
-                        Optimized for {hashtagResults.platform}
-                      </p>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setHashtagResults(null);
-                        setSelectedHashtags([]);
-                        setGenerationCount(0);
-                      }}
-                      className="px-3 py-1.5 rounded-lg font-semibold text-xs transition-all hover:scale-105 border-2 flex items-center gap-1.5"
-                      style={{
-                        borderColor: 'rgba(239, 68, 68, 0.3)',
-                        color: '#ef4444',
-                        backgroundColor: 'rgba(239, 68, 68, 0.05)'
-                      }}
-                      title="Clear all hashtags and start fresh"
-                    >
-                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                      </svg>
-                      Clear All
-                    </button>
-                  </div>
-                  <div 
-                    className="mb-4 p-3 rounded-lg flex items-center justify-center gap-2"
-                    style={{ 
-                      backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.04)',
-                      borderLeft: theme === 'dark' ? '3px solid #2979FF' : '3px solid rgba(41, 121, 255, 0.5)'
-                    }}
-                  >
-                    <span className="text-sm">💡</span>
-                    <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                      Sorted by effectiveness score. Higher numbers = better reach + lower competition.
+              }}
+              className="block"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">#️⃣</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                      Hashtag Deep Research
+                    </h3>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Research and analyze hashtags to find the best ones for your content strategy
                     </p>
                   </div>
-
-                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                    {hashtagResults.hashtags.map((hashtag: any, index: number) => {
-                      const isSelected = selectedHashtags.includes(hashtag.tag);
-                      return (
-                        <div
-                          key={index}
-                          onClick={() => {
-                            if (isSelected) {
-                              setSelectedHashtags(prev => prev.filter(tag => tag !== hashtag.tag));
-                            } else {
-                              setSelectedHashtags(prev => [...prev, hashtag.tag]);
-                            }
-                          }}
-                          className="rounded-lg p-3 border-2 transition-all hover:scale-[1.02] cursor-pointer min-w-0"
-                          style={{
-                            backgroundColor: isSelected 
-                              ? (theme === 'dark' ? 'rgba(41, 121, 255, 0.15)' : 'rgba(41, 121, 255, 0.08)')
-                              : 'var(--card-bg)',
-                            borderColor: isSelected 
-                              ? '#2979FF' 
-                              : 'var(--card-border)',
-                            boxShadow: isSelected 
-                              ? (theme === 'dark' 
-                                  ? '0 4px 20px rgba(41, 121, 255, 0.3), 0 0 0 2px rgba(41, 121, 255, 0.2)'
-                                  : '0 2px 8px rgba(41, 121, 255, 0.2), 0 0 0 1px rgba(41, 121, 255, 0.3)')
-                              : (theme === 'dark' ? '0 4px 12px rgba(41, 121, 255, 0.1)' : '0 2px 4px rgba(0, 0, 0, 0.05)')
-                          }}
-                        >
-                          <div className="flex items-center gap-2 min-w-0">
-                              <div 
-                                className="w-4 h-4 rounded border-2 flex items-center justify-center transition-all flex-shrink-0"
-                                style={{
-                                  borderColor: isSelected ? '#2979FF' : 'var(--card-border)',
-                                  backgroundColor: isSelected ? '#2979FF' : 'transparent'
-                                }}
-                              >
-                                {isSelected && (
-                                  <svg className="w-2.5 h-2.5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                                  </svg>
-                                )}
-                              </div>
-                              
-                              {/* Reach Score Badge */}
-                              {(() => {
-                                // Scale score from 0-54 to 0-100
-                                const reachScore = Math.round((hashtag.score / 54) * 100);
-                                
-                                const getRating = (score: number) => {
-                                  if (score >= 90) return { label: 'Outstanding', color: '#10b981', bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.3)' };
-                                  if (score >= 70) return { label: 'High', color: '#22c55e', bg: 'rgba(34, 197, 94, 0.15)', border: 'rgba(34, 197, 94, 0.3)' };
-                                  if (score >= 50) return { label: 'Medium', color: '#3b82f6', bg: 'rgba(59, 130, 246, 0.15)', border: 'rgba(59, 130, 246, 0.3)' };
-                                  if (score >= 30) return { label: 'Low', color: '#f59e0b', bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.3)' };
-                                  return { label: 'Very Low', color: '#ef4444', bg: 'rgba(239, 68, 68, 0.15)', border: 'rgba(239, 68, 68, 0.3)' };
-                                };
-                                const rating = getRating(reachScore);
-                                return (
-                                  <div 
-                                    className="px-2 py-0.5 rounded text-xs font-bold min-w-[36px] text-center flex-shrink-0"
-                                    style={{
-                                      backgroundColor: rating.bg,
-                                      color: rating.color,
-                                      border: `1px solid ${rating.border}`
-                                    }}
-                                    title={`Reach Score: ${reachScore}/100 - ${rating.label}`}
-                                  >
-                                    {reachScore}
-                                  </div>
-                                );
-                              })()}
-                              
-                          </div>
-                          
-                          <h4 className="text-sm font-bold leading-tight line-clamp-2 mt-2" style={{ color: 'var(--text-primary)' }}>
-                            {hashtag.tag}
-                          </h4>
-                        </div>
-                      );
-                    })}
-                  </div>
-
-                  {/* Selected Hashtags Box */}
-                  {selectedHashtags.length > 0 && (
-                    <div className="mt-4">
-                      <div 
-                        className="rounded-lg p-4 border-2"
-                        style={{
-                          backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.03)',
-                          borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.3)' : 'rgba(41, 121, 255, 0.2)',
-                          boxShadow: theme === 'dark' ? '0 4px 16px rgba(41, 121, 255, 0.15)' : '0 2px 8px rgba(41, 121, 255, 0.1)'
-                        }}
-                      >
-                        <div className="flex items-center justify-between mb-3">
-                          <h4 className="text-base font-bold" style={{ color: 'var(--secondary)' }}>
-                            📦 Selected Hashtags ({selectedHashtags.length})
-                          </h4>
-                          <button
-                            onClick={() => {
-                              setSelectedHashtags([]);
-                            }}
-                            className="text-xs font-medium transition-all hover:opacity-70"
-                            style={{ color: 'var(--text-secondary)' }}
-                          >
-                            Clear All
-                          </button>
-                        </div>
-                        
-                        <div className="flex flex-wrap gap-2 mb-3 p-3 rounded-lg" style={{ 
-                          backgroundColor: 'var(--card-bg)',
-                          minHeight: '50px'
-                        }}>
-                          {selectedHashtags.map((tag, index) => (
-                            <div
-                              key={index}
-                              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg transition-all hover:scale-105"
-                              style={{
-                                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.08)',
-                                borderWidth: '1px',
-                                borderStyle: 'solid',
-                                borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.3)' : 'rgba(41, 121, 255, 0.25)',
-                                color: 'var(--text-primary)'
-                              }}
-                            >
-                              <span className="font-medium text-sm">{tag}</span>
-                              <button
-                                onClick={() => {
-                                  setSelectedHashtags(prev => prev.filter(t => t !== tag));
-                                }}
-                                className="w-3.5 h-3.5 flex items-center justify-center rounded-full hover:bg-red-500 hover:text-white transition-all"
-                                style={{ color: 'var(--text-secondary)' }}
-                              >
-                                <svg className="w-2.5 h-2.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            </div>
-                          ))}
-                        </div>
-
-                        <button
-                          onClick={() => {
-                            const selectedText = selectedHashtags.join(' ');
-                            navigator.clipboard.writeText(selectedText);
-                            showNotification(`Copied ${selectedHashtags.length} hashtag${selectedHashtags.length > 1 ? 's' : ''}!`, 'success', 'Copied');
-                          }}
-                          className="w-full px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 shadow-md"
-                          style={{
-                            background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)',
-                            color: 'white'
-                          }}
-                        >
-                          📋 Copy Selected Hashtags ({selectedHashtags.length})
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Quick Actions */}
-                  <div className="mt-4 flex gap-3 justify-center">
-                    <button
-                      onClick={() => {
-                        const allTags = hashtagResults.hashtags.map((h: any) => h.tag);
-                        setSelectedHashtags(allTags);
-                      }}
-                      className="px-6 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2 shadow-sm"
-                      style={{
-                        borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.3)' : 'rgba(41, 121, 255, 0.25)',
-                        color: '#2979FF',
-                        backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.05)' : 'rgba(41, 121, 255, 0.04)'
-                      }}
-                    >
-                      ✅ Select All
-                    </button>
-                    {selectedHashtags.length > 0 && (
-                      <button
-                        onClick={() => {
-                          setSelectedHashtags([]);
-                        }}
-                        className="px-6 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2 shadow-sm"
-                        style={{
-                          borderColor: 'var(--card-border)',
-                          color: 'var(--text-secondary)',
-                          backgroundColor: 'var(--card-bg)'
-                        }}
-                      >
-                        🗑️ Clear Selection
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Generate More Hashtags Button */}
-                  <div className="mt-4 flex justify-center">
-                    <button
-                      onClick={async () => {
-                        setIsGeneratingMore(true);
-                        
-                        try {
-                          // Call AI API to generate more hashtags
-                          const response = await fetch('/api/generate-hashtags', {
-                            method: 'POST',
-                            headers: {
-                              'Content-Type': 'application/json',
-                            },
-                            body: JSON.stringify({
-                              niche: hashtagResults.niche,
-                              platform: hashtagResults.platform,
-                              batchNumber: generationCount
-                            })
-                          });
-
-                          if (!response.ok) {
-                            throw new Error('Failed to generate more hashtags');
-                          }
-
-                          const data = await response.json();
-                          
-                          // Filter out duplicates and append new ones
-                          const existingTags = new Set(hashtagResults.hashtags.map((h: any) => h.tag));
-                          const uniqueNewHashtags = data.hashtags.filter((h: any) => !existingTags.has(h.tag));
-                          
-                          // Append to existing hashtags and re-sort by score
-                          const allHashtags = [...hashtagResults.hashtags, ...uniqueNewHashtags];
-                          const sortedHashtags = allHashtags.sort((a: any, b: any) => b.score - a.score);
-                          
-                          setHashtagResults({
-                            ...hashtagResults,
-                            hashtags: sortedHashtags
-                          });
-                          
-                          setGenerationCount(prev => prev + 1);
-                        } catch (error) {
-                          console.error('Error generating more hashtags:', error);
-                          showNotification('Failed to generate more hashtags. Please try again.', 'error', 'Error');
-                        } finally {
-                          setIsGeneratingMore(false);
-                        }
-                      }}
-                      disabled={isGeneratingMore}
-                      className="px-8 py-2.5 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2 flex items-center justify-center gap-2 shadow-sm"
-                      style={{
-                        background: isGeneratingMore 
-                          ? 'var(--card-bg)' 
-                          : (theme === 'dark' 
-                              ? 'linear-gradient(135deg, rgba(41, 121, 255, 0.1) 0%, rgba(111, 255, 210, 0.1) 100%)'
-                              : 'linear-gradient(135deg, rgba(41, 121, 255, 0.06) 0%, rgba(111, 255, 210, 0.06) 100%)'),
-                        borderColor: theme === 'dark' ? '#2979FF' : 'rgba(41, 121, 255, 0.4)',
-                        color: 'var(--text-primary)',
-                        borderStyle: 'dashed'
-                      }}
-                    >
-                      {isGeneratingMore ? (
-                        <>
-                          <span className="inline-block animate-spin">⚡</span>
-                          <span>Generating More...</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>✨</span>
-                          <span>Generate More Hashtags</span>
-                        </>
-                      )}
-                    </button>
-                  </div>
                 </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
               </div>
-            )}
-
-            {/* Empty State */}
-            {!hashtagResults && !isResearchingHashtags && (
-              <div className="text-center py-12">
-                <div className="text-6xl mb-4">🔍</div>
-                <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                  Ready to find the perfect hashtags?
-                </h3>
-                <p style={{ color: 'var(--text-secondary)' }}>
-                  Enter your niche and platform to get started
-                </p>
-              </div>
-            )}
-            </div>
-            </div>
+            </Link>
           </div>
         )}
 
@@ -5560,281 +3663,291 @@ function HomeContent() {
             onDragOver={(e) => handleDragOver(e, 'digital-products')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'digital-products')}
-            onClick={() => !isReorderMode && collapsedModules.has('digital-products') && toggleModuleCollapse('digital-products')}
-            className="rounded-2xl shadow-lg border scroll-mt-4 relative"
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('digital-products'));
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
             style={{
-              transition: 'margin-bottom 0.3s ease-out, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease-out, border-color 0.3s ease-out',
-              willChange: 'transform',
-              marginBottom: collapsedModules.has('digital-products') ? '1rem' : '2.5rem',
+              marginBottom: '1rem',
               backgroundColor: theme === 'dark' 
                 ? 'rgba(218, 165, 32, 0.08)' 
                 : 'rgba(218, 165, 32, 0.06)',
               borderColor: dragOverModule === 'digital-products'
                 ? '#DAA520'
-                : (isReorderMode && user)
-                  ? (theme === 'dark' ? 'rgba(218, 165, 32, 0.6)' : 'rgba(218, 165, 32, 0.6)')
-                  : (theme === 'dark'
-                    ? 'rgba(218, 165, 32, 0.4)'
-                    : 'rgba(218, 165, 32, 0.4)'),
-              boxShadow: draggedModule === 'digital-products'
-                ? '0 16px 48px rgba(218, 165, 32, 0.35), 0 0 0 2px rgba(218, 165, 32, 0.5), 0 0 20px rgba(218, 165, 32, 0.25)'
-                : dragOverModule === 'digital-products'
-                  ? '0 0 0 3px rgba(218, 165, 32, 0.4), 0 0 20px rgba(218, 165, 32, 0.25)'
-                  : (isReorderMode && user)
-                    ? (theme === 'dark'
-                      ? '0 8px 32px rgba(218, 165, 32, 0.3), 0 0 0 2px rgba(218, 165, 32, 0.4), 0 0 20px rgba(218, 165, 32, 0.2)'
-                      : '0 8px 32px rgba(218, 165, 32, 0.3), 0 0 0 2px rgba(218, 165, 32, 0.4), 0 0 15px rgba(218, 165, 32, 0.2)')
-                    : (theme === 'dark'
-                      ? '0 4px 20px rgba(218, 165, 32, 0.2), 0 0 15px rgba(218, 165, 32, 0.12)'
-                      : '0 4px 20px rgba(218, 165, 32, 0.25), 0 0 15px rgba(218, 165, 32, 0.15)'),
+                : theme === 'dark'
+                  ? 'rgba(218, 165, 32, 0.4)'
+                  : 'rgba(218, 165, 32, 0.4)',
+              boxShadow: dragOverModule === 'digital-products'
+                ? '0 0 0 3px rgba(218, 165, 32, 0.4)'
+                : theme === 'dark'
+                  ? '0 4px 20px rgba(218, 165, 32, 0.2), 0 0 15px rgba(218, 165, 32, 0.12)'
+                  : '0 4px 20px rgba(218, 165, 32, 0.25), 0 0 15px rgba(218, 165, 32, 0.15)',
               order: moduleOrder.indexOf('digital-products'),
-              cursor: (isReorderMode && user) ? (draggedModule === 'digital-products' ? 'grabbing' : 'grab') : (collapsedModules.has('digital-products') ? 'pointer' : 'default'),
-              opacity: 1,
-              transform: draggedModule === 'digital-products' 
-                ? 'scale(1.05) rotate(2deg)' 
-                : 'scale(1)',
-              padding: '1.5rem',
-              zIndex: draggedModule === 'digital-products' ? 1000 : 'auto',
-              overflow: 'visible',
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'digital-products' ? 0.5 : 1,
+              transform: dragOverModule === 'digital-products' ? 'scale(1.02)' : 'scale(1)',
+              padding: '1rem',
             }}
           >
-            {/* Drop Indicators */}
-            {dragOverModule === 'digital-products' && dropPosition === 'before' && draggedModule !== 'digital-products' && (
-              <div 
-                className="absolute -top-2 left-0 right-0 h-1 rounded-full"
-                style={{
-                  backgroundColor: '#DAA520',
-                  boxShadow: '0 0 16px rgba(218, 165, 32, 0.8)',
-                  zIndex: 1001,
-                }}
-              />
-            )}
-            
-            {dragOverModule === 'digital-products' && dropPosition === 'after' && draggedModule !== 'digital-products' && (
-              <div 
-                className="absolute -bottom-2 left-0 right-0 h-1 rounded-full"
-                style={{
-                  backgroundColor: '#DAA520',
-                  boxShadow: '0 0 16px rgba(218, 165, 32, 0.8)',
-                  zIndex: 1001,
-                }}
-              />
-            )}
-
-            {/* Collapsed Bar View */}
-            <div 
-              className="flex items-center justify-between"
-              style={{
-                transition: 'opacity 0.2s ease-out',
-                opacity: collapsedModules.has('digital-products') ? 1 : 0,
-                pointerEvents: collapsedModules.has('digital-products') ? 'auto' : 'none',
-                position: collapsedModules.has('digital-products') ? 'relative' : 'absolute',
-                height: collapsedModules.has('digital-products') ? 'auto' : '0',
+            <Link 
+              href={getModuleUrl('digital-products')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
               }}
+              className="block"
             >
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">💎</span>
-                <h3 className="text-lg sm:text-xl font-bold" style={{ 
-                  background: 'linear-gradient(135deg, #DAA520, #FFD700, #F4C430)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  backgroundClip: 'text'
-                }}>
-                  Premium Collection
-                </h3>
-              </div>
-              <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
-                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
-              </span>
-            </div>
-
-            {/* Expanded Content */}
-            <div
-              style={{
-                transformOrigin: 'top',
-                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out',
-                transform: collapsedModules.has('digital-products') ? 'scaleY(0)' : 'scaleY(1)',
-                opacity: collapsedModules.has('digital-products') ? 0 : 1,
-                height: collapsedModules.has('digital-products') ? '0' : 'auto',
-                overflow: 'hidden',
-                willChange: 'transform, opacity',
-              }}
-            >
-              <>
-                {/* Minimize Button */}
-                {!isReorderMode && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleModuleCollapse('digital-products');
-                    }}
-                    className="absolute top-1 right-1 sm:top-2 sm:right-2 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
-                    style={{
-                      backgroundColor: theme === 'dark' ? 'rgba(218, 165, 32, 0.15)' : 'rgba(218, 165, 32, 0.2)',
-                      border: `2px solid ${theme === 'dark' ? 'rgba(218, 165, 32, 0.4)' : 'rgba(218, 165, 32, 0.5)'}`,
-                      color: '#DAA520',
-                      zIndex: 10,
-                      boxShadow: theme === 'dark' ? '0 4px 12px rgba(218, 165, 32, 0.3)' : '0 4px 12px rgba(218, 165, 32, 0.4)',
-                    }}
-                    title="Minimize"
-                  >
-                    <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                    </svg>
-                  </button>
-                )}
-
-                <div className="space-y-6">
-                  <div className="text-center">
-                    <h2 className="text-3xl sm:text-4xl font-bold mb-2" style={{ 
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">💎</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold" style={{ 
                       background: 'linear-gradient(135deg, #DAA520, #FFD700, #F4C430)',
                       WebkitBackgroundClip: 'text',
                       WebkitTextFillColor: 'transparent',
-                      backgroundClip: 'text',
-                      textShadow: 'none',
-                      filter: 'drop-shadow(0 2px 8px rgba(218, 165, 32, 0.3))'
+                      backgroundClip: 'text'
                     }}>
-                      💎 Premium Collection
-                    </h2>
-                    <p className="text-sm sm:text-base font-medium" style={{ 
-                      color: theme === 'dark' ? 'rgba(218, 165, 32, 0.9)' : 'rgba(184, 134, 11, 0.9)'
-                    }}>
-                      Premium resources crafted for creators at the top of their game.
-                    </p>
-                  </div>
-
-                  {/* Products Grid */}
-                  {loadingProducts ? (
-                    <div className="text-center py-12">
-                      <div className="inline-block w-12 h-12 border-4 border-t-transparent rounded-full animate-spin mb-4" style={{ borderColor: '#DAA520', borderTopColor: 'transparent' }}></div>
-                      <p style={{ color: 'var(--text-secondary)' }}>Loading collection...</p>
-                    </div>
-                  ) : digitalProducts.length === 0 ? (
-                    <div className="text-center py-12">
-                      <p style={{ color: 'var(--text-secondary)' }}>No products available yet. Check back soon!</p>
-                    </div>
-                  ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {digitalProducts.map((product) => (
-                      <div 
-                        key={product.id}
-                        className="rounded-xl overflow-hidden border-2 transition-all hover:scale-105 hover:shadow-2xl"
-                        style={{
-                          backgroundColor: theme === 'dark' ? 'rgba(218, 165, 32, 0.06)' : '#FFFEF7',
-                          borderColor: theme === 'dark' ? 'rgba(218, 165, 32, 0.35)' : 'rgba(218, 165, 32, 0.35)',
-                          boxShadow: theme === 'dark' ? '0 4px 16px rgba(218, 165, 32, 0.1)' : '0 4px 16px rgba(218, 165, 32, 0.15)',
-                        }}
-                      >
-                        <div className="relative h-48 overflow-hidden">
-                          <img 
-                            src={product.image_url} 
-                            alt={product.title}
-                            className="w-full h-full object-cover"
-                            style={{ filter: 'brightness(0.95) saturate(1.1)' }}
-                          />
-                          {product.badge_text && (
-                            <div 
-                              className="absolute top-3 right-3 px-3 py-1 rounded-full text-xs font-bold"
-                              style={{
-                                background: product.badge_color || 'linear-gradient(135deg, #DAA520, #FFD700)',
-                                color: theme === 'dark' ? '#1a1a1a' : '#000',
-                                boxShadow: '0 2px 8px rgba(218, 165, 32, 0.4)',
-                              }}
-                            >
-                              {product.badge_text}
-                            </div>
-                          )}
-                        </div>
-                        <div className="p-6">
-                          <h3 className="text-xl font-bold mb-1" style={{ 
-                            background: 'linear-gradient(135deg, #DAA520, #FFD700)',
-                            WebkitBackgroundClip: 'text',
-                            WebkitTextFillColor: 'transparent',
-                            backgroundClip: 'text'
-                          }}>
-                            {product.title}
-                          </h3>
-                          {product.subtitle && (
-                            <p className="text-sm font-semibold mb-3" style={{ color: theme === 'dark' ? '#B8860B' : '#8B6914' }}>
-                              {product.subtitle}
-                            </p>
-                          )}
-                          <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                            {product.description}
-                          </p>
-                          <div className="flex items-center gap-2 mb-4">
-                            <span className="text-2xl font-bold" style={{ 
-                              background: 'linear-gradient(135deg, #DAA520, #FFD700)',
-                              WebkitBackgroundClip: 'text',
-                              WebkitTextFillColor: 'transparent',
-                              backgroundClip: 'text'
-                            }}>${product.price}</span>
-                            {product.original_price && (
-                              <span className="text-sm line-through opacity-60" style={{ color: 'var(--text-secondary)' }}>
-                                ${product.original_price}
-                              </span>
-                            )}
-                          </div>
-                          <button
-                            onClick={async () => {
-                              try {
-                                console.log('Creating checkout for product:', product.id);
-                                const response = await fetch('/api/create-checkout', {
-                                  method: 'POST',
-                                  headers: { 'Content-Type': 'application/json' },
-                                  body: JSON.stringify({
-                                    productId: product.id,
-                                    userId: user?.id || null,
-                                  }),
-                                });
-
-                                const data = await response.json();
-                                console.log('Checkout response:', data);
-
-                                if (response.ok && data.url) {
-                                  window.location.href = data.url;
-                                } else {
-                                  console.error('Checkout failed:', data);
-                                  alert(`Failed to create checkout session: ${data.error || 'Unknown error'}`);
-                                }
-                              } catch (error) {
-                                console.error('Checkout error:', error);
-                                alert('An error occurred. Please try again.');
-                              }
-                            }}
-                            className="w-full py-3 rounded-lg font-bold transition-all hover:scale-105 hover:shadow-xl"
-                            style={{
-                              background: 'linear-gradient(135deg, #DAA520, #FFD700, #F4C430)',
-                              color: theme === 'dark' ? '#1a1a1a' : '#000',
-                              boxShadow: '0 4px 16px rgba(218, 165, 32, 0.4)',
-                              border: '1px solid rgba(255, 215, 0, 0.3)'
-                            }}
-                          >
-                            Buy Now
-                          </button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                  )}
-
-                  {/* Coming Soon Badge */}
-                  <div 
-                    className="text-center p-4 rounded-lg"
-                    style={{
-                      backgroundColor: theme === 'dark' ? 'rgba(218, 165, 32, 0.08)' : 'rgba(218, 165, 32, 0.08)',
-                      border: `1px solid ${theme === 'dark' ? 'rgba(218, 165, 32, 0.3)' : 'rgba(218, 165, 32, 0.35)'}`,
-                    }}
-                  >
-                    <p className="text-sm font-semibold" style={{ 
-                      color: '#DAA520'
-                    }}>
-                      ✨ More premium content coming soon!
+                      Premium Collection
+                    </h3>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Browse and access premium digital products and resources
                     </p>
                   </div>
                 </div>
-              </>
-            </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* Comment Bait Generator Module - Now navigates to dedicated page */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={(e) => {
+              if (isReorderMode && user) {
+                handleDragStart('comment-bait');
+              } else {
+                e.preventDefault();
+              }
+            }}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => {
+              if (isReorderMode && user) {
+                handleDragOver(e, 'comment-bait');
+              } else {
+                e.preventDefault();
+              }
+            }}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => {
+              if (isReorderMode && user) {
+                handleDrop(e, 'comment-bait');
+              } else {
+                e.preventDefault();
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: dragOverModule === 'comment-bait'
+                ? '#2979FF'
+                : 'var(--card-border)',
+              boxShadow: dragOverModule === 'comment-bait'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('comment-bait'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'comment-bait' ? 0.5 : 1,
+              transform: dragOverModule === 'comment-bait' ? 'scale(1.02)' : 'scale(1)',
+              padding: '1rem',
+            }}
+          >
+            <Link 
+              href={getModuleUrl('comment-bait')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
+              }}
+              className="block"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🎣</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                      Comment Bait Generator
+                    </h3>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Generate high-engagement "first comments" to pin under your videos
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* Brainworm Generator Module */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={(e) => {
+              if (isReorderMode && user) {
+                handleDragStart('brainworm-generator');
+              } else {
+                e.preventDefault();
+              }
+            }}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => {
+              if (isReorderMode && user) {
+                handleDragOver(e, 'brainworm-generator');
+              } else {
+                e.preventDefault();
+              }
+            }}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => {
+              if (isReorderMode && user) {
+                handleDrop(e, 'brainworm-generator');
+              } else {
+                e.preventDefault();
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: dragOverModule === 'brainworm-generator'
+                ? '#2979FF'
+                : 'var(--card-border)',
+              boxShadow: dragOverModule === 'brainworm-generator'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('brainworm-generator'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'brainworm-generator' ? 0.5 : 1,
+              transform: dragOverModule === 'brainworm-generator' ? 'scale(1.02)' : 'scale(1)',
+              padding: '1rem',
+            }}
+          >
+            <Link 
+              href={getModuleUrl('brainworm-generator')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
+              }}
+              className="block"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🧠</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                      Brainworm Phrase Generator
+                    </h3>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Create irresistibly engaging phrases that get stuck in viewers' heads
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+            </Link>
+          </div>
+        )}
+
+        {/* Sugar Daddy Message Generator Module - Now navigates to dedicated page */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={(e) => {
+              if (isReorderMode && user) {
+                handleDragStart('sugar-daddy-messages');
+              } else {
+                e.preventDefault();
+              }
+            }}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => {
+              if (isReorderMode && user) {
+                handleDragOver(e, 'sugar-daddy-messages');
+              } else {
+                e.preventDefault();
+              }
+            }}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => {
+              if (isReorderMode && user) {
+                handleDrop(e, 'sugar-daddy-messages');
+              } else {
+                e.preventDefault();
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: dragOverModule === 'sugar-daddy-messages'
+                ? '#2979FF'
+                : 'var(--card-border)',
+              boxShadow: dragOverModule === 'sugar-daddy-messages'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('sugar-daddy-messages'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'sugar-daddy-messages' ? 0.5 : 1,
+              transform: dragOverModule === 'sugar-daddy-messages' ? 'scale(1.02)' : 'scale(1)',
+              padding: '1rem',
+            }}
+          >
+            <Link 
+              href={getModuleUrl('sugar-daddy-messages')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
+              }}
+              className="block"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">💸</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                      Sugar Daddy Message Generator
+                    </h3>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Generate persuasive messages for requesting financial support
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+            </Link>
           </div>
         )}
 
@@ -5847,582 +3960,65 @@ function HomeContent() {
             onDragOver={(e) => handleDragOver(e, 'music-generator')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'music-generator')}
-            onClick={() => !isReorderMode && collapsedModules.has('music-generator') && toggleModuleCollapse('music-generator')}
-            className="rounded-2xl shadow-lg border scroll-mt-4 relative overflow-hidden"
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('music-generator'));
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
             style={{
-              transition: 'margin-bottom 0.3s ease-out, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease-out, border-color 0.3s ease-out',
-              willChange: 'transform',
-              marginBottom: collapsedModules.has('music-generator') ? '1rem' : '2.5rem',
+              marginBottom: '1rem',
               backgroundColor: theme === 'dark' 
                 ? 'rgba(41, 121, 255, 0.12)' 
                 : 'rgba(41, 121, 255, 0.03)',
               borderColor: dragOverModule === 'music-generator'
                 ? '#2979FF'
-                : (isReorderMode && user)
-                  ? (theme === 'dark' ? 'rgba(41, 121, 255, 0.6)' : 'rgba(41, 121, 255, 0.5)')
-                  : (theme === 'dark'
-                    ? 'rgba(41, 121, 255, 0.4)'
-                    : 'rgba(41, 121, 255, 0.3)'),
-              boxShadow: draggedModule === 'music-generator'
-                ? '0 16px 48px rgba(41, 121, 255, 0.45), 0 0 0 2px rgba(41, 121, 255, 0.6), 0 0 20px rgba(41, 121, 255, 0.3)'
-                : dragOverModule === 'music-generator'
-                  ? '0 0 0 3px rgba(41, 121, 255, 0.5), 0 0 20px rgba(41, 121, 255, 0.3)'
-                  : (isReorderMode && user)
-                    ? (theme === 'dark'
-                      ? '0 8px 32px rgba(41, 121, 255, 0.4), 0 0 0 2px rgba(41, 121, 255, 0.5), 0 0 20px rgba(41, 121, 255, 0.25)'
-                      : '0 8px 32px rgba(41, 121, 255, 0.3), 0 0 0 2px rgba(41, 121, 255, 0.4), 0 0 15px rgba(41, 121, 255, 0.2)')
-                    : (theme === 'dark'
-                      ? '0 4px 20px rgba(41, 121, 255, 0.25), 0 0 15px rgba(41, 121, 255, 0.15)'
-                      : '0 4px 20px rgba(41, 121, 255, 0.15), 0 0 10px rgba(41, 121, 255, 0.1)'),
+                : theme === 'dark'
+                  ? 'rgba(41, 121, 255, 0.4)'
+                  : 'rgba(41, 121, 255, 0.3)',
+              boxShadow: dragOverModule === 'music-generator'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : theme === 'dark'
+                  ? '0 4px 20px rgba(41, 121, 255, 0.25), 0 0 15px rgba(41, 121, 255, 0.15)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.15), 0 0 10px rgba(41, 121, 255, 0.1)',
               order: moduleOrder.indexOf('music-generator'),
-              cursor: (isReorderMode && user) ? (draggedModule === 'music-generator' ? 'grabbing' : 'grab') : (collapsedModules.has('music-generator') ? 'pointer' : 'default'),
-              opacity: 1,
-              transform: draggedModule === 'music-generator' 
-                ? 'scale(1.05) rotate(2deg)' 
-                : 'scale(1)',
-              padding: '1.5rem',
-              zIndex: draggedModule === 'music-generator' ? 1000 : 'auto',
-              overflow: 'visible',
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'music-generator' ? 0.5 : 1,
+              transform: dragOverModule === 'music-generator' ? 'scale(1.02)' : 'scale(1)',
+              padding: '1rem',
             }}
           >
-            {/* Drop Indicator - Top */}
-            {dragOverModule === 'music-generator' && dropPosition === 'before' && draggedModule !== 'music-generator' && (
-              <div 
-                className="absolute -top-2 left-0 right-0 h-1 rounded-full"
-                style={{
-                  backgroundColor: '#2979FF',
-                  boxShadow: '0 0 16px rgba(41, 121, 255, 0.8)',
-                  zIndex: 1001,
-                }}
-              />
-            )}
-            
-            {/* Drop Indicator - Bottom */}
-            {dragOverModule === 'music-generator' && dropPosition === 'after' && draggedModule !== 'music-generator' && (
-              <div 
-                className="absolute -bottom-2 left-0 right-0 h-1 rounded-full"
-                style={{
-                  backgroundColor: '#2979FF',
-                  boxShadow: '0 0 16px rgba(41, 121, 255, 0.8)',
-                  zIndex: 1001,
-                }}
-              />
-            )}
-
-            {/* Collapsed Bar View */}
-            <div 
-              className="flex items-center justify-between gap-2"
-              style={{
-                transition: 'opacity 0.2s ease-out',
-                opacity: collapsedModules.has('music-generator') ? 1 : 0,
-                pointerEvents: collapsedModules.has('music-generator') ? 'auto' : 'none',
-                position: collapsedModules.has('music-generator') ? 'relative' : 'absolute',
-                height: collapsedModules.has('music-generator') ? 'auto' : '0',
+            <Link 
+              href={getModuleUrl('music-generator')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
               }}
+              className="block"
             >
-              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                <span className="text-3xl flex-shrink-0">🎵</span>
-                <h3 className="text-lg sm:text-xl font-bold truncate" style={{ color: 'var(--secondary)' }}>
-                  Music Generator
-                </h3>
-                <span className="px-2 py-1 text-xs font-bold rounded flex-shrink-0" style={{
-                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  color: 'white',
-                }}>
-                  PRO
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🎵</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                      Music Generator
+                    </h3>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Generate custom background music for your videos with AI-powered composition
+                    </p>
+                  </div>
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
                 </span>
               </div>
-              <span className="text-sm opacity-60 flex-shrink-0 hidden sm:block" style={{ color: 'var(--text-secondary)' }}>
-                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
-              </span>
-            </div>
-
-            {/* Expanded Content */}
-            <div
-              style={{
-                transformOrigin: 'top',
-                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out',
-                transform: collapsedModules.has('music-generator') ? 'scaleY(0)' : 'scaleY(1)',
-                opacity: collapsedModules.has('music-generator') ? 0 : 1,
-                height: collapsedModules.has('music-generator') ? '0' : 'auto',
-                overflow: 'hidden',
-                willChange: 'transform, opacity',
-              }}
-            >
-              {/* Minimize Button */}
-              {!isReorderMode && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleModuleCollapse('music-generator');
-                  }}
-                  className="absolute top-1 right-1 sm:top-2 sm:right-2 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
-                  style={{
-                    backgroundColor: 'rgba(41, 121, 255, 0.15)',
-                    border: '2px solid rgba(41, 121, 255, 0.4)',
-                    color: '#2979FF',
-                    zIndex: 10,
-                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)',
-                  }}
-                  title="Minimize"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                  </svg>
-                </button>
-              )}
-
-              <div className="text-center mb-6">
-                <div className="flex items-center justify-center gap-3 mb-2">
-                  <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#2979FF' }}>
-                    🎵 Music Generator
-                  </h2>
-                  <span className="px-3 py-1 text-sm font-bold rounded" style={{
-                    background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                    color: 'white',
-                  }}>
-                    PRO
-                  </span>
-                </div>
-                <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
-                  Create unique music tracks powered by AI
-                </p>
-              </div>
-
-              {/* Pro Feature Paywall */}
-              {!isPro ? (
-                <div className="text-center py-8 px-4">
-                  <div className="mb-6">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4"
-                      style={{
-                        backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                        border: '3px solid rgba(41, 121, 255, 0.3)',
-                      }}
-                    >
-                      <span className="text-4xl">🔒</span>
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-                      Pro Feature
-                    </h3>
-                    <p className="text-base mb-6" style={{ color: 'var(--text-secondary)' }}>
-                      Upgrade to Pro to unlock unlimited access to the AI Music Generator and create custom music and sound effects for your content.
-                    </p>
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <span>AI-powered music generation</span>
-                      </div>
-                      <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <span>Custom duration (10-120 seconds)</span>
-                      </div>
-                      <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <span>Unlimited music generation</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (user) {
-                        setCurrentStep('premium');
-                      } else {
-                        // Open auth modal for sign up/sign in
-                        setAuthModalMode('signup');
-                        setAuthModalOpen(true);
-                      }
-                    }}
-                    className="px-8 py-4 rounded-lg font-bold text-lg transition-all hover:scale-105 active:scale-95"
-                    style={{
-                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                      color: 'white',
-                      boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                    }}
-                  >
-                    {user ? '🚀 Upgrade to Pro' : '🔐 Sign In to Upgrade'}
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Song Duration Slider */}
-                  <div>
-                    <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      Song Length: {musicDuration}s
-                    </label>
-                  <div className="relative py-3 px-1">
-                    {/* Apple-style Glass container */}
-                    <div className="relative p-5 rounded-3xl overflow-hidden" style={{
-                      background: theme === 'dark' 
-                        ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%)'
-                        : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%)',
-                      backdropFilter: 'blur(40px) saturate(180%)',
-                      WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-                      border: theme === 'dark'
-                        ? '1px solid rgba(255, 255, 255, 0.18)'
-                        : '1px solid rgba(255, 255, 255, 0.8)',
-                      boxShadow: theme === 'dark'
-                        ? '0 8px 32px rgba(0, 0, 0, 0.37), inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 1px 2px rgba(0, 0, 0, 0.2)'
-                        : '0 8px 32px rgba(31, 38, 135, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(0, 0, 0, 0.05)',
-                    }}>
-                      <input
-                        type="range"
-                        min="10"
-                        max="120"
-                        step="10"
-                        value={musicDuration}
-                        onChange={(e) => setMusicDuration(Number(e.target.value))}
-                        disabled={isGeneratingMusic}
-                        className="w-full h-1 rounded-full appearance-none cursor-pointer music-duration-slider"
-                        style={{
-                          background: 'transparent',
-                        }}
-                      />
-                      {/* Apple-style track background */}
-                      <div className="absolute left-5 right-5 top-1/2 -translate-y-1/2 h-1 rounded-full overflow-visible pointer-events-none" style={{
-                        background: theme === 'dark' 
-                          ? 'rgba(255, 255, 255, 0.15)' 
-                          : 'rgba(0, 0, 0, 0.08)',
-                        boxShadow: theme === 'dark'
-                          ? 'inset 0 1px 2px rgba(0, 0, 0, 0.5)'
-                          : 'inset 0 1px 2px rgba(0, 0, 0, 0.12)',
-                      }}>
-                        <div className="h-full rounded-full transition-all duration-500 ease-out" style={{
-                          width: `${((musicDuration - 10) / 110) * 100}%`,
-                          background: 'linear-gradient(90deg, #007AFF 0%, #5AC8FA 100%)',
-                          boxShadow: theme === 'dark'
-                            ? '0 0 8px rgba(0, 122, 255, 0.4), 0 0 16px rgba(90, 200, 250, 0.2)'
-                            : '0 0 6px rgba(0, 122, 255, 0.3), 0 0 12px rgba(90, 200, 250, 0.15)',
-                        }} />
-                      </div>
-                    </div>
-                    <style jsx>{`
-                      .music-duration-slider::-webkit-slider-thumb {
-                        appearance: none;
-                        width: 28px;
-                        height: 28px;
-                        border-radius: 50%;
-                        background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.94) 100%);
-                        cursor: pointer;
-                        position: relative;
-                        z-index: 10;
-                        box-shadow: 
-                          0 2px 8px rgba(0, 0, 0, 0.12),
-                          0 8px 24px rgba(0, 0, 0, 0.08),
-                          0 0 0 0.5px rgba(0, 0, 0, 0.04),
-                          inset 0 1px 1px rgba(255, 255, 255, 0.9),
-                          inset 0 -1px 2px rgba(0, 0, 0, 0.03);
-                        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                        border: 0.5px solid rgba(0, 0, 0, 0.04);
-                      }
-                      .music-duration-slider::-webkit-slider-thumb:hover {
-                        transform: scale(1.08);
-                        box-shadow: 
-                          0 4px 12px rgba(0, 0, 0, 0.14),
-                          0 12px 32px rgba(0, 0, 0, 0.1),
-                          0 0 0 0.5px rgba(0, 0, 0, 0.05),
-                          inset 0 1px 1px rgba(255, 255, 255, 1),
-                          inset 0 -1px 3px rgba(0, 0, 0, 0.04);
-                      }
-                      .music-duration-slider::-webkit-slider-thumb:active {
-                        transform: scale(1.02);
-                        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-                        box-shadow: 
-                          0 1px 4px rgba(0, 0, 0, 0.15),
-                          0 4px 12px rgba(0, 0, 0, 0.1),
-                          0 0 0 0.5px rgba(0, 0, 0, 0.06),
-                          inset 0 1px 1px rgba(255, 255, 255, 0.95),
-                          inset 0 -1px 2px rgba(0, 0, 0, 0.05);
-                      }
-                      .music-duration-slider::-moz-range-thumb {
-                        width: 28px;
-                        height: 28px;
-                        border-radius: 50%;
-                        background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.94) 100%);
-                        cursor: pointer;
-                        border: 0.5px solid rgba(0, 0, 0, 0.04);
-                        box-shadow: 
-                          0 2px 8px rgba(0, 0, 0, 0.12),
-                          0 8px 24px rgba(0, 0, 0, 0.08),
-                          0 0 0 0.5px rgba(0, 0, 0, 0.04),
-                          inset 0 1px 1px rgba(255, 255, 255, 0.9),
-                          inset 0 -1px 2px rgba(0, 0, 0, 0.03);
-                        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                      }
-                      .music-duration-slider::-moz-range-thumb:hover {
-                        transform: scale(1.08);
-                        box-shadow: 
-                          0 4px 12px rgba(0, 0, 0, 0.14),
-                          0 12px 32px rgba(0, 0, 0, 0.1),
-                          0 0 0 0.5px rgba(0, 0, 0, 0.05),
-                          inset 0 1px 1px rgba(255, 255, 255, 1),
-                          inset 0 -1px 3px rgba(0, 0, 0, 0.04);
-                      }
-                      .music-duration-slider::-moz-range-thumb:active {
-                        transform: scale(1.02);
-                        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-                        box-shadow: 
-                          0 1px 4px rgba(0, 0, 0, 0.15),
-                          0 4px 12px rgba(0, 0, 0, 0.1),
-                          0 0 0 0.5px rgba(0, 0, 0, 0.06),
-                          inset 0 1px 1px rgba(255, 255, 255, 0.95),
-                          inset 0 -1px 2px rgba(0, 0, 0, 0.05);
-                      }
-                      @media (max-width: 640px) {
-                        .music-duration-slider::-webkit-slider-thumb {
-                          width: 36px;
-                          height: 36px;
-                        }
-                        .music-duration-slider::-moz-range-thumb {
-                          width: 36px;
-                          height: 36px;
-                        }
-                      }
-                    `}</style>
-                  </div>
-                  <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                    <span>10s</span>
-                    <span>120s</span>
-                  </div>
-                </div>
-
-                {/* Music Type Dropdown */}
-                <div>
-                  <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Music Type
-                  </label>
-                  <select
-                    value={musicType}
-                    onChange={(e) => setMusicType(e.target.value)}
-                    disabled={isGeneratingMusic}
-                    className="w-full px-4 py-3 rounded-lg border-2 transition-all"
-                    style={{
-                      backgroundColor: 'var(--input-bg)',
-                      borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.4)' : 'rgba(41, 121, 255, 0.3)',
-                      color: 'var(--text-primary)',
-                    }}
-                  >
-                    <option value="instrumental">Instrumental</option>
-                    <option value="vocals">With Vocals</option>
-                  </select>
-                </div>
-
-                {/* Music Prompt */}
-                <div>
-                  <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Describe Your Music
-                  </label>
-                  <textarea
-                    value={musicPrompt}
-                    onChange={(e) => setMusicPrompt(e.target.value)}
-                    disabled={isGeneratingMusic}
-                    placeholder="E.g., 'Upbeat electronic dance music' or 'Calm acoustic guitar'"
-                    className="w-full px-4 py-3 rounded-lg border-2 transition-all resize-none text-sm sm:text-base"
-                    rows={4}
-                    style={{
-                      backgroundColor: 'var(--input-bg)',
-                      borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.4)' : 'rgba(41, 121, 255, 0.3)',
-                      color: 'var(--text-primary)',
-                    }}
-                  />
-                </div>
-
-                {/* Generate Button */}
-                {!generatedMusic && (
-                  <button
-                    onClick={generateMusic}
-                    disabled={isGeneratingMusic || !musicPrompt.trim()}
-                    className="w-full py-4 rounded-lg font-bold text-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                    style={{
-                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                      color: 'white',
-                      boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                    }}
-                  >
-                    {isGeneratingMusic ? '🎵 Generating...' : '🎵 Generate Music'}
-                  </button>
-                )}
-
-                {/* Progress Bar */}
-                {isGeneratingMusic && (
-                  <div className="space-y-2">
-                    <div className="w-full h-3 rounded-full overflow-hidden" style={{
-                      backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                    }}>
-                      <div 
-                        className="h-full transition-all duration-300 rounded-full"
-                        style={{
-                          width: `${musicProgress}%`,
-                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                          boxShadow: '0 0 10px rgba(41, 121, 255, 0.5)'
-                        }}
-                      />
-                    </div>
-                    <p className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      Creating your music... {musicProgress}%
-                    </p>
-                  </div>
-                )}
-
-                {/* Audio Player & Download */}
-                {generatedMusic && (
-                  <div className="mt-6 p-4 rounded-lg" style={{
-                    backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
-                    border: '2px solid rgba(41, 121, 255, 0.3)',
-                  }}>
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="text-2xl">✅</span>
-                      <h3 className="font-bold text-lg" style={{ color: '#2979FF' }}>
-                        Music Generated!
-                      </h3>
-                    </div>
-
-                    {/* Audio Player */}
-                    <audio
-                      controls
-                      className="w-full mb-4"
-                      style={{
-                        borderRadius: '8px',
-                        outline: 'none',
-                      }}
-                    >
-                      <source src={generatedMusic.audio} type="audio/mpeg" />
-                      Your browser does not support the audio element.
-                    </audio>
-
-                    {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <button
-                        onClick={() => {
-                          const link = document.createElement('a');
-                          link.href = generatedMusic.audio;
-                          link.download = `postready-music-${Date.now()}.mp3`;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                        }}
-                        className="flex-1 py-3 px-4 rounded-lg font-bold text-sm sm:text-base transition-all hover:scale-105 active:scale-95"
-                        style={{
-                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                          color: 'white',
-                          boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                        }}
-                      >
-                        💾 Download
-                      </button>
-                      <div className="flex gap-3">
-                        <button
-                          onClick={() => {
-                            setGeneratedMusic(null);
-                            setMusicProgress(0);
-                            generateMusic();
-                          }}
-                          disabled={isGeneratingMusic}
-                          className="flex-1 py-3 px-4 rounded-lg font-bold text-sm sm:text-base transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                          style={{
-                            background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                            color: 'white',
-                            boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                          }}
-                        >
-                          🎵 Generate New
-                        </button>
-                        {musicHistory.length > 0 && (
-                          <button
-                            onClick={() => setShowMusicHistory(!showMusicHistory)}
-                            className="py-3 px-4 rounded-lg font-bold transition-all hover:scale-105 active:scale-95 flex-shrink-0"
-                            style={{
-                              backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                              color: 'var(--text-primary)',
-                            }}
-                            title="View History"
-                          >
-                            📜
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-
-                {/* Music History Panel */}
-                {showMusicHistory && musicHistory.length > 0 && (
-                  <div className="mt-6 p-4 rounded-lg" style={{
-                    backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
-                    border: '2px solid rgba(41, 121, 255, 0.3)',
-                  }}>
-                    <div className="flex items-center justify-between mb-4">
-                      <h3 className="font-bold text-lg" style={{ color: '#2979FF' }}>
-                        📜 Music History
-                      </h3>
-                      <button
-                        onClick={() => setShowMusicHistory(false)}
-                        className="text-sm opacity-60 hover:opacity-100"
-                        style={{ color: 'var(--text-primary)' }}
-                      >
-                        ✕ Close
-                      </button>
-                    </div>
-                    <div className="space-y-3 max-h-96 overflow-y-auto">
-                      {musicHistory.map((music) => (
-                        <div
-                          key={music.id}
-                          className="p-3 rounded-lg"
-                          style={{
-                            backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                            border: '1px solid rgba(41, 121, 255, 0.2)',
-                          }}
-                        >
-                          <div className="flex items-start justify-between gap-3 mb-2">
-                            <div className="flex-1 min-w-0">
-                              <p className="text-sm font-semibold truncate" style={{ color: 'var(--text-primary)' }}>
-                                {music.prompt}
-                              </p>
-                              <p className="text-xs opacity-60" style={{ color: 'var(--text-secondary)' }}>
-                                {new Date(music.timestamp).toLocaleString()} • {music.duration}s • {music.type}
-                              </p>
-                            </div>
-                            <button
-                              onClick={() => {
-                                setGeneratedMusic(music);
-                                setShowMusicHistory(false);
-                              }}
-                              className="px-3 py-1 text-xs rounded-lg font-bold transition-all hover:scale-105"
-                              style={{
-                                background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                                color: 'white',
-                              }}
-                            >
-                              Load
-                            </button>
-                          </div>
-                          <audio
-                            controls
-                            className="w-full"
-                            style={{
-                              height: '32px',
-                              borderRadius: '4px',
-                            }}
-                          >
-                            <source src={music.audio} type="audio/mpeg" />
-                          </audio>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-              )}
-            </div>
+            </Link>
           </div>
         )}
 
-        {/* Script and Voiceover Generator */}
+        {/* Script & Voiceover Generator Module */}
         {currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
@@ -6431,3925 +4027,145 @@ function HomeContent() {
             onDragOver={(e) => handleDragOver(e, 'voiceover-generator')}
             onDragLeave={handleDragLeave}
             onDrop={(e) => handleDrop(e, 'voiceover-generator')}
-            onClick={() => !isReorderMode && collapsedModules.has('voiceover-generator') && toggleModuleCollapse('voiceover-generator')}
-            className="rounded-2xl shadow-lg border scroll-mt-4 relative overflow-hidden"
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('voiceover-generator'));
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
             style={{
-              transition: 'margin-bottom 0.3s ease-out, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease-out, border-color 0.3s ease-out',
-              willChange: 'transform',
-              marginBottom: collapsedModules.has('voiceover-generator') ? '1rem' : '2.5rem',
+              marginBottom: '1rem',
               backgroundColor: theme === 'dark' 
                 ? 'rgba(41, 121, 255, 0.12)' 
                 : 'rgba(41, 121, 255, 0.03)',
               borderColor: dragOverModule === 'voiceover-generator'
                 ? '#2979FF'
-                : (isReorderMode && user)
-                  ? (theme === 'dark' ? 'rgba(41, 121, 255, 0.6)' : 'rgba(41, 121, 255, 0.5)')
-                  : (theme === 'dark'
-                    ? 'rgba(41, 121, 255, 0.4)'
-                    : 'rgba(41, 121, 255, 0.3)'),
-              boxShadow: draggedModule === 'voiceover-generator'
-                ? '0 16px 48px rgba(41, 121, 255, 0.45), 0 0 0 2px rgba(41, 121, 255, 0.6), 0 0 20px rgba(41, 121, 255, 0.3)'
-                : dragOverModule === 'voiceover-generator'
-                  ? '0 0 0 3px rgba(41, 121, 255, 0.5), 0 0 20px rgba(41, 121, 255, 0.3)'
-                  : (isReorderMode && user)
-                    ? (theme === 'dark'
-                      ? '0 8px 32px rgba(41, 121, 255, 0.4), 0 0 0 2px rgba(41, 121, 255, 0.5), 0 0 20px rgba(41, 121, 255, 0.25)'
-                      : '0 8px 32px rgba(41, 121, 255, 0.3), 0 0 0 2px rgba(41, 121, 255, 0.4), 0 0 15px rgba(41, 121, 255, 0.2)')
-                    : (theme === 'dark'
-                      ? '0 4px 20px rgba(41, 121, 255, 0.25), 0 0 15px rgba(41, 121, 255, 0.15)'
-                      : '0 4px 20px rgba(41, 121, 255, 0.15), 0 0 10px rgba(41, 121, 255, 0.1)'),
+                : theme === 'dark'
+                  ? 'rgba(41, 121, 255, 0.4)'
+                  : 'rgba(41, 121, 255, 0.3)',
+              boxShadow: dragOverModule === 'voiceover-generator'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : theme === 'dark'
+                  ? '0 4px 20px rgba(41, 121, 255, 0.25), 0 0 15px rgba(41, 121, 255, 0.15)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.15), 0 0 10px rgba(41, 121, 255, 0.1)',
               order: moduleOrder.indexOf('voiceover-generator'),
-              cursor: (isReorderMode && user) ? (draggedModule === 'voiceover-generator' ? 'grabbing' : 'grab') : (collapsedModules.has('voiceover-generator') ? 'pointer' : 'default'),
-              opacity: 1,
-              transform: draggedModule === 'voiceover-generator' 
-                ? 'scale(1.05) rotate(2deg)' 
-                : 'scale(1)',
-              padding: '1.5rem',
-              zIndex: draggedModule === 'voiceover-generator' ? 1000 : 'auto',
-              overflow: 'visible',
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'voiceover-generator' ? 0.5 : 1,
+              transform: dragOverModule === 'voiceover-generator' ? 'scale(1.02)' : 'scale(1)',
+              padding: '1rem',
             }}
           >
-            {/* Drop Indicator - Top */}
-            {dragOverModule === 'voiceover-generator' && dropPosition === 'before' && draggedModule !== 'voiceover-generator' && (
-              <div 
-                className="absolute -top-2 left-0 right-0 h-1 rounded-full"
-                style={{
-                  backgroundColor: '#2979FF',
-                  boxShadow: '0 0 16px rgba(41, 121, 255, 0.8)',
-                  zIndex: 1001,
-                }}
-              />
-            )}
-            
-            {/* Drop Indicator - Bottom */}
-            {dragOverModule === 'voiceover-generator' && dropPosition === 'after' && draggedModule !== 'voiceover-generator' && (
-              <div 
-                className="absolute -bottom-2 left-0 right-0 h-1 rounded-full"
-                style={{
-                  backgroundColor: '#2979FF',
-                  boxShadow: '0 0 16px rgba(41, 121, 255, 0.8)',
-                  zIndex: 1001,
-                }}
-              />
-            )}
-
-            {/* Collapsed Bar View */}
-            <div 
-              className="flex items-center justify-between gap-2"
-              style={{
-                transition: 'opacity 0.2s ease-out',
-                opacity: collapsedModules.has('voiceover-generator') ? 1 : 0,
-                pointerEvents: collapsedModules.has('voiceover-generator') ? 'auto' : 'none',
-                position: collapsedModules.has('voiceover-generator') ? 'relative' : 'absolute',
-                height: collapsedModules.has('voiceover-generator') ? 'auto' : '0',
+            <Link 
+              href={getModuleUrl('voiceover-generator')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
               }}
+              className="block"
             >
-              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                <span className="text-3xl flex-shrink-0">🎙️</span>
-                <h3 className="text-lg sm:text-xl font-bold truncate" style={{ color: 'var(--secondary)' }}>
-                  Script and Voiceover Generator
-                </h3>
-                <span className="px-2 py-1 text-xs font-bold rounded flex-shrink-0" style={{
-                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  color: 'white',
-                }}>
-                  PRO
-                </span>
-              </div>
-              <span className="text-sm opacity-60 flex-shrink-0 hidden sm:block" style={{ color: 'var(--text-secondary)' }}>
-                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
-              </span>
-            </div>
-
-            {/* Expanded Content */}
-            <div
-              style={{
-                transformOrigin: 'top',
-                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out',
-                transform: collapsedModules.has('voiceover-generator') ? 'scaleY(0)' : 'scaleY(1)',
-                opacity: collapsedModules.has('voiceover-generator') ? 0 : 1,
-                height: collapsedModules.has('voiceover-generator') ? '0' : 'auto',
-                overflow: 'hidden',
-                willChange: 'transform, opacity',
-              }}
-            >
-              {/* Minimize Button */}
-              {!isReorderMode && (
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleModuleCollapse('voiceover-generator');
-                  }}
-                  className="absolute top-1 right-1 sm:top-2 sm:right-2 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
-                  style={{
-                    backgroundColor: 'rgba(41, 121, 255, 0.15)',
-                    border: '2px solid rgba(41, 121, 255, 0.4)',
-                    color: '#2979FF',
-                    zIndex: 10,
-                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)',
-                  }}
-                  title="Minimize"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                  </svg>
-                </button>
-              )}
-
-              <div className="text-center mb-6">
-                <div className="flex items-center justify-center gap-3 mb-2">
-                  <h2 className="text-3xl sm:text-4xl font-bold" style={{ color: '#2979FF' }}>
-                    🎙️ Script and Voiceover Generator
-                  </h2>
-                  <span className="px-3 py-1 text-sm font-bold rounded" style={{
-                    background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                    color: 'white',
-                  }}>
-                    PRO
-                  </span>
-                </div>
-                <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
-                  Create professional AI voiceovers with generated scripts
-                </p>
-              </div>
-
-              {/* Pro Feature Paywall */}
-              {!isPro ? (
-                <div className="text-center py-8 px-4">
-                  <div className="mb-6">
-                    <div className="inline-flex items-center justify-center w-20 h-20 rounded-full mb-4"
-                      style={{
-                        backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                        border: '3px solid rgba(41, 121, 255, 0.3)',
-                      }}
-                    >
-                      <span className="text-4xl">🔒</span>
-                    </div>
-                    <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-                      Pro Feature
-                    </h3>
-                    <p className="text-base mb-6" style={{ color: 'var(--text-secondary)' }}>
-                      Upgrade to Pro to unlock unlimited access to the Script and Voiceover Generator with AI-powered script writing and professional voice synthesis.
-                    </p>
-                    <div className="space-y-3 mb-6">
-                      <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <span>AI script generation (15-120 seconds)</span>
-                      </div>
-                      <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <span>Professional voice options (4 voices)</span>
-                      </div>
-                      <div className="flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-                        <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <span>Unlimited voiceover generation</span>
-                      </div>
-                    </div>
-                  </div>
-                  <button
-                    onClick={() => {
-                      if (user) {
-                        setCurrentStep('premium');
-                      } else {
-                        // Open auth modal for sign up/sign in
-                        setAuthModalMode('signup');
-                        setAuthModalOpen(true);
-                      }
-                    }}
-                    className="px-8 py-4 rounded-lg font-bold text-lg transition-all hover:scale-105 active:scale-95"
-                    style={{
-                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                      color: 'white',
-                      boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                    }}
-                  >
-                    {user ? '🚀 Upgrade to Pro' : '🔐 Sign In to Upgrade'}
-                  </button>
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {/* Topic Input */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🎙️</span>
                   <div>
-                    <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
-                      Voiceover Topic
-                    </label>
-                    <textarea
-                    value={voiceoverTopic}
-                    onChange={(e) => setVoiceoverTopic(e.target.value)}
-                    disabled={isGeneratingVoiceover}
-                    placeholder="E.g., 'Product demo for eco-friendly water bottles' or 'Welcome message for a yoga studio'"
-                    className="w-full px-4 py-3 rounded-lg border-2 transition-all resize-none text-sm sm:text-base"
-                    rows={3}
-                    style={{
-                      backgroundColor: 'var(--input-bg)',
-                      borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.4)' : 'rgba(41, 121, 255, 0.3)',
-                      color: 'var(--text-primary)',
-                    }}
-                  />
-                </div>
-
-                {/* Duration Slider */}
-                <div>
-                  <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Duration: {voiceoverDuration}s
-                  </label>
-                  <div className="relative py-3 px-1">
-                    {/* Apple-style Glass container */}
-                    <div className="relative p-5 rounded-3xl overflow-hidden" style={{
-                      background: theme === 'dark' 
-                        ? 'linear-gradient(145deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.01) 100%)'
-                        : 'linear-gradient(145deg, rgba(255, 255, 255, 0.9) 0%, rgba(255, 255, 255, 0.6) 100%)',
-                      backdropFilter: 'blur(40px) saturate(180%)',
-                      WebkitBackdropFilter: 'blur(40px) saturate(180%)',
-                      border: theme === 'dark'
-                        ? '1px solid rgba(255, 255, 255, 0.18)'
-                        : '1px solid rgba(255, 255, 255, 0.8)',
-                      boxShadow: theme === 'dark'
-                        ? '0 8px 32px rgba(0, 0, 0, 0.37), inset 0 1px 1px rgba(255, 255, 255, 0.15), 0 1px 2px rgba(0, 0, 0, 0.2)'
-                        : '0 8px 32px rgba(31, 38, 135, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.95), 0 1px 2px rgba(0, 0, 0, 0.05)',
-                    }}>
-                      <input
-                        type="range"
-                        min="15"
-                        max="120"
-                        step="15"
-                        value={voiceoverDuration}
-                        onChange={(e) => setVoiceoverDuration(Number(e.target.value))}
-                        disabled={isGeneratingVoiceover}
-                        className="w-full h-1 rounded-full appearance-none cursor-pointer voiceover-duration-slider"
-                        style={{
-                          background: 'transparent',
-                        }}
-                      />
-                      {/* Apple-style track background */}
-                      <div className="absolute left-5 right-5 top-1/2 -translate-y-1/2 h-1 rounded-full overflow-visible pointer-events-none" style={{
-                        background: theme === 'dark' 
-                          ? 'rgba(255, 255, 255, 0.15)' 
-                          : 'rgba(0, 0, 0, 0.08)',
-                        boxShadow: theme === 'dark'
-                          ? 'inset 0 1px 2px rgba(0, 0, 0, 0.5)'
-                          : 'inset 0 1px 2px rgba(0, 0, 0, 0.12)',
-                      }}>
-                        <div className="h-full rounded-full transition-all duration-500 ease-out" style={{
-                          width: `${((voiceoverDuration - 15) / 105) * 100}%`,
-                          background: 'linear-gradient(90deg, #007AFF 0%, #5AC8FA 100%)',
-                          boxShadow: theme === 'dark'
-                            ? '0 0 8px rgba(0, 122, 255, 0.4), 0 0 16px rgba(90, 200, 250, 0.2)'
-                            : '0 0 6px rgba(0, 122, 255, 0.3), 0 0 12px rgba(90, 200, 250, 0.15)',
-                        }} />
-                      </div>
-                    </div>
-                    <style jsx>{`
-                      .voiceover-duration-slider::-webkit-slider-thumb {
-                        appearance: none;
-                        width: 28px;
-                        height: 28px;
-                        border-radius: 50%;
-                        background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.94) 100%);
-                        cursor: pointer;
-                        position: relative;
-                        z-index: 10;
-                        box-shadow: 
-                          0 2px 8px rgba(0, 0, 0, 0.12),
-                          0 8px 24px rgba(0, 0, 0, 0.08),
-                          0 0 0 0.5px rgba(0, 0, 0, 0.04),
-                          inset 0 1px 1px rgba(255, 255, 255, 0.9),
-                          inset 0 -1px 2px rgba(0, 0, 0, 0.03);
-                        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                        border: 0.5px solid rgba(0, 0, 0, 0.04);
-                      }
-                      .voiceover-duration-slider::-webkit-slider-thumb:hover {
-                        transform: scale(1.08);
-                        box-shadow: 
-                          0 4px 12px rgba(0, 0, 0, 0.14),
-                          0 12px 32px rgba(0, 0, 0, 0.1),
-                          0 0 0 0.5px rgba(0, 0, 0, 0.05),
-                          inset 0 1px 1px rgba(255, 255, 255, 1),
-                          inset 0 -1px 3px rgba(0, 0, 0, 0.04);
-                      }
-                      .voiceover-duration-slider::-webkit-slider-thumb:active {
-                        transform: scale(1.02);
-                        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-                        box-shadow: 
-                          0 1px 4px rgba(0, 0, 0, 0.15),
-                          0 4px 12px rgba(0, 0, 0, 0.1),
-                          0 0 0 0.5px rgba(0, 0, 0, 0.06),
-                          inset 0 1px 1px rgba(255, 255, 255, 0.95),
-                          inset 0 -1px 2px rgba(0, 0, 0, 0.05);
-                      }
-                      .voiceover-duration-slider::-moz-range-thumb {
-                        width: 28px;
-                        height: 28px;
-                        border-radius: 50%;
-                        background: linear-gradient(180deg, rgba(255, 255, 255, 1) 0%, rgba(255, 255, 255, 0.94) 100%);
-                        cursor: pointer;
-                        border: 0.5px solid rgba(0, 0, 0, 0.04);
-                        box-shadow: 
-                          0 2px 8px rgba(0, 0, 0, 0.12),
-                          0 8px 24px rgba(0, 0, 0, 0.08),
-                          0 0 0 0.5px rgba(0, 0, 0, 0.04),
-                          inset 0 1px 1px rgba(255, 255, 255, 0.9),
-                          inset 0 -1px 2px rgba(0, 0, 0, 0.03);
-                        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-                      }
-                      .voiceover-duration-slider::-moz-range-thumb:hover {
-                        transform: scale(1.08);
-                        box-shadow: 
-                          0 4px 12px rgba(0, 0, 0, 0.14),
-                          0 12px 32px rgba(0, 0, 0, 0.1),
-                          0 0 0 0.5px rgba(0, 0, 0, 0.05),
-                          inset 0 1px 1px rgba(255, 255, 255, 1),
-                          inset 0 -1px 3px rgba(0, 0, 0, 0.04);
-                      }
-                      .voiceover-duration-slider::-moz-range-thumb:active {
-                        transform: scale(1.02);
-                        transition: all 0.15s cubic-bezier(0.4, 0, 0.2, 1);
-                        box-shadow: 
-                          0 1px 4px rgba(0, 0, 0, 0.15),
-                          0 4px 12px rgba(0, 0, 0, 0.1),
-                          0 0 0 0.5px rgba(0, 0, 0, 0.06),
-                          inset 0 1px 1px rgba(255, 255, 255, 0.95),
-                          inset 0 -1px 2px rgba(0, 0, 0, 0.05);
-                      }
-                      @media (max-width: 640px) {
-                        .voiceover-duration-slider::-webkit-slider-thumb {
-                          width: 36px;
-                          height: 36px;
-                        }
-                        .voiceover-duration-slider::-moz-range-thumb {
-                          width: 36px;
-                          height: 36px;
-                        }
-                      }
-                    `}</style>
-                  </div>
-                  <div className="flex justify-between text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>
-                    <span>15s</span>
-                    <span>120s</span>
-                  </div>
-                </div>
-
-                {/* Voice Selection */}
-                <div>
-                  <label className="block mb-2 font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Voice Selection
-                  </label>
-                  <select
-                    value={voiceoverVoice}
-                    onChange={(e) => setVoiceoverVoice(e.target.value)}
-                    disabled={isGeneratingVoiceover}
-                    className="w-full px-4 py-3 rounded-lg border-2 transition-all"
-                    style={{
-                      backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff',
-                      borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.4)' : 'rgba(41, 121, 255, 0.3)',
-                      color: theme === 'dark' ? '#ffffff' : '#000000',
-                    }}
-                  >
-                    <option value="TYkIHhDWzXPHalxGXze5" style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#000000' }}>🎬 Trailer Voice</option>
-                    <option value="6sFKzaJr574YWVu4UuJF" style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#000000' }}>🎙️ Cornelius</option>
-                    <option value="jqcCZkN6Knx8BJ5TBdYR" style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#000000' }}>🎙️ Zara</option>
-                    <option value="dXtC3XhB9GtPusIpNtQx" style={{ backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff', color: theme === 'dark' ? '#ffffff' : '#000000' }}>🎙️ Hale</option>
-                  </select>
-                </div>
-
-                {/* Generate Script Button */}
-                {!voiceoverScript && (
-                  <button
-                    onClick={generateVoiceover}
-                    disabled={isGeneratingVoiceover || !voiceoverTopic.trim()}
-                    className="w-full py-4 rounded-lg font-bold text-lg transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                    style={{
-                      background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                      color: 'white',
-                      boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                    }}
-                  >
-                    {isGeneratingVoiceover ? '✍️ Generating Script...' : '✍️ Generate Script'}
-                  </button>
-                )}
-
-                {/* Progress Bar */}
-                {isGeneratingVoiceover && !generatedVoiceover && (
-                  <div className="space-y-2">
-                    <div className="w-full h-3 rounded-full overflow-hidden" style={{
-                      backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)'
-                    }}>
-                      <div 
-                        className="h-full transition-all duration-300 rounded-full"
-                        style={{
-                          width: `${voiceoverProgress}%`,
-                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                          boxShadow: '0 0 10px rgba(41, 121, 255, 0.5)'
-                        }}
-                      />
-                    </div>
-                    <p className="text-center text-sm" style={{ color: 'var(--text-secondary)' }}>
-                      {voiceoverProgress < 50 ? 'Crafting your script...' : 'Converting to voiceover...'} {voiceoverProgress}%
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                      Script & Voiceover Generator
+                    </h3>
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Create professional scripts and generate AI voiceovers for your content
                     </p>
                   </div>
-                )}
-
-                {/* Generated Script Display */}
-                {voiceoverScript && !generatedVoiceover && (
-                  <div className="mt-6 p-4 rounded-lg" style={{
-                    backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
-                    border: '2px solid rgba(41, 121, 255, 0.3)',
-                  }}>
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="text-2xl">📝</span>
-                      <h3 className="font-bold text-lg" style={{ color: '#2979FF' }}>
-                        Your Script
-                      </h3>
-                      <span className="text-xs opacity-60" style={{ color: 'var(--text-secondary)' }}>
-                        (Editable)
-                      </span>
-                    </div>
-
-                    {/* Editable Script */}
-                    <div className="mb-3">
-                      <textarea
-                        value={voiceoverScript}
-                        onChange={(e) => setVoiceoverScript(e.target.value)}
-                        disabled={isGeneratingVoiceover}
-                        className="w-full px-4 py-3 rounded-lg border-2 transition-all resize-none text-sm"
-                        rows={8}
-                        style={{
-                          backgroundColor: 'var(--input-bg)',
-                          borderColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.4)' : 'rgba(41, 121, 255, 0.3)',
-                          color: 'var(--text-primary)',
-                          lineHeight: '1.6',
-                        }}
-                      />
-                    </div>
-
-                    {/* Guide AI Section */}
-                    <div className="relative mb-4" style={{ zIndex: 10 }}>
-                      <button
-                        onClick={() => setShowGuidanceInput(true)}
-                        disabled={isGeneratingVoiceover}
-                        className="px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-                        style={{
-                          background: 'linear-gradient(to right, #6FFFD2, #2979FF)',
-                          color: 'white',
-                          boxShadow: '0 2px 8px rgba(111, 255, 210, 0.4)'
-                        }}
-                      >
-                        <span>🤖</span>
-                        <span>Guide AI</span>
-                      </button>
-
-                      {/* Floating Dialog Overlay */}
-                      {showGuidanceInput && (
-                        <>
-                          {/* Backdrop */}
-                          <div 
-                            onClick={() => {
-                              setShowGuidanceInput(false);
-                              setVoiceoverGuidance('');
-                            }}
-                            style={{
-                              position: 'fixed',
-                              top: 0,
-                              left: 0,
-                              right: 0,
-                              bottom: 0,
-                              backgroundColor: 'rgba(0, 0, 0, 0.3)',
-                              zIndex: 999,
-                            }}
-                          />
-                          
-                          {/* Dialog Box */}
-                          <div 
-                            className="p-4 rounded-lg shadow-2xl animate-in"
-                            style={{
-                              position: 'absolute',
-                              top: '100%',
-                              left: 0,
-                              right: 0,
-                              marginTop: '0.5rem',
-                              backgroundColor: theme === 'dark' ? 'rgba(26, 26, 26, 0.98)' : 'rgba(255, 255, 255, 0.98)',
-                              border: '2px solid rgba(111, 255, 210, 0.5)',
-                              boxShadow: '0 8px 32px rgba(111, 255, 210, 0.3), 0 0 0 1px rgba(111, 255, 210, 0.2)',
-                              backdropFilter: 'blur(10px)',
-                              zIndex: 1000,
-                            }}
-                          >
-                            <label className="block mb-2 text-sm font-semibold" style={{ color: 'var(--text-primary)' }}>
-                              🤖 How would you like to refine the script?
-                            </label>
-                            <textarea
-                              value={voiceoverGuidance}
-                              onChange={(e) => setVoiceoverGuidance(e.target.value)}
-                              disabled={isGeneratingVoiceover}
-                              placeholder="E.g., 'Make it more exciting', 'Add a call to action', 'Make it shorter and punchier'"
-                              className="w-full px-3 py-2 rounded-lg border-2 transition-all resize-none text-sm mb-3"
-                              rows={2}
-                              autoFocus
-                              style={{
-                                backgroundColor: theme === 'dark' ? '#1a1a1a' : '#ffffff',
-                                borderColor: theme === 'dark' ? 'rgba(111, 255, 210, 0.5)' : 'rgba(111, 255, 210, 0.4)',
-                                color: 'var(--text-primary)',
-                              }}
-                            />
-                            <div className="flex gap-2">
-                              <button
-                                onClick={() => {
-                                  if (voiceoverGuidance.trim()) {
-                                    guideVoiceoverScript(voiceoverGuidance);
-                                    setShowGuidanceInput(false);
-                                  }
-                                }}
-                                disabled={isGeneratingVoiceover || !voiceoverGuidance.trim()}
-                                className="flex-1 py-2 px-3 rounded-lg font-semibold text-sm transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                                style={{
-                                  background: 'linear-gradient(to right, #6FFFD2, #2979FF)',
-                                  color: 'white',
-                                  boxShadow: '0 2px 8px rgba(111, 255, 210, 0.4)'
-                                }}
-                              >
-                                {isGeneratingVoiceover ? '🤖 Refining...' : '✨ Apply'}
-                              </button>
-                              <button
-                                onClick={() => {
-                                  setShowGuidanceInput(false);
-                                  setVoiceoverGuidance('');
-                                }}
-                                disabled={isGeneratingVoiceover}
-                                className="py-2 px-3 rounded-lg font-semibold text-sm transition-all hover:scale-105 active:scale-95"
-                                style={{
-                                  backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                                  color: 'var(--text-primary)',
-                                }}
-                              >
-                                Cancel
-                              </button>
-                            </div>
-                          </div>
-                        </>
-                      )}
-                    </div>
-
-                    {/* Generate Voiceover Button */}
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <button
-                        onClick={generateVoiceoverAudio}
-                        disabled={isGeneratingVoiceover || !voiceoverScript.trim()}
-                        className="flex-1 py-3 px-4 rounded-lg font-bold text-sm sm:text-base transition-all hover:scale-105 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
-                        style={{
-                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                          color: 'white',
-                          boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                        }}
-                      >
-                        {isGeneratingVoiceover ? '🎙️ Generating...' : '🎙️ Generate Voiceover'}
-                      </button>
-                      <button
-                        onClick={() => {
-                          setVoiceoverScript('');
-                          setVoiceoverProgress(0);
-                        }}
-                        className="py-3 px-4 rounded-lg font-bold text-sm sm:text-base transition-all hover:scale-105 active:scale-95"
-                        style={{
-                          backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                          color: 'var(--text-primary)',
-                        }}
-                      >
-                        🔄 Regenerate Script
-                      </button>
-                    </div>
-                  </div>
-                )}
-
-                {/* Audio Player & Download */}
-                {generatedVoiceover && (
-                  <div className="mt-6 p-4 rounded-lg" style={{
-                    backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
-                    border: '2px solid rgba(41, 121, 255, 0.3)',
-                  }}>
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="text-2xl">✅</span>
-                      <h3 className="font-bold text-lg" style={{ color: '#2979FF' }}>
-                        Voiceover Generated!
-                      </h3>
-                    </div>
-
-                    {/* Show/Hide Script Toggle */}
-                    <button
-                      onClick={() => setShowVoiceoverScript(!showVoiceoverScript)}
-                      className="w-full py-2 px-3 rounded-lg mb-3 text-sm font-semibold transition-all hover:scale-102"
-                      style={{
-                        backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                        color: 'var(--text-primary)',
-                      }}
-                    >
-                      {showVoiceoverScript ? '👁️ Hide Script' : '👁️ View Script'}
-                    </button>
-
-                    {/* Script Display */}
-                    {showVoiceoverScript && (
-                      <div className="p-3 rounded-lg mb-4" style={{
-                        backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
-                        maxHeight: '200px',
-                        overflowY: 'auto',
-                      }}>
-                        <p style={{ color: 'var(--text-primary)', lineHeight: '1.6', fontSize: '0.9rem' }}>
-                          {generatedVoiceover.script}
-                        </p>
-                      </div>
-                    )}
-
-                    {/* Audio Player */}
-                    <audio
-                      controls
-                      className="w-full mb-4"
-                      style={{
-                        borderRadius: '8px',
-                        outline: 'none',
-                      }}
-                    >
-                      <source src={generatedVoiceover.audio} type="audio/mpeg" />
-                      Your browser does not support the audio element.
-                    </audio>
-
-                    {/* Action Buttons */}
-                    <div className="flex flex-col sm:flex-row gap-3">
-                      <button
-                        onClick={() => {
-                          const link = document.createElement('a');
-                          link.href = generatedVoiceover.audio;
-                          link.download = `postready-voiceover-${Date.now()}.mp3`;
-                          document.body.appendChild(link);
-                          link.click();
-                          document.body.removeChild(link);
-                        }}
-                        className="flex-1 py-3 px-4 rounded-lg font-bold text-sm sm:text-base transition-all hover:scale-105 active:scale-95"
-                        style={{
-                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                          color: 'white',
-                          boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                        }}
-                      >
-                        💾 Download Voiceover
-                      </button>
-                      <button
-                        onClick={() => {
-                          setGeneratedVoiceover(null);
-                          setVoiceoverScript('');
-                          setVoiceoverProgress(0);
-                        }}
-                        className="py-3 px-4 rounded-lg font-bold text-sm sm:text-base transition-all hover:scale-105 active:scale-95"
-                        style={{
-                          backgroundColor: theme === 'dark' ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.1)',
-                          color: 'var(--text-primary)',
-                        }}
-                      >
-                        🎙️ Generate New
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Sora Prompt Generator */}
-        {currentStep === "form" && (
-          <div 
-            draggable={!!(isReorderMode && user)}
-            onDragStart={() => handleDragStart('sora-prompt')}
-            onDragEnd={handleDragEnd}
-            onDragOver={(e) => handleDragOver(e, 'sora-prompt')}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, 'sora-prompt')}
-            onClick={() => !isReorderMode && collapsedModules.has('sora-prompt') && toggleModuleCollapse('sora-prompt')}
-            className="rounded-2xl shadow-lg border scroll-mt-4 relative overflow-hidden"
-            style={{
-              transition: 'margin-bottom 0.3s ease-out, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease-out, border-color 0.3s ease-out',
-              willChange: 'transform',
-              marginBottom: collapsedModules.has('sora-prompt') ? '1rem' : '2.5rem',
-              backgroundColor: theme === 'dark' 
-                ? 'rgba(88, 50, 120, 0.12)' 
-                : 'rgba(139, 92, 246, 0.03)',
-              borderColor: dragOverModule === 'sora-prompt'
-                ? '#8B5CF6'
-                : (isReorderMode && user)
-                  ? (theme === 'dark' ? 'rgba(139, 92, 246, 0.6)' : 'rgba(139, 92, 246, 0.5)')
-                  : (theme === 'dark'
-                    ? 'rgba(139, 92, 246, 0.4)'
-                    : 'rgba(139, 92, 246, 0.3)'),
-              boxShadow: draggedModule === 'sora-prompt'
-                ? '0 16px 48px rgba(139, 92, 246, 0.45), 0 0 0 2px rgba(139, 92, 246, 0.6), 0 0 20px rgba(139, 92, 246, 0.3)'
-                : dragOverModule === 'sora-prompt'
-                  ? '0 0 0 3px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.3)'
-                  : (isReorderMode && user)
-                    ? (theme === 'dark'
-                      ? '0 8px 32px rgba(139, 92, 246, 0.4), 0 0 0 2px rgba(139, 92, 246, 0.5), 0 0 20px rgba(139, 92, 246, 0.25)'
-                      : '0 8px 32px rgba(139, 92, 246, 0.3), 0 0 0 2px rgba(139, 92, 246, 0.4), 0 0 15px rgba(139, 92, 246, 0.2)')
-                    : (theme === 'dark'
-                      ? '0 4px 20px rgba(139, 92, 246, 0.25), 0 0 15px rgba(139, 92, 246, 0.15)'
-                      : '0 4px 20px rgba(139, 92, 246, 0.15), 0 0 10px rgba(139, 92, 246, 0.1)'),
-              order: moduleOrder.indexOf('sora-prompt'),
-              cursor: (isReorderMode && user) ? (draggedModule === 'sora-prompt' ? 'grabbing' : 'grab') : (collapsedModules.has('sora-prompt') ? 'pointer' : 'default'),
-              opacity: 1,
-              transform: draggedModule === 'sora-prompt' 
-                ? 'scale(1.05) rotate(2deg)' 
-                : 'scale(1)',
-              padding: '1.5rem',
-              zIndex: draggedModule === 'sora-prompt' ? 1000 : 'auto',
-              overflow: 'visible',
-            }}
-          >
-            {/* Drop Indicator - Top */}
-            {dragOverModule === 'sora-prompt' && dropPosition === 'before' && draggedModule !== 'sora-prompt' && (
-              <div 
-                className="absolute -top-2 left-0 right-0 h-1 rounded-full"
-                style={{
-                  backgroundColor: '#8B5CF6',
-                  boxShadow: '0 0 16px rgba(139, 92, 246, 0.8)',
-                  zIndex: 1001,
-                }}
-              />
-            )}
-            
-            {/* Drop Indicator - Bottom */}
-            {dragOverModule === 'sora-prompt' && dropPosition === 'after' && draggedModule !== 'sora-prompt' && (
-              <div 
-                className="absolute -bottom-2 left-0 right-0 h-1 rounded-full"
-                style={{
-                  backgroundColor: '#8B5CF6',
-                  boxShadow: '0 0 16px rgba(139, 92, 246, 0.8)',
-                  zIndex: 1001,
-                }}
-              />
-            )}
-
-            {/* Collapsed Bar View */}
-            <div 
-              className="flex items-center justify-between gap-2"
-              style={{
-                transition: 'opacity 0.2s ease-out',
-                opacity: collapsedModules.has('sora-prompt') ? 1 : 0,
-                pointerEvents: collapsedModules.has('sora-prompt') ? 'auto' : 'none',
-                position: collapsedModules.has('sora-prompt') ? 'relative' : 'absolute',
-                height: collapsedModules.has('sora-prompt') ? 'auto' : '0',
-              }}
-            >
-              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
-                <span className="text-3xl flex-shrink-0">🎬</span>
-                <h3 className="text-lg sm:text-xl font-bold truncate" style={{ color: 'var(--secondary)' }}>
-                  Sora Prompt Generator
-                </h3>
-                <span className="px-2 py-1 text-xs font-bold rounded flex-shrink-0" style={{
-                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  color: 'white',
-                }}>
-                  PRO
+                </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
                 </span>
               </div>
-              <span className="text-sm opacity-60 flex-shrink-0 hidden sm:block" style={{ color: 'var(--text-secondary)' }}>
-                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
-              </span>
-            </div>
-
-            {/* Expanded Content */}
-            <div
-              style={{
-                transformOrigin: 'top',
-                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out',
-                transform: collapsedModules.has('sora-prompt') ? 'scaleY(0)' : 'scaleY(1)',
-                opacity: collapsedModules.has('sora-prompt') ? 0 : 1,
-                height: collapsedModules.has('sora-prompt') ? '0' : 'auto',
-                overflow: 'hidden',
-                willChange: 'transform, opacity',
-              }}
-            >
-                {/* Minimize Button */}
-                {!isReorderMode && (
-                  <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleModuleCollapse('sora-prompt');
-                  }}
-                  className="absolute top-1 right-1 sm:top-2 sm:right-2 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
-                  style={{ 
-                    backgroundColor: 'rgba(41, 121, 255, 0.15)',
-                    border: '2px solid rgba(41, 121, 255, 0.4)',
-                    color: '#2979FF',
-                    zIndex: 10,
-                    boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)'
-                  }}
-                  title="Minimize"
-                >
-                  <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                    </svg>
-                  </button>
-                )}
-
-                <div className="space-y-6">
-                  <div className="text-center relative">
-                    <div className="flex items-center justify-center gap-3 mb-2">
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          scrollToPremium();
-                        }}
-                        className="px-4 py-2 text-sm font-bold rounded-lg transition-all hover:scale-105 active:scale-95 flex items-center gap-2"
-                        style={{
-                          background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                          color: 'white',
-                          boxShadow: '0 4px 12px rgba(41, 121, 255, 0.4)'
-                        }}
-                      >
-                        <span>★</span>
-                        Get Pro
-                      </button>
-                      <h2 className="text-3xl sm:text-4xl font-bold text-center flex-1" style={{ 
-                        color: '#8B5CF6',
-                        textShadow: '0 0 20px rgba(139, 92, 246, 0.3)'
-                      }}>
-                        🎬 Sora Prompt Generator
-                      </h2>
-                      <div className="w-[100px]"></div>
-                    </div>
-                    <p className="text-sm sm:text-base" style={{ 
-                      color: theme === 'dark' ? 'rgba(139, 92, 246, 0.8)' : 'rgba(99, 102, 241, 0.9)'
-                    }}>
-                      Generate professional, detailed video prompts for OpenAI Sora
-                    </p>
-                  </div>
-                  
-                  {/* Usage Indicator */}
-                  {!isPro && (
-                    <div className="mt-4 p-3 rounded-lg" style={{
-                      backgroundColor: soraUsageCount >= 1 
-                        ? 'rgba(239, 68, 68, 0.1)' 
-                        : 'rgba(139, 92, 246, 0.1)',
-                      border: `1px solid ${soraUsageCount >= 1 ? 'rgba(239, 68, 68, 0.3)' : 'rgba(139, 92, 246, 0.3)'}`,
-                    }}>
-                      <p className="text-sm font-medium" style={{ 
-                        color: soraUsageCount >= 1 ? '#ef4444' : '#8B5CF6'
-                      }}>
-                        {soraUsageCount === 0 ? 'Free Trial: 1 generation remaining' : 'Upgrade to Pro for unlimited generations'}
-                      </p>
-                    </div>
-                  )}
-                  
-                  {isPro && (
-                    <div className="mt-4 p-3 rounded-lg" style={{
-                      backgroundColor: 'rgba(16, 185, 129, 0.1)',
-                      border: '1px solid rgba(16, 185, 129, 0.3)',
-                    }}>
-                      <p className="text-sm font-medium" style={{ color: '#10b981' }}>
-                        Pro Member: Unlimited generations
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Input Form */}
-                  <form onSubmit={async (e) => {
-                    e.preventDefault();
-                    
-                    // Check if user needs to upgrade to Pro (free users get 1 use)
-                    if (!isPro && soraUsageCount >= 1) {
-                      setShowSoraPaywall(true);
-                      return;
-                    }
-                    
-                    setIsGeneratingSora(true);
-                    
-                    try {
-                      const response = await fetch('/api/generate-sora-prompts', {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                          videoIdea: soraVideoIdea,
-                          style: soraStyle,
-                          cameraMovement: soraCameraMovement,
-                          mood: soraMood,
-                        }),
-                      });
-
-                      if (!response.ok) throw new Error('Failed to generate prompts');
-
-                      const data = await response.json();
-                      setSoraPrompts(data.prompts || []);
-                      
-                      // Increment usage count (only for free users and anonymous users)
-                      if (!isPro) {
-                        const newCount = soraUsageCount + 1;
-                        setSoraUsageCount(newCount);
-                        
-                        // Save to BOTH device and user storage to prevent bypassing by signing in/out
-                        const deviceId = getDeviceId();
-                        const deviceUsageKey = `sora_usage_${deviceId}`;
-                        localStorage.setItem(deviceUsageKey, newCount.toString());
-                        
-                        // Also save to user-specific key if signed in
-                        if (user) {
-                          const userUsageKey = `sora_usage_user_${user.id}`;
-                          localStorage.setItem(userUsageKey, newCount.toString());
-                        }
-                      }
-                    } catch (error) {
-                      console.error('Error generating Sora prompts:', error);
-                      alert('Failed to generate prompts. Please try again.');
-                    } finally {
-                      setIsGeneratingSora(false);
-                    }
-                  }} className="space-y-4">
-                    <div className="space-y-2">
-                      <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                        Video Concept <span className="text-red-500">*</span>
-                      </label>
-                      <textarea
-                        value={soraVideoIdea}
-                        onChange={(e) => setSoraVideoIdea(e.target.value)}
-                        placeholder="Describe your video idea... (e.g., 'A serene morning in Tokyo, cherry blossoms falling')"
-                        required
-                        rows={3}
-                        className="w-full rounded-lg px-4 py-3 focus:outline-none border"
-                        style={{
-                          backgroundColor: 'var(--card-bg)',
-                          borderColor: 'rgba(139, 92, 246, 0.3)',
-                          color: 'var(--text-primary)',
-                          resize: 'vertical',
-                          boxShadow: '0 0 0 0 rgba(139, 92, 246, 0)',
-                          transition: 'border-color 0.2s, box-shadow 0.2s',
-                        }}
-                        onFocus={(e) => {
-                          e.currentTarget.style.borderColor = '#8B5CF6';
-                          e.currentTarget.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.2), 0 0 15px rgba(139, 92, 246, 0.3)';
-                        }}
-                        onBlur={(e) => {
-                          e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                          e.currentTarget.style.boxShadow = '0 0 0 0 rgba(139, 92, 246, 0)';
-                        }}
-                      />
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                          Visual Style
-                        </label>
-                        <select
-                          value={soraStyle}
-                          onChange={(e) => setSoraStyle(e.target.value)}
-                          className="w-full rounded-lg px-4 py-3 focus:outline-none border"
-                          style={{
-                            backgroundColor: 'var(--card-bg)',
-                            borderColor: 'rgba(139, 92, 246, 0.3)',
-                            color: 'var(--text-primary)',
-                            boxShadow: '0 0 0 0 rgba(139, 92, 246, 0)',
-                            transition: 'border-color 0.2s, box-shadow 0.2s',
-                          }}
-                          onFocus={(e) => {
-                            e.currentTarget.style.borderColor = '#8B5CF6';
-                            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.2), 0 0 15px rgba(139, 92, 246, 0.3)';
-                          }}
-                          onBlur={(e) => {
-                            e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(139, 92, 246, 0)';
-                          }}
-                        >
-                          <option value="">Select style</option>
-                          <option value="cinematic">Cinematic</option>
-                          <option value="photorealistic">Photorealistic</option>
-                          <option value="animated">Animated</option>
-                          <option value="surreal">Surreal</option>
-                          <option value="documentary">Documentary</option>
-                          <option value="vintage">Vintage Film</option>
-                          <option value="hyperrealistic">Hyperrealistic</option>
-                          <option value="security-camera">Security Camera</option>
-                          <option value="ring-camera">Ring Camera</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                          Camera Movement
-                        </label>
-                        <select
-                          value={soraCameraMovement}
-                          onChange={(e) => setSoraCameraMovement(e.target.value)}
-                          className="w-full rounded-lg px-4 py-3 focus:outline-none border"
-                          style={{
-                            backgroundColor: 'var(--card-bg)',
-                            borderColor: 'rgba(139, 92, 246, 0.3)',
-                            color: 'var(--text-primary)',
-                            boxShadow: '0 0 0 0 rgba(139, 92, 246, 0)',
-                            transition: 'border-color 0.2s, box-shadow 0.2s',
-                          }}
-                          onFocus={(e) => {
-                            e.currentTarget.style.borderColor = '#8B5CF6';
-                            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.2), 0 0 15px rgba(139, 92, 246, 0.3)';
-                          }}
-                          onBlur={(e) => {
-                            e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(139, 92, 246, 0)';
-                          }}
-                        >
-                          <option value="">Select movement</option>
-                          <option value="static">Static Shot</option>
-                          <option value="slow-pan">Slow Pan</option>
-                          <option value="tracking">Tracking Shot</option>
-                          <option value="aerial">Aerial/Drone</option>
-                          <option value="handheld">Handheld</option>
-                          <option value="crane">Crane Shot</option>
-                          <option value="dolly">Dolly Zoom</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="block text-sm font-medium" style={{ color: 'var(--text-secondary)' }}>
-                          Mood/Tone
-                        </label>
-                        <select
-                          value={soraMood}
-                          onChange={(e) => setSoraMood(e.target.value)}
-                          className="w-full rounded-lg px-4 py-3 focus:outline-none border"
-                          style={{
-                            backgroundColor: 'var(--card-bg)',
-                            borderColor: 'rgba(139, 92, 246, 0.3)',
-                            color: 'var(--text-primary)',
-                            boxShadow: '0 0 0 0 rgba(139, 92, 246, 0)',
-                            transition: 'border-color 0.2s, box-shadow 0.2s',
-                          }}
-                          onFocus={(e) => {
-                            e.currentTarget.style.borderColor = '#8B5CF6';
-                            e.currentTarget.style.boxShadow = '0 0 0 3px rgba(139, 92, 246, 0.2), 0 0 15px rgba(139, 92, 246, 0.3)';
-                          }}
-                          onBlur={(e) => {
-                            e.currentTarget.style.borderColor = 'rgba(139, 92, 246, 0.3)';
-                            e.currentTarget.style.boxShadow = '0 0 0 0 rgba(139, 92, 246, 0)';
-                          }}
-                        >
-                          <option value="">Select mood</option>
-                          <option value="peaceful">Peaceful</option>
-                          <option value="dramatic">Dramatic</option>
-                          <option value="energetic">Energetic</option>
-                          <option value="mysterious">Mysterious</option>
-                          <option value="uplifting">Uplifting</option>
-                          <option value="melancholic">Melancholic</option>
-                          <option value="suspenseful">Suspenseful</option>
-                          <option value="funny">Funny</option>
-                          <option value="strange">Strange</option>
-                          <option value="hyper-experimental">Hyper Experimental</option>
-                          <option value="hyper-bizarre">Hyper Bizarre</option>
-                        </select>
-                      </div>
-                    </div>
-
-                    <button
-                      type="submit"
-                      disabled={isGeneratingSora || !soraVideoIdea}
-                      className="w-full py-4 rounded-lg font-bold transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 shadow-lg"
-                      style={{
-                        background: 'linear-gradient(135deg, #8B5CF6, #6366F1, #3B82F6)',
-                        color: 'white'
-                      }}
-                    >
-                      {isGeneratingSora ? (
-                        <>
-                          <span className="animate-spin">🎬</span>
-                          Generating Prompts...
-                        </>
-                      ) : (
-                        <>
-                          ✨ Generate Sora Prompts
-                        </>
-                      )}
-                    </button>
-                  </form>
-
-                  {/* Generated Prompts */}
-                  {soraPrompts.length > 0 && (
-                    <div className="space-y-4">
-                      <div className="flex items-center justify-between">
-                        <h3 className="text-xl font-bold flex items-center gap-2" style={{ color: 'var(--secondary)' }}>
-                          <span>📝</span> Generated Prompts
-                        </h3>
-                        <button
-                          onClick={() => setSoraPrompts([])}
-                          className="px-4 py-2 rounded-lg font-medium transition-all hover:scale-105 flex items-center gap-2"
-                          style={{
-                            backgroundColor: theme === 'dark' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.05)',
-                            borderColor: 'rgba(239, 68, 68, 0.3)',
-                            border: '1px solid',
-                            color: '#ef4444'
-                          }}
-                        >
-                          🗑️ Clear Prompts
-                        </button>
-                      </div>
-                      <div className="grid gap-4">
-                        {soraPrompts.map((prompt, index) => (
-                          <div 
-                            key={index}
-                            className="rounded-xl p-5 border-2 relative group"
-                            style={{
-                              backgroundColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.05)' : 'rgba(139, 92, 246, 0.03)',
-                              borderColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.3)' : 'rgba(139, 92, 246, 0.2)'
-                            }}
-                          >
-                            <div className="flex items-start justify-between gap-3 mb-3">
-                              <h4 className="font-bold text-lg" style={{ color: '#8B5CF6' }}>
-                                Prompt {index + 1}: {prompt.title}
-                              </h4>
-                              <button
-                                onClick={() => {
-                                  navigator.clipboard.writeText(prompt.prompt);
-                                }}
-                                className="px-3 py-1.5 rounded-lg transition-all hover:scale-105 flex items-center gap-1.5 text-sm font-medium"
-                                style={{
-                                  background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
-                                  color: 'white'
-                                }}
-                              >
-                                📋 Copy
-                              </button>
-                            </div>
-                            <p className="text-sm leading-relaxed mb-3 p-3 rounded-lg" style={{ 
-                              color: 'var(--text-primary)',
-                              backgroundColor: theme === 'dark' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.5)'
-                            }}>
-                              {prompt.prompt}
-                            </p>
-                            <div className="flex flex-wrap gap-2 text-xs">
-                              {prompt.tags && prompt.tags.map((tag: string, tagIndex: number) => (
-                                <span 
-                                  key={tagIndex}
-                                  className="px-2 py-1 rounded-full"
-                                  style={{
-                                    backgroundColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.15)' : 'rgba(139, 92, 246, 0.1)',
-                                    color: '#8B5CF6'
-                                  }}
-                                >
-                                  {tag}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Empty State */}
-                  {soraPrompts.length === 0 && !isGeneratingSora && (
-                    <div className="text-center py-12">
-                      <div className="text-6xl mb-4">🎬</div>
-                      <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                        Ready to create stunning video prompts?
-                      </h3>
-                      <p style={{ color: 'var(--text-secondary)' }}>
-                        Describe your video concept and we'll generate professional Sora prompts
-                      </p>
-                    </div>
-                  )}
-                </div>
-            </div>
+            </Link>
           </div>
         )}
 
-        </div>
-        {/* End Modules Container */}
-
-        {/* Researching State */}
-        {currentStep === "researching" && (
-          <div ref={strategyRef} className="mb-10 scroll-mt-4">
-            <div 
-              className="rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500"
-              style={{
-                backgroundColor: userType === 'creator' 
-                  ? 'rgba(218, 165, 32, 0.08)'
-                  : 'var(--card-bg)',
-                borderColor: userType === 'creator'
-                  ? 'rgba(218, 165, 32, 0.3)'
-                  : 'var(--card-border)',
-                boxShadow: userType === 'creator'
-                  ? '0 10px 40px rgba(218, 165, 32, 0.15)'
-                  : undefined
-              }}
-            >
-              <div className="text-center py-12">
-                <div className="text-6xl mb-6 animate-bounce">⚡</div>
-                <h2 className="text-3xl font-bold mb-4 transition-colors duration-500" style={{ 
-                  color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
-                }}>
-                  {userType === 'business' ? 'Creating Your Strategy...' : 'Researching Creator Insights...'}
-                </h2>
-                <p className="mb-8" style={{ color: 'var(--text-secondary)' }}>
-                  {userType === 'business' 
-                    ? `Finding the best tactics for ${businessInfo.businessName} on ${businessInfo.platform}`
-                    : `Analyzing ${businessInfo.businessType} trends and building your content strategy...`
-                  }
-                </p>
-
-                <div className="max-w-md mx-auto space-y-4">
-                  <div className="flex items-center justify-between text-sm mb-2">
-                    <span className="font-medium" style={{ color: 'var(--text-primary)' }}>
-                      {researchStatus}
-                    </span>
-                    <span className="font-bold transition-colors duration-500" style={{ 
-                      color: userType === 'creator' ? '#DAA520' : 'var(--primary)' 
-                    }}>
-                      {Math.round(researchProgress)}%
-                    </span>
-                  </div>
-                  {/* Progress bar container */}
-                  <div 
-                    className="w-full rounded-full overflow-hidden relative"
-                    style={{ 
-                      backgroundColor: 'var(--card-border)',
-                      height: '12px',
-                      boxShadow: 'inset 0 2px 4px rgba(0, 0, 0, 0.1)'
-                    }}
-                  >
-                    {/* Progress bar fill */}
-                    <div
-                      className="h-full rounded-full transition-all duration-700 ease-out relative overflow-hidden"
-                      style={{ 
-                        width: `${researchProgress}%`,
-                        background: userType === 'creator'
-                          ? 'linear-gradient(90deg, #DAA520 0%, #F4D03F 50%, #FFD700 100%)'
-                          : 'linear-gradient(90deg, #2979FF 0%, #6F7FFF 50%, #9F7AEA 100%)',
-                        boxShadow: userType === 'creator'
-                          ? '0 0 12px rgba(218, 165, 32, 0.5), 0 2px 4px rgba(218, 165, 32, 0.3)'
-                          : '0 0 12px rgba(41, 121, 255, 0.5), 0 2px 4px rgba(41, 121, 255, 0.3)'
-                      }}
-                    >
-                      {/* Shimmer effect */}
-                      <div 
-                        className="absolute inset-0 opacity-40"
-                        style={{
-                          background: 'linear-gradient(90deg, transparent 0%, rgba(255, 255, 255, 0.6) 50%, transparent 100%)',
-                          animation: 'shimmer 2s infinite ease-in-out',
-                          width: '50%'
-                        }}
-                      />
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* Step-by-Step Strategy Wizard */}
-        {strategy && currentStep !== "form" && currentStep !== "researching" && currentStep !== "premium" && currentStep !== "history" && currentStep !== "businesses" && (
-          <div ref={strategyRef} className="mb-10 scroll-mt-4">
-            <div 
-              className="rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-500"
-              style={{
-                backgroundColor: userType === 'creator' 
-                  ? 'rgba(218, 165, 32, 0.08)'
-                  : 'var(--card-bg)',
-                borderColor: userType === 'creator'
-                  ? 'rgba(218, 165, 32, 0.3)'
-                  : 'var(--card-border)',
-                boxShadow: userType === 'creator'
-                  ? '0 10px 40px rgba(218, 165, 32, 0.15)'
-                  : undefined
-              }}
-            >
-              {/* Progress Indicator */}
-              <div className="mb-6">
-                <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium text-gray-700">
-                    Step {Math.min(getStepNumber(), 4)} of 4
-                  </span>
-                  <span className="text-sm text-gray-500">
-                    {businessInfo.businessName} - {businessInfo.location}
-                  </span>
-                </div>
-                <div className="w-full bg-gray-200 rounded-full h-2">
-                  <div
-                    className="h-2 rounded-full transition-all duration-500"
-                    style={{ 
-                      width: `${(Math.min(getStepNumber(), 4) / 4) * 100}%`,
-                      background: userType === 'creator' 
-                        ? 'linear-gradient(to right, #DAA520, #F4D03F)'
-                        : '#2979FF'
-                    }}
-                  ></div>
-                </div>
-              </div>
-
-              {/* Step 1: Key Strategies */}
-              {currentStep === "principles" && strategy && strategy.keyPrinciples && strategy.contentIdeas && (
-                <div>
-                  <div className="mb-8">
-                    <h2 className="text-2xl sm:text-4xl font-bold mb-2 sm:mb-3 transition-colors duration-500" style={{ 
-                      color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
-                    }}>
-                      {userType === 'business' 
-                        ? `Your ${businessInfo.platform} Growth Strategy`
-                        : `Your ${businessInfo.platform} Creator Strategy`
-                      }
-                    </h2>
-                    <p className="text-sm sm:text-lg" style={{ color: 'var(--text-secondary)' }}>
-                      {userType === 'business'
-                        ? 'Simple, actionable tactics that actually work'
-                        : 'Expert insights to grow your channel and engage your audience'
-                      }
-                    </p>
-                  </div>
-
-                  <div className="rounded-xl sm:rounded-2xl p-4 sm:p-8 mb-5 sm:mb-8 border-l-4 transition-all duration-500" style={{ 
-                    background: userType === 'creator'
-                      ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.12) 0%, rgba(244, 208, 63, 0.12) 100%)'
-                      : 'linear-gradient(135deg, rgba(41, 121, 255, 0.08) 0%, rgba(111, 255, 210, 0.08) 100%)',
-                    borderColor: userType === 'creator' ? '#DAA520' : 'var(--accent)'
-                  }}>
-                    <div className="flex items-start">
-                      <span className="text-3xl sm:text-5xl mr-3 sm:mr-5">🎯</span>
-                      <div>
-                        <h3 className="font-bold text-base sm:text-xl mb-2 sm:mb-3 transition-colors duration-500" style={{ 
-                          color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
-                        }}>
-                          {userType === 'business' ? 'The Key to Success' : 'Your Creator Blueprint'}
-                        </h3>
-                        <p className="text-sm sm:text-lg leading-relaxed" style={{ color: 'var(--text-primary)' }}>{strategy.headlineSummary}</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Value Creation Message - Only for Creators */}
-                  {userType === 'creator' && (
-                    <div className="rounded-xl sm:rounded-2xl p-4 sm:p-8 mb-5 sm:mb-8 border-2" style={{
-                      background: 'linear-gradient(135deg, rgba(218, 165, 32, 0.15) 0%, rgba(244, 208, 63, 0.15) 100%)',
-                      borderColor: '#DAA520',
-                      boxShadow: '0 4px 16px rgba(218, 165, 32, 0.2)'
-                    }}>
-                      <div className="flex items-start gap-3 sm:gap-5">
-                        <span className="text-4xl sm:text-6xl">💎</span>
-                        <div>
-                          <h4 className="font-bold text-lg sm:text-2xl mb-2 sm:mb-4" style={{ color: '#DAA520' }}>
-                            The Golden Rule: Deliver Real Value
-                          </h4>
-                          <p className="text-sm sm:text-lg leading-relaxed mb-3 sm:mb-4" style={{ color: 'var(--text-primary)' }}>
-                            Whether you entertain, educate, or inspire — <span className="font-bold" style={{ color: '#DAA520' }}>the more value you provide, the faster your channel grows</span>. Every video should answer: "What does my viewer gain from watching this?"
-                          </p>
-                          <div className="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4 mt-3 sm:mt-4">
-                            <div className="flex items-start gap-2">
-                              <span className="text-xl sm:text-2xl">🎭</span>
-                              <div>
-                                <p className="font-semibold mb-1 text-sm sm:text-base" style={{ color: '#DAA520' }}>Entertainment Value</p>
-                                <p className="text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>Make them laugh, feel, or escape reality</p>
-                              </div>
-                            </div>
-                            <div className="flex items-start gap-2">
-                              <span className="text-xl sm:text-2xl">🎓</span>
-                              <div>
-                                <p className="font-semibold mb-1 text-sm sm:text-base" style={{ color: '#DAA520' }}>Utility Value</p>
-                                <p className="text-xs sm:text-sm" style={{ color: 'var(--text-secondary)' }}>Teach them something useful or solve a problem</p>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Experimentation Message - Only for Creators */}
-                  {userType === 'creator' && (
-                    <div className="rounded-xl p-4 sm:p-6 mb-5 sm:mb-8 border-l-4" style={{
-                      background: 'linear-gradient(135deg, rgba(218, 165, 32, 0.1) 0%, rgba(244, 208, 63, 0.1) 100%)',
-                      borderColor: '#DAA520'
-                    }}>
-                      <div className="flex items-start gap-3 sm:gap-4">
-                        <span className="text-3xl sm:text-4xl">🧪</span>
-                        <div>
-                          <h4 className="font-bold text-base sm:text-lg mb-2" style={{ color: '#DAA520' }}>
-                            The Power of Experimentation
-                          </h4>
-                          <p className="text-sm sm:text-base leading-relaxed mb-2 sm:mb-3" style={{ color: 'var(--text-primary)' }}>
-                            Experimentation is often how creators reach new heights. By leveraging your unique creativity and trying new formats, styles, and approaches, you'll discover what truly resonates with your audience. Don't be afraid to break your own rules and test new ideas — that's where breakthrough content lives.
-                          </p>
-                          <p className="text-sm sm:text-base leading-relaxed italic" style={{ color: 'var(--text-primary)', opacity: 0.9 }}>
-                            Remember: sometimes the most chaotic, unplanned moments create the most viral, memorable content. Embrace the unexpected — it's often your greatest creative asset.
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="mb-6 sm:mb-10">
-                    <h3 className="text-xl sm:text-2xl font-bold mb-4 sm:mb-6 flex items-center transition-colors duration-500" style={{ 
-                      color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
-                    }}>
-                      <span className="text-2xl sm:text-3xl mr-2 sm:mr-3">⚡</span>
-                      {userType === 'business' ? '5 Strategies to Grow Your Audience' : '5 Key Creator Strategies'}
-                    </h3>
-                    <div className="space-y-2 sm:space-y-3">
-                      {strategy.keyPrinciples.map((principle, index) => (
-                        <div 
-                          key={index} 
-                          className="rounded-lg sm:rounded-xl p-4 sm:p-6 border transition-all duration-500 hover:scale-[1.02] cursor-default"
-                          style={{
-                            backgroundColor: userType === 'creator' 
-                              ? 'rgba(218, 165, 32, 0.05)'
-                              : 'var(--card-bg)',
-                            borderColor: userType === 'creator'
-                              ? 'rgba(218, 165, 32, 0.2)'
-                              : 'var(--card-border)',
-                            boxShadow: userType === 'creator'
-                              ? '0 2px 8px rgba(218, 165, 32, 0.1)'
-                              : '0 1px 3px rgba(0,0,0,0.05)'
-                          }}
-                        >
-                          <div className="flex items-start gap-3 sm:gap-4">
-                            <div 
-                              className="rounded-full w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center font-bold flex-shrink-0 text-sm sm:text-lg transition-all duration-500"
-                              style={{
-                                background: userType === 'creator' 
-                                  ? 'linear-gradient(135deg, #DAA520 0%, #F4D03F 100%)'
-                                  : 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)',
-                                color: userType === 'creator' ? '#1A1F2E' : 'white'
-                              }}
-                            >
-                              {index + 1}
-                            </div>
-                            <p className="text-sm sm:text-base leading-relaxed pt-0.5 sm:pt-1" style={{ color: 'var(--text-primary)' }}>{principle}</p>
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-xl p-6 mb-8 border-l-4" style={{ 
-                    backgroundColor: '#FEF3C7',
-                    borderColor: '#F59E0B'
-                  }}>
-                    <div className="flex items-start gap-4">
-                      <span className="text-3xl">💡</span>
-                      <div>
-                        <h4 className="font-bold text-lg mb-2" style={{ color: '#92400E' }}>Pro Tip</h4>
-                        <p style={{ color: '#78350F' }}>
-                          Consistency beats perfection. Post regularly, engage authentically, and your audience will grow!
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={handleNextStep}
-                    className="w-full text-lg py-4 rounded-lg font-bold transition-all duration-500 hover:scale-105 active:scale-95 shadow-lg"
-                    style={{
-                      background: userType === 'creator'
-                        ? 'linear-gradient(to right, #DAA520, #F4D03F)'
-                        : 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                      color: userType === 'creator' ? '#1A1F2E' : 'white',
-                      boxShadow: userType === 'creator'
-                        ? '0 8px 20px rgba(218, 165, 32, 0.35)'
-                        : '0 8px 20px rgba(41, 121, 255, 0.3)'
-                    }}
-                  >
-                    {userType === 'business' ? 'Next: Choose Your Video Idea →' : 'Next: Pick Your Content →'}
-                  </button>
-                </div>
-              )}
-
-              {/* Step 2: Choose Video Idea */}
-              {currentStep === "choose-idea" && strategy && strategy.contentIdeas && (
-                <div>
-                  <h2 className="text-3xl font-bold mb-2 transition-colors duration-500" style={{ 
-                    color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
-                  }}>
-                    {userType === 'business' ? 'Choose Your Video Idea' : 'Pick Your Content Concept'}
-                  </h2>
-                  <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
-                    {userType === 'business'
-                      ? 'Select one idea to create content for. You\'ll record the video next.'
-                      : 'Choose a content idea that resonates with your goals. You\'ll craft your video next.'
-                    }
-                  </p>
-
-                  {/* Loading State - Beautiful Animated Emoji */}
-                  {isGeneratingIdeas && (
-                    <div className="flex flex-col items-center justify-center py-20 mb-6">
-                      <div className="text-8xl mb-6 animate-bounce">
-                        ✨
-                      </div>
-                      <h3 className="text-2xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                        Generating Fresh Ideas...
-                      </h3>
-                      <p style={{ color: 'var(--text-secondary)' }}>
-                        Creating amazing video concepts just for you
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Video Ideas Grid */}
-                  {!isGeneratingIdeas && (
-                    <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 mb-8 transition-all duration-300 ${
-                      ideasAnimation === 'fadeOut' ? 'animate-fade-out' : 
-                      ideasAnimation === 'fadeIn' ? 'animate-fade-in' : ''
-                    }`}>
-                    {strategy.contentIdeas.map((idea, index) => (
-                      <div
-                        key={index}
-                        onClick={() => handleSelectIdea(idea)}
-                        className="group relative border-2 rounded-2xl cursor-pointer transition-all duration-500 hover:scale-[1.02] active:scale-[0.98]"
-                        style={{
-                          backgroundColor: selectedIdea?.title === idea.title 
-                            ? (userType === 'creator' ? 'rgba(218, 165, 32, 0.15)' : 'rgba(41, 121, 255, 0.08)')
-                            : 'var(--card-bg)',
-                          borderColor: selectedIdea?.title === idea.title 
-                            ? (userType === 'creator' ? '#DAA520' : 'var(--primary)')
-                            : (userType === 'creator' ? 'rgba(218, 165, 32, 0.4)' : 'var(--card-border)'),
-                          boxShadow: selectedIdea?.title === idea.title 
-                            ? (userType === 'creator' ? '0 10px 30px rgba(218, 165, 32, 0.35), 0 0 0 1px rgba(218, 165, 32, 0.5)' : '0 10px 30px rgba(41, 121, 255, 0.25)')
-                            : '0 4px 12px rgba(0,0,0,0.12)',
-                          transform: selectedIdea?.title === idea.title ? 'translateY(-2px)' : 'none',
-                          padding: '1.5rem'
-                        }}
-                      >
-                        {/* Badge positioned at top right */}
-                        <div className="flex justify-end mb-4">
-                          <Badge variant={idea.angle}>
-                            {idea.angle.replace(/_/g, " ")}
-                          </Badge>
-                        </div>
-                        
-                        {/* Title - matching business card style */}
-                        <h4 
-                          className="font-bold mb-4 transition-colors duration-500" 
-                          style={{ 
-                            color: selectedIdea?.title === idea.title 
-                              ? (userType === 'creator' ? '#DAA520' : 'var(--primary)')
-                              : 'var(--text-primary)',
-                            fontSize: '1.125rem',
-                            lineHeight: '1.4',
-                            letterSpacing: '0',
-                            fontWeight: '700'
-                          }}
-                        >
-                          {idea.title}
-                        </h4>
-                        
-                        {/* Description - matching business card style */}
-                        <p 
-                          className="leading-relaxed" 
-                          style={{ 
-                            color: 'var(--text-secondary)',
-                            fontSize: '0.875rem',
-                            lineHeight: '1.5',
-                            letterSpacing: '0',
-                            margin: 0
-                          }}
-                        >
-                          {idea.description}
-                        </p>
-                        
-                        {/* Selected indicator */}
-                        {selectedIdea?.title === idea.title && (
-                          <div className="absolute -top-2 -right-2 w-10 h-10 rounded-full flex items-center justify-center transition-all duration-500 shadow-lg" style={{ 
-                            background: userType === 'creator' 
-                              ? 'linear-gradient(135deg, #DAA520, #F4D03F)'
-                              : 'linear-gradient(135deg, #2979FF, #4A9FFF)',
-                            boxShadow: userType === 'creator'
-                              ? '0 4px 12px rgba(218, 165, 32, 0.5)'
-                              : '0 4px 12px rgba(41, 121, 255, 0.5)'
-                          }}>
-                            <span className="text-white text-xl font-bold">✓</span>
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                    </div>
-                  )}
-
-                  {/* Generate More Ideas Button - Floating */}
-                  <div className="mb-6 flex items-center justify-end gap-4">
-                    <button
-                      onClick={async () => {
-                        // Check if user has exceeded free limit (2 free generates)
-                        if (generateIdeasCount >= 2 && !isPro) {
-                          setModalState({
-                            isOpen: true,
-                            title: "Pro Feature",
-                            message: "You've used your 2 free idea generations. Upgrade to PostReady Pro for unlimited video ideas?",
-                            type: 'confirm',
-                            onConfirm: scrollToPremium,
-                            confirmText: "Upgrade Now"
-                          });
-                          return;
-                        }
-
-                        // Generate ideas with smooth animation
-                        if (!businessInfo.businessName) {
-                          showNotification("Please fill in your business information first.", "error", "Error");
-                          return;
-                        }
-                        
-                        setIsRewriting(true);
-                        setIdeasAnimation('fadeOut');
-                        
-                        try {
-                          // Wait for fade out animation
-                          await new Promise(resolve => setTimeout(resolve, 300));
-                          
-                          // Show loading state
-                          setIsGeneratingIdeas(true);
-                          
-                          const response = await fetch("/api/research-business", {
-                            method: "POST",
-                            headers: {
-                              "Content-Type": "application/json",
-                            },
-                            body: JSON.stringify({ businessInfo }),
-                          });
-
-                          if (!response.ok) {
-                            let errorMessage = `Failed to generate more ideas: ${response.status} ${response.statusText}`;
-                            try {
-                              const errorText = await response.text();
-                              try {
-                                const errorData = JSON.parse(errorText);
-                                errorMessage = errorData.error || errorMessage;
-                              } catch {
-                                errorMessage = errorText || errorMessage;
-                              }
-                            } catch {
-                              // Use default error message
-                            }
-                            console.error("API Error:", errorMessage);
-                            throw new Error(errorMessage);
-                          }
-
-                          const data = await response.json();
-                          
-                          // Hide loading state
-                          setIsGeneratingIdeas(false);
-                          
-                          // CRITICAL: Validate AI-generated ideas
-                          if (!data.research || !data.research.contentIdeas || !Array.isArray(data.research.contentIdeas)) {
-                            console.error("❌ CRITICAL ERROR: Invalid ideas data received from API");
-                            throw new Error("API returned invalid ideas. Never use generic fallback.");
-                          }
-                          
-                          console.log("✅ Generated", data.research.contentIdeas.length, "new contextual ideas");
-                          
-                          // Update businessInfo with detected type if available
-                          if (data.detectedBusinessType) {
-                            setBusinessInfo(prev => ({
-                              ...prev,
-                              detectedBusinessType: data.detectedBusinessType
-                            }));
-                          }
-                          
-                          // Update strategy with new AI-generated ideas
-                          setStrategy(data.research);
-                          setSelectedIdea(null);
-                          
-                          // Increment usage count for non-Pro users
-                          if (!isPro) {
-                            setGenerateIdeasCount(prev => prev + 1);
-                          }
-                          
-                          // Start fade in animation
-                          setIdeasAnimation('fadeIn');
-                          
-                          // Show success notification
-                          showNotification("New video ideas generated!", "success", "Success");
-                          
-                          // Reset animation after fade in completes
-                          setTimeout(() => {
-                            setIdeasAnimation('idle');
-                          }, 500);
-                        } catch (error) {
-                          console.error("Error generating more ideas:", error);
-                          showNotification("Failed to generate more ideas. Please try again.", "error", "Error");
-                          setIdeasAnimation('idle');
-                          setIsGeneratingIdeas(false);
-                        } finally {
-                          setIsRewriting(false);
-                        }
-                      }}
-                      disabled={isRewriting || isGeneratingIdeas}
-                      className={`px-8 py-4 rounded-2xl font-bold text-base transition-all duration-300 shadow-2xl hover:shadow-2xl hover:scale-[1.02] active:scale-[0.98] flex items-center gap-3 relative overflow-hidden ${
-                        isRewriting || isGeneratingIdeas
-                          ? "bg-gray-400 text-white cursor-not-allowed"
-                          : "text-white"
-                      }`}
-                      style={!isRewriting && !isGeneratingIdeas ? { 
-                        background: 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 50%, #6FFFD2 100%)',
-                        border: '2px solid rgba(111, 255, 210, 0.8)',
-                        boxShadow: '0 8px 25px rgba(41, 121, 255, 0.5), 0 0 40px rgba(111, 255, 210, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)',
-                        textShadow: '0 2px 4px rgba(0, 0, 0, 0.2)'
-                      } : {}}
-                      onMouseEnter={(e) => {
-                        if (!isRewriting && !isGeneratingIdeas) {
-                          e.currentTarget.style.background = 'linear-gradient(135deg, #1e5dd9 0%, #2979FF 50%, #4A9FFF 100%)';
-                          e.currentTarget.style.borderColor = 'rgba(111, 255, 210, 1)';
-                          e.currentTarget.style.boxShadow = '0 12px 35px rgba(41, 121, 255, 0.6), 0 0 60px rgba(111, 255, 210, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.3)';
-                          e.currentTarget.style.transform = 'scale(1.02) translateY(-2px)';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (!isRewriting && !isGeneratingIdeas) {
-                          e.currentTarget.style.background = 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 50%, #6FFFD2 100%)';
-                          e.currentTarget.style.borderColor = 'rgba(111, 255, 210, 0.8)';
-                          e.currentTarget.style.boxShadow = '0 8px 25px rgba(41, 121, 255, 0.5), 0 0 40px rgba(111, 255, 210, 0.3), inset 0 1px 0 rgba(255, 255, 255, 0.2)';
-                          e.currentTarget.style.transform = 'scale(1) translateY(0)';
-                        }
-                      }}
-                    >
-                      {isRewriting ? (
-                        "Generating..."
-                      ) : generateIdeasCount >= 2 && !isPro ? (
-                        <>
-                          <span className="mr-2">🔒</span>
-                          Pro: Unlimited Ideas
-                        </>
-                      ) : isPro ? (
-                        <>
-                          <span className="mr-2">🎬</span>
-                          Generate More Ideas
-                        </>
-                      ) : (
-                        <>
-                          <span className="mr-2">🎬</span>
-                          Generate More Ideas
-                        </>
-                      )}
-                    </button>
-                  </div>
-
-                  {/* Guide AI Button for Video Ideas */}
-                  <div className="mb-6 flex items-center justify-center">
-                    <div className="relative guide-ai-ideas-container">
-                      <button
-                        onClick={() => {
-                          if (guideAIForIdeasCount >= 3 && !isPro) {
-                            setModalState({
-                              isOpen: true,
-                              title: userType === 'creator' ? "Upgrade to Creator" : "Upgrade to PostReady Pro",
-                              message: userType === 'creator' 
-                                ? "You've used your 3 free Guide AI uses for video ideas. Upgrade to Creator for unlimited Guide AI and more features!"
-                                : "You've used your 3 free Guide AI uses for video ideas. Upgrade to PostReady Pro for unlimited Guide AI and more features!",
-                              type: 'confirm',
-                              onConfirm: scrollToPremium,
-                              confirmText: userType === 'creator' ? "View Creator Plan" : "View Pro Plan"
-                            });
-                            return;
-                          }
-                          setShowGuideAIForIdeas(!showGuideAIForIdeas);
-                        }}
-                        disabled={guideAIForIdeasCount >= 3 && !isPro}
-                        className={`px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                          guideAIForIdeasCount >= 3 && !isPro ? '' : ''
-                        }`}
-                        style={guideAIForIdeasCount >= 3 && !isPro ? {
-                          backgroundColor: 'transparent',
-                          borderColor: '#94a3b8',
-                          color: '#94a3b8'
-                        } : { 
-                          backgroundColor: 'transparent',
-                          borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
-                          color: userType === 'creator' ? '#DAA520' : '#2979FF'
-                        }}
-                        title={!isPro && guideAIForIdeasCount < 3 ? `${3 - guideAIForIdeasCount} Guide AI uses left` : ''}
-                      >
-                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                        </svg>
-                        Guide AI
-                        {!isPro && guideAIForIdeasCount < 3 && (
-                          <span className="text-xs px-1.5 py-0.5 rounded" style={{ 
-                            backgroundColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.15)' : 'rgba(41, 121, 255, 0.15)',
-                            color: userType === 'creator' ? '#DAA520' : '#2979FF'
-                          }}>
-                            {3 - guideAIForIdeasCount}
-                          </span>
-                        )}
-                      </button>
-                      {showGuideAIForIdeas && (
-                        <div 
-                          className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-80 rounded-lg shadow-2xl border-2 p-4 z-50 guide-ai-ideas-container"
-                          style={{
-                            backgroundColor: 'var(--card-bg)',
-                            borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.3)',
-                            boxShadow: userType === 'creator' 
-                              ? '0 10px 40px rgba(218, 165, 32, 0.2)' 
-                              : '0 10px 40px rgba(41, 121, 255, 0.2)'
-                          }}
-                        >
-                          <div className="mb-3">
-                            <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-                              Tell the AI how to adjust the video ideas:
-                            </label>
-                            <textarea
-                              value={aiGuidanceForIdeas}
-                              onChange={(e) => setAiGuidanceForIdeas(e.target.value)}
-                              onKeyDown={(e) => {
-                                if (e.key === 'Enter' && !e.shiftKey) {
-                                  e.preventDefault();
-                                  if (aiGuidanceForIdeas.trim() && !isGeneratingIdeas) {
-                                    handleGenerateIdeasWithGuidance(aiGuidanceForIdeas.trim());
-                                  }
-                                }
-                              }}
-                              placeholder="e.g., 'Make them more casual and fun', 'Focus on behind-the-scenes content', 'Make them shorter and simpler', 'Add more educational tips'"
-                              rows={3}
-                              className="w-full px-3 py-2 rounded-lg border-2 resize-none focus:outline-none text-sm"
-                              style={{
-                                backgroundColor: theme === 'dark' ? 'rgba(30, 37, 50, 0.85)' : 'white',
-                                borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)',
-                                color: theme === 'dark' ? 'var(--text-primary)' : '#1a1a1a'
-                              }}
-                              onFocus={(e) => {
-                                e.target.style.boxShadow = userType === 'creator' 
-                                  ? '0 0 0 2px rgba(218, 165, 32, 0.5)' 
-                                  : '0 0 0 2px rgba(41, 121, 255, 0.5)';
-                              }}
-                              onBlur={(e) => {
-                                e.target.style.boxShadow = 'none';
-                              }}
-                            />
-                          </div>
-                          <div className="flex gap-2">
-                            <button
-                              onClick={() => {
-                                if (aiGuidanceForIdeas.trim()) {
-                                  if (!isPro) {
-                                    setGuideAIForIdeasCount(prev => prev + 1);
-                                  }
-                                  handleGenerateIdeasWithGuidance(aiGuidanceForIdeas.trim());
-                                }
-                              }}
-                              disabled={!aiGuidanceForIdeas.trim() || isGeneratingIdeas}
-                              className="flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                              style={{ 
-                                backgroundColor: userType === 'creator' ? '#DAA520' : '#2979FF'
-                              }}
-                            >
-                              Apply & Generate
-                            </button>
-                            <button
-                              onClick={() => {
-                                setShowGuideAIForIdeas(false);
-                                setAiGuidanceForIdeas("");
-                              }}
-                              className="px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2"
-                              style={{
-                                borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
-                                color: userType === 'creator' ? '#DAA520' : '#2979FF',
-                                backgroundColor: 'transparent'
-                              }}
-                            >
-                              Cancel
-                            </button>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4">
-                    <button
-                      onClick={handlePreviousStep}
-                      className="flex-1 border-2 rounded-xl px-6 py-3 font-bold transition-all duration-500 shadow-sm hover:shadow-md hover:scale-105"
-                      style={{
-                        borderColor: userType === 'creator' ? '#DAA520' : 'var(--primary)',
-                        color: userType === 'creator' ? '#DAA520' : 'var(--primary)',
-                        backgroundColor: userType === 'creator' 
-                          ? 'rgba(218, 165, 32, 0.05)'
-                          : 'rgba(41, 121, 255, 0.05)'
-                      }}
-                    >
-                      ← Back
-                    </button>
-                    <button
-                      onClick={handleNextStep}
-                      className="flex-1 rounded-xl px-6 py-3 font-bold transition-all duration-500 shadow-md hover:shadow-lg hover:scale-105"
-                      style={{
-                        background: userType === 'creator'
-                          ? 'linear-gradient(to right, #DAA520, #F4D03F)'
-                          : 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                        color: userType === 'creator' ? '#1A1F2E' : 'white'
-                      }}
-                    >
-                      {userType === 'business' ? 'Next: Record Video →' : 'Next: Create Content →'}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-
-              {/* Step 3: Record Video */}
-              {currentStep === "record-video" && selectedIdea && (
-                <div className="text-center py-8">
-                  <div className="text-6xl mb-6">🎥</div>
-                  <h2 className="text-3xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
-                    Time to Record Your Video!
-                  </h2>
-                  
-                  <div className="max-w-2xl mx-auto mb-8">
-                    <div className="border-2 rounded-lg p-6 mb-4" style={{ 
-                      backgroundColor: userType === 'creator' 
-                        ? 'rgba(218, 165, 32, 0.1)'
-                        : 'rgba(99, 102, 241, 0.1)',
-                      borderColor: userType === 'creator'
-                        ? 'rgba(218, 165, 32, 0.3)'
-                        : 'rgba(99, 102, 241, 0.3)'
-                    }}>
-                      <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-                        Your Selected Idea:
-                      </h3>
-                      <p className="text-lg font-medium mb-2" style={{ 
-                        color: userType === 'creator' ? '#DAA520' : 'var(--primary)'
-                      }}>
-                        {selectedIdea.title}
-                      </p>
-                      <p style={{ color: 'var(--text-secondary)' }}>
-                        {selectedIdea.description}
-                      </p>
-                    </div>
-
-                    {/* Regenerate Idea Button */}
-                    <div className="mb-6">
-                      <button
-                        onClick={handleRegenerateIdea}
-                        className={`w-full px-4 py-3 rounded-lg font-bold transition-all shadow-sm hover:shadow-md hover:scale-105 ${
-                          regenerateCount >= 2 && !isPro
-                            ? userType === 'creator'
-                              ? "bg-gradient-to-r from-amber-500 to-yellow-500 text-white hover:from-amber-600 hover:to-yellow-600"
-                              : "bg-gradient-to-r from-amber-500 to-blue-600 text-white hover:from-amber-600 hover:to-blue-700"
-                            : ""
-                        }`}
-                        style={regenerateCount < 2 || isPro ? {
-                          borderWidth: '2px',
-                          borderStyle: 'solid',
-                          borderColor: userType === 'creator' ? '#DAA520' : '#2563eb',
-                          color: userType === 'creator' ? '#DAA520' : '#2563eb',
-                          backgroundColor: userType === 'creator' 
-                            ? 'rgba(218, 165, 32, 0.05)'
-                            : 'rgba(37, 99, 235, 0.05)'
-                        } : {}}
-                      >
-                        {regenerateCount >= 2 && !isPro
-                          ? "🔒 Pro: Unlimited Ideas"
-                          : <span className="flex items-center justify-center gap-2">
-                              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                              </svg>
-                              Regenerate Idea
-                            </span>}
-                      </button>
-                      {regenerateCount >= 2 && !isPro && (
-                        <p className="text-xs text-gray-600 text-center mt-2">
-                          You've used your 2 free regenerations
-                        </p>
-                      )}
-                      {regenerateCount > 0 && regenerateCount < 2 && !isPro && (
-                        <p className="text-xs text-gray-600 text-center mt-2">
-                          {2 - regenerateCount} free regeneration{2 - regenerateCount !== 1 ? 's' : ''} remaining
-                        </p>
-                      )}
-                    </div>
-
-                    {/* Recording Instructions - Simplified */}
-                    <div className="rounded-xl p-8 mb-8 border-2 transition-all duration-500 text-center" style={{
-                      background: userType === 'creator'
-                        ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.08) 0%, rgba(244, 208, 63, 0.08) 100%)'
-                        : 'linear-gradient(135deg, rgba(41, 121, 255, 0.05) 0%, rgba(111, 255, 210, 0.05) 100%)',
-                      borderColor: userType === 'creator' 
-                        ? 'rgba(218, 165, 32, 0.3)'
-                        : 'rgba(41, 121, 255, 0.2)'
-                    }}>
-                      <div className="flex flex-col items-center">
-                        <span className="text-5xl mb-4">{userType === 'creator' ? '🎬' : '📱'}</span>
-                        <h4 className="font-bold text-2xl mb-4 transition-colors duration-500" style={{ 
-                          color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' 
-                        }}>
-                          {userType === 'business' ? 'Ready to Record?' : 'Ready to Create?'}
-                        </h4>
-                        <p className="text-lg mb-2 max-w-xl" style={{ color: 'var(--text-primary)' }}>
-                          {userType === 'business'
-                            ? <>Research shows that users prefer <span className="font-semibold" style={{ color: '#2979FF' }}>raw phone video</span> over heavily edited content.</>
-                            : <>Research repeatedly confirms that <span className="font-semibold transition-colors duration-500" style={{ color: userType === 'creator' ? '#DAA520' : '#2979FF' }}>authenticity drives engagement</span> faster than any other social media tactic.</>
-                          }
-                        </p>
-                        <div className="mt-5 pt-5 border-t-2 transition-colors duration-500" style={{
-                          borderColor: userType === 'creator'
-                            ? 'rgba(218, 165, 32, 0.2)'
-                            : 'rgba(41, 121, 255, 0.15)'
-                        }}>
-                          <p className="text-base flex items-center justify-center gap-2" style={{ color: 'var(--text-secondary)' }}>
-                            <span className="text-xl">💪</span>
-                            <span>{userType === 'business'
-                              ? "Don't overthink it — hit record and come back when you're done!"
-                              : "Go record your video, then come back to this page"
-                            }</span>
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div className="flex gap-4 max-w-md mx-auto">
-                    <button
-                      onClick={handlePreviousStep}
-                      className="flex-1 border-2 rounded-xl px-6 py-3 font-bold transition-all duration-500 shadow-sm hover:shadow-md hover:scale-105"
-                      style={{
-                        borderColor: userType === 'creator' ? '#DAA520' : 'var(--primary)',
-                        color: userType === 'creator' ? '#DAA520' : 'var(--primary)',
-                        backgroundColor: userType === 'creator' 
-                          ? 'rgba(218, 165, 32, 0.05)'
-                          : 'rgba(41, 121, 255, 0.05)'
-                      }}
-                    >
-                      ← Change Idea
-                    </button>
-                    <button
-                      onClick={handleNextStep}
-                      className="flex-1 rounded-xl px-6 py-3 font-bold transition-all duration-500 shadow-md hover:shadow-lg hover:scale-105"
-                      style={{
-                        background: userType === 'creator'
-                          ? 'linear-gradient(to right, #DAA520, #F4D03F)'
-                          : 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                        color: userType === 'creator' ? '#1A1F2E' : 'white'
-                      }}
-                    >
-                      {userType === 'business' ? "I'm Done Recording! →" : "I'm Done Creating! →"}
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {/* Generating Caption Loading Screen with Progress */}
-              {currentStep === "generating-caption" && (
-                <LoadingProgress />
-              )}
-
-              {/* Step 4: Post Details */}
-              {currentStep === "post-details" && (
-                <div className="max-w-4xl mx-auto animate-fade-in" style={{
-                  animation: 'fadeInUp 0.8s ease-out forwards',
-                  opacity: 0
-                }}>
-                  <h2 className="text-3xl font-bold mb-2" style={{ 
-                    color: 'var(--secondary)',
-                    animation: 'fadeInUp 0.8s ease-out 0.1s forwards',
-                    opacity: 0
-                  }}>
-                    Your Post is Ready! 🎉
-                  </h2>
-                  <p className="mb-8" style={{ 
-                    color: 'var(--text-secondary)',
-                    animation: 'fadeInUp 0.8s ease-out 0.2s forwards',
-                    opacity: 0
-                  }}>
-                    Copy your caption and post when the time is right
-                  </p>
-
-                  {!postDetails ? (
-                    <div className="text-center py-12">
-                      <div className="inline-block mb-6">
-                        <div className="w-16 h-16 border-4 rounded-full animate-spin" style={{ 
-                          borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.2)' : 'rgba(41, 121, 255, 0.2)',
-                          borderTopColor: userType === 'creator' ? '#DAA520' : '#2979FF'
-                        }}></div>
-                      </div>
-                      <p style={{ color: 'var(--text-secondary)' }}>
-                        Generating your caption...
-                      </p>
-                    </div>
-                  ) : (
-                    <>
-                      <div className="space-y-5" style={{
-                        animation: 'fadeInUp 0.8s ease-out 0.3s forwards',
-                        opacity: 0
-                      }}>
-                        {/* Best Times to Post */}
-                        <div className="rounded-xl p-5 border-2" style={{ 
-                          background: userType === 'creator'
-                            ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.08) 0%, rgba(244, 208, 63, 0.08) 100%)'
-                            : 'linear-gradient(135deg, rgba(41, 121, 255, 0.05) 0%, rgba(111, 255, 210, 0.05) 100%)',
-                          borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.2)',
-                          animation: 'fadeInUp 0.8s ease-out 0.4s forwards',
-                          opacity: 0
-                        }}>
-                          <h3 className="font-bold mb-4 flex items-center" style={{ color: 'var(--text-primary)' }}>
-                            <span className="text-2xl mr-2">📅</span>
-                            Best Times to Post
-                          </h3>
-                          <p className="text-sm mb-4" style={{ color: 'var(--text-secondary)' }}>
-                            Based on our analysis of the {businessInfo.location} market...
-                          </p>
-                          <div className="grid grid-cols-3 gap-3">
-                            {/* Morning */}
-                            <div className="relative group">
-                              <div className="rounded-lg p-3 text-center transition-all hover:scale-105 cursor-help" style={{ 
-                                background: userType === 'creator' ? 'rgba(218, 165, 32, 0.08)' : 'rgba(41, 121, 255, 0.08)',
-                                border: `1px solid ${userType === 'creator' ? 'rgba(218, 165, 32, 0.2)' : 'rgba(41, 121, 255, 0.2)'}`
-                              }}>
-                                <div className="font-bold text-sm mb-1" style={{ color: userType === 'creator' ? '#DAA520' : '#2979FF' }}>Morning</div>
-                                <div className="text-sm" style={{ color: 'var(--text-primary)' }}>8am - 10am</div>
-                              </div>
-                              {/* Tooltip */}
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-                                <div className="bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl">
-                                  <div className="font-bold mb-1">☀️ Morning Rush</div>
-                                  <div className="text-gray-300">
-                                    People check social media during breakfast and commutes. Perfect for catching early birds before their day gets busy.
-                                  </div>
-                                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-gray-900"></div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Afternoon */}
-                            <div className="relative group">
-                              <div className="rounded-lg p-3 text-center transition-all hover:scale-105 cursor-help" style={{ 
-                                background: userType === 'creator' ? 'rgba(218, 165, 32, 0.08)' : 'rgba(41, 121, 255, 0.08)',
-                                border: `1px solid ${userType === 'creator' ? 'rgba(218, 165, 32, 0.2)' : 'rgba(41, 121, 255, 0.2)'}`
-                              }}>
-                                <div className="font-bold text-sm mb-1" style={{ color: userType === 'creator' ? '#DAA520' : '#2979FF' }}>Afternoon</div>
-                                <div className="text-sm" style={{ color: 'var(--text-primary)' }}>2pm - 5pm</div>
-                              </div>
-                              {/* Tooltip */}
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-                                <div className="bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl">
-                                  <div className="font-bold mb-1">☕ Afternoon Break</div>
-                                  <div className="text-gray-300">
-                                    Lunch breaks and mid-day scrolling. High engagement as people take mental breaks from work or daily activities.
-                                  </div>
-                                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-gray-900"></div>
-                                </div>
-                              </div>
-                            </div>
-
-                            {/* Evening */}
-                            <div className="relative group">
-                              <div className="rounded-lg p-3 text-center transition-all hover:scale-105 cursor-help" style={{ 
-                                background: userType === 'creator' ? 'rgba(218, 165, 32, 0.08)' : 'rgba(41, 121, 255, 0.08)',
-                                border: `1px solid ${userType === 'creator' ? 'rgba(218, 165, 32, 0.2)' : 'rgba(41, 121, 255, 0.2)'}`
-                              }}>
-                                <div className="font-bold text-sm mb-1" style={{ color: userType === 'creator' ? '#DAA520' : '#2979FF' }}>Evening</div>
-                                <div className="text-sm" style={{ color: 'var(--text-primary)' }}>7pm - 8pm</div>
-                              </div>
-                              {/* Tooltip */}
-                              <div className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 w-64 opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none z-50">
-                                <div className="bg-gray-900 text-white text-xs rounded-lg p-3 shadow-xl">
-                                  <div className="font-bold mb-1">🌙 Peak Engagement</div>
-                                  <div className="text-gray-300">
-                                    Prime time when people unwind after dinner. Highest engagement and reach as audiences relax and scroll through content.
-                                  </div>
-                                  <div className="absolute bottom-0 left-1/2 transform -translate-x-1/2 translate-y-1/2 rotate-45 w-2 h-2 bg-gray-900"></div>
-                                </div>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Title */}
-                        <div className="rounded-xl p-6 border-2 shadow-sm" style={{ 
-                          background: userType === 'creator'
-                            ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.08) 0%, rgba(244, 208, 63, 0.08) 100%)'
-                            : 'linear-gradient(135deg, rgba(41, 121, 255, 0.04) 0%, rgba(111, 255, 210, 0.04) 100%)',
-                          borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.2)'
-                        }}>
-                          <div className="flex items-center justify-between mb-4">
-                            <h3 className="font-bold flex items-center text-lg" style={{ color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' }}>
-                              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 8h10M7 12h4m1 8l-4-4H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-3l-4 4z" />
-                              </svg>
-                              Post Title
-                            </h3>
-                            <button
-                              onClick={handleRewordTitle}
-                              disabled={isRewordingTitle}
-                              className={`px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 flex items-center gap-2 shadow-sm ${
-                                isRewordingTitle
-                                  ? "bg-gray-400 text-white cursor-not-allowed"
-                                  : rewordTitleCount >= 3 && !isPro
-                                  ? "text-white"
-                                  : "text-white"
-                              }`}
-                              style={!isRewordingTitle ? {
-                                backgroundColor: rewordTitleCount >= 3 && !isPro 
-                                  ? '#94a3b8' 
-                                  : userType === 'creator' ? '#DAA520' : '#2979FF'
-                              } : {}}
-                            >
-                              {isRewordingTitle ? (
-                                <>
-                                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                  </svg>
-                                  Rewording...
-                                </>
-                              ) : rewordTitleCount >= 3 && !isPro ? (
-                                <>
-                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                                  </svg>
-                                  Pro Only
-                                </>
-                              ) : (
-                                <>
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                  </svg>
-                                  Reword
-                                </>
-                              )}
-                            </button>
-                          </div>
-                          {!isPro && (
-                            <p className="text-xs mb-3 flex items-center gap-1" style={{ color: 'var(--text-secondary)' }}>
-                              <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 20 20">
-                                <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
-                              </svg>
-                              {rewordTitleCount >= 3 
-                                ? "You've used your 3 free rewords" 
-                                : `${3 - rewordTitleCount} ${3 - rewordTitleCount === 1 ? 'use' : 'uses'} left`}
-                            </p>
-                          )}
-                          <input
-                            type="text"
-                            value={postDetails.title}
-                            onChange={(e) => {
-                              const updatedDetails = { ...postDetails, title: e.target.value };
-                              setPostDetails(updatedDetails);
-                            }}
-                            onBlur={async () => {
-                              // Auto-save when user finishes editing
-                              if (user && selectedIdea && postDetails) {
-                                await saveCompletedPostToHistory(selectedIdea, postDetails);
-                              }
-                            }}
-                            className={`border-2 rounded-lg px-4 py-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all duration-300 ${
-                              titleAnimation === 'fadeOut' ? 'animate-fade-out' : 
-                              titleAnimation === 'fadeIn' ? 'animate-fade-in' : ''
-                            }`}
-                            style={{
-                              backgroundColor: theme === 'dark' ? 'rgba(30, 37, 50, 0.85)' : 'white',
-                              borderColor: 'rgba(41, 121, 255, 0.25)',
-                              color: theme === 'dark' ? 'var(--text-primary)' : '#1a1a1a',
-                              fontSize: '15px'
-                            }}
-                            placeholder="Enter your post title..."
-                          />
-                        </div>
-
-                        {/* Caption with Hashtags */}
-                        <div className="rounded-xl p-6 border-2 shadow-sm" style={{ 
-                          background: userType === 'creator'
-                            ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.08) 0%, rgba(244, 208, 63, 0.08) 100%)'
-                            : 'linear-gradient(135deg, rgba(41, 121, 255, 0.04) 0%, rgba(111, 255, 210, 0.04) 100%)',
-                          borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.2)'
-                        }}>
-                          <h3 className="font-bold mb-4 flex items-center text-lg" style={{ color: userType === 'creator' ? '#DAA520' : 'var(--secondary)' }}>
-                            <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                            </svg>
-                            Caption (Editable)
-                          </h3>
-                          <textarea
-                            value={postDetails.caption}
-                            onChange={(e) => {
-                              const updatedDetails = { ...postDetails, caption: e.target.value };
-                              setPostDetails(updatedDetails);
-                            }}
-                            onBlur={async (e) => {
-                              // Remove focus ring
-                              e.target.style.boxShadow = 'none';
-                              // Auto-save when user finishes editing
-                              if (user && selectedIdea && postDetails) {
-                                await saveCompletedPostToHistory(selectedIdea, postDetails);
-                              }
-                            }}
-                            rows={8}
-                            className={`border-2 rounded-lg px-4 py-3 w-full focus:outline-none resize-vertical transition-all duration-300 ${
-                              captionAnimation === 'fadeOut' ? 'animate-fade-out' : 
-                              captionAnimation === 'typing' ? 'animate-typing' : ''
-                            }`}
-                            style={{
-                              backgroundColor: theme === 'dark' ? 'rgba(30, 37, 50, 0.85)' : 'white',
-                              borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)',
-                              color: theme === 'dark' ? 'var(--text-primary)' : '#1a1a1a',
-                              fontSize: '14.5px',
-                              lineHeight: '1.6'
-                            }}
-                            onFocus={(e) => {
-                              e.target.style.boxShadow = userType === 'creator' 
-                                ? '0 0 0 2px rgba(218, 165, 32, 0.5)' 
-                                : '0 0 0 2px rgba(41, 121, 255, 0.5)';
-                            }}
-                            placeholder="Your caption with hashtags will appear here..."
-                          />
-                          
-                          {/* Action Buttons - Clean Compact Layout */}
-                          <div className="flex flex-wrap gap-2 mt-4 justify-center">
-                            <button
-                              onClick={handleCopyToClipboard}
-                              className="px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105 text-white flex items-center gap-2"
-                              style={{ backgroundColor: userType === 'creator' ? '#DAA520' : '#2979FF' }}
-                            >
-                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
-                              </svg>
-                              Copy
-                            </button>
-                            
-                            <div className="relative guide-ai-container">
-                              <button
-                                onClick={() => {
-                                  if (guideAICount >= 2 && !isPro) {
-                                    setModalState({
-                                      isOpen: true,
-                                      title: userType === 'creator' ? "Upgrade to Creator" : "Upgrade to PostReady Pro",
-                                      message: userType === 'creator' 
-                                        ? "You've used your 2 free Guide AI uses. Upgrade to Creator for unlimited Guide AI and more features!"
-                                        : "You've used your 2 free Guide AI uses. Upgrade to PostReady Pro for unlimited Guide AI and more features!",
-                                      type: 'confirm',
-                                      onConfirm: scrollToPremium,
-                                      confirmText: userType === 'creator' ? "View Creator Plan" : "View Pro Plan"
-                                    });
-                                    return;
-                                  }
-                                  setShowGuideAI(!showGuideAI);
-                                }}
-                                disabled={guideAICount >= 2 && !isPro}
-                                className={`px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed ${
-                                  guideAICount >= 2 && !isPro ? '' : ''
-                                }`}
-                                style={guideAICount >= 2 && !isPro ? {
-                                  backgroundColor: 'transparent',
-                                  borderColor: '#94a3b8',
-                                  color: '#94a3b8'
-                                } : { 
-                                  backgroundColor: 'transparent',
-                                  borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
-                                  color: userType === 'creator' ? '#DAA520' : '#2979FF'
-                                }}
-                                title={!isPro && guideAICount < 2 ? `${2 - guideAICount} Guide AI uses left` : ''}
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
-                                </svg>
-                                Guide AI
-                                {!isPro && guideAICount < 2 && (
-                                  <span className="text-xs px-1.5 py-0.5 rounded" style={{ 
-                                    backgroundColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.15)' : 'rgba(41, 121, 255, 0.15)',
-                                    color: userType === 'creator' ? '#DAA520' : '#2979FF'
-                                  }}>
-                                    {2 - guideAICount}
-                                  </span>
-                                )}
-                              </button>
-                              {showGuideAI && (
-                                <div 
-                                  className="absolute bottom-full left-0 mb-2 w-80 rounded-lg shadow-2xl border-2 p-4 z-50 guide-ai-container"
-                                  style={{
-                                    backgroundColor: 'var(--card-bg)',
-                                    borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.3)',
-                                    boxShadow: userType === 'creator' 
-                                      ? '0 10px 40px rgba(218, 165, 32, 0.2)' 
-                                      : '0 10px 40px rgba(41, 121, 255, 0.2)'
-                                  }}
-                                >
-                                  <div className="mb-3">
-                                    <label className="block text-sm font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-                                      Tell the AI how to adjust the caption:
-                                    </label>
-                                    <textarea
-                                      value={aiGuidance}
-                                      onChange={(e) => setAiGuidance(e.target.value)}
-                                      onKeyDown={(e) => {
-                                        if (e.key === 'Enter' && !e.shiftKey) {
-                                          e.preventDefault();
-                                          if (aiGuidance.trim() && !isRewriting) {
-                                            handleRewriteCaption(aiGuidance.trim());
-                                          }
-                                        }
-                                      }}
-                                      placeholder="e.g., 'Make it more casual', 'Add more emojis', 'Make it shorter', 'Focus on gaming'"
-                                      rows={3}
-                                      className="w-full px-3 py-2 rounded-lg border-2 resize-none focus:outline-none text-sm"
-                                      style={{
-                                        backgroundColor: theme === 'dark' ? 'rgba(30, 37, 50, 0.85)' : 'white',
-                                        borderColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)',
-                                        color: theme === 'dark' ? 'var(--text-primary)' : '#1a1a1a'
-                                      }}
-                                      onFocus={(e) => {
-                                        e.target.style.boxShadow = userType === 'creator' 
-                                          ? '0 0 0 2px rgba(218, 165, 32, 0.5)' 
-                                          : '0 0 0 2px rgba(41, 121, 255, 0.5)';
-                                      }}
-                                      onBlur={(e) => {
-                                        e.target.style.boxShadow = 'none';
-                                      }}
-                                    />
-                                  </div>
-                                  <div className="flex gap-2">
-                                    <button
-                                      onClick={() => {
-                                        if (aiGuidance.trim()) {
-                                          if (!isPro) {
-                                            setGuideAICount(prev => prev + 1);
-                                          }
-                                          handleRewriteCaption(aiGuidance.trim());
-                                        }
-                                      }}
-                                      disabled={!aiGuidance.trim() || isRewriting}
-                                      className="flex-1 px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 text-white shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-                                      style={{ 
-                                        backgroundColor: userType === 'creator' ? '#DAA520' : '#2979FF'
-                                      }}
-                                    >
-                                      Apply & Rewrite
-                                    </button>
-                                    <button
-                                      onClick={() => {
-                                        setShowGuideAI(false);
-                                        setAiGuidance("");
-                                      }}
-                                      className="px-4 py-2 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2"
-                                      style={{
-                                        borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
-                                        color: userType === 'creator' ? '#DAA520' : '#2979FF',
-                                        backgroundColor: 'transparent'
-                                      }}
-                                    >
-                                      Cancel
-                                    </button>
-                                  </div>
-                                </div>
-                              )}
-                            </div>
-                            
-                            <button
-                              onClick={() => handleRewriteCaption()}
-                              disabled={isRewriting}
-                              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105 flex items-center gap-2 ${
-                                isRewriting
-                                  ? "bg-gray-400 text-white cursor-not-allowed"
-                                  : "text-white"
-                              }`}
-                              style={!isRewriting ? {
-                                backgroundColor: rewriteCount >= 2 && !isPro 
-                                  ? '#94a3b8' 
-                                  : userType === 'creator' ? '#DAA520' : '#2979FF'
-                              } : {}}
-                              title={!isPro && rewriteCount < 2 ? `${2 - rewriteCount} rewrites left` : ''}
-                            >
-                              {isRewriting ? (
-                                <>
-                                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                  </svg>
-                                  Rewriting...
-                                </>
-                              ) : rewriteCount >= 2 && !isPro ? (
-                                <>
-                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                                  </svg>
-                                  Pro Only
-                                </>
-                              ) : (
-                                <>
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-                                  </svg>
-                                  Rewrite
-                                  {!isPro && rewriteCount < 2 && (
-                                    <span className="text-xs px-1.5 py-0.5 rounded bg-white/20">
-                                      {2 - rewriteCount}
-                                    </span>
-                                  )}
-                                </>
-                              )}
-                            </button>
-                            
-                            <button
-                              onClick={handleMoreHashtags}
-                              disabled={isGeneratingHashtags || (hashtagCount >= 3 && !isPro)}
-                              className={`px-4 py-2 rounded-lg font-medium text-sm transition-all hover:scale-105 flex items-center gap-2 border-2 disabled:opacity-50 disabled:cursor-not-allowed`}
-                              style={hashtagCount >= 3 && !isPro ? {
-                                backgroundColor: 'transparent',
-                                borderColor: '#94a3b8',
-                                color: '#94a3b8'
-                              } : {
-                                backgroundColor: 'transparent',
-                                borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
-                                color: userType === 'creator' ? '#DAA520' : '#2979FF'
-                              }}
-                              title={!isPro && hashtagCount < 3 ? `${3 - hashtagCount} hashtag generations left` : ''}
-                            >
-                              {isGeneratingHashtags ? (
-                                <>
-                                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                  </svg>
-                                  Generating...
-                                </>
-                              ) : hashtagCount >= 3 && !isPro ? (
-                                <>
-                                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-                                  </svg>
-                                  Pro Only
-                                </>
-                              ) : (
-                                <>
-                                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                                  </svg>
-                                  More Hashtags
-                                  {!isPro && hashtagCount < 3 && (
-                                    <span className="text-xs px-1.5 py-0.5 rounded" style={{ 
-                                      backgroundColor: userType === 'creator' ? 'rgba(218, 165, 32, 0.15)' : 'rgba(41, 121, 255, 0.15)',
-                                      color: userType === 'creator' ? '#DAA520' : '#2979FF'
-                                    }}>
-                                      {3 - hashtagCount}
-                                    </span>
-                                  )}
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        </div>
-
-                        {/* User Notes Section (Only for signed-in users) */}
-                        {user && (
-                          <div className="mt-6">
-                            <h3 className="font-bold mb-3 flex items-center text-base" style={{ color: 'var(--text-primary)' }}>
-                              <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                              </svg>
-                              Personal Notes
-                            </h3>
-                            <textarea
-                              value={userNotes}
-                              onChange={(e) => setUserNotes(e.target.value)}
-                              placeholder="Add personal notes about this post idea... (optional)"
-                              rows={4}
-                              className="w-full rounded-lg px-4 py-3 text-sm resize-none border-2 focus:outline-none focus:ring-2 transition-all"
-                              style={{
-                                backgroundColor: 'var(--input-bg)',
-                                borderColor: 'var(--card-border)',
-                                color: 'var(--text-primary)'
-                              }}
-                              onFocus={(e) => {
-                                e.target.style.borderColor = userType === 'creator' ? '#DAA520' : '#2979FF';
-                                e.target.style.boxShadow = userType === 'creator' 
-                                  ? '0 0 0 3px rgba(218, 165, 32, 0.1)' 
-                                  : '0 0 0 3px rgba(41, 121, 255, 0.1)';
-                              }}
-                              onBlur={(e) => {
-                                e.target.style.borderColor = 'var(--card-border)';
-                                e.target.style.boxShadow = 'none';
-                              }}
-                            />
-                          </div>
-                        )}
-
-                        {/* Save to History Button (Only for signed-in users) */}
-                        {user && (
-                          <div className="pt-2">
-                            <button
-                              onClick={handleSaveToHistory}
-                              disabled={isSavingToHistory || isSavedToHistory}
-                              className="w-full px-4 py-3 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2 flex items-center justify-center gap-2 shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
-                              style={isSavedToHistory ? {
-                                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                borderColor: '#10b981',
-                                color: 'white'
-                              } : {
-                                background: userType === 'creator' 
-                                  ? 'linear-gradient(135deg, #DAA520 0%, #F4D03F 100%)'
-                                  : 'linear-gradient(135deg, #2979FF 0%, #4A9FFF 100%)',
-                                borderColor: userType === 'creator' ? '#DAA520' : '#2979FF',
-                                color: 'white'
-                              }}
-                            >
-                              {isSavingToHistory ? (
-                                <>
-                                  <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24">
-                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                  </svg>
-                                  Saving...
-                                </>
-                              ) : isSavedToHistory ? (
-                                <>
-                                  <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 20 20">
-                                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                                  </svg>
-                                  Saved to History
-                                </>
-                              ) : (
-                                <>
-                                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z" />
-                                  </svg>
-                                  Save to History
-                                </>
-                              )}
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Back Button */}
-                        <div className="pt-2">
-                          <button
-                            onClick={handlePreviousStep}
-                            className="w-full px-4 py-3 rounded-lg font-semibold text-sm transition-all hover:scale-105 border-2 flex items-center justify-center gap-2 shadow-sm"
-                            style={{ 
-                              borderColor: 'rgba(41, 121, 255, 0.3)',
-                              color: '#2979FF',
-                              backgroundColor: 'rgba(41, 121, 255, 0.02)'
-                            }}
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                            </svg>
-                            Back
-                          </button>
-                        </div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Social Media Page Analyzer */}
+        {/* Sora Prompt Generator Module */}
         {currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
-            onDragStart={() => handleDragStart('page-analyzer')}
+            onDragStart={(e) => {
+              if (isReorderMode && user) {
+                handleDragStart('sora-prompt');
+              } else {
+                e.preventDefault();
+              }
+            }}
             onDragEnd={handleDragEnd}
-            onDragOver={(e) => handleDragOver(e, 'page-analyzer')}
+            onDragOver={(e) => {
+              if (isReorderMode && user) {
+                handleDragOver(e, 'sora-prompt');
+              } else {
+                e.preventDefault();
+              }
+            }}
             onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, 'page-analyzer')}
-            onClick={() => !isReorderMode && collapsedModules.has('page-analyzer') && toggleModuleCollapse('page-analyzer')}
-            className="rounded-2xl shadow-lg border scroll-mt-4 relative overflow-hidden"
+            onDrop={(e) => {
+              if (isReorderMode && user) {
+                handleDrop(e, 'sora-prompt');
+              } else {
+                e.preventDefault();
+              }
+            }}
+            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
             style={{
-              transition: 'margin-bottom 0.3s ease-out, transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease-out, border-color 0.3s ease-out',
-              willChange: 'transform',
-              marginBottom: collapsedModules.has('page-analyzer') ? '1rem' : '2.5rem',
-              backgroundColor: theme === 'dark' 
-                ? 'rgba(20, 184, 166, 0.08)' 
-                : 'rgba(20, 184, 166, 0.03)',
-              borderColor: dragOverModule === 'page-analyzer'
-                ? '#14B8A6'
-                : (isReorderMode && user)
-                  ? (theme === 'dark' ? 'rgba(20, 184, 166, 0.6)' : 'rgba(20, 184, 166, 0.5)')
-                  : (theme === 'dark'
-                    ? 'rgba(20, 184, 166, 0.4)'
-                    : 'rgba(20, 184, 166, 0.3)'),
-              boxShadow: draggedModule === 'page-analyzer'
-                ? '0 16px 48px rgba(20, 184, 166, 0.45), 0 0 0 2px rgba(20, 184, 166, 0.6), 0 0 20px rgba(20, 184, 166, 0.3)'
-                : dragOverModule === 'page-analyzer'
-                  ? '0 0 0 3px rgba(20, 184, 166, 0.5), 0 0 20px rgba(20, 184, 166, 0.3)'
-                  : (isReorderMode && user)
-                    ? (theme === 'dark'
-                      ? '0 8px 32px rgba(20, 184, 166, 0.4), 0 0 0 2px rgba(20, 184, 166, 0.5), 0 0 20px rgba(20, 184, 166, 0.25)'
-                      : '0 8px 32px rgba(20, 184, 166, 0.3), 0 0 0 2px rgba(20, 184, 166, 0.4), 0 0 15px rgba(20, 184, 166, 0.2)')
-                    : (theme === 'dark'
-                      ? '0 4px 20px rgba(20, 184, 166, 0.25), 0 0 15px rgba(20, 184, 166, 0.15)'
-                      : '0 4px 20px rgba(20, 184, 166, 0.15), 0 0 10px rgba(20, 184, 166, 0.1)'),
-              cursor: (isReorderMode && user) ? (draggedModule === 'page-analyzer' ? 'grabbing' : 'grab') : (collapsedModules.has('page-analyzer') ? 'pointer' : 'default'),
-              opacity: 1,
-              transform: draggedModule === 'page-analyzer' 
-                ? 'scale(1.05) rotate(2deg)' 
-                : 'scale(1)',
-              padding: '1.5rem',
-              zIndex: draggedModule === 'page-analyzer' ? 1000 : 'auto',
-              overflow: 'visible',
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: dragOverModule === 'sora-prompt'
+                ? '#2979FF'
+                : 'var(--card-border)',
+              boxShadow: dragOverModule === 'sora-prompt'
+                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('sora-prompt'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'sora-prompt' ? 0.5 : 1,
+              transform: dragOverModule === 'sora-prompt' ? 'scale(1.02)' : 'scale(1)',
+              padding: '1rem',
             }}
           >
-            {/* Drop Indicators */}
-            {dragOverModule === 'page-analyzer' && dropPosition === 'before' && draggedModule !== 'page-analyzer' && (
-              <div 
-                className="absolute -top-2 left-0 right-0 h-1 rounded-full"
-                style={{
-                  backgroundColor: '#14B8A6',
-                  boxShadow: '0 0 16px rgba(20, 184, 166, 0.8)',
-                  zIndex: 1001,
-                }}
-              />
-            )}
-            
-            {dragOverModule === 'page-analyzer' && dropPosition === 'after' && draggedModule !== 'page-analyzer' && (
-              <div 
-                className="absolute -bottom-2 left-0 right-0 h-1 rounded-full"
-                style={{
-                  backgroundColor: '#14B8A6',
-                  boxShadow: '0 0 16px rgba(20, 184, 166, 0.8)',
-                  zIndex: 1001,
-                }}
-              />
-            )}
-
-            {/* Collapsed Bar View */}
-            <div 
-              className="flex items-center justify-between"
-              style={{
-                transition: 'opacity 0.2s ease-out',
-                opacity: collapsedModules.has('page-analyzer') ? 1 : 0,
-                pointerEvents: collapsedModules.has('page-analyzer') ? 'auto' : 'none',
-                position: collapsedModules.has('page-analyzer') ? 'relative' : 'absolute',
-                height: collapsedModules.has('page-analyzer') ? 'auto' : '0',
+            <Link 
+              href={getModuleUrl('sora-prompt')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
               }}
+              className="block"
             >
-              <div className="flex items-center gap-3">
-                <span className="text-3xl">📊</span>
-                <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
-                  Page Analyzer
-                </h3>
-              </div>
-              <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
-                {isReorderMode ? 'Drag to reorder' : 'Click to expand'}
-              </span>
-            </div>
-
-            {/* Expanded Content */}
-            <div
-              style={{
-                transformOrigin: 'top',
-                transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.2s ease-out',
-                transform: collapsedModules.has('page-analyzer') ? 'scaleY(0)' : 'scaleY(1)',
-                opacity: collapsedModules.has('page-analyzer') ? 0 : 1,
-                height: collapsedModules.has('page-analyzer') ? '0' : 'auto',
-                overflow: 'hidden',
-                willChange: 'transform, opacity',
-              }}
-            >
-              {/* Minimize Button */}
-              {!isReorderMode && (
-                <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  toggleModuleCollapse('page-analyzer');
-                }}
-                className="absolute top-1 right-1 sm:top-2 sm:right-2 w-8 h-8 sm:w-9 sm:h-9 flex items-center justify-center rounded-lg sm:rounded-xl transition-all hover:scale-110 active:scale-95"
-                style={{ 
-                  backgroundColor: 'rgba(41, 121, 255, 0.15)',
-                  border: '2px solid rgba(41, 121, 255, 0.4)',
-                  color: '#2979FF',
-                  zIndex: 10,
-                  boxShadow: '0 4px 12px rgba(41, 121, 255, 0.3)'
-                }}
-                title="Minimize"
-              >
-                <svg className="w-4 h-4 sm:w-5 sm:h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={3}>
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M20 12H4" />
-                  </svg>
-                </button>
-              )}
-
-              <div className="space-y-6">
-                <div className="text-center">
-                  <h2 className="text-3xl sm:text-4xl font-bold mb-2" style={{ 
-                    color: '#14B8A6',
-                    textShadow: '0 0 20px rgba(20, 184, 166, 0.3)'
-                  }}>
-                    📊 Social Media Page Analyzer
-                  </h2>
-                  <p className="text-sm sm:text-base" style={{ 
-                    color: theme === 'dark' ? 'rgba(20, 184, 166, 0.8)' : 'rgba(20, 184, 166, 0.9)'
-                  }}>
-                    Upload a screenshot of any social media page to get AI-powered insights and actionable improvements
-                  </p>
-                  
-                  {/* Privacy Notice */}
-                  <div className="mt-4 p-3 rounded-lg text-xs text-center" style={{
-                    backgroundColor: theme === 'dark' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.05)',
-                    border: '1px solid rgba(99, 102, 241, 0.2)',
-                    color: 'var(--text-secondary)'
-                  }}>
-                    <p className="flex items-center justify-center gap-2">
-                      <span>🔒</span>
-                      <span>
-                        By using this tool, you agree that we may store extracted data to improve our services. See our{' '}
-                        <a href="/privacy" target="_blank" className="underline hover:opacity-70" style={{ color: 'rgb(99, 102, 241)' }}>
-                          Privacy Policy
-                        </a>
-                        {' '}for details.
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                {/* Upload Section */}
-                {!pageAnalysis && (
-                  <div className="space-y-4">
-                    <div 
-                      className="border-2 border-dashed rounded-xl p-8 text-center cursor-pointer hover:border-teal-500 transition-all"
-                      style={{
-                        borderColor: theme === 'dark' ? 'rgba(20, 184, 166, 0.4)' : 'rgba(20, 184, 166, 0.3)',
-                        backgroundColor: theme === 'dark' ? 'rgba(20, 184, 166, 0.05)' : 'rgba(20, 184, 166, 0.02)'
-                      }}
-                      onClick={() => document.getElementById('page-screenshot-upload')?.click()}
-                    >
-                      {pageScreenshotPreview ? (
-                        <div className="space-y-4">
-                          <img 
-                            src={pageScreenshotPreview} 
-                            alt="Preview" 
-                            className="max-w-full max-h-64 mx-auto rounded-lg shadow-lg"
-                          />
-                          <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                            Click to change screenshot
-                          </p>
-                        </div>
-                      ) : (
-                        <div className="space-y-3">
-                          <div className="text-6xl">📸</div>
-                          <div>
-                            <p className="text-lg font-semibold mb-1" style={{ color: 'var(--text-primary)' }}>
-                              Upload Screenshot
-                            </p>
-                            <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                              Click to upload or drag and drop
-                            </p>
-                            <p className="text-xs mt-2" style={{ color: 'var(--text-secondary)' }}>
-                              PNG, JPG, or WEBP (max 10MB)
-                            </p>
-                          </div>
-                        </div>
-                      )}
-                    </div>
-                    <input
-                      id="page-screenshot-upload"
-                      type="file"
-                      accept="image/*"
-                      className="hidden"
-                      onChange={async (e) => {
-                        const file = e.target.files?.[0];
-                        if (file) {
-                          if (file.size > 10 * 1024 * 1024) {
-                            showNotification("File size must be less than 10MB", "error", "Error");
-                            return;
-                          }
-                          setPageScreenshot(file);
-                          const reader = new FileReader();
-                          reader.onloadend = () => {
-                            setPageScreenshotPreview(reader.result as string);
-                          };
-                          reader.readAsDataURL(file);
-                        }
-                      }}
-                    />
-
-                    {pageScreenshotPreview && (
-                      <button
-                        onClick={async () => {
-                          if (!pageScreenshotPreview) return;
-                          
-                          setIsAnalyzingPage(true);
-                          try {
-                            const response = await fetch('/api/analyze-page', {
-                              method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                              },
-                              body: JSON.stringify({
-                                imageData: pageScreenshotPreview,
-                              }),
-                            });
-
-                            if (!response.ok) {
-                              throw new Error('Failed to analyze page');
-                            }
-
-                            const data = await response.json();
-                            setPageAnalysis(data.analysis);
-                            
-                            // Update user info from AI extraction
-                            if (data.userInfo) {
-                              setPageUserInfo(data.userInfo);
-                            }
-                            
-                            // Save analysis data to database with screenshot
-                            try {
-                              await fetch('/api/save-page-analysis', {
-                                method: 'POST',
-                                headers: {
-                                  'Content-Type': 'application/json',
-                                },
-                                body: JSON.stringify({
-                                  userId: user?.id || null,
-                                  userInfo: data.userInfo || pageUserInfo,
-                                  analysis: data.analysis,
-                                  screenshotData: pageScreenshotPreview, // Send the base64 image data
-                                }),
-                              });
-                              console.log('Analysis and screenshot saved to database');
-                            } catch (saveError) {
-                              console.error('Error saving analysis data:', saveError);
-                              // Don't notify user about save error
-                            }
-                            
-                            showNotification("Analysis complete!", "success", "Success");
-                          } catch (error) {
-                            console.error('Error analyzing page:', error);
-                            showNotification("Failed to analyze page. Please try again.", "error", "Error");
-                          } finally {
-                            setIsAnalyzingPage(false);
-                          }
-                        }}
-                        disabled={isAnalyzingPage}
-                        className="w-full px-8 py-4 rounded-xl font-bold text-lg transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
-                        style={{
-                          background: isAnalyzingPage 
-                            ? 'linear-gradient(135deg, #9CA3AF 0%, #6B7280 100%)'
-                            : 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
-                          color: 'white',
-                          boxShadow: '0 4px 15px rgba(20, 184, 166, 0.4)',
-                        }}
-                      >
-                        {isAnalyzingPage ? (
-                          <span className="flex items-center justify-center gap-2">
-                            <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
-                            </svg>
-                            Analyzing...
-                          </span>
-                        ) : (
-                          '🔍 Analyze Page'
-                        )}
-                      </button>
-                    )}
-                  </div>
-                )}
-
-                {/* Analysis Results */}
-                {pageAnalysis && (
-                  <div className="space-y-4">
-                    {/* Extracted User Info Display */}
-                    {(pageUserInfo.username || pageUserInfo.fullName) && (
-                      <div 
-                        className="p-4 rounded-xl"
-                        style={{
-                          backgroundColor: theme === 'dark' ? 'rgba(99, 102, 241, 0.1)' : 'rgba(99, 102, 241, 0.05)',
-                          border: '1px solid rgba(99, 102, 241, 0.3)',
-                        }}
-                      >
-                        <h3 className="text-sm font-bold mb-3" style={{ color: 'var(--text-primary)' }}>
-                          📊 Detected Page Info
-                        </h3>
-                        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 text-sm">
-                          {pageUserInfo.username && (
-                            <div>
-                              <span className="text-xs opacity-70">Username:</span>
-                              <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{pageUserInfo.username}</p>
-                            </div>
-                          )}
-                          {pageUserInfo.fullName && (
-                            <div>
-                              <span className="text-xs opacity-70">Name:</span>
-                              <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{pageUserInfo.fullName}</p>
-                            </div>
-                          )}
-                          {pageUserInfo.followerCount && (
-                            <div>
-                              <span className="text-xs opacity-70">Followers:</span>
-                              <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{pageUserInfo.followerCount}</p>
-                            </div>
-                          )}
-                          {pageUserInfo.postCount && (
-                            <div>
-                              <span className="text-xs opacity-70">Posts:</span>
-                              <p className="font-semibold" style={{ color: 'var(--text-primary)' }}>{pageUserInfo.postCount}</p>
-                            </div>
-                          )}
-                          {pageUserInfo.socialLink && (
-                            <div className="col-span-2">
-                              <span className="text-xs opacity-70">Profile:</span>
-                              <a 
-                                href={pageUserInfo.socialLink} 
-                                target="_blank" 
-                                rel="noopener noreferrer"
-                                className="font-semibold hover:underline block truncate"
-                                style={{ color: 'rgb(99, 102, 241)' }}
-                              >
-                                {pageUserInfo.socialLink}
-                              </a>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-
-                    <div 
-                      className="p-6 rounded-xl"
-                      style={{
-                        backgroundColor: theme === 'dark' ? 'rgba(20, 184, 166, 0.1)' : 'rgba(20, 184, 166, 0.05)',
-                        border: '1px solid rgba(20, 184, 166, 0.3)',
-                      }}
-                    >
-                      <div className="whitespace-pre-wrap" style={{ color: 'var(--text-primary)' }}>
-                        {pageAnalysis}
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                      <button
-                        onClick={() => {
-                          setPageAnalysis(null);
-                          setPageScreenshot(null);
-                          setPageScreenshotPreview("");
-                          setPageUserInfo({
-                            username: '',
-                            fullName: '',
-                            bioLinks: '',
-                            followerCount: '',
-                            postCount: '',
-                            socialLink: '',
-                          });
-                        }}
-                        className="px-6 py-3 rounded-lg font-semibold transition-all hover:scale-105"
-                        style={{
-                          backgroundColor: 'var(--card-bg)',
-                          border: '2px solid var(--card-border)',
-                          color: 'var(--text-primary)',
-                        }}
-                      >
-                        Analyze Another
-                      </button>
-                      <button
-                        onClick={() => {
-                          // Generate PDF
-                          const pdf = new jsPDF();
-                          const pageWidth = pdf.internal.pageSize.getWidth();
-                          const pageHeight = pdf.internal.pageSize.getHeight();
-                          const margin = 20;
-                          const maxWidth = pageWidth - (margin * 2);
-                          let yPosition = 20;
-
-                          // Header Background
-                          pdf.setFillColor(41, 121, 255);
-                          pdf.rect(0, 0, pageWidth, 45, 'F');
-
-                          // PostReady Branding
-                          pdf.setTextColor(255, 255, 255);
-                          pdf.setFontSize(26);
-                          pdf.setFont('helvetica', 'bold');
-                          pdf.text('PostReady', margin, 28);
-                          
-                          pdf.setFontSize(11);
-                          pdf.setFont('helvetica', 'normal');
-                          pdf.text('Social Media Page Analysis Report', margin, 37);
-
-                          // Date
-                          pdf.setFontSize(9);
-                          const dateText = `Generated: ${new Date().toLocaleDateString('en-US', { 
-                            year: 'numeric', 
-                            month: 'long', 
-                            day: 'numeric' 
-                          })}`;
-                          const dateWidth = pdf.getTextWidth(dateText);
-                          pdf.text(dateText, pageWidth - margin - dateWidth, 37);
-
-                          yPosition = 60;
-
-                          // Reset text color for content
-                          pdf.setTextColor(0, 0, 0);
-
-                          // Add User Information Section if available
-                          if (pageUserInfo.username || pageUserInfo.fullName) {
-                            pdf.setFillColor(245, 247, 250);
-                            pdf.roundedRect(margin, yPosition - 5, maxWidth, 45, 2, 2, 'F');
-                            
-                            pdf.setFontSize(12);
-                            pdf.setFont('helvetica', 'bold');
-                            pdf.setTextColor(41, 121, 255);
-                            pdf.text('PAGE INFORMATION', margin + 3, yPosition);
-                            yPosition += 8;
-                            
-                            pdf.setFontSize(9);
-                            pdf.setFont('helvetica', 'normal');
-                            pdf.setTextColor(60, 60, 60);
-                            
-                            if (pageUserInfo.username) {
-                              pdf.text(`Username: ${pageUserInfo.username}`, margin + 3, yPosition);
-                              yPosition += 5;
-                            }
-                            if (pageUserInfo.fullName) {
-                              pdf.text(`Name: ${pageUserInfo.fullName}`, margin + 3, yPosition);
-                              yPosition += 5;
-                            }
-                            if (pageUserInfo.followerCount) {
-                              pdf.text(`Followers: ${pageUserInfo.followerCount}`, margin + 3, yPosition);
-                              yPosition += 5;
-                            }
-                            if (pageUserInfo.postCount) {
-                              pdf.text(`Posts: ${pageUserInfo.postCount}`, margin + 3, yPosition);
-                              yPosition += 5;
-                            }
-                            if (pageUserInfo.bioLinks) {
-                              pdf.text(`Bio Links: ${pageUserInfo.bioLinks}`, margin + 3, yPosition);
-                              yPosition += 5;
-                            }
-                            if (pageUserInfo.socialLink) {
-                              pdf.setTextColor(41, 121, 255);
-                              pdf.textWithLink(`Profile: ${pageUserInfo.socialLink}`, margin + 3, yPosition, { url: pageUserInfo.socialLink });
-                              yPosition += 5;
-                            }
-                            
-                            yPosition += 8;
-                            pdf.setTextColor(0, 0, 0);
-                          }
-
-                          // Helper function to remove emojis and clean text
-                          const cleanText = (text: string) => {
-                            return text
-                              .replace(/🎯|✨|⚠️|🚀|💡|📈|🎨|•/g, '')
-                              .replace(/\*\*/g, '')
-                              .trim();
-                          };
-
-                          // Process the analysis text
-                          const lines = pageAnalysis.split('\n');
-                          
-                          lines.forEach((line: string) => {
-                            // Check if we need a new page
-                            if (yPosition > pageHeight - 30) {
-                              pdf.addPage();
-                              yPosition = 20;
-                            }
-
-                            const trimmedLine = line.trim();
-
-                            // Skip separators and empty lines
-                            if (trimmedLine === '' || trimmedLine === '---') {
-                              yPosition += 3;
-                              return;
-                            }
-
-                            // Section headers (detect by ** and emojis)
-                            if (line.includes('**') && (line.includes('🎯') || line.includes('✨') || line.includes('⚠️') || line.includes('🚀') || line.includes('💡') || line.includes('📈') || line.includes('🎨'))) {
-                              yPosition += 8;
-                              
-                              // Add a colored bar on the left
-                              pdf.setFillColor(41, 121, 255);
-                              pdf.rect(margin - 5, yPosition - 6, 3, 12, 'F');
-                              
-                              // Add a subtle background box
-                              pdf.setFillColor(245, 247, 250);
-                              pdf.roundedRect(margin, yPosition - 6, maxWidth, 12, 2, 2, 'F');
-                              
-                              // Section header text
-                              pdf.setFontSize(13);
-                              pdf.setFont('helvetica', 'bold');
-                              pdf.setTextColor(41, 121, 255);
-                              
-                              const cleanLine = cleanText(line).toUpperCase();
-                              pdf.text(cleanLine, margin + 3, yPosition);
-                              
-                              yPosition += 12;
-                              pdf.setTextColor(0, 0, 0);
-                            }
-                            // Numbered action items
-                            else if (line.match(/^\d+\.\s\*\*/)) {
-                              pdf.setFontSize(10);
-                              
-                              // Extract number and text
-                              const match = line.match(/^(\d+)\.\s\*\*(.*?)\*\*\s*-\s*(.*)/);
-                              if (match) {
-                                const [, number, title, description] = match;
-                                
-                                // Number circle with gradient effect
-                                pdf.setFillColor(41, 121, 255);
-                                pdf.circle(margin + 4, yPosition - 2, 4.5, 'F');
-                                
-                                // Inner circle for depth
-                                pdf.setFillColor(60, 140, 255);
-                                pdf.circle(margin + 4, yPosition - 2, 3.5, 'F');
-                                
-                                pdf.setTextColor(255, 255, 255);
-                                pdf.setFontSize(9);
-                                pdf.setFont('helvetica', 'bold');
-                                const numWidth = pdf.getTextWidth(number);
-                                pdf.text(number, margin + 4 - (numWidth / 2), yPosition + 0.8);
-                                
-                                // Title
-                                pdf.setTextColor(0, 0, 0);
-                                pdf.setFontSize(11);
-                                pdf.setFont('helvetica', 'bold');
-                                pdf.text(title.trim(), margin + 12, yPosition);
-                                
-                                // Description
-                                yPosition += 6;
-                                pdf.setFont('helvetica', 'normal');
-                                pdf.setTextColor(60, 60, 60);
-                                pdf.setFontSize(10);
-                                const descWrapped = pdf.splitTextToSize(description.trim(), maxWidth - 12);
-                                descWrapped.forEach((textLine: string) => {
-                                  pdf.text(textLine, margin + 12, yPosition);
-                                  yPosition += 5;
-                                });
-                                
-                                yPosition += 3;
-                                pdf.setTextColor(0, 0, 0);
-                              }
-                            }
-                            // Bullet points (detect by • or starting with -)
-                            else if (trimmedLine.startsWith('•') || (trimmedLine.startsWith('-') && !line.match(/^\d+\./))) {
-                              pdf.setFontSize(10);
-                              pdf.setFont('helvetica', 'normal');
-                              pdf.setTextColor(40, 40, 40);
-                              
-                              // Bullet point circle
-                              pdf.setFillColor(41, 121, 255);
-                              pdf.circle(margin + 2.5, yPosition - 1.5, 1.8, 'F');
-                              
-                              const text = trimmedLine.replace(/^[•-]\s*/, '').trim();
-                              const wrappedText = pdf.splitTextToSize(text, maxWidth - 10);
-                              wrappedText.forEach((textLine: string, index: number) => {
-                                pdf.text(textLine, margin + 8, yPosition);
-                                if (index < wrappedText.length - 1) {
-                                  yPosition += 5;
-                                }
-                              });
-                              
-                              yPosition += 7;
-                              pdf.setTextColor(0, 0, 0);
-                            }
-                            // Regular paragraphs
-                            else if (trimmedLine.length > 0) {
-                              pdf.setFontSize(10);
-                              pdf.setFont('helvetica', 'normal');
-                              pdf.setTextColor(50, 50, 50);
-                              
-                              const wrappedText = pdf.splitTextToSize(trimmedLine, maxWidth);
-                              wrappedText.forEach((textLine: string) => {
-                                pdf.text(textLine, margin, yPosition);
-                                yPosition += 5;
-                              });
-                              yPosition += 2;
-                              pdf.setTextColor(0, 0, 0);
-                            }
-                          });
-
-                          // Footer on every page
-                          const totalPages = pdf.internal.pages.length - 1;
-                          for (let i = 1; i <= totalPages; i++) {
-                            pdf.setPage(i);
-                            
-                            // Footer line
-                            pdf.setDrawColor(200, 200, 200);
-                            pdf.setLineWidth(0.5);
-                            pdf.line(margin, pageHeight - 15, pageWidth - margin, pageHeight - 15);
-                            
-                            pdf.setFontSize(8);
-                            pdf.setTextColor(120, 120, 120);
-                            pdf.setFont('helvetica', 'normal');
-                            
-                            // Page number on left
-                            pdf.text(`Page ${i} of ${totalPages}`, margin, pageHeight - 8);
-                            
-                            // PostReady branding on right
-                            const brandText = 'PostReady - Built to help creators thrive';
-                            const brandWidth = pdf.getTextWidth(brandText);
-                            pdf.text(brandText, pageWidth - margin - brandWidth, pageHeight - 8);
-                          }
-
-                          // Save the PDF
-                          pdf.save(`PostReady-Analysis-${new Date().getTime()}.pdf`);
-                          showNotification("PDF downloaded successfully!", "success", "Success");
-                        }}
-                        className="px-6 py-3 rounded-lg font-semibold transition-all hover:scale-105"
-                        style={{
-                          background: 'linear-gradient(135deg, #8B5CF6 0%, #6366F1 100%)',
-                          color: 'white',
-                        }}
-                      >
-                        📄 Save as PDF
-                      </button>
-                      <button
-                        onClick={() => {
-                          navigator.clipboard.writeText(pageAnalysis);
-                          showNotification("Analysis copied to clipboard!", "success", "Success");
-                        }}
-                        className="px-6 py-3 rounded-lg font-semibold transition-all hover:scale-105"
-                        style={{
-                          background: 'linear-gradient(135deg, #14B8A6 0%, #0D9488 100%)',
-                          color: 'white',
-                        }}
-                      >
-                        📋 Copy Analysis
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
-
-        {/* History Page - Shows completed posts and saved video ideas */}
-        {currentStep === "history" && (
-          <SectionCard className="mb-10" isPro={isPro}>
-            <div>
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                    📝 Your History
-                  </h2>
-                  <p style={{ color: 'var(--text-secondary)' }}>
-                    All your saved video ideas and completed posts
-                  </p>
-                </div>
-                <button
-                  onClick={navigateHome}
-                  disabled={isNavigating}
-                  className="px-5 py-2.5 rounded-lg font-medium transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    backgroundColor: 'var(--card-bg)',
-                    borderWidth: '2px',
-                    borderStyle: 'solid',
-                    borderColor: 'var(--card-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                >
-                  ← Back to Home
-                </button>
-              </div>
-
-              {completedPosts.length === 0 && savedVideoIdeas.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="text-6xl mb-4">📭</div>
-                  <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                    No history yet
-                  </h3>
-                  <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
-                    Save video ideas or complete posts to see them here
-                  </p>
-                  <PrimaryButton onClick={navigateHome} isPro={isPro}>
-                    Get Started
-                  </PrimaryButton>
-                </div>
-              ) : (
-                <div className="space-y-8">
-                  {/* Saved Video Ideas Section - List View */}
-                  {savedVideoIdeas.length > 0 && (
-                    <div>
-                      <h3 className="text-2xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
-                        💡 Saved Video Ideas ({savedVideoIdeas.length})
-                      </h3>
-                      <div className="space-y-2 mb-8">
-                        {savedVideoIdeas.map((savedIdea) => (
-                          <div
-                            key={savedIdea.id}
-                            onClick={() => router.push(`/idea/${savedIdea.id}`)}
-                            className="border-2 rounded-lg p-4 transition-all hover:shadow-md cursor-pointer group"
-                            style={{
-                              backgroundColor: 'var(--card-bg)',
-                              borderColor: 'var(--card-border)'
-                            }}
-                          >
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-start gap-3">
-                                  <div className="flex-1 min-w-0">
-                                    <h4 className="font-bold mb-1 group-hover:opacity-80 transition-opacity" style={{ color: 'var(--text-primary)' }}>
-                                      {savedIdea.videoIdea.title}
-                                    </h4>
-                                    <p className="text-xs mb-2 truncate" style={{ color: 'var(--text-secondary)' }}>
-                                      {savedIdea.businessName} • {new Date(savedIdea.savedAt).toLocaleString()}
-                                    </p>
-                                    <div className="flex items-center gap-2 flex-wrap">
-                                      <Badge variant={savedIdea.videoIdea.angle}>
-                                        {savedIdea.videoIdea.angle.replace(/_/g, " ")}
-                                      </Badge>
-                                    </div>
-                                  </div>
-                                  <svg 
-                                    className="w-5 h-5 flex-shrink-0 opacity-0 group-hover:opacity-70 transition-opacity" 
-                                    fill="none" 
-                                    stroke="currentColor" 
-                                    viewBox="0 0 24 24"
-                                    style={{ color: 'var(--text-secondary)' }}
-                                  >
-                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                                  </svg>
-                                </div>
-                              </div>
-                              <button
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  if (!user || !user.id) return;
-                                  
-                                  // Remove from Supabase
-                                  const result = await deleteSavedVideoIdea(user.id, savedIdea.id);
-                                  if (!result.error) {
-                                    setSavedVideoIdeas(prev => prev.filter(s => s.id !== savedIdea.id));
-                                    showNotification("Idea removed", "success", "Removed");
-                                  }
-                                }}
-                                className="p-1.5 rounded hover:bg-gray-100 transition-colors ml-2 flex-shrink-0"
-                                style={{ color: 'var(--text-secondary)' }}
-                                title="Remove from saved"
-                              >
-                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                </svg>
-                              </button>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Completed Posts Section - Compact List View */}
-                  {completedPosts.length > 0 && (
-                    <div>
-                      <h3 className="text-2xl font-bold mb-4" style={{ color: 'var(--secondary)' }}>
-                        ✅ Completed Posts ({completedPosts.length})
-                      </h3>
-                      <div className="space-y-3">
-                        {completedPosts.map((post) => (
-                          <div
-                            key={post.id}
-                            onClick={() => router.push(`/post/${post.id}`)}
-                            className="group rounded-xl p-5 border-2 transition-all cursor-pointer hover:scale-[1.01]"
-                            style={{
-                              backgroundColor: 'var(--card-bg)',
-                              borderColor: 'var(--card-border)',
-                              boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
-                            }}
-                            onMouseEnter={(e) => {
-                              e.currentTarget.style.borderColor = 'rgba(41, 121, 255, 0.4)';
-                              e.currentTarget.style.boxShadow = '0 4px 12px rgba(41, 121, 255, 0.15)';
-                            }}
-                            onMouseLeave={(e) => {
-                              e.currentTarget.style.borderColor = 'var(--card-border)';
-                              e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
-                            }}
-                          >
-                            <div className="flex items-start justify-between gap-4">
-                              <div className="flex-1 min-w-0">
-                                <h3 className="text-lg font-bold mb-2 truncate" style={{ color: 'var(--text-primary)' }}>
-                                  {post.videoIdea.title}
-                                </h3>
-                                <p className="text-sm mb-2" style={{ color: 'var(--text-secondary)' }}>
-                                  {post.businessName} • {new Date(post.completedAt).toLocaleDateString()}
-                                </p>
-                                <p className="text-sm mb-3 line-clamp-2" style={{ color: 'var(--text-secondary)' }}>
-                                  {post.postDetails.caption.substring(0, 100)}
-                                  {post.postDetails.caption.length > 100 ? '...' : ''}
-                                </p>
-                                <div className="flex items-center gap-2 flex-wrap">
-                                  <Badge variant={post.videoIdea.angle}>
-                                    {post.videoIdea.angle.replace(/_/g, " ")}
-                                  </Badge>
-                                  {post.postDetails.notes && (
-                                    <span 
-                                      className="text-xs px-2 py-1 rounded-full flex items-center gap-1"
-                                      style={{
-                                        backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                                        color: '#2979FF'
-                                      }}
-                                    >
-                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                                      </svg>
-                                      Has notes
-                                    </span>
-                                  )}
-                                </div>
-                              </div>
-                              <svg 
-                                className="w-5 h-5 flex-shrink-0 opacity-0 group-hover:opacity-70 transition-opacity" 
-                                fill="none" 
-                                stroke="currentColor" 
-                                viewBox="0 0 24 24"
-                                style={{ color: 'var(--text-secondary)' }}
-                              >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                              </svg>
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )}
-            </div>
-          </SectionCard>
-        )}
-
-        {/* Businesses Page - Shows saved businesses for quick access */}
-        {currentStep === "businesses" && (
-          <SectionCard className="mb-10" isPro={isPro}>
-            <div>
-              <div className="flex items-center justify-between mb-8">
-                <div>
-                  <h2 className="text-4xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                    🏢 My Businesses
-                  </h2>
-                  <p style={{ color: 'var(--text-secondary)' }}>
-                    Quickly generate more videos for your researched businesses
-                  </p>
-                </div>
-                <button
-                  onClick={navigateHome}
-                  disabled={isNavigating}
-                  className="px-5 py-2.5 rounded-lg font-medium transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-                  style={{
-                    backgroundColor: 'var(--card-bg)',
-                    borderWidth: '2px',
-                    borderStyle: 'solid',
-                    borderColor: 'var(--card-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                >
-                  ← Back to Home
-                </button>
-              </div>
-
-              {savedBusinesses.length === 0 ? (
-                <div className="text-center py-16">
-                  <div className="text-6xl mb-4">🏢</div>
-                  <h3 className="text-xl font-bold mb-2" style={{ color: 'var(--secondary)' }}>
-                    No businesses yet
-                  </h3>
-                  <p className="mb-6" style={{ color: 'var(--text-secondary)' }}>
-                    Research a business to save it for quick access later
-                  </p>
-                  <PrimaryButton onClick={navigateHome} isPro={isPro}>
-                    Research Your First Business
-                  </PrimaryButton>
-                </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                  {savedBusinesses.map((business) => (
-                    <div
-                      key={business.id}
-                      className="bg-white border-2 border-gray-200 rounded-xl p-6 hover:border-indigo-300 hover:shadow-lg transition-all cursor-pointer"
-                      onClick={() => loadSavedBusiness(business)}
-                    >
-                      <div className="flex items-start justify-between mb-4">
-                        <div className="flex-1">
-                          <h3 className="text-2xl font-bold text-gray-900 mb-2">
-                            {business.businessInfo.businessName}
-                          </h3>
-                          <div className="flex flex-wrap gap-2 mb-3">
-                            <span className="inline-block bg-indigo-100 text-indigo-700 px-3 py-1 rounded-full text-xs font-medium">
-                              {business.businessInfo.businessType}
-                            </span>
-                            <span className="inline-block bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-medium">
-                              {business.businessInfo.platform}
-                            </span>
-                            <span className="inline-block bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-xs font-medium">
-                              📍 {business.businessInfo.location}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4 mb-4">
-                        <h4 className="font-bold text-gray-900 mb-2 text-sm">Strategy Summary:</h4>
-                        <p className="text-gray-700 text-sm line-clamp-2">
-                          {business.strategy.headlineSummary}
-                        </p>
-                      </div>
-
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>
-                          Last used: {new Date(business.lastUsed).toLocaleDateString()}
-                        </span>
-                        <span className="font-medium text-blue-600">
-                          {business.strategy.contentIdeas.length} video ideas →
-                        </span>
-                      </div>
-
-                      <div className="mt-4 text-center">
-                        <div className="text-blue-600 font-bold text-sm">
-                          Click to generate more videos
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          </SectionCard>
-        )}
-
-        {/* Premium Subscription Page - Accessible from any step */}
-        {currentStep === "premium" && (
-          <div className="animate-fade-in">
-            {isPro ? (
-              <div className="max-w-3xl mx-auto mb-10">
-                <div className="bg-gradient-to-br from-blue-600 to-cyan-400 rounded-2xl p-8 text-white shadow-2xl relative overflow-hidden">
-                  {/* Premium Background Pattern */}
-                  <div className="absolute inset-0 opacity-10">
-                    <div className="absolute top-0 right-0 w-64 h-64 rounded-full" style={{
-                      background: 'radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%)',
-                      filter: 'blur(40px)'
-                    }}></div>
-                  </div>
-                  
-                  <div className="relative z-10">
-                    <div className="text-center mb-6">
-                      <div className="inline-flex items-center gap-2 mb-4">
-                        <svg className="w-10 h-10" fill="currentColor" viewBox="0 0 20 20">
-                          <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                        </svg>
-                        <h3 className="text-3xl font-bold">You're a Pro Member!</h3>
-                      </div>
-                      <p className="text-lg opacity-90">Thank you for supporting PostReady</p>
-                    </div>
-
-                    <div className="space-y-4 mb-6">
-                      <div className="flex items-start bg-white bg-opacity-10 rounded-lg p-4">
-                        <svg className="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <div>
-                          <p className="font-bold text-lg">Unlimited Caption Rewrites & Title Rewords</p>
-                          <p className="text-purple-100 text-sm">Perfect your content with unlimited edits</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start bg-white bg-opacity-10 rounded-lg p-4">
-                        <svg className="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <div>
-                          <p className="font-bold text-lg">Priority Support</p>
-                          <p className="text-purple-100 text-sm">Get help when you need it most</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start bg-white bg-opacity-10 rounded-lg p-4">
-                        <svg className="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <div>
-                          <p className="font-bold text-lg">Sora Prompt Generator</p>
-                          <p className="text-purple-100 text-sm">Unlimited sora video prompts</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start bg-white bg-opacity-10 rounded-lg p-4">
-                        <svg className="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <div>
-                          <p className="font-bold text-lg">Viral Video Idea Generator</p>
-                          <p className="text-purple-100 text-sm">Get unlimited viral video ideas with hooks & strategies</p>
-                        </div>
-                      </div>
-                      <div className="flex items-start bg-white bg-opacity-10 rounded-lg p-4">
-                        <svg className="w-6 h-6 mr-3 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20">
-                          <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                        </svg>
-                        <div>
-                          <p className="font-bold text-lg">Premium Experience</p>
-                          <p className="text-purple-100 text-sm">Enhanced interface and exclusive features</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-center">
-                      <button
-                        onClick={handleManageBilling}
-                        disabled={billingLoading}
-                        className="bg-white text-blue-600 rounded-lg px-8 py-3 font-bold hover:bg-gray-50 transition-all shadow-lg inline-flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                      >
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                        </svg>
-                        {billingLoading ? 'Loading...' : 'Manage Subscription'}
-                      </button>
-                      <p className="text-purple-100 text-sm mt-3">
-                        Update payment method, view invoices, or cancel subscription
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <div className="max-w-3xl mx-auto mb-10">
-                {/* Plan Type Toggle Pill */}
-
-                <div 
-                  className="rounded-2xl p-8 text-white shadow-2xl"
-                  style={{
-                    background: 'linear-gradient(135deg, #2563eb 0%, #06b6d4 100%)',
-                    boxShadow: '0 20px 60px rgba(37, 99, 235, 0.3)',
-                  }}
-                >
-                  <div className="text-center mb-6">
-                    <h3 className="text-3xl font-bold mb-2">
-                      Pro Plan
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <span className="text-2xl">🎬</span>
+                  <div>
+                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                      Sora Prompt Generator
                     </h3>
-                    <div className="flex items-end justify-center gap-2">
-                      <span className="text-5xl font-bold">
-                        $4.99
-                      </span>
-                      <span className="text-xl mb-2 opacity-80">/month</span>
-                    </div>
-                    <p className="mt-2 opacity-90">
-                      Everything you need to grow your page
+                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                      Generate detailed prompts for Sora AI video generation
                     </p>
                   </div>
-
-                  <div className="space-y-4 mb-8">
-                    <div className="flex items-start">
-                      <span className="text-2xl mr-3">✓</span>
-                      <div>
-                        <p className="font-bold text-lg">Sora Prompt Generator</p>
-                        <p className="text-sm opacity-85">Unlimited sora video prompts</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-2xl mr-3">✓</span>
-                      <div>
-                        <p className="font-bold text-lg">Hashtag Deep Research Tool</p>
-                        <p className="text-sm opacity-85">Find trending hashtags in your niche</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-2xl mr-3">✓</span>
-                      <div>
-                        <p className="font-bold text-lg">Viral Video Idea Generator</p>
-                        <p className="text-sm opacity-85">Get unlimited viral video ideas with hooks & strategies</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-2xl mr-3">✓</span>
-                      <div>
-                        <p className="font-bold text-lg">Priority Support</p>
-                        <p className="text-sm opacity-85">Get help when you need it most</p>
-                      </div>
-                    </div>
-                    <div className="flex items-start">
-                      <span className="text-2xl mr-3">✓</span>
-                      <div>
-                        <p className="font-bold text-lg">Advanced Strategy Insights</p>
-                        <p className="text-sm opacity-85">Get deeper analysis to grow your social media</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={initiateCheckout}
-                    className="w-full bg-white rounded-lg px-6 py-4 font-bold text-lg hover:bg-gray-50 transition-all shadow-lg"
-                    style={{
-                      color: '#2563eb'
-                    }}
-                  >
-                    {user 
-                      ? 'Subscribe to PostReady Pro - $4.99/month'
-                      : 'Sign Up & Subscribe - $4.99/month'}
-                  </button>
-                  <p className="text-center text-sm mt-3 opacity-85">
-                    Cancel anytime • Secure payment by Stripe
-                  </p>
                 </div>
+                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
               </div>
-            )}
-
-            {/* Feature Comparison */}
-            <div className="max-w-2xl mx-auto mb-8">
-              <h3 className="text-2xl font-bold mb-4 text-center" style={{ color: 'var(--secondary)' }}>
-                Free vs Pro Comparison
-              </h3>
-              <div className="rounded-lg border-2 overflow-hidden" style={{ 
-                backgroundColor: 'var(--card-bg)',
-                borderColor: 'var(--card-border)'
-              }}>
-                <div className="grid grid-cols-3 text-center border-b-2" style={{ borderColor: 'var(--card-border)' }}>
-                  <div className="p-4 font-bold" style={{ color: 'var(--text-primary)' }}>Feature</div>
-                  <div className="p-4 font-bold" style={{ 
-                    backgroundColor: 'var(--hover-bg)',
-                    color: 'var(--text-primary)'
-                  }}>Free</div>
-                  <div className="p-4 font-bold" style={{ 
-                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                    color: 'var(--primary)'
-                  }}>Pro/Creator</div>
-                </div>
-                <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
-                  <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Sora Prompt Generator</div>
-                  <div className="p-4" style={{ 
-                    backgroundColor: 'var(--hover-bg)',
-                    color: 'var(--text-primary)'
-                  }}>1 use</div>
-                  <div className="p-4 font-bold" style={{ 
-                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                    color: 'var(--primary)'
-                  }}>Unlimited</div>
-                </div>
-                <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
-                  <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Hashtag Deep Research Tool</div>
-                  <div className="p-4" style={{ 
-                    backgroundColor: 'var(--hover-bg)',
-                    color: 'var(--text-secondary)'
-                  }}>Pro Only</div>
-                  <div className="p-4 font-bold" style={{ 
-                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                    color: 'var(--primary)'
-                  }}>Unlimited</div>
-                </div>
-                <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
-                  <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Viral Video Idea Generator</div>
-                  <div className="p-4" style={{ 
-                    backgroundColor: 'var(--hover-bg)',
-                    color: 'var(--text-secondary)'
-                  }}>Pro Only</div>
-                  <div className="p-4 font-bold" style={{ 
-                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                    color: 'var(--primary)'
-                  }}>Unlimited</div>
-                </div>
-                <div className="grid grid-cols-3 text-center border-b" style={{ borderColor: 'var(--card-border)' }}>
-                  <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Support</div>
-                  <div className="p-4" style={{ 
-                    backgroundColor: 'var(--hover-bg)',
-                    color: 'var(--text-primary)'
-                  }}>Email</div>
-                  <div className="p-4 font-bold" style={{ 
-                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                    color: 'var(--primary)'
-                  }}>Priority</div>
-                </div>
-                <div className="grid grid-cols-3 text-center">
-                  <div className="p-4 text-left text-sm" style={{ color: 'var(--text-primary)' }}>Advanced Strategy Insights</div>
-                  <div className="p-4" style={{ 
-                    backgroundColor: 'var(--hover-bg)',
-                    color: 'var(--text-secondary)'
-                  }}>Pro Only</div>
-                  <div className="p-4 font-bold" style={{ 
-                    backgroundColor: 'rgba(41, 121, 255, 0.1)',
-                    color: 'var(--primary)'
-                  }}>Unlimited</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Back Button */}
-            <div className="text-center">
-              <button
-                onClick={handlePreviousStep}
-                className="font-medium transition-colors hover:scale-105"
-                style={{ color: 'var(--text-secondary)' }}
-              >
-                ← Back to Main Page
-              </button>
-            </div>
+            </Link>
           </div>
         )}
 
-        {/* Get unlimited ideas with Pro button - Video ideas page only */}
-        {currentStep === "choose-idea" && !isPro && (
-          <div className="mb-8 flex justify-center w-full">
-            <button
-              onClick={scrollToPremium}
-              className="rounded-xl px-6 py-3 border-2 shadow-lg transition-all hover:shadow-xl hover:scale-105 flex items-center gap-2 font-semibold text-base"
-              style={{
-                maxWidth: '28rem',
-                background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.2) 0%, rgba(111, 255, 210, 0.2) 100%)',
-                borderColor: 'rgba(41, 121, 255, 0.7)',
-                color: '#2979FF',
-                boxShadow: 'rgba(41, 121, 255, 0.3) 0px 4px 20px, rgba(111, 255, 210, 0.1) 0px 0px 40px'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(41, 121, 255, 0.2) 0%, rgba(111, 255, 210, 0.2) 100%)';
-                e.currentTarget.style.borderColor = 'rgba(41, 121, 255, 0.7)';
-                e.currentTarget.style.boxShadow = 'rgba(41, 121, 255, 0.3) 0px 6px 25px, rgba(111, 255, 210, 0.15) 0px 0px 50px';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'linear-gradient(135deg, rgba(41, 121, 255, 0.2) 0%, rgba(111, 255, 210, 0.2) 100%)';
-                e.currentTarget.style.borderColor = 'rgba(41, 121, 255, 0.7)';
-                e.currentTarget.style.boxShadow = 'rgba(41, 121, 255, 0.3) 0px 4px 20px, rgba(111, 255, 210, 0.1) 0px 0px 40px';
-              }}
-            >
-              <span className="text-xl">⚡</span>
-              <span>Get unlimited ideas with Pro</span>
-            </button>
-          </div>
-        )}
+{/* Join Network CTA - moved inside module */}
 
+        {/* End Modules Container */}
+        </div>
+
+        {/* Footer */}
         <div className="text-center py-8 space-y-2">
           <p className="text-sm font-semibold" style={{ 
             background: 'linear-gradient(to right, #2979FF, #6FFFD2, #2979FF)',
@@ -10387,719 +4203,19 @@ function HomeContent() {
             </a>
           </div>
         </div>
-      </div>
 
-      {/* Auth Modal */}
-      <AuthModal
-        isOpen={authModalOpen}
-        onClose={() => setAuthModalOpen(false)}
-        mode={authModalMode}
-      />
-
-      {/* Custom Modal */}
-      <Modal
-        isOpen={modalState.isOpen}
-        title={modalState.title}
-        message={modalState.message}
-        type={modalState.type}
-        onClose={() => {
-          if (modalState.onCancel) {
-            modalState.onCancel();
-          }
-          setModalState({ ...modalState, isOpen: false });
-        }}
-        onConfirm={modalState.onConfirm}
-        confirmText={modalState.confirmText}
-        isCreator={userType === 'creator'}
-      />
-
-      {/* Notification */}
-      <Notification
-        isOpen={notification.isOpen}
-        onClose={closeNotification}
-        title={notification.title}
-        message={notification.message}
-        type={notification.type}
-        duration={3000}
-      />
-
-      {/* Celebration Splash Screen for Successful Subscription */}
-      {showCelebration && (
-        <div 
-          className="fixed inset-0 z-[100] flex items-center justify-center p-4"
-          style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(10px)',
-            animation: 'fadeIn 0.3s ease-out'
-          }}
-        >
-          {/* Confetti Effect */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {[...Array(50)].map((_, i) => (
-              <div
-                key={i}
-                className="absolute"
-                style={{
-                  left: `${Math.random() * 100}%`,
-                  top: '-20px',
-                  width: '10px',
-                  height: '10px',
-                  backgroundColor: ['#2979FF', '#6FFFD2', '#DAA520', '#F4D03F', '#FF6B9D'][Math.floor(Math.random() * 5)],
-                  borderRadius: Math.random() > 0.5 ? '50%' : '0',
-                  animation: `fall ${2 + Math.random() * 3}s linear infinite`,
-                  animationDelay: `${Math.random() * 2}s`,
-                  opacity: 0.8
-                }}
-              />
-            ))}
-          </div>
-
-          {/* Celebration Card */}
-          <div 
-            className="relative max-w-lg w-full rounded-3xl p-8 text-center"
-            style={{
-              background: isCreator 
-                ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.15) 0%, rgba(244, 208, 63, 0.15) 100%)'
-                : 'linear-gradient(135deg, rgba(41, 121, 255, 0.15) 0%, rgba(111, 255, 210, 0.15) 100%)',
-              border: `3px solid ${isCreator ? '#DAA520' : '#2979FF'}`,
-              boxShadow: isCreator
-                ? '0 20px 60px rgba(218, 165, 32, 0.4), 0 0 80px rgba(244, 208, 63, 0.2)'
-                : '0 20px 60px rgba(41, 121, 255, 0.4), 0 0 80px rgba(111, 255, 210, 0.2)',
-              animation: 'scaleIn 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)',
-              backgroundColor: 'var(--card-bg)'
-            }}
-          >
-            {/* Animated Trophy/Star */}
-            <div 
-              className="text-8xl mb-6"
-              style={{
-                animation: 'bounce 1s ease-in-out infinite'
-              }}
-            >
-              {isCreator ? '✨' : '🎉'}
-            </div>
-
-            {/* Title */}
-            <h2 
-              className="text-4xl font-bold mb-4"
-              style={{
-                color: isCreator ? '#DAA520' : '#2979FF',
-                textShadow: isCreator
-                  ? '0 0 20px rgba(218, 165, 32, 0.5)'
-                  : '0 0 20px rgba(41, 121, 255, 0.5)'
-              }}
-            >
-              Welcome to {isCreator ? 'PostReady Creator' : 'PostReady Pro'}!
-            </h2>
-
-            {/* Message */}
-            <p 
-              className="text-xl mb-2"
-              style={{ color: 'var(--text-primary)' }}
-            >
-              You're all set! 🚀
-            </p>
-            <p 
-              className="text-lg mb-8 opacity-80"
-              style={{ color: 'var(--text-secondary)' }}
-            >
-              Enjoy unlimited video ideas, advanced insights, and priority support.
-            </p>
-
-            {/* Feature Pills */}
-            <div className="flex flex-wrap justify-center gap-3 mb-8">
-              {['Unlimited Ideas', 'Advanced Insights', 'Priority Support'].map((feature, idx) => (
-                <span
-                  key={idx}
-                  className="px-4 py-2 rounded-full text-sm font-bold"
-                  style={{
-                    background: isCreator
-                      ? 'linear-gradient(to right, #DAA520, #F4D03F)'
-                      : 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                    color: 'white',
-                    boxShadow: isCreator
-                      ? '0 4px 15px rgba(218, 165, 32, 0.4)'
-                      : '0 4px 15px rgba(41, 121, 255, 0.3)',
-                    animation: `slideUp 0.5s ease-out ${idx * 0.1}s backwards`
-                  }}
-                >
-                  ✓ {feature}
-                </span>
-              ))}
-            </div>
-
-            {/* Action Button */}
-            <button
-              onClick={() => {
-                setShowCelebration(false);
-                // Reload page to refresh Pro status after user closes modal
-                window.location.reload();
-              }}
-              className="px-8 py-4 rounded-xl font-bold text-lg text-white transition-all hover:scale-105"
-              style={{
-                background: isCreator
-                  ? 'linear-gradient(to right, #DAA520, #F4D03F)'
-                  : 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                boxShadow: isCreator
-                  ? '0 8px 25px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)'
-                  : '0 8px 25px rgba(41, 121, 255, 0.3), 0 0 40px rgba(111, 255, 210, 0.1)'
-              }}
-            >
-              Let's Get Started! 🎯
-            </button>
-          </div>
-
-          {/* CSS Animations */}
-          <style jsx>{`
-            @keyframes fadeIn {
-              from { 
-                opacity: 0;
-                transform: translateY(10px);
-              }
-              to { 
-                opacity: 1;
-                transform: translateY(0);
-              }
-            }
-            
-            @keyframes spin {
-              from {
-                transform: rotate(0deg);
-              }
-              to {
-                transform: rotate(360deg);
-              }
-            }
-            
-            @keyframes scaleIn {
-              from {
-                opacity: 0;
-                transform: scale(0.5) rotate(-10deg);
-              }
-              to {
-                opacity: 1;
-                transform: scale(1) rotate(0deg);
-              }
-            }
-            
-            @keyframes bounce {
-              0%, 100% { transform: translateY(0); }
-              50% { transform: translateY(-20px); }
-            }
-            
-            @keyframes fall {
-              from {
-                transform: translateY(0) rotate(0deg);
-                opacity: 1;
-              }
-              to {
-                transform: translateY(100vh) rotate(360deg);
-                opacity: 0;
-              }
-            }
-            
-            @keyframes slideUp {
-              from {
-                opacity: 0;
-                transform: translateY(20px);
-              }
-              to {
-                opacity: 1;
-                transform: translateY(0);
-              }
-            }
-          `}</style>
-        </div>
-      )}
-
-      {/* Floating Reorder Toggle - Removed per user request */}
-      {false && user && currentStep === "form" && (
-        <button
-          onClick={() => setIsReorderMode(!isReorderMode)}
-          className="hidden md:block fixed bottom-24 right-6 rounded-xl z-50 group transition-all duration-200"
-          style={{ 
-            padding: '10px 18px',
-            backgroundColor: isReorderMode ? '#2979FF' : theme === 'dark' ? 'rgba(40, 40, 50, 0.98)' : 'rgba(255, 255, 255, 0.98)',
-            border: `2px solid ${isReorderMode ? '#2979FF' : theme === 'dark' ? 'rgba(111, 255, 210, 0.25)' : 'rgba(41, 121, 255, 0.2)'}`,
-            boxShadow: isReorderMode 
-              ? '0 4px 16px rgba(41, 121, 255, 0.3), 0 12px 32px rgba(41, 121, 255, 0.2)'
-              : theme === 'dark'
-                ? '0 4px 16px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3)'
-                : '0 4px 16px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.12)',
-            backdropFilter: 'blur(16px)',
-          }}
-          title={isReorderMode ? 'Done editing' : 'Edit module order'}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            if (isReorderMode) {
-              e.currentTarget.style.boxShadow = '0 6px 20px rgba(41, 121, 255, 0.4), 0 16px 40px rgba(41, 121, 255, 0.25)';
-            } else {
-              e.currentTarget.style.borderColor = theme === 'dark' ? 'rgba(111, 255, 210, 0.4)' : 'rgba(41, 121, 255, 0.4)';
-              e.currentTarget.style.boxShadow = theme === 'dark'
-                ? '0 6px 20px rgba(0, 0, 0, 0.5), 0 12px 32px rgba(0, 0, 0, 0.35)'
-                : '0 6px 20px rgba(0, 0, 0, 0.12), 0 12px 32px rgba(0, 0, 0, 0.15)';
-            }
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.borderColor = isReorderMode ? '#2979FF' : theme === 'dark' ? 'rgba(111, 255, 210, 0.25)' : 'rgba(41, 121, 255, 0.2)';
-            e.currentTarget.style.boxShadow = isReorderMode 
-              ? '0 4px 16px rgba(41, 121, 255, 0.3), 0 12px 32px rgba(41, 121, 255, 0.2)'
-              : theme === 'dark'
-                ? '0 4px 16px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.3)'
-                : '0 4px 16px rgba(0, 0, 0, 0.08), 0 8px 24px rgba(0, 0, 0, 0.12)';
-          }}
-        >
-          <div className="flex items-center gap-2.5">
-            <svg 
-              width="16" 
-              height="16" 
-              viewBox="0 0 16 16" 
-              fill="none"
-              style={{ transition: 'transform 0.2s ease' }}
-              className={isReorderMode ? 'rotate-0' : ''}
-            >
-              {isReorderMode ? (
-                <path 
-                  d="M13.5 4.5L6.5 11.5L2.5 7.5" 
-                  stroke="white" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
-                  strokeLinejoin="round"
-                />
-              ) : (
-                <>
-                  <rect x="2" y="3" width="12" height="2" rx="1" fill={theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)'} />
-                  <rect x="2" y="7" width="12" height="2" rx="1" fill={theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)'} />
-                  <rect x="2" y="11" width="12" height="2" rx="1" fill={theme === 'dark' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(0, 0, 0, 0.8)'} />
-                </>
-              )}
-            </svg>
-            <span 
-              className="text-sm font-medium"
-              style={{ 
-                color: isReorderMode ? 'white' : 'var(--text-primary)',
-                letterSpacing: '-0.01em'
-              }}
-            >
-              {isReorderMode ? 'Done' : 'Edit'}
-            </span>
-          </div>
-        </button>
-      )}
-
-      {/* Floating Minimize/Maximize All Button - Only on home screen */}
-      {!isReorderMode && currentStep === "form" && (
-        <button
-          onClick={() => {
-            if (areAllModulesCollapsed()) {
-              expandAllModules();
-            } else {
-              collapseAllModules();
-            }
-          }}
-          className="fixed bottom-20 right-4 sm:bottom-24 sm:right-6 rounded-full hover:scale-110 z-50 opacity-70 sm:opacity-100"
-          style={{ 
-            backgroundColor: 'transparent',
-            border: 'none',
-            padding: 0,
-            transition: 'all 0.3s ease, transform 0.2s ease',
-            filter: 'drop-shadow(0 0 8px rgba(41, 121, 255, 0.6)) drop-shadow(0 0 16px rgba(41, 121, 255, 0.4))'
-          }}
-          title={areAllModulesCollapsed() ? 'Expand All Modules' : 'Collapse All Modules'}
-        >
-        <img 
-          src={areAllModulesCollapsed() ? '/icons/maximize.png' : '/icons/minimize.png'}
-          alt={areAllModulesCollapsed() ? 'Expand' : 'Collapse'}
-          className="w-12 h-12 sm:w-14 sm:h-14"
-          style={{ transition: 'opacity 0.3s ease', display: 'block' }}
-        />
-      </button>
-      )}
-
-      {/* Floating Theme Toggle */}
-      {!isReorderMode && (
-        <button
-          onClick={toggleTheme}
-          className="fixed bottom-4 right-4 sm:bottom-6 sm:right-6 rounded-full hover:scale-110 z-50 opacity-70 sm:opacity-100"
-          style={{ 
-            backgroundColor: 'transparent',
-            border: 'none',
-            padding: 0,
-            transition: 'all 0.3s ease, transform 0.2s ease',
-            filter: 'drop-shadow(0 0 8px rgba(41, 121, 255, 0.6)) drop-shadow(0 0 16px rgba(41, 121, 255, 0.4))'
-          }}
-          title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
-        >
-        <img 
-          src={theme === 'light' ? '/icons/darkmode.png' : '/icons/lightmode.png'}
-          alt={theme === 'light' ? 'Dark Mode' : 'Light Mode'}
-          className="w-12 h-12 sm:w-14 sm:h-14"
-          style={{ transition: 'opacity 0.3s ease', display: 'block' }}
-        />
-      </button>
-      )}
-
-      {/* Sora Paywall Modal */}
-      {showSoraPaywall && (
-        <div 
-          className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
-          style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(12px)',
-          }}
-          onClick={() => setShowSoraPaywall(false)}
-        >
-          <div 
-            className="max-w-lg w-full rounded-2xl p-8 animate-scale-in"
-            style={{
-              backgroundColor: 'var(--card-bg)',
-              border: '2px solid rgba(139, 92, 246, 0.4)',
-              boxShadow: '0 20px 60px rgba(139, 92, 246, 0.3)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: '#8B5CF6' }}>
-                Unlock Unlimited Sora Prompts
-              </h2>
-              <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
-                {user 
-                  ? "You've used your free generation. Upgrade to Pro for unlimited access to the Sora Prompt Generator."
-                  : "You've used your free generation. Sign in and upgrade to Pro for unlimited access to the Sora Prompt Generator."
-                }
-              </p>
-            </div>
-
-            <div className="space-y-4 mb-6">
-              <div className="p-4 rounded-lg" style={{
-                backgroundColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)',
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-              }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#8B5CF6' }}>
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Unlimited Sora Generations
-                  </span>
-                </div>
-                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
-                  Create as many video prompts as you need
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg" style={{
-                backgroundColor: theme === 'dark' ? 'rgba(139, 92, 246, 0.1)' : 'rgba(139, 92, 246, 0.05)',
-                border: '1px solid rgba(139, 92, 246, 0.3)',
-              }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#8B5CF6' }}>
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Plus All Pro Features
-                  </span>
-                </div>
-                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
-                  Unlimited video ideas, hashtag research, and more
-                </p>
-              </div>
-            </div>
-
-            <div className="text-center mb-4">
-              <div className="text-4xl font-bold mb-2" style={{ color: '#8B5CF6' }}>
-                $4.99<span className="text-lg font-normal">/month</span>
-              </div>
-              <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                Cancel anytime • Secure payment by Stripe
-              </p>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowSoraPaywall(false);
-                  if (user) {
-                    setCurrentStep('premium');
-                  } else {
-                    setCurrentStep('form');
-                    // Scroll to top and show sign in prompt
-                    window.scrollTo(0, 0);
-                  }
-                }}
-                className="flex-1 py-3 rounded-lg font-bold transition-all hover:scale-105"
-                style={{
-                  background: 'linear-gradient(135deg, #8B5CF6, #6366F1)',
-                  color: 'white',
-                }}
-              >
-                {user ? 'Upgrade to Pro' : 'Sign In to Get Pro'}
-              </button>
-              <button
-                onClick={() => setShowSoraPaywall(false)}
-                className="px-6 py-3 rounded-lg font-medium transition-all hover:opacity-80 border"
-                style={{
-                  borderColor: 'var(--card-border)',
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                Maybe Later
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Voiceover Generator Paywall Modal */}
-      {showVoiceoverPaywall && (
-        <div 
-          className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
-          style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(12px)',
-          }}
-          onClick={() => setShowVoiceoverPaywall(false)}
-        >
-          <div 
-            className="max-w-lg w-full rounded-2xl p-8 animate-scale-in"
-            style={{
-              backgroundColor: 'var(--card-bg)',
-              border: '2px solid rgba(41, 121, 255, 0.4)',
-              boxShadow: '0 20px 60px rgba(41, 121, 255, 0.3)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: '#2979FF' }}>
-                🎙️ Pro Feature: Script & Voiceover Generator
-              </h2>
-              <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
-                {user 
-                  ? "The Script and Voiceover Generator is a Pro-only feature. Upgrade to Pro to create professional AI voiceovers with generated scripts."
-                  : "The Script and Voiceover Generator is a Pro-only feature. Sign in and upgrade to Pro to create professional AI voiceovers with generated scripts."
-                }
-              </p>
-            </div>
-
-            <div className="space-y-4 mb-6">
-              <div className="p-4 rounded-lg" style={{
-                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
-                border: '1px solid rgba(41, 121, 255, 0.3)',
-              }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    AI Script Generation
-                  </span>
-                </div>
-                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
-                  Get professional scripts tailored to your content
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg" style={{
-                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
-                border: '1px solid rgba(41, 121, 255, 0.3)',
-              }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Professional Voice Options
-                  </span>
-                </div>
-                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
-                  Access to Trailer Voice, Cornelius, Zara, and Hale
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg" style={{
-                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
-                border: '1px solid rgba(41, 121, 255, 0.3)',
-              }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Unlimited Voiceovers
-                  </span>
-                </div>
-                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
-                  Create as many voiceovers as you need
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowVoiceoverPaywall(false);
-                  if (user) {
-                    setCurrentStep('premium');
-                  } else {
-                    // Open auth modal for sign up/sign in
-                    setAuthModalMode('signup');
-                    setAuthModalOpen(true);
-                  }
-                }}
-                className="flex-1 py-3 rounded-lg font-bold transition-all hover:scale-105"
-                style={{
-                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  color: 'white',
-                }}
-              >
-                {user ? 'Upgrade to Pro' : 'Sign In to Get Pro'}
-              </button>
-              <button
-                onClick={() => setShowVoiceoverPaywall(false)}
-                className="px-6 py-3 rounded-lg font-medium transition-all hover:opacity-80 border"
-                style={{
-                  borderColor: 'var(--card-border)',
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                Maybe Later
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Music Generator Paywall Modal */}
-      {showMusicPaywall && (
-        <div 
-          className="fixed inset-0 z-[99999] flex items-center justify-center p-4"
-          style={{
-            backgroundColor: 'rgba(0, 0, 0, 0.85)',
-            backdropFilter: 'blur(12px)',
-          }}
-          onClick={() => setShowMusicPaywall(false)}
-        >
-          <div 
-            className="max-w-lg w-full rounded-2xl p-8 animate-scale-in"
-            style={{
-              backgroundColor: 'var(--card-bg)',
-              border: '2px solid rgba(41, 121, 255, 0.4)',
-              boxShadow: '0 20px 60px rgba(41, 121, 255, 0.3)',
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold mb-2" style={{ color: '#2979FF' }}>
-                🎵 Pro Feature: AI Music Generator
-              </h2>
-              <p className="text-base" style={{ color: 'var(--text-secondary)' }}>
-                {user 
-                  ? "The AI Music Generator is a Pro-only feature. Upgrade to Pro to create custom music and sound effects for your content."
-                  : "The AI Music Generator is a Pro-only feature. Sign in and upgrade to Pro to create custom music and sound effects for your content."
-                }
-              </p>
-            </div>
-
-            <div className="space-y-4 mb-6">
-              <div className="p-4 rounded-lg" style={{
-                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
-                border: '1px solid rgba(41, 121, 255, 0.3)',
-              }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    AI-Powered Music Creation
-                  </span>
-                </div>
-                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
-                  Generate custom background music from text descriptions
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg" style={{
-                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
-                border: '1px solid rgba(41, 121, 255, 0.3)',
-              }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Custom Durations & Styles
-                  </span>
-                </div>
-                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
-                  Choose music type and duration (5-22 seconds)
-                </p>
-              </div>
-
-              <div className="p-4 rounded-lg" style={{
-                backgroundColor: theme === 'dark' ? 'rgba(41, 121, 255, 0.1)' : 'rgba(41, 121, 255, 0.05)',
-                border: '1px solid rgba(41, 121, 255, 0.3)',
-              }}>
-                <div className="flex items-center gap-3 mb-2">
-                  <svg className="w-6 h-6 flex-shrink-0" fill="currentColor" viewBox="0 0 20 20" style={{ color: '#2979FF' }}>
-                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                  </svg>
-                  <span className="font-semibold" style={{ color: 'var(--text-primary)' }}>
-                    Unlimited Generation
-                  </span>
-                </div>
-                <p className="text-sm ml-9" style={{ color: 'var(--text-secondary)' }}>
-                  Create as much music as you need for your content
-                </p>
-              </div>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => {
-                  setShowMusicPaywall(false);
-                  if (user) {
-                    setCurrentStep('premium');
-                  } else {
-                    // Open auth modal for sign up/sign in
-                    setAuthModalMode('signup');
-                    setAuthModalOpen(true);
-                  }
-                }}
-                className="flex-1 py-3 rounded-lg font-bold transition-all hover:scale-105"
-                style={{
-                  background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  color: 'white',
-                }}
-              >
-                {user ? 'Upgrade to Pro' : 'Sign In to Get Pro'}
-              </button>
-              <button
-                onClick={() => setShowMusicPaywall(false)}
-                className="px-6 py-3 rounded-lg font-medium transition-all hover:opacity-80 border"
-                style={{
-                  borderColor: 'var(--card-border)',
-                  color: 'var(--text-secondary)',
-                }}
-              >
-                Maybe Later
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Email Verification Modal */}
-      <Modal
-        isOpen={showEmailVerificationModal}
-        onClose={() => setShowEmailVerificationModal(false)}
-        title="📧 Verify Your Email"
-        message="Please check your email inbox for a message from 'Supabase Auth' and click the verification link.
+        {/* Email Verification Modal */}
+        <Modal
+          isOpen={showEmailVerificationModal}
+          onClose={() => setShowEmailVerificationModal(false)}
+          title="📧 Verify Your Email"
+          message="Please check your email inbox for a message from 'Supabase Auth' and click the verification link.
 
 Once verified, you'll be automatically signed in and can access all PostReady features!"
-        type="info"
-        confirmText="OK, Got It!"
-      />
+          type="info"
+          confirmText="OK, Got It!"
+        />
+      </div>
     </div>
   );
 }

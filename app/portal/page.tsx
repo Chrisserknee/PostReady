@@ -1,18 +1,15 @@
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter } from 'next/navigation';
 import { SectionCard } from '@/components/SectionCard';
-import { PrimaryButton } from '@/components/PrimaryButton';
-import { SecondaryButton } from '@/components/SecondaryButton';
 import { Modal } from '@/components/Modal';
-import { User } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
 
 export default function UserPortal() {
-  const { user, isPro, signOut, loading } = useAuth();
+  const { user, isPro, loading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const router = useRouter();
   const [billingLoading, setBillingLoading] = useState(false);
@@ -75,7 +72,7 @@ export default function UserPortal() {
     };
     
     loadUserPlanType();
-  }, [user, isPro]); // Refresh when subscription status changes
+  }, [user, isPro]);
 
   useEffect(() => {
     if (!loading && !user) {
@@ -98,9 +95,7 @@ export default function UserPortal() {
     try {
       const response = await fetch('/api/contact-support', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           subject: supportSubject,
           message: supportMessage,
@@ -122,7 +117,6 @@ export default function UserPortal() {
         type: 'success',
       });
 
-      // Clear form
       setSupportSubject('');
       setSupportMessage('');
       setShowSupportModal(false);
@@ -151,14 +145,12 @@ export default function UserPortal() {
     
     setBillingLoading(true);
     try {
-      // Get the current session to include auth token
       const { data: { session } } = await supabase.auth.getSession();
       
       if (!session?.access_token) {
         throw new Error('No active session found. Please sign in again.');
       }
       
-      // Create Stripe Customer Portal session
       const response = await fetch('/api/create-portal-session', {
         method: 'POST',
         headers: {
@@ -166,9 +158,7 @@ export default function UserPortal() {
           'Authorization': `Bearer ${session.access_token}`,
         },
         credentials: 'include',
-        body: JSON.stringify({
-          userId: user.id,
-        }),
+        body: JSON.stringify({ userId: user.id }),
       });
 
       if (!response.ok) {
@@ -191,338 +181,254 @@ export default function UserPortal() {
     }
   };
 
-  // Show loading if auth is loading or no user
   if (loading || !user) {
     return (
       <div className="min-h-screen flex items-center justify-center" style={{ backgroundColor: 'var(--background)' }}>
         <div className="text-center">
-          <div className="text-4xl mb-4">⏳</div>
+          <div className="text-4xl mb-4 animate-bounce">⏳</div>
           <p style={{ color: 'var(--text-secondary)' }}>Loading...</p>
         </div>
       </div>
     );
   }
 
-  // Check if user is a creator
   const isCreator = userPlanType === 'creator';
 
+  // Helper for card styles to ensure consistency
+  const cardStyle = {
+    backgroundColor: 'var(--card-bg)',
+    border: '1px solid var(--card-border)',
+    boxShadow: '0 8px 32px -4px rgba(0, 0, 0, 0.2), 0 4px 16px -2px rgba(0, 0, 0, 0.1), 0 0 0 1px rgba(255, 255, 255, 0.05) inset',
+    transition: 'all 0.3s ease',
+    position: 'relative' as const,
+    backdropFilter: 'blur(10px)',
+  };
+
+  const getGlowStyle = () => {
+    if (isCreator && isPro) return {
+      boxShadow: '0 0 50px -5px rgba(218, 165, 32, 0.3), 0 0 0 1px rgba(218, 165, 32, 0.4) inset',
+      borderColor: 'rgba(218, 165, 32, 0.3)'
+    };
+    if (isPro) return {
+      boxShadow: '0 0 50px -5px rgba(41, 121, 255, 0.3), 0 0 0 1px rgba(41, 121, 255, 0.4) inset',
+      borderColor: 'rgba(41, 121, 255, 0.3)'
+    };
+    return {};
+  };
+
   return (
-    <div className="min-h-screen" style={{ backgroundColor: 'var(--background)' }}>
-      <div className="max-w-4xl mx-auto px-4 py-10">
+    <div className="min-h-screen relative overflow-hidden" style={{ backgroundColor: 'var(--background)' }}>
+      {/* Ambient Background Glow */}
+      <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[600px] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none z-0 mix-blend-screen"></div>
+      
+      <div className="max-w-3xl mx-auto px-4 py-12 relative z-10">
         {/* Header */}
-        <div className="flex justify-between items-center mb-8">
-          <div className="flex items-center gap-4">
-            <img 
-              src="/postready-logo.svg" 
-              alt="PostReady Logo" 
-              className="h-16 w-auto cursor-pointer transition-all hover:scale-105 logo-glow"
-              onClick={() => router.push('/')}
-            />
+        <div className="flex items-center justify-between mb-10">
+          <div className="flex items-center gap-3">
+            <div className="relative group">
+              <div className="absolute inset-0 bg-blue-500 blur-2xl opacity-40 group-hover:opacity-60 transition-opacity duration-500 rounded-full scale-150"></div>
+              <img 
+                src="/postready-logo.svg" 
+                alt="PostReady Logo" 
+                className="h-10 w-auto cursor-pointer hover:scale-105 transition-transform relative z-10"
+                onClick={() => router.push('/')}
+              />
+            </div>
           </div>
           <button
             onClick={() => router.push('/')}
-            className="px-5 py-2.5 rounded-lg font-medium transition-all hover:scale-105"
+            className="px-4 py-2 rounded-lg text-sm font-medium transition-all hover:bg-gray-100 dark:hover:bg-gray-800 hover:shadow-md"
             style={{
-              backgroundColor: 'var(--card-bg)',
-              borderWidth: '2px',
-              borderStyle: 'solid',
-              borderColor: isCreator && isPro 
-                ? 'rgba(218, 165, 32, 0.3)' 
-                : 'var(--card-border)',
-              color: isCreator && isPro 
-                ? '#DAA520' 
-                : 'var(--text-primary)'
+              color: 'var(--text-secondary)',
+              border: '1px solid var(--card-border)'
             }}
           >
-            ← Back to Home
+            ← Back to Dashboard
           </button>
         </div>
 
-        {/* Account Overview */}
-        <div 
-          className="mb-6 rounded-2xl shadow-lg border p-8 space-y-6 transition-all duration-300"
-          style={{
-            backgroundColor: isCreator && isPro 
-              ? 'rgba(218, 165, 32, 0.08)' 
-              : 'var(--card-bg)',
-            borderColor: isCreator && isPro 
-              ? 'rgba(218, 165, 32, 0.3)' 
-              : 'var(--card-border)',
-            boxShadow: isCreator && isPro 
-              ? '0 10px 40px rgba(218, 165, 32, 0.15)' 
-              : '0 10px 40px rgba(0, 0, 0, 0.05)'
-          }}
-        >
-          <div className="flex items-start justify-between">
-            <div>
-              <h2 className="text-2xl font-bold mb-4" style={{ 
-                color: isCreator && isPro ? '#DAA520' : 'var(--text-primary)' 
-              }}>
-                Account Overview
-              </h2>
-              <div className="space-y-3">
+        <div className="space-y-8">
+          {/* Account Overview */}
+          <div className="rounded-2xl p-8 transition-all hover:-translate-y-1" style={{ ...cardStyle, ...getGlowStyle() }}>
+            <h2 className="text-xl font-bold mb-6 flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+              Account Overview
+              {isPro && <span className="animate-pulse text-xs">✨</span>}
+            </h2>
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-6 border-b" style={{ borderColor: 'var(--card-border)' }}>
                 <div>
-                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Email</p>
-                  <p className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>{user?.email || 'Unknown'}</p>
+                  <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Email Address</p>
+                  <p className="text-lg font-medium" style={{ color: 'var(--text-primary)' }}>{user.email}</p>
                 </div>
-                <div>
-                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>Account Status</p>
-                  <div className="flex items-center gap-2">
-                    {isPro ? (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold" style={{ 
-                        background: isCreator && isPro 
-                          ? 'linear-gradient(to right, #DAA520, #F4D03F)' 
-                          : 'linear-gradient(to right, #2979FF, #6FFFD2)', 
-                        color: 'white',
-                        boxShadow: isCreator && isPro 
-                          ? '0 0 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)' 
-                          : 'none'
-                      }}>
-                        {isCreator && isPro ? '✨' : '⚡'} {isCreator && isPro ? 'Creator' : 'Pro'} Member
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold bg-gray-200" style={{ color: 'var(--text-secondary)' }}>
-                        Free Plan
-                      </span>
-                    )}
-                  </div>
+                <div className="flex items-center gap-2">
+                   {isPro ? (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-bold" style={{ 
+                      background: isCreator && isPro 
+                        ? 'linear-gradient(to right, #DAA520, #F4D03F)' 
+                        : 'linear-gradient(to right, #2979FF, #6FFFD2)', 
+                      color: 'white',
+                      boxShadow: '0 2px 10px rgba(41, 121, 255, 0.2)'
+                    }}>
+                      {isCreator && isPro ? '✨ Creator Plan' : '⚡ Pro Plan'}
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-600 dark:bg-gray-800 dark:text-gray-400">
+                      Free Plan
+                    </span>
+                  )}
                 </div>
               </div>
+              
+              <div>
+                <p className="text-sm font-medium mb-1" style={{ color: 'var(--text-secondary)' }}>Member Since</p>
+                <p className="text-base" style={{ color: 'var(--text-primary)' }}>
+                  {new Date(user.created_at || Date.now()).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Billing & Subscription */}
+          <div className="rounded-2xl p-8 transition-all hover:-translate-y-1" style={{ ...cardStyle, ...getGlowStyle() }}>
+            <h2 className="text-xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
+              Billing & Subscription
+            </h2>
+            
+            {isPro ? (
+              <div className="p-6 rounded-xl border bg-opacity-50" style={{ 
+                backgroundColor: 'var(--hover-bg)',
+                borderColor: 'var(--card-border)' 
+              }}>
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                  <div>
+                    <h3 className="font-bold text-lg flex items-center gap-2" style={{ color: 'var(--text-primary)' }}>
+                      {isCreator && isPro ? 'Creator Subscription' : 'Pro Subscription'}
+                      <span className="text-xs px-2 py-0.5 rounded bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">Active</span>
+                    </h3>
+                    <p className="text-sm mt-1" style={{ color: 'var(--text-secondary)' }}>
+                      $10.00 / month
+                    </p>
+                  </div>
+                  <button
+                    onClick={handleManageBilling}
+                    disabled={billingLoading}
+                    className="px-5 py-2.5 rounded-lg font-medium text-white text-sm transition-all hover:shadow-lg active:scale-95 disabled:opacity-70"
+                    style={{
+                      background: isCreator && isPro ? '#DAA520' : '#2979FF',
+                    }}
+                  >
+                    {billingLoading ? 'Loading...' : 'Manage Subscription'}
+                  </button>
+                </div>
+                <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
+                  Manage your payment method, view billing history, or cancel your subscription via our secure portal.
+                </p>
+              </div>
+            ) : (
+              <div className="text-center py-8 px-4 rounded-xl border border-dashed" style={{ borderColor: 'var(--card-border)' }}>
+                <div className="text-4xl mb-3">🚀</div>
+                <h3 className="text-lg font-bold mb-2" style={{ color: 'var(--text-primary)' }}>Upgrade to Pro</h3>
+                <p className="text-sm mb-6 max-w-md mx-auto" style={{ color: 'var(--text-secondary)' }}>
+                  Unlock unlimited AI generation, premium insights, and priority support.
+                </p>
+                <button
+                  onClick={() => router.push('/?premium=true')}
+                  className="px-6 py-3 rounded-xl font-bold text-white text-sm transition-all hover:shadow-lg hover:scale-105 active:scale-95"
+                  style={{
+                    background: 'linear-gradient(135deg, #2979FF, #6FFFD2)',
+                    boxShadow: '0 4px 15px rgba(41, 121, 255, 0.3)'
+                  }}
+                >
+                  View Pro Plans
+                </button>
+              </div>
+            )}
+          </div>
+
+          {/* Account Actions */}
+          <div className="rounded-2xl p-8 transition-all hover:-translate-y-1" style={{ ...cardStyle, ...getGlowStyle() }}>
+            <h2 className="text-xl font-bold mb-6" style={{ color: 'var(--text-primary)' }}>
+              Account Actions
+            </h2>
+            <div className="space-y-3">
+              <button
+                onClick={() => setShowSupportModal(true)}
+                className="w-full flex items-center justify-between p-4 rounded-xl border transition-all hover:bg-opacity-50"
+                style={{ 
+                  borderColor: 'var(--card-border)',
+                  backgroundColor: 'var(--background)',
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">💬</span>
+                  <div className="text-left">
+                    <span className="block font-medium text-sm" style={{ color: 'var(--text-primary)' }}>Contact Support</span>
+                    <span className="block text-xs" style={{ color: 'var(--text-secondary)' }}>Get help with your account</span>
+                  </div>
+                </div>
+                <span style={{ color: 'var(--text-secondary)' }}>→</span>
+              </button>
+
+              <button
+                onClick={() => {
+                  setModalState({
+                    isOpen: true,
+                    title: 'Sign Out',
+                    message: 'Are you sure you want to sign out?',
+                    type: 'confirm',
+                    onConfirm: async () => {
+                      if (signingOutRef.current) return;
+                      signingOutRef.current = true;
+                      setIsSigningOut(true);
+                      document.body.style.transition = 'opacity 0.3s ease-out';
+                      document.body.style.opacity = '0';
+                      await new Promise(resolve => setTimeout(resolve, 300));
+                      await supabase.auth.signOut();
+                      localStorage.clear();
+                      window.location.href = '/';
+                    },
+                    confirmText: 'Sign Out'
+                  });
+                }}
+                className="w-full flex items-center justify-between p-4 rounded-xl border transition-all hover:bg-red-50 dark:hover:bg-red-900/10 hover:border-red-200 dark:hover:border-red-900/30"
+                style={{ 
+                  borderColor: 'var(--card-border)',
+                  backgroundColor: 'var(--background)',
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-xl">🚪</span>
+                  <div className="text-left">
+                    <span className="block font-medium text-sm text-red-500">Sign Out</span>
+                    <span className="block text-xs" style={{ color: 'var(--text-secondary)' }}>Log out of your account</span>
+                  </div>
+                </div>
+              </button>
             </div>
           </div>
         </div>
-
-        {/* Billing & Subscription */}
-        <SectionCard className="mb-6">
-          <h2 className="text-2xl font-bold mb-6" style={{ 
-            color: isCreator && isPro ? '#DAA520' : 'var(--secondary)' 
-          }}>
-            Billing & Subscription
-          </h2>
-          
-          {isPro ? (
-            <div className="space-y-4">
-              <div className="p-6 rounded-xl border-2" style={{ 
-                backgroundColor: isCreator && isPro 
-                  ? 'rgba(218, 165, 32, 0.08)' 
-                  : 'var(--hover-bg)',
-                borderColor: isCreator && isPro 
-                  ? 'rgba(218, 165, 32, 0.3)' 
-                  : 'var(--primary)',
-                boxShadow: isCreator && isPro 
-                  ? '0 10px 40px rgba(218, 165, 32, 0.15)' 
-                  : 'none'
-              }}>
-                <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-bold text-xl flex items-center" style={{ 
-                    color: isCreator && isPro ? '#DAA520' : 'var(--text-primary)' 
-                  }}>
-                    <span className="mr-2">{isCreator && isPro ? '✨' : '⚡'}</span>
-                    {isCreator && isPro ? 'PostReady Creator' : 'PostReady Pro'}
-                  </h3>
-                  <span className="text-lg font-bold px-3 py-1 rounded-lg" style={{ 
-                    color: isCreator && isPro ? '#DAA520' : 'var(--primary)',
-                    backgroundColor: 'var(--card-bg)'
-                  }}>
-                    $10/month
-                  </span>
-                </div>
-                <p className="text-sm mb-6" style={{ color: 'var(--text-secondary)' }}>
-                  Unlimited video ideas, advanced insights, and priority support
-                </p>
-                <button
-                  onClick={handleManageBilling}
-                  disabled={billingLoading}
-                  className="w-full text-white rounded-xl px-6 py-3 font-bold transition-all disabled:bg-gray-400 disabled:cursor-not-allowed shadow-md hover:shadow-lg hover:scale-105"
-                  style={{
-                    backgroundColor: billingLoading ? undefined : (isCreator && isPro ? '#DAA520' : '#2979FF'),
-                    boxShadow: billingLoading ? undefined : (isCreator && isPro 
-                      ? '0 4px 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)' 
-                      : '0 4px 20px rgba(41, 121, 255, 0.3), 0 0 40px rgba(111, 255, 210, 0.1)')
-                  }}
-                  onMouseEnter={(e) => {
-                    if (!billingLoading) {
-                      e.currentTarget.style.backgroundColor = isCreator && isPro ? '#C19A1E' : '#1e5dd9';
-                    }
-                  }}
-                  onMouseLeave={(e) => {
-                    if (!billingLoading) {
-                      e.currentTarget.style.backgroundColor = isCreator && isPro ? '#DAA520' : '#2979FF';
-                    }
-                  }}
-                >
-                  {billingLoading ? 'Loading...' : '⚙️ Manage Subscription'}
-                </button>
-                <p className="text-xs mt-3 text-center" style={{ color: 'var(--text-secondary)' }}>
-                  Update payment method, view invoices, or cancel subscription
-                </p>
-              </div>
-            </div>
-          ) : (
-            <div className="text-center py-10">
-              <div className="text-6xl mb-4">⚡</div>
-              <h3 className="text-2xl font-bold mb-3" style={{ 
-                color: 'var(--secondary)' 
-              }}>
-                Upgrade to Pro
-              </h3>
-              <p className="mb-6 text-lg" style={{ color: 'var(--text-secondary)' }}>
-                Get unlimited video ideas, advanced insights, and priority support for just $10/month
-              </p>
-              <button
-                onClick={() => {
-                  router.push('/?premium=true');
-                }}
-                className="w-full text-white rounded-xl px-6 py-3 font-bold transition-all shadow-md hover:shadow-lg hover:scale-105"
-                style={{
-                  backgroundColor: '#2979FF',
-                  boxShadow: '0 4px 20px rgba(41, 121, 255, 0.3), 0 0 40px rgba(111, 255, 210, 0.1)'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.backgroundColor = '#1e5dd9';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.backgroundColor = '#2979FF';
-                }}
-              >
-                ⚡ View Pro Plans
-              </button>
-            </div>
-          )}
-        </SectionCard>
-
-        {/* Account Actions */}
-        <SectionCard>
-          <h2 className="text-2xl font-bold mb-6" style={{ 
-            color: isCreator && isPro ? '#DAA520' : 'var(--secondary)' 
-          }}>
-            Account Actions
-          </h2>
-          <div className="space-y-3">
-            <button
-              onClick={() => setShowSupportModal(true)}
-              className="w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-105"
-              style={{ 
-                borderColor: isPro 
-                  ? (isCreator && isPro ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.3)')
-                  : 'var(--card-border)',
-                backgroundColor: 'var(--card-bg)'
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold flex items-center gap-2" style={{ 
-                    color: isPro 
-                      ? (isCreator && isPro ? '#DAA520' : 'var(--primary)')
-                      : 'var(--text-primary)'
-                  }}>
-                    {isPro ? '⚡' : ''} {isPro ? 'Priority Support' : 'Support'}
-                  </h3>
-                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    {isPro ? 'Get priority assistance from our team' : 'Contact our support team'}
-                  </p>
-                </div>
-                <span style={{ 
-                  color: isPro 
-                    ? (isCreator && isPro ? '#DAA520' : 'var(--primary)')
-                    : 'var(--primary)' 
-                }}>→</span>
-              </div>
-            </button>
-
-            <button
-              onClick={() => {
-                // Show confirmation modal
-                setModalState({
-                  isOpen: true,
-                  title: 'Sign Out',
-                  message: 'Are you sure you want to sign out?',
-                  type: 'confirm',
-                  onConfirm: async () => {
-                    // Prevent multiple clicks using ref (instant check, no re-render needed)
-                    if (signingOutRef.current) {
-                      console.log('⚠️ Sign out already in progress, ignoring click');
-                      return;
-                    }
-                    
-                    signingOutRef.current = true;
-                    setIsSigningOut(true);
-                    console.log('🚪 Signing out...');
-                    
-                    // Add smooth fade-out effect
-                    document.body.style.transition = 'opacity 0.3s ease-out';
-                    document.body.style.opacity = '0';
-                    
-                    // Wait for fade animation
-                    await new Promise(resolve => setTimeout(resolve, 300));
-                    
-                    // Sign out from Supabase and wait for it to complete
-                    await supabase.auth.signOut();
-                    console.log('✅ Signed out successfully');
-                    
-                    // Clear all local storage
-                    localStorage.clear();
-                    
-                    // Redirect
-                    window.location.href = '/';
-                  },
-                  confirmText: 'Sign Out'
-                });
-              }}
-              disabled={isSigningOut}
-              className="w-full text-left p-4 rounded-lg border-2 transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ 
-                borderColor: '#EF4444',
-                backgroundColor: 'var(--card-bg)'
-              }}
-              onMouseEnter={(e) => {
-                if (!isSigningOut) {
-                  e.currentTarget.style.backgroundColor = '#FEE2E2';
-                  e.currentTarget.style.borderColor = '#DC2626';
-                }
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.backgroundColor = 'var(--card-bg)';
-                e.currentTarget.style.borderColor = '#EF4444';
-              }}
-            >
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-red-600">{isSigningOut ? 'Signing Out...' : 'Sign Out'}</h3>
-                  <p className="text-sm" style={{ color: 'var(--text-secondary)' }}>
-                    {isSigningOut ? 'Please wait...' : 'Sign out of your account'}
-                  </p>
-                </div>
-                <span className="text-red-600">→</span>
-              </div>
-            </button>
-          </div>
-        </SectionCard>
       </div>
 
-      {/* Floating Theme Toggle - Bottom Right */}
+      {/* Floating Theme Toggle */}
       <button
         onClick={toggleTheme}
-        className="fixed bottom-6 right-6 p-4 rounded-full shadow-2xl hover:scale-110 z-50"
+        className="fixed bottom-6 right-6 p-3 rounded-full shadow-lg hover:scale-110 transition-all z-50"
         style={{ 
           backgroundColor: 'var(--card-bg)',
-          border: `3px solid ${isCreator && isPro ? '#DAA520' : 'var(--primary)'}`,
-          transition: 'all 0.3s ease, transform 0.2s ease',
-          boxShadow: isCreator && isPro 
-            ? '0 10px 40px rgba(218, 165, 32, 0.3)' 
-            : '0 10px 40px rgba(0, 0, 0, 0.2)'
+          border: '1px solid var(--card-border)',
+          color: 'var(--text-primary)'
         }}
-        title={theme === 'light' ? 'Switch to Dark Mode' : 'Switch to Light Mode'}
+        title="Toggle Theme"
       >
-        <span className="text-3xl" style={{ transition: 'opacity 0.3s ease' }}>
+        <span className="text-2xl">
           {theme === 'light' ? '🌙' : '☀️'}
         </span>
       </button>
-      
-      {/* Support Contact Modal */}
+
+      {/* Modals */}
       {showSupportModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black bg-opacity-50"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
           onClick={(e) => {
             if (e.target === e.currentTarget && !isSubmittingSupport) {
               setShowSupportModal(false);
@@ -532,165 +438,49 @@ export default function UserPortal() {
           }}
         >
           <div 
-            className="bg-white rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200"
+            className="rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200"
             style={{
               backgroundColor: 'var(--card-bg)',
-              border: `2px solid ${isPro 
-                ? (isCreator && isPro ? 'rgba(218, 165, 32, 0.3)' : 'rgba(41, 121, 255, 0.3)')
-                : 'var(--card-border)'}`,
+              border: '1px solid var(--card-border)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6">
-              <div className="flex items-start justify-between mb-4">
-                <h3 className="text-xl font-bold" style={{ 
-                  color: isPro 
-                    ? (isCreator && isPro ? '#DAA520' : 'var(--primary)')
-                    : 'var(--text-primary)'
-                }}>
-                  {isPro ? '⚡ Priority Support' : 'Support'}
-                </h3>
-                <button
-                  onClick={() => {
-                    setShowSupportModal(false);
-                    setSupportSubject('');
-                    setSupportMessage('');
-                  }}
-                  className="text-gray-400 hover:text-gray-600 transition-colors"
-                >
-                  ✕
-                </button>
-              </div>
-
-              {isPro && (
-                <div className="mb-4 p-3 rounded-lg" style={{
-                  backgroundColor: isCreator && isPro 
-                    ? 'rgba(218, 165, 32, 0.1)' 
-                    : 'rgba(41, 121, 255, 0.1)',
-                  border: `1px solid ${isCreator && isPro 
-                    ? 'rgba(218, 165, 32, 0.3)' 
-                    : 'rgba(41, 121, 255, 0.3)'}`
-                }}>
-                  <p className="text-sm font-medium" style={{ 
-                    color: isCreator && isPro ? '#DAA520' : 'var(--primary)' 
-                  }}>
-                    ⚡ As a Pro member, you'll receive priority support with faster response times.
-                  </p>
-                </div>
-              )}
-
-              <div className="space-y-4">
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                    Subject *
-                  </label>
-                  <input
-                    type="text"
-                    value={supportSubject}
-                    onChange={(e) => setSupportSubject(e.target.value)}
-                    placeholder="e.g., Account Issue, Feature Request"
-                    className="w-full px-4 py-2 rounded-lg border-2 focus:outline-none"
-                    style={{
-                      backgroundColor: 'white',
-                      borderColor: isPro 
-                        ? (isCreator && isPro ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)')
-                        : 'var(--card-border)',
-                      color: '#1a1a1a',
-                    }}
-                    disabled={isSubmittingSupport}
-                    onFocus={(e) => {
-                      e.target.style.boxShadow = isPro 
-                        ? (isCreator && isPro 
-                          ? '0 0 0 2px rgba(218, 165, 32, 0.5)' 
-                          : '0 0 0 2px rgba(41, 121, 255, 0.5)')
-                        : '0 0 0 2px rgba(0, 0, 0, 0.1)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-semibold mb-2" style={{ color: 'var(--text-primary)' }}>
-                    Message *
-                  </label>
-                  <textarea
-                    value={supportMessage}
-                    onChange={(e) => setSupportMessage(e.target.value)}
-                    placeholder="Please describe your question or issue..."
-                    rows={6}
-                    className="w-full px-4 py-2 rounded-lg border-2 resize-none focus:outline-none"
-                    style={{
-                      backgroundColor: 'white',
-                      borderColor: isPro 
-                        ? (isCreator && isPro ? 'rgba(218, 165, 32, 0.25)' : 'rgba(41, 121, 255, 0.25)')
-                        : 'var(--card-border)',
-                      color: '#1a1a1a',
-                    }}
-                    disabled={isSubmittingSupport}
-                    onFocus={(e) => {
-                      e.target.style.boxShadow = isPro 
-                        ? (isCreator && isPro 
-                          ? '0 0 0 2px rgba(218, 165, 32, 0.5)' 
-                          : '0 0 0 2px rgba(41, 121, 255, 0.5)')
-                        : '0 0 0 2px rgba(0, 0, 0, 0.1)';
-                    }}
-                    onBlur={(e) => {
-                      e.target.style.boxShadow = 'none';
-                    }}
-                  />
-                </div>
-
-                {user?.email && (
-                  <p className="text-xs" style={{ color: 'var(--text-secondary)' }}>
-                    Sending from: {user.email}
-                  </p>
-                )}
+            <div className="p-6 border-b" style={{ borderColor: 'var(--card-border)' }}>
+              <div className="flex items-center justify-between">
+                <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Contact Support</h3>
+                <button onClick={() => setShowSupportModal(false)} className="text-gray-400 hover:text-gray-500">✕</button>
               </div>
             </div>
-
-            <div className="bg-gray-50 px-6 py-4 flex gap-3 justify-end">
-              <button
-                onClick={() => {
-                  setShowSupportModal(false);
-                  setSupportSubject('');
-                  setSupportMessage('');
-                }}
-                className="px-4 py-2 rounded-lg font-medium transition-all"
-                style={{
-                  backgroundColor: 'transparent',
-                  color: 'var(--text-secondary)',
-                }}
-                disabled={isSubmittingSupport}
-              >
-                Cancel
-              </button>
-              <button
-                onClick={handleSupportSubmit}
-                disabled={isSubmittingSupport || !supportSubject.trim() || !supportMessage.trim()}
-                className="px-6 py-2 rounded-lg font-bold transition-all text-white disabled:opacity-50 disabled:cursor-not-allowed"
-                style={{
-                  background: isPro 
-                    ? (isCreator && isPro 
-                      ? 'linear-gradient(to right, #DAA520, #F4D03F)'
-                      : 'linear-gradient(to right, #2979FF, #6FFFD2)')
-                    : 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                  boxShadow: isPro 
-                    ? (isCreator && isPro 
-                      ? '0 4px 20px rgba(218, 165, 32, 0.4), 0 0 40px rgba(244, 208, 63, 0.2)'
-                      : '0 4px 20px rgba(41, 121, 255, 0.3), 0 0 40px rgba(111, 255, 210, 0.1)')
-                    : 'none'
-                }}
-              >
-                {isSubmittingSupport ? 'Sending...' : 'Send Message'}
-              </button>
+            <div className="p-6 space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase mb-2" style={{ color: 'var(--text-secondary)' }}>Subject</label>
+                <input
+                  type="text"
+                  value={supportSubject}
+                  onChange={(e) => setSupportSubject(e.target.value)}
+                  className="w-full px-4 py-2 rounded-lg border bg-transparent outline-none focus:ring-2 focus:ring-blue-500/20"
+                  style={{ borderColor: 'var(--card-border)', color: 'var(--text-primary)' }}
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-bold uppercase mb-2" style={{ color: 'var(--text-secondary)' }}>Message</label>
+                <textarea
+                  value={supportMessage}
+                  onChange={(e) => setSupportMessage(e.target.value)}
+                  rows={4}
+                  className="w-full px-4 py-2 rounded-lg border bg-transparent outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
+                  style={{ borderColor: 'var(--card-border)', color: 'var(--text-primary)' }}
+                />
+              </div>
+            </div>
+            <div className="p-6 pt-0 flex gap-3 justify-end">
+              <button onClick={() => setShowSupportModal(false)} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100">Cancel</button>
+              <button onClick={handleSupportSubmit} className="px-6 py-2 rounded-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700">Send</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal */}
       <Modal
         isOpen={modalState.isOpen}
         title={modalState.title}
@@ -701,7 +491,6 @@ export default function UserPortal() {
         confirmText={modalState.confirmText}
       />
       
-      {/* Support Success/Error Modal */}
       <Modal
         isOpen={supportModalState.isOpen}
         title={supportModalState.title}
@@ -713,4 +502,3 @@ export default function UserPortal() {
     </div>
   );
 }
-
