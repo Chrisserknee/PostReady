@@ -9,7 +9,8 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { useAuth } from '@/contexts/AuthContext';
-import { Lock, AlertTriangle } from 'lucide-react';
+import { supabase } from '@/lib/supabase';
+import { Lock, AlertTriangle, AlertCircle, Shield } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 
 interface TranslationResult {
@@ -29,6 +30,10 @@ export function RedFlagTranslator() {
   const [result, setResult] = useState<TranslationResult | null>(null);
   const [error, setError] = useState("");
   const [usageRemaining, setUsageRemaining] = useState<number | null>(null);
+  const [hasRedFlags, setHasRedFlags] = useState(false);
+  const [showResult, setShowResult] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
+  const [audioUrl, setAudioUrl] = useState<string | null>(null);
 
   const fetchUsage = async () => {
     try {
@@ -48,40 +53,122 @@ export function RedFlagTranslator() {
     fetchUsage();
   }, [user]);
 
+  // Cleanup audio URL on unmount
+  useEffect(() => {
+    return () => {
+      if (audioUrl) {
+        URL.revokeObjectURL(audioUrl);
+      }
+    };
+  }, [audioUrl]);
+
   const handleTranslate = async () => {
     if (!text.trim()) {
-      setError("Please enter some text to translate");
-      return;
-    }
-
-    if (!isPro && usageRemaining !== null && usageRemaining <= 0) {
-      router.push('/?premium=true');
+      setError("Please enter some text to analyze");
       return;
     }
 
     setIsLoading(true);
     setError("");
     setResult(null);
+    setHasRedFlags(false);
+    setShowResult(false);
+    setShowPopup(false);
+    if (audioUrl) {
+      URL.revokeObjectURL(audioUrl);
+      setAudioUrl(null);
+    }
 
     try {
+      // Get access token from Supabase session for API authentication
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: HeadersInit = { 'Content-Type': 'application/json' };
+      
+      // Add Authorization header if we have a session
+      if (session?.access_token) {
+        headers['Authorization'] = `Bearer ${session.access_token}`;
+      }
+
       const response = await fetch('/api/red-flag-translator', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers,
         credentials: 'include',
         body: JSON.stringify({ text, context }),
       });
 
       if (!response.ok) {
-        const errorData = await response.json();
-        if (errorData.requiresUpgrade) {
+        const errorData = await response.json().catch(() => ({}));
+        console.log('🚩 Red Flag API Error:', {
+          status: response.status,
+          errorData,
+          isPro: isPro,
+          user: user?.id
+        });
+        
+        // Only redirect if it's actually a requiresUpgrade error AND user is not Pro
+        if (errorData.requiresUpgrade && !isPro) {
           router.push('/?premium=true');
           return;
         }
-        throw new Error(errorData.error || 'Failed to translate');
+        
+        // If Pro user gets requiresUpgrade, log it but don't redirect
+        if (errorData.requiresUpgrade && isPro) {
+          console.error('🚩 ERROR: Pro user received requiresUpgrade error!', {
+            userId: user?.id,
+            isPro,
+            errorData
+          });
+        }
+        
+        throw new Error(errorData.error || 'Failed to detect red flags');
       }
 
       const data = await response.json();
       setResult(data);
+      const flagsDetected = data.redFlags && data.redFlags.length > 0;
+      setHasRedFlags(flagsDetected);
+      
+      // If red flags detected, show popup and play voice
+      if (flagsDetected) {
+        // Show popup animation
+        setShowPopup(true);
+        
+        // Fetch and play voice
+        try {
+          const voiceResponse = await fetch('/api/red-flag-voice', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          });
+          
+          if (voiceResponse.ok) {
+            const voiceData = await voiceResponse.json();
+            if (voiceData.audio) {
+              // Play audio directly from data URL
+              const audio = new Audio(voiceData.audio);
+              audio.volume = 0.8;
+              audio.play().catch(err => console.error('Audio play error:', err));
+              
+              // Clean up after playback
+              audio.onended = () => {
+                setAudioUrl(null);
+              };
+            }
+          }
+        } catch (err) {
+          console.error('Error fetching voice:', err);
+        }
+        
+        // Hide popup after 3 seconds
+        setTimeout(() => {
+          setShowPopup(false);
+        }, 3000);
+      }
+      
+      // Animate result appearance
+      setTimeout(() => {
+        setShowResult(true);
+      }, 100);
+      
       fetchUsage();
     } catch (err: any) {
       setError(err.message || "An error occurred");
@@ -91,12 +178,36 @@ export function RedFlagTranslator() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Hovering Popup Animation */}
+      {showPopup && (
+        <div 
+          className="fixed inset-0 z-50 flex items-center justify-center pointer-events-none"
+          style={{
+            animation: 'fadeInScale 0.5s ease-out',
+          }}
+        >
+          <div 
+            className="bg-gradient-to-br from-red-500 to-red-700 text-white px-8 py-6 rounded-2xl shadow-2xl border-4 border-white/20 flex items-center gap-4"
+            style={{
+              animation: 'floatUp 0.5s ease-out, pulse 2s ease-in-out infinite',
+              animationDelay: '0s, 0.5s',
+              boxShadow: '0 20px 60px rgba(239, 68, 68, 0.5), 0 0 0 10px rgba(239, 68, 68, 0.2)',
+            }}
+          >
+            <AlertTriangle className="h-12 w-12 animate-bounce" />
+            <div>
+              <h2 className="text-3xl font-bold mb-1">Red Flag Detected!</h2>
+              <p className="text-red-100 text-sm">Analyzing potential warning signs...</p>
+            </div>
+          </div>
+        </div>
+      )}
       <Card>
         <CardHeader>
-          <CardTitle>🚩 Red Flag Translator</CardTitle>
+          <CardTitle>🚩 Red Flag Detector</CardTitle>
           <CardDescription>
-            Decode hidden meanings and identify red flags in text messages, social media posts, and conversations.
+            Detect hidden meanings and identify red flags in text messages, social media posts, and conversations.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -107,7 +218,7 @@ export function RedFlagTranslator() {
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="text">Text to Translate</Label>
+            <Label htmlFor="text">Text to Analyze</Label>
             <Textarea
               id="text"
               placeholder="Paste the text message, post, or conversation snippet here..."
@@ -137,15 +248,10 @@ export function RedFlagTranslator() {
             {isLoading ? (
               <>
                 <span className="mr-2 h-4 w-4 animate-spin rounded-full border-2 border-b-transparent"></span>
-                Translating...
-              </>
-            ) : (!isPro && usageRemaining !== null && usageRemaining <= 0) ? (
-              <>
-                <Lock className="mr-2 h-4 w-4" />
-                Upgrade to Translate
+                Detecting...
               </>
             ) : (
-              "🚩 Translate Red Flags"
+              "🚩 Detect Red Flags"
             )}
           </Button>
         </CardContent>
@@ -158,54 +264,184 @@ export function RedFlagTranslator() {
       )}
 
       {result && (
-        <Card>
-          <CardHeader>
-            <CardTitle>Translation Result</CardTitle>
+        <Card 
+          className={`transition-all duration-500 ${
+            showResult ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4'
+          } ${
+            hasRedFlags ? 'border-red-500 shadow-lg shadow-red-500/20' : 'border-green-500 shadow-lg shadow-green-500/20'
+          }`}
+          style={{
+            animation: hasRedFlags ? 'pulse 2s ease-in-out infinite' : undefined,
+          }}
+        >
+          <CardHeader className={hasRedFlags ? 'bg-red-50 dark:bg-red-950/20' : 'bg-green-50 dark:bg-green-950/20'}>
+            <CardTitle className={`flex items-center gap-2 ${hasRedFlags ? 'text-red-600 dark:text-red-400' : 'text-green-600 dark:text-green-400'}`}>
+              {hasRedFlags ? (
+                <>
+                  <AlertTriangle className="h-5 w-5 animate-pulse" />
+                  Red Flags Detected!
+                </>
+              ) : (
+                <>
+                  <Shield className="h-5 w-5" />
+                  No Red Flags Found
+                </>
+              )}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div>
-              <Label className="text-sm font-semibold">Original Text:</Label>
-              <p className="mt-1 text-muted-foreground">{result.original}</p>
+          <CardContent className="space-y-6 pt-6">
+            {/* Original Text */}
+            <div className="p-4 rounded-lg bg-muted/50 border">
+              <Label className="text-sm font-semibold text-muted-foreground mb-2 block">Original Text:</Label>
+              <p className="text-base leading-relaxed">{result.original}</p>
             </div>
 
-            <div>
-              <Label className="text-sm font-semibold">What They Really Mean:</Label>
-              <p className="mt-1">{result.translation}</p>
+            {/* What They Really Mean */}
+            <div className={`p-4 rounded-lg border-2 ${
+              hasRedFlags 
+                ? 'bg-red-50 dark:bg-red-950/30 border-red-200 dark:border-red-800/30' 
+                : 'bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800/30'
+            }`}>
+              <Label className={`text-sm font-semibold mb-2 block ${
+                hasRedFlags 
+                  ? 'text-red-700 dark:text-red-300' 
+                  : 'text-blue-700 dark:text-blue-300'
+              }`}>
+                What They Really Mean:
+              </Label>
+              <p className={`text-base leading-relaxed ${
+                hasRedFlags 
+                  ? 'text-red-900 dark:text-red-100' 
+                  : 'text-blue-900 dark:text-blue-100'
+              }`}>
+                {result.translation}
+              </p>
             </div>
 
+            {/* Red Flags - Animated */}
             {result.redFlags && result.redFlags.length > 0 && (
-              <div>
-                <Label className="text-sm font-semibold flex items-center gap-2">
-                  <AlertTriangle className="h-4 w-4 text-red-500" />
-                  Red Flags:
-                </Label>
-                <ul className="mt-2 space-y-1">
+              <div className="space-y-3">
+                <div className="flex items-center gap-2 mb-3">
+                  <AlertTriangle className="h-5 w-5 text-red-500 animate-pulse" />
+                  <Label className="text-lg font-bold text-red-600 dark:text-red-400">
+                    {result.redFlags.length} Red Flag{result.redFlags.length !== 1 ? 's' : ''} Detected
+                  </Label>
+                </div>
+                <div className="space-y-2">
                   {result.redFlags.map((flag, idx) => (
-                    <li key={idx} className="flex items-start gap-2">
-                      <span className="text-red-500">🚩</span>
-                      <span>{flag}</span>
-                    </li>
+                    <div
+                      key={idx}
+                      className="p-4 rounded-lg bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800/30 animate-fade-in"
+                      style={{
+                        animationDelay: `${idx * 100}ms`,
+                        animation: 'slideInLeft 0.5s ease-out',
+                      }}
+                    >
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl animate-bounce" style={{ animationDelay: `${idx * 100}ms` }}>🚩</span>
+                        <p className="text-red-900 dark:text-red-100 font-medium flex-1">{flag}</p>
+                      </div>
+                    </div>
                   ))}
-                </ul>
+                </div>
               </div>
             )}
 
+            {/* Beautiful Analysis */}
             {result.explanation && (
-              <div>
-                <Label className="text-sm font-semibold">Why This Is Problematic:</Label>
-                <p className="mt-1 text-muted-foreground">{result.explanation}</p>
+              <div className={`p-5 rounded-lg border-2 ${
+                hasRedFlags 
+                  ? 'bg-gradient-to-br from-red-50 to-orange-50 dark:from-red-950/40 dark:to-orange-950/40 border-red-300 dark:border-red-700/50' 
+                  : 'bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/40 dark:to-emerald-950/40 border-green-300 dark:border-green-700/50'
+              }`}>
+                <div className="flex items-start gap-3 mb-3">
+                  <AlertCircle className={`h-5 w-5 mt-0.5 ${
+                    hasRedFlags 
+                      ? 'text-red-600 dark:text-red-400' 
+                      : 'text-green-600 dark:text-green-400'
+                  }`} />
+                  <Label className={`text-base font-bold ${
+                    hasRedFlags 
+                      ? 'text-red-700 dark:text-red-300' 
+                      : 'text-green-700 dark:text-green-300'
+                  }`}>
+                    Analysis
+                  </Label>
+                </div>
+                <p className={`text-sm leading-relaxed ${
+                  hasRedFlags 
+                    ? 'text-red-900 dark:text-red-100' 
+                    : 'text-green-900 dark:text-green-100'
+                }`}>
+                  {result.explanation}
+                </p>
               </div>
             )}
 
+            {/* Suggested Response */}
             {result.response && (
-              <div>
-                <Label className="text-sm font-semibold">Suggested Response:</Label>
-                <p className="mt-1 text-muted-foreground">{result.response}</p>
+              <div className="p-4 rounded-lg bg-blue-50 dark:bg-blue-950/30 border border-blue-200 dark:border-blue-800/30">
+                <Label className="text-sm font-semibold text-blue-700 dark:text-blue-300 mb-2 block">
+                  Suggested Response:
+                </Label>
+                <p className="text-blue-900 dark:text-blue-100 text-sm leading-relaxed">{result.response}</p>
               </div>
             )}
           </CardContent>
         </Card>
       )}
+
+      <style jsx>{`
+        @keyframes pulse {
+          0%, 100% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+          }
+          50% {
+            box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+          }
+        }
+        @keyframes slideInLeft {
+          from {
+            opacity: 0;
+            transform: translateX(-20px);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0);
+          }
+        }
+        @keyframes fadeIn {
+          from {
+            opacity: 0;
+          }
+          to {
+            opacity: 1;
+          }
+        }
+        @keyframes fadeInScale {
+          from {
+            opacity: 0;
+            transform: scale(0.8);
+          }
+          to {
+            opacity: 1;
+            transform: scale(1);
+          }
+        }
+        @keyframes floatUp {
+          from {
+            opacity: 0;
+            transform: translateY(20px) scale(0.9);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0) scale(1);
+          }
+        }
+        .animate-fade-in {
+          animation: fadeIn 0.5s ease-out;
+        }
+      `}</style>
     </div>
   );
 }

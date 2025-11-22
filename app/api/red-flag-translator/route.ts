@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { createServerSupabaseClient } from '@/lib/auth-utils';
+import { createServerSupabaseClient, verifyProAccess } from '@/lib/auth-utils';
 import { loadUserProgress, saveUserProgress } from '@/lib/userProgress';
 
 const openai = new OpenAI({
@@ -9,35 +9,136 @@ const openai = new OpenAI({
 
 export async function POST(request: NextRequest) {
   try {
+    // CRITICAL: Check Pro status FIRST, before anything else
+    console.log('🚩 Red Flag Translator API: ========== START ==========');
+    console.log('🚩 Red Flag Translator API: Request headers:', {
+      cookie: request.headers.get('cookie')?.substring(0, 200),
+      authorization: request.headers.get('authorization')?.substring(0, 50),
+    });
+    
     const supabase = createServerSupabaseClient(request);
     const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    console.log('🚩 Red Flag Translator API: Auth check:', {
+      hasUser: !!user,
+      userId: user?.id,
+      userEmail: user?.email,
+      authError: authError?.message,
+    });
 
     let isPro = false;
     let usageCount = 0;
     const FREE_LIMIT = 1;
 
+    // FIRST: Check Pro status using verifyProAccess (PRIMARY METHOD - most reliable)
     if (user) {
-      const { data: profile } = await supabase
+      console.log('🚩 Red Flag Translator API: User found:', user.id, user.email);
+      
+      // PRIMARY METHOD: Use verifyProAccess with the SAME supabase client to avoid session issues
+      console.log('🚩 Red Flag Translator API: Checking Pro status with verifyProAccess (PRIMARY CHECK)...');
+      const proCheck = await verifyProAccess(request, supabase);
+      console.log('🚩 Red Flag Translator API: verifyProAccess result:', {
+        isPro: proCheck.isPro,
+        userId: proCheck.userId,
+        error: proCheck.error
+      });
+      
+      // TRUST verifyProAccess, but also check database directly as fallback
+      isPro = proCheck.isPro;
+      
+      // FALLBACK: Also check directly from database - if verifyProAccess fails, trust database
+      const { data: profile, error: profileError } = await supabase
         .from('user_profiles')
-        .select('is_pro')
+        .select('is_pro, plan_type')
         .eq('id', user.id)
         .maybeSingle();
       
-      isPro = profile?.is_pro === true;
+      console.log('🚩 Red Flag Translator API: Direct database check:', {
+        hasProfile: !!profile,
+        is_pro: profile?.is_pro,
+        is_pro_type: typeof profile?.is_pro,
+        plan_type: profile?.plan_type,
+        profileError: profileError?.message,
+        verifyProAccess_isPro: proCheck.isPro,
+        CURRENT_isPro: isPro
+      });
       
-      const { data: userProgress } = await loadUserProgress(user.id);
-      usageCount = userProgress?.redFlagTranslatorCount ?? 0;
+      // If verifyProAccess says false but database says true, trust database
+      if (!isPro && profile) {
+        const isProValue = profile.is_pro;
+        const dbIsPro = isProValue === true || 
+                        isProValue === 'true' || 
+                        isProValue === 1 || 
+                        isProValue === '1' ||
+                        String(isProValue).toLowerCase() === 'true';
+        
+        if (dbIsPro) {
+          console.log('⚠️ 🚩 Red Flag Translator API: verifyProAccess returned false but database says Pro - TRUSTING DATABASE');
+          isPro = true;
+        }
+      }
+      
+      if (isPro) {
+        console.log('✅ ✅ ✅ 🚩 Red Flag Translator API: Pro status CONFIRMED');
+      } else {
+        console.log('❌ ❌ ❌ 🚩 Red Flag Translator API: Non-Pro user confirmed. verifyProAccess error:', proCheck.error);
+      }
+      
+      // Only check usage if NOT Pro
+      if (!isPro) {
+        const { data: userProgress, error: progressError } = await loadUserProgress(user.id);
+        if (progressError) {
+          console.error('Error loading user progress:', progressError);
+        }
+        usageCount = userProgress?.redFlagTranslatorCount ?? 0;
+        console.log('🚩 Red Flag Translator API: Non-Pro user, usage count:', usageCount);
+      } else {
+        console.log('🚩 Red Flag Translator API: Pro user confirmed, skipping usage check');
+      }
     } else {
+      // Not logged in - check cookie usage
       const usageCookie = request.cookies.get('rft_usage');
       usageCount = usageCookie ? parseInt(usageCookie.value) : 0;
+      console.log('🚩 Red Flag Translator API: Not logged in, cookie usage:', usageCount);
     }
 
-    if (!isPro && usageCount >= FREE_LIMIT) {
-      return NextResponse.json({ 
-        error: "You've used your free generation. Upgrade to Pro for unlimited access!",
-        requiresUpgrade: true 
-      }, { status: 403 });
+    // Check Usage Limit - ONLY block if we're CERTAIN user is NOT Pro
+    console.log('🚩 Red Flag Translator API: Final check - isPro:', isPro, 'usageCount:', usageCount, 'FREE_LIMIT:', FREE_LIMIT, 'user:', user?.id);
+    
+    // CRITICAL: If isPro is true, NEVER block - allow unlimited access
+    if (isPro) {
+      console.log('✅ 🚩 Red Flag Translator API: Pro user confirmed, allowing unlimited access');
+    } else if (!user) {
+      // Not logged in - check cookie usage
+      if (usageCount >= FREE_LIMIT) {
+        console.log('🚩 Red Flag Translator API: Guest user limit reached, blocking request');
+        return NextResponse.json({ 
+          error: "You've used your free generation. Upgrade to Pro for unlimited access!",
+          requiresUpgrade: true 
+        }, { status: 403 });
+      }
+    } else if (usageCount >= FREE_LIMIT) {
+      // Logged in but not Pro - block only if we're CERTAIN
+      console.log('🚩 Red Flag Translator API: Logged-in non-Pro user limit reached');
+      console.log('🚩 Red Flag Translator API: Double-checking Pro status one more time...');
+      
+      // One final Pro check before blocking - use SAME supabase client
+      const finalCheck = await verifyProAccess(request, supabase);
+      console.log('🚩 Red Flag Translator API: Final Pro check result:', finalCheck);
+      
+      if (finalCheck.isPro) {
+        isPro = true;
+        console.log('✅ 🚩 Red Flag Translator API: Final check confirmed Pro status, allowing request');
+      } else {
+        console.log('🚩 Red Flag Translator API: Confirmed non-Pro, blocking request');
+        return NextResponse.json({ 
+          error: "You've used your free generation. Upgrade to Pro for unlimited access!",
+          requiresUpgrade: true 
+        }, { status: 403 });
+      }
     }
+    
+    console.log('✅ 🚩 Red Flag Translator API: Proceeding with generation. Final isPro:', isPro);
 
     const body = await request.json();
     const { text, context } = body;

@@ -1,87 +1,64 @@
 import { NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
 
 /**
  * Create a server-side Supabase client with cookies for authentication
+ * Uses @supabase/ssr for proper cookie handling in API routes
+ * Also supports Authorization header for token-based auth
  */
 export function createServerSupabaseClient(request: NextRequest) {
   const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
   const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
-  // Extract access token from cookies or Authorization header
-  // Supabase stores tokens in cookies with various names depending on version
+  // Check for Authorization header first (from frontend fetch with Bearer token)
+  const authHeader = request.headers.get('authorization');
+  const accessToken = authHeader?.replace('Bearer ', '');
+
+  // If we have an access token from Authorization header, use regular client with token
+  if (accessToken) {
+    console.log('🔑 createServerSupabaseClient: Using Authorization header token');
+    return createClient(supabaseUrl, supabaseAnonKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+        detectSessionInUrl: false,
+      },
+      global: {
+        headers: {
+          Authorization: `Bearer ${accessToken}`,
+        },
+      },
+    });
+  }
+
+  // Otherwise, use SSR client for cookie-based auth
+  // Parse cookies from request
   const cookieHeader = request.headers.get('cookie') || '';
   const cookies: Record<string, string> = {};
   
   cookieHeader.split(';').forEach(cookie => {
     const [name, value] = cookie.trim().split('=');
     if (name && value) {
-      cookies[name] = decodeURIComponent(value);
+      cookies[name.trim()] = decodeURIComponent(value.trim());
     }
   });
-
-  // Try to find Supabase access token in cookies
-  // Supabase v2 uses a different cookie structure
-  let accessToken = request.headers.get('authorization')?.replace('Bearer ', '');
   
-  if (!accessToken) {
-    // Try different cookie names used by Supabase
-    // Supabase stores session in cookies with format: sb-<project-ref>-auth-token
-    const projectRef = supabaseUrl.split('//')[1]?.split('.')[0];
-    const possibleCookieNames = [
-      'sb-access-token',
-      'supabase-auth-token',
-      `sb-${projectRef}-auth-token`,
-      `sb-${projectRef}-auth-token-code-verifier`
-    ];
-    
-    // Also check for Supabase session cookie (newer format)
-    const allCookieNames = Object.keys(cookies);
-    const supabaseCookies = allCookieNames.filter(name => 
-      name.includes('supabase') || name.startsWith('sb-')
-    );
-    
-    console.log('🔍 createServerSupabaseClient: Found Supabase cookies:', supabaseCookies);
-    
-    for (const cookieName of possibleCookieNames) {
-      if (cookies[cookieName]) {
-        accessToken = cookies[cookieName];
-        break;
-      }
-    }
-    
-    // Also try to extract from compound cookie format (base64 JSON)
-    if (!accessToken) {
-      for (const [name, value] of Object.entries(cookies)) {
-        if (name.includes('supabase') || name.startsWith('sb-')) {
-          try {
-            // Try to parse as JSON in case it's a compound cookie
-            const parsed = JSON.parse(value);
-            if (parsed.access_token) {
-              accessToken = parsed.access_token;
-              break;
-            }
-          } catch {
-            // Not JSON, might be the token itself
-            if (value && value.length > 20 && !value.includes(';')) {
-              accessToken = value;
-            }
-          }
-        }
-      }
-    }
-  }
-
-  const client = createClient(supabaseUrl, supabaseAnonKey, {
-    auth: {
-      persistSession: false,
-      autoRefreshToken: false,
-      detectSessionInUrl: false,
-    },
-    global: {
-      headers: accessToken ? {
-        Authorization: `Bearer ${accessToken}`,
-      } : {},
+  // Create Supabase client using SSR package which properly handles cookies
+  const client = createServerClient(supabaseUrl, supabaseAnonKey, {
+    cookies: {
+      getAll() {
+        // Return cookies in the format Supabase expects
+        return Object.entries(cookies).map(([name, value]) => ({ name, value }));
+      },
+      setAll(cookiesToSet) {
+        // In API routes, cookies are managed by the response object
+        // This is a no-op here as we handle cookies via NextResponse in the route handlers
+        cookiesToSet.forEach(({ name, value }) => {
+          // Store for potential use, but actual setting happens in route handlers
+          cookies[name] = value;
+        });
+      },
     },
   });
 
@@ -140,15 +117,29 @@ export async function verifyUserOwnership(request: NextRequest, targetUserId: st
  * Verify that the authenticated user has Pro subscription
  * SECURITY: This prevents non-Pro users from accessing Pro features
  * 
+ * @param request - NextRequest object (optional if supabaseClient is provided)
+ * @param supabaseClient - Optional Supabase client to reuse (prevents session issues)
  * @returns { isPro: boolean, userId: string | null, error: string | null }
  */
-export async function verifyProAccess(request: NextRequest): Promise<{ 
+export async function verifyProAccess(
+  request?: NextRequest,
+  supabaseClient?: ReturnType<typeof createServerSupabaseClient>
+): Promise<{ 
   isPro: boolean; 
   userId: string | null; 
   error: string | null 
 }> {
   try {
-    const supabase = createServerSupabaseClient(request);
+    // Use provided client or create new one
+    const supabase = supabaseClient || (request ? createServerSupabaseClient(request) : null);
+    
+    if (!supabase) {
+      return {
+        isPro: false,
+        userId: null,
+        error: 'No Supabase client available'
+      };
+    }
     
     // Get authenticated user
     const { data: { user }, error: authError } = await supabase.auth.getUser();
@@ -191,13 +182,20 @@ export async function verifyProAccess(request: NextRequest): Promise<{
       };
     }
 
-    // Check if user has Pro access
-    const isPro = profile?.is_pro === true;
+    // Check if user has Pro access - handle all possible formats
+    const isProValue = profile?.is_pro;
+    const isPro = isProValue === true || 
+                  isProValue === 'true' || 
+                  isProValue === 1 || 
+                  isProValue === '1' ||
+                  String(isProValue).toLowerCase() === 'true';
     
     console.log('✅ verifyProAccess: Final result:', { 
       userId: user.id, 
       isPro, 
-      is_pro_value: profile?.is_pro 
+      is_pro_value: isProValue,
+      is_pro_type: typeof isProValue,
+      plan_type: profile?.plan_type
     });
     
     if (!isPro) {

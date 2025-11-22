@@ -3727,10 +3727,10 @@ function HomeContent() {
                   <span className="text-2xl">🚩</span>
                   <div>
                     <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
-                      Red Flag Translator
+                      Red Flag Detector
                     </h3>
                     <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
-                      Decode hidden meanings and identify red flags in text messages and conversations
+                      Detect hidden meanings and identify red flags in text messages and conversations
                     </p>
                   </div>
                 </div>
