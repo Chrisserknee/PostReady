@@ -208,12 +208,18 @@ Focus on REAL current trends. Keep descriptions concise. Return ONLY valid JSON.
         
         if (user) {
           // Logged in user - update user_progress table
-          const { data: currentProgress } = await loadUserProgress(user.id);
-          await saveUserProgress(user.id, {
-            ...currentProgress,
-            trendRadarCount: newCount,
-            currentStep: currentProgress?.currentStep || 'form',
-          });
+          const { data: userProgress, error: loadError } = await loadUserProgress(user.id);
+          if (!loadError && userProgress) {
+            await saveUserProgress(user.id, {
+              ...userProgress,
+              trendRadarCount: newCount,
+            });
+          } else {
+            await saveUserProgress(user.id, {
+              businessInfo: null, strategy: null, selectedIdea: null, postDetails: null, currentStep: 'form',
+              trendRadarCount: newCount,
+            });
+          }
           console.log('📊 Trend Radar API: Updated usage count for user:', newCount);
         } else {
           // Not logged in - set cookie

@@ -81,12 +81,18 @@ Format as JSON:
       const newCount = usageCount + 1;
       
       if (user) {
-        const { data: currentProgress } = await loadUserProgress(user.id);
-        await saveUserProgress(user.id, {
-          ...currentProgress,
-          cringeCoupleCaptionCount: newCount,
-          currentStep: currentProgress?.currentStep || 'form',
-        });
+        const { data: userProgress, error: loadError } = await loadUserProgress(user.id);
+        if (!loadError && userProgress) {
+          await saveUserProgress(user.id, {
+            ...userProgress,
+            cringeCoupleCaptionCount: newCount,
+          });
+        } else {
+          await saveUserProgress(user.id, {
+            businessInfo: null, strategy: null, selectedIdea: null, postDetails: null, currentStep: 'form',
+            cringeCoupleCaptionCount: newCount,
+          });
+        }
       } else {
         finalResponse.cookies.set('ccc_usage', newCount.toString(), {
           maxAge: 60 * 60 * 24 * 365,
