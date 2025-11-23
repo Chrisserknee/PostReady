@@ -3,6 +3,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User, Session } from '@supabase/supabase-js';
 import { supabase } from '@/lib/supabase';
+import posthog from 'posthog-js';
 
 type AuthContextType = {
   user: User | null;
@@ -76,6 +77,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Set isPro status
           const proStatus = data.is_pro || false;
           setIsPro(proStatus);
+          
+          // Update PostHog with new Pro status
+          if (typeof window !== 'undefined' && posthog.__loaded && user) {
+            posthog.identify(userId, {
+              email: user.email,
+              is_pro: proStatus,
+            });
+          }
         } else if (error) {
           failureCount++;
           // Stop checking after 3 failures
@@ -157,6 +166,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session);
       setUser(session?.user ?? null);
       if (session?.user) {
+        // Identify user in PostHog
+        if (typeof window !== 'undefined' && posthog.__loaded) {
+          posthog.identify(session.user.id, {
+            email: session.user.email,
+            is_pro: isPro,
+          });
+        }
+        
         // Reset failure count on auth change
         failureCount = 0;
         checkProStatus(session.user.id);
@@ -179,6 +196,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           }
         }, 300000); // 5 minutes
       } else {
+        // Reset PostHog identification on logout
+        if (typeof window !== 'undefined' && posthog.__loaded) {
+          posthog.reset();
+        }
         setIsPro(false);
         // Clear interval when user logs out
         if (intervalId) {
