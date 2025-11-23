@@ -141,6 +141,57 @@
   }
 }
 
+@keyframes gradient-shift {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
+  }
+}
+
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 0.3;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes ultimate-glow {
+  0%, 100% {
+    filter: drop-shadow(0 0 20px rgba(41, 121, 255, 0.4)) drop-shadow(0 0 40px rgba(111, 255, 210, 0.3));
+    transform: scale(1);
+  }
+  25% {
+    filter: drop-shadow(0 0 30px rgba(41, 121, 255, 0.6)) drop-shadow(0 0 60px rgba(111, 255, 210, 0.5));
+    transform: scale(1.02);
+  }
+  50% {
+    filter: drop-shadow(0 0 25px rgba(111, 255, 210, 0.6)) drop-shadow(0 0 50px rgba(41, 121, 255, 0.4));
+    transform: scale(1.01);
+  }
+  75% {
+    filter: drop-shadow(0 0 35px rgba(41, 121, 255, 0.7)) drop-shadow(0 0 70px rgba(111, 255, 210, 0.6));
+    transform: scale(1.03);
+  }
+}
+
+@keyframes shimmer-text {
+  0% {
+    background-position: -200% center;
+  }
+  100% {
+    background-position: 200% center;
+  }
+}
+
 /* Enhanced Animation Classes - Mobile Optimized */
 .animate-fade-out {
   animation: fadeOut 0.3s var(--ease-out-smooth) forwards;

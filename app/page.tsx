@@ -279,6 +279,8 @@ function HomeContent() {
   const [dropPosition, setDropPosition] = useState<'before' | 'after' | null>(null);
   const [hoveredTool, setHoveredTool] = useState<string | null>(null);
   const [hoveredFunnyGenerators, setHoveredFunnyGenerators] = useState<boolean>(false);
+  const [hoveredPostReadyTools, setHoveredPostReadyTools] = useState<boolean>(false);
+  const [hoveredSocialMediaTools, setHoveredSocialMediaTools] = useState<boolean>(false);
 
   // Tool data for expanding cards
   const toolData: Record<string, { title: string; description: string; fullDescription: string; features: string[]; icon: string; color: string }> = {
@@ -3556,11 +3558,44 @@ function HomeContent() {
                 onClick={navigateHome}
                 disabled={isNavigating}
                 variant={currentStep === "form" ? "default" : "outline"}
-                className={`px-4 py-2 h-auto rounded-lg text-sm font-semibold shadow-md hover:scale-105 active:scale-95 whitespace-nowrap ${
+                className={`px-4 py-2 h-auto rounded-lg text-sm font-semibold shadow-md hover:scale-105 active:scale-95 whitespace-nowrap transition-all duration-300 ${
                   currentStep === "form" 
-                    ? "bg-primary text-primary-foreground hover:bg-primary/90 shadow-[0_4px_12px_rgba(41,121,255,0.4)]" 
-                    : "bg-card text-card-foreground border-input hover:bg-accent hover:text-accent-foreground"
+                    ? "text-white" 
+                    : "bg-card text-card-foreground border-input"
                 }`}
+                style={currentStep === "form" ? {
+                  background: '#06B6D4',
+                  boxShadow: '0 4px 20px rgba(6, 182, 212, 0.4), 0 0 30px rgba(6, 182, 212, 0.3)',
+                  filter: 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.5))',
+                } : {
+                  background: 'var(--card-bg)',
+                  color: 'var(--card-foreground)',
+                  borderColor: 'var(--input)',
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = '#06B6D4';
+                  e.currentTarget.style.backgroundSize = '';
+                  e.currentTarget.style.animation = '';
+                  e.currentTarget.style.color = 'white';
+                  e.currentTarget.style.borderColor = 'transparent';
+                  e.currentTarget.style.boxShadow = '0 4px 20px rgba(6, 182, 212, 0.4), 0 0 30px rgba(6, 182, 212, 0.3)';
+                  e.currentTarget.style.filter = 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.5))';
+                }}
+                onMouseLeave={(e) => {
+                  if (currentStep === "form") {
+                    e.currentTarget.style.background = '#06B6D4';
+                    e.currentTarget.style.boxShadow = '0 4px 20px rgba(6, 182, 212, 0.4), 0 0 30px rgba(6, 182, 212, 0.3)';
+                    e.currentTarget.style.filter = 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.5))';
+                  } else {
+                    e.currentTarget.style.background = 'var(--card-bg)';
+                    e.currentTarget.style.backgroundSize = '';
+                    e.currentTarget.style.animation = '';
+                    e.currentTarget.style.color = 'var(--card-foreground)';
+                    e.currentTarget.style.borderColor = 'var(--input)';
+                    e.currentTarget.style.boxShadow = '';
+                    e.currentTarget.style.filter = '';
+                  }
+                }}
               >
                 Home
               </Button>
@@ -3597,7 +3632,12 @@ function HomeContent() {
               {!isPro && (
                 <Button
                   onClick={scrollToPremium}
-                  className="px-4 py-2 h-auto rounded-lg text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 text-white border-none bg-[linear-gradient(to_right,#2979FF,#6FFFD2)] shadow-[0_4px_12px_rgba(41,121,255,0.4)] hover:opacity-90"
+                  className="px-4 py-2 h-auto rounded-lg text-sm font-semibold shadow-lg hover:scale-105 active:scale-95 whitespace-nowrap flex-shrink-0 text-white border-none hover:opacity-90"
+                  style={{
+                    background: '#06B6D4',
+                    boxShadow: '0 4px 20px rgba(6, 182, 212, 0.4), 0 0 30px rgba(6, 182, 212, 0.3)',
+                    filter: 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.5))',
+                  }}
                 >
                   ★ Get Pro
                 </Button>
@@ -3626,7 +3666,30 @@ function HomeContent() {
                   <Button
                     onClick={() => setCurrentStep('form')}
                     variant="outline"
-                    className="flex items-center gap-2 px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 whitespace-nowrap bg-card text-card-foreground border-input"
+                    className="flex items-center gap-2 px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 whitespace-nowrap transition-all duration-300"
+                    style={{
+                      background: 'var(--card-bg)',
+                      color: 'var(--card-foreground)',
+                      borderColor: 'var(--input)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#06B6D4';
+                      e.currentTarget.style.backgroundSize = '';
+                      e.currentTarget.style.animation = '';
+                      e.currentTarget.style.color = 'white';
+                      e.currentTarget.style.borderColor = 'transparent';
+                      e.currentTarget.style.boxShadow = '0 4px 20px rgba(6, 182, 212, 0.4), 0 0 30px rgba(6, 182, 212, 0.3)';
+                      e.currentTarget.style.filter = 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.5))';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'var(--card-bg)';
+                      e.currentTarget.style.backgroundSize = '';
+                      e.currentTarget.style.animation = '';
+                      e.currentTarget.style.color = 'var(--card-foreground)';
+                      e.currentTarget.style.borderColor = 'var(--input)';
+                      e.currentTarget.style.boxShadow = '';
+                      e.currentTarget.style.filter = '';
+                    }}
                   >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
@@ -3654,19 +3717,52 @@ function HomeContent() {
                   <Button 
                     onClick={() => openAuthModal('signin')}
                     variant="outline"
-                    className="px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 whitespace-nowrap bg-card text-card-foreground border-input"
+                    className="px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 whitespace-nowrap transition-all duration-300"
+                    style={{
+                      background: 'var(--card-bg)',
+                      color: 'var(--card-foreground)',
+                      borderColor: 'var(--input)',
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = '#06B6D4';
+                      e.currentTarget.style.backgroundSize = '';
+                      e.currentTarget.style.animation = '';
+                      e.currentTarget.style.color = 'white';
+                      e.currentTarget.style.borderColor = 'transparent';
+                      e.currentTarget.style.boxShadow = '0 4px 20px rgba(6, 182, 212, 0.4), 0 0 30px rgba(6, 182, 212, 0.3)';
+                      e.currentTarget.style.filter = 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.5))';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'var(--card-bg)';
+                      e.currentTarget.style.backgroundSize = '';
+                      e.currentTarget.style.animation = '';
+                      e.currentTarget.style.color = 'var(--card-foreground)';
+                      e.currentTarget.style.borderColor = 'var(--input)';
+                      e.currentTarget.style.boxShadow = '';
+                      e.currentTarget.style.filter = '';
+                    }}
                   >
                     Sign In
                   </Button>
                   <Button
                     onClick={() => openAuthModal('signup')}
-                    className="px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 text-white whitespace-nowrap border-none bg-[linear-gradient(to_right,#2979FF,#6FFFD2)] hover:opacity-90"
+                    className="px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 text-white whitespace-nowrap border-none hover:opacity-90"
+                    style={{
+                      background: '#06B6D4',
+                      boxShadow: '0 4px 20px rgba(6, 182, 212, 0.4), 0 0 30px rgba(6, 182, 212, 0.3)',
+                      filter: 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.5))',
+                    }}
                   >
                     Sign Up Now
                   </Button>
                   <Button 
                     onClick={() => setCurrentStep('premium')}
-                    className="px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 whitespace-nowrap flex items-center gap-2 text-white border-none bg-[linear-gradient(to_right,#2979FF,#6FFFD2)] shadow-[0_4px_15px_rgba(41,121,255,0.3)] hover:opacity-90"
+                    className="px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 whitespace-nowrap flex items-center gap-2 text-white border-none hover:opacity-90"
+                    style={{
+                      background: '#06B6D4',
+                      boxShadow: '0 4px 20px rgba(6, 182, 212, 0.4), 0 0 30px rgba(6, 182, 212, 0.3)',
+                      filter: 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.5))',
+                    }}
                   >
                     <span>★</span>
                     Get Pro
@@ -3701,12 +3797,13 @@ function HomeContent() {
           </div>
         )}
 
-        <div className={`flex flex-col items-center justify-center mb-16 ${currentStep !== "form" ? "hidden md:flex" : "flex"}`}>
+        <div className={`flex flex-col items-center justify-center mb-16 w-full ${currentStep !== "form" ? "hidden md:flex" : "flex"}`}>
           <div 
             onClick={navigateHome}
-            className="cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 mb-6"
+            className="cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 mb-6 flex justify-center"
             style={{ 
-              opacity: isNavigating ? 0.5 : 1
+              opacity: isNavigating ? 0.5 : 1,
+              width: '100%'
             }}
           >
             <img 
@@ -3716,116 +3813,32 @@ function HomeContent() {
             />
           </div>
           <p 
-            className="text-3xl sm:text-4xl font-bold tracking-tight whitespace-nowrap text-center relative"
+            className="text-3xl sm:text-4xl font-bold tracking-tight whitespace-nowrap text-center"
             style={{
-              background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 50%, #2979FF 100%)',
-              backgroundSize: '200% 200%',
+              background: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 20%, #8B5CF6 40%, #EC4899 50%, #F59E0B 60%, #06B6D4 80%, #3B82F6 100%)',
+              backgroundSize: '400% 400%',
               WebkitBackgroundClip: 'text',
               WebkitTextFillColor: 'transparent',
               backgroundClip: 'text',
-              animation: 'gradient-shift 3s ease infinite',
+              animation: 'gradient-shift 7s ease-in-out infinite',
               letterSpacing: '-0.02em',
-              filter: 'drop-shadow(0 0 20px rgba(41, 121, 255, 0.4))',
+              display: 'block',
+              width: '100%',
+              margin: '0 auto 0 -20px',
+              filter: 'drop-shadow(0 0 15px rgba(59, 130, 246, 0.4))',
+              WebkitFontSmoothing: 'antialiased',
+              MozOsxFontSmoothing: 'grayscale',
             }}
           >
-            Your Digital Multitool
+            The Ultimate Digital Multitool
           </p>
         </div>
 
         {/* Modules Container - uses flex to enable reordering */}
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
 
-        {/* KidSafe URL Checker - FORCED RENDER */}
-        {currentStep === "form" && (
-          <div 
-            onClick={(e) => {
-              if (!isReorderMode) {
-                e.preventDefault();
-                router.push(getModuleUrl('kidsafe-url-checker'));
-              }
-            }}
-            onMouseEnter={() => !isReorderMode && setHoveredTool('kidsafe-url-checker')}
-            onMouseLeave={() => setHoveredTool(null)}
-            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
-            style={{
-              marginBottom: '1rem',
-              backgroundColor: 'var(--card-bg)',
-              borderColor: hoveredTool === 'kidsafe-url-checker' ? '#10B981' : 'var(--card-border)',
-              order: -1, // Force to top
-              cursor: 'pointer',
-              padding: hoveredTool === 'kidsafe-url-checker' ? '1.5rem' : '1rem',
-            }}
-          >
-             {/* Glow effect */}
-            {hoveredTool === 'kidsafe-url-checker' && (
-              <div
-                className="absolute inset-0 opacity-20 pointer-events-none"
-                style={{
-                  background: 'radial-gradient(circle at center, #10B981, transparent 70%)',
-                  animation: 'pulse-glow 2s ease-in-out infinite',
-                }}
-              />
-            )}
-
-            <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <span className="text-3xl">🛡️</span>
-                  <div>
-                    <h3 
-                      className="text-base sm:text-lg font-bold transition-all duration-500"
-                      style={{ 
-                        color: hoveredTool === 'kidsafe-url-checker' ? '#10B981' : 'var(--secondary)',
-                        fontSize: hoveredTool === 'kidsafe-url-checker' ? '1.25rem' : '1rem'
-                      }}
-                    >
-                      KidSafe URL Checker
-                    </h3>
-                    <p 
-                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      {toolData['kidsafe-url-checker']?.description || 'Check if a website is safe for children under 13'}
-                    </p>
-                  </div>
-                </div>
-                <span 
-                  className="text-sm opacity-60 transition-all duration-500"
-                  style={{ 
-                    color: 'var(--text-secondary)',
-                    opacity: hoveredTool === 'kidsafe-url-checker' ? 0 : 0.6
-                  }}
-                >
-                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
-                </span>
-            </div>
-
-            {/* Expanded Content */}
-             {toolData['kidsafe-url-checker'] && (
-                <div
-                  className="overflow-hidden transition-all duration-500"
-                  style={{
-                    maxHeight: hoveredTool === 'kidsafe-url-checker' ? '500px' : '0px',
-                    opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                  }}
-                >
-                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }}>
-                    <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
-                      {toolData['kidsafe-url-checker'].fullDescription}
-                    </p>
-                    <Button
-                        className="w-full font-semibold transition-all duration-300 hover:scale-105"
-                        style={{ backgroundColor: '#10B981', color: 'white', border: 'none' }}
-                      >
-                        Check URL Safety →
-                      </Button>
-                  </div>
-                </div>
-             )}
-          </div>
-        )}
-
         {/* Collab Engine - Top of Homepage */}
-        {currentStep === "form" && (
+        {false && currentStep === "form" && (
           <div 
             ref={collabSectionRef}
             draggable={!!(isReorderMode && user)}
@@ -4023,7 +4036,7 @@ function HomeContent() {
         )}
 
         {/* Trend Radar - Live trend tracking */}
-        {currentStep === "form" && (
+        {false && currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
             onDragStart={() => handleDragStart('trend-radar')}
@@ -4202,7 +4215,7 @@ function HomeContent() {
         )}
 
         {/* Viral Video Idea Generator */}
-        {currentStep === "form" && (
+        {false && currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
             onDragStart={() => handleDragStart('idea-generator')}
@@ -4381,7 +4394,7 @@ function HomeContent() {
         )}
 
         {/* Hashtag Deep Research Tool - Always visible on homepage */}
-        {currentStep === "form" && (
+        {false && currentStep === "form" && (
           <div 
             ref={hashtagSectionRef}
             draggable={!!(isReorderMode && user)}
@@ -4560,37 +4573,225 @@ function HomeContent() {
           </div>
         )}
 
-        {/* Funny Generators Hub */}
+        {/* KidSafe URL Checker */}
         {currentStep === "form" && (
           <div 
-            onMouseEnter={() => setHoveredFunnyGenerators(true)}
-            onMouseLeave={() => setHoveredFunnyGenerators(false)}
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('kidsafe-url-checker')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'kidsafe-url-checker')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'kidsafe-url-checker')}
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('kidsafe-url-checker'));
+              }
+            }}
+            onMouseEnter={() => !isReorderMode && setHoveredTool('kidsafe-url-checker')}
+            onMouseLeave={() => setHoveredTool(null)}
             className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
             style={{
               marginBottom: '1rem',
               backgroundColor: 'var(--card-bg)',
-              borderColor: hoveredFunnyGenerators 
-                ? '#EC4899'
-                : 'var(--card-border)',
-              borderWidth: hoveredFunnyGenerators ? '2px' : '1px',
-              boxShadow: hoveredFunnyGenerators
-                ? '0 20px 60px rgba(236, 72, 153, 0.3), 0 0 0 1px rgba(236, 72, 153, 0.4)'
-                : theme === 'dark'
-                  ? '0 8px 32px rgba(236, 72, 153, 0.15), 0 0 0 1px rgba(236, 72, 153, 0.1)'
-                  : '0 4px 20px rgba(236, 72, 153, 0.12), 0 0 0 1px rgba(236, 72, 153, 0.08)',
-              order: moduleOrder.indexOf('red-flag-detector') === -1 ? 999 : moduleOrder.indexOf('red-flag-detector'),
-              cursor: 'pointer',
-              padding: hoveredFunnyGenerators ? '1.5rem' : '1rem',
+              borderColor: hoveredTool === 'kidsafe-url-checker' 
+                ? '#10B981'
+                : dragOverModule === 'kidsafe-url-checker'
+                  ? '#2979FF'
+                  : 'var(--card-border)',
+              filter: hoveredTool === 'kidsafe-url-checker' 
+                ? 'drop-shadow(0 0 10px rgba(16, 185, 129, 0.05))'
+                : 'drop-shadow(0 0 25px rgba(16, 185, 129, 0.12))',
+              backdropFilter: 'blur(8px)',
+              boxShadow: hoveredTool === 'kidsafe-url-checker'
+                ? '0 8px 20px rgba(16, 185, 129, 0.08), 0 0 0 1px rgba(16, 185, 129, 0.15)'
+                : dragOverModule === 'kidsafe-url-checker'
+                  ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                  : theme === 'dark'
+                    ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                    : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('kidsafe-url-checker') === -1 ? 1 : moduleOrder.indexOf('kidsafe-url-checker'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'kidsafe-url-checker' ? 0.5 : 1,
+              transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.03)' : dragOverModule === 'kidsafe-url-checker' ? 'scale(1.02)' : 'scale(1)',
+              padding: hoveredTool === 'kidsafe-url-checker' ? '1.5rem' : '1rem',
               transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            {/* Playful gradient glow effect */}
-            {hoveredFunnyGenerators && (
+            {/* Glow effect */}
+            {hoveredTool === 'kidsafe-url-checker' && (
               <div
                 className="absolute inset-0 opacity-20 pointer-events-none"
                 style={{
-                  background: 'radial-gradient(circle at center, #EC4899, #F59E0B, transparent 70%)',
+                  background: 'radial-gradient(circle at center, #10B981, transparent 70%)',
                   animation: 'pulse-glow 2s ease-in-out infinite',
+                }}
+              />
+            )}
+
+            <Link 
+              href={getModuleUrl('kidsafe-url-checker')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
+              }}
+              className="block"
+            >
+              {/* Header - Always visible */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span 
+                    className="text-3xl transition-transform duration-500" 
+                    style={{ 
+                      transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
+                    }}
+                  >
+                    🛡️
+                  </span>
+                  <div>
+                    <h3 
+                      className="text-base sm:text-lg font-bold transition-all duration-500"
+                      style={{ 
+                        color: hoveredTool === 'kidsafe-url-checker' ? '#10B981' : 'var(--secondary)',
+                        fontSize: hoveredTool === 'kidsafe-url-checker' ? '1.25rem' : '1rem'
+                      }}
+                    >
+                      KidSafe URL Checker
+                    </h3>
+                    <p 
+                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {toolData['kidsafe-url-checker']?.description || 'Check if a website is safe for children under 13'}
+                    </p>
+                  </div>
+                </div>
+                <span 
+                  className="text-sm opacity-60 transition-all duration-500"
+                  style={{ 
+                    color: 'var(--text-secondary)',
+                    opacity: hoveredTool === 'kidsafe-url-checker' ? 0 : 0.6
+                  }}
+                >
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+
+              {/* Expanded Content - Fades in on hover */}
+              {toolData['kidsafe-url-checker'] && (
+                <div
+                  className="overflow-hidden transition-all duration-500"
+                  style={{
+                    maxHeight: hoveredTool === 'kidsafe-url-checker' ? '500px' : '0px',
+                    opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                    transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-10px)',
+                  }}
+                >
+                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                    {/* Full Description */}
+                    <p 
+                      className="text-sm leading-relaxed transition-all duration-500 delay-100"
+                      style={{ 
+                        color: 'var(--text-secondary)',
+                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      {toolData['kidsafe-url-checker'].fullDescription}
+                    </p>
+
+                    {/* Features List */}
+                    <div 
+                      className="space-y-2 transition-all duration-500 delay-200"
+                      style={{
+                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#10B981' }}>
+                        Key Features
+                      </p>
+                      <ul className="space-y-1.5">
+                        {toolData['kidsafe-url-checker'].features.map((feature, idx) => (
+                          <li 
+                            key={idx} 
+                            className="flex items-center gap-2 text-sm"
+                            style={{
+                              transitionDelay: `${300 + idx * 50}ms`,
+                              opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                              transform: hoveredTool === 'kidsafe-url-checker' ? 'translateX(0)' : 'translateX(-10px)',
+                            }}
+                          >
+                            <span className="text-xs font-bold" style={{ color: '#10B981' }}>✓</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div 
+                      className="pt-2 transition-all duration-500 delay-300"
+                      style={{
+                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <Button
+                        className="w-full font-semibold transition-all duration-300 hover:scale-105"
+                        style={{
+                          backgroundColor: '#10B981',
+                          color: 'white',
+                          border: 'none',
+                        }}
+                      >
+                        Explore KidSafe URL Checker →
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Link>
+          </div>
+        )}
+
+        {/* PostReady Tools Hub */}
+        {currentStep === "form" && (
+          <div 
+            onMouseEnter={() => setHoveredPostReadyTools(true)}
+            onMouseLeave={() => setHoveredPostReadyTools(false)}
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: hoveredPostReadyTools 
+                ? '#2979FF'
+                : 'var(--card-border)',
+              borderWidth: hoveredPostReadyTools ? '2px' : '1px',
+              boxShadow: hoveredPostReadyTools
+                ? '0 2px 8px rgba(41, 121, 255, 0.02), 0 0 0 1px rgba(41, 121, 255, 0.08)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              filter: hoveredPostReadyTools
+                ? 'drop-shadow(0 0 4px rgba(41, 121, 255, 0.015))'
+                : 'drop-shadow(0 0 25px rgba(41, 121, 255, 0.12))',
+              backdropFilter: 'blur(8px)',
+              order: moduleOrder.indexOf('trend-radar') === -1 ? 999 : moduleOrder.indexOf('trend-radar'),
+              cursor: 'pointer',
+              padding: hoveredPostReadyTools ? '1.5rem' : '1rem',
+              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            {/* Gradient glow effect */}
+            {hoveredPostReadyTools && (
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, #2979FF, #06B6D4, transparent 70%)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                  opacity: 0.005,
                 }}
               />
             )}
@@ -4601,26 +4802,26 @@ function HomeContent() {
                 <span 
                   className="text-3xl transition-transform duration-500" 
                   style={{ 
-                    transform: hoveredFunnyGenerators ? 'scale(1.15) rotate(10deg)' : 'scale(1) rotate(0deg)'
+                    transform: hoveredPostReadyTools ? 'scale(1.15) rotate(10deg)' : 'scale(1) rotate(0deg)'
                   }}
                 >
-                  😂
+                  🚀
                 </span>
                 <div>
                   <h3 
                     className="text-base sm:text-lg font-bold transition-all duration-500"
                     style={{ 
-                      color: hoveredFunnyGenerators ? '#EC4899' : 'var(--secondary)',
-                      fontSize: hoveredFunnyGenerators ? '1.25rem' : '1rem'
+                      color: hoveredPostReadyTools ? '#2979FF' : 'var(--secondary)',
+                      fontSize: hoveredPostReadyTools ? '1.25rem' : '1rem'
                     }}
                   >
-                    Funny Generators
+                    PostReady Tools
                   </h3>
                   <p 
                     className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
                     style={{ color: 'var(--text-secondary)' }}
                   >
-                    {hoveredFunnyGenerators ? 'Choose a generator below ↓' : 'Lighthearted tools for humor and entertainment'}
+                    {hoveredPostReadyTools ? 'Choose a tool below ↓' : 'Professional tools for content creation and growth'}
                   </p>
                 </div>
               </div>
@@ -4628,7 +4829,7 @@ function HomeContent() {
                 className="text-sm opacity-60 transition-all duration-500"
                 style={{ 
                   color: 'var(--text-secondary)',
-                  opacity: hoveredFunnyGenerators ? 0 : 0.6
+                  opacity: hoveredPostReadyTools ? 0 : 0.6
                 }}
               >
                 Hover to explore →
@@ -4639,19 +4840,20 @@ function HomeContent() {
             <div
               className="overflow-hidden transition-all duration-500"
               style={{
-                maxHeight: hoveredFunnyGenerators ? '600px' : '0px',
-                opacity: hoveredFunnyGenerators ? 1 : 0,
-                transform: hoveredFunnyGenerators ? 'translateY(0)' : 'translateY(-10px)',
+                maxHeight: hoveredPostReadyTools ? '800px' : '0px',
+                opacity: hoveredPostReadyTools ? 1 : 0,
+                transform: hoveredPostReadyTools ? 'translateY(0)' : 'translateY(-10px)',
               }}
             >
-              <div className="pt-4 space-y-2 border-t" style={{ borderColor: 'rgba(236, 72, 153, 0.2)' }}>
+              <div className="pt-4 space-y-2 border-t" style={{ borderColor: 'rgba(41, 121, 255, 0.2)' }}>
                 {/* Tool List */}
                 {[
-                  { id: 'red-flag-detector', name: 'Red Flag Detector', icon: '🚩', color: '#ef4444' },
-                  { id: 'cringe-couple-caption', name: 'Cringe Couple Caption Generator', icon: '💑', color: '#EC4899' },
-                  { id: 'comment-fight-starter', name: 'Comment Fight Starter', icon: '💥', color: '#EF4444' },
-                  { id: 'poor-life-choices-advisor', name: 'Poor Life Choices Generator', icon: '🤦', color: '#F59E0B' },
-                  { id: 'random-excuse', name: 'Random Excuse Generator', icon: '🎭', color: '#F59E0B' },
+                  { id: 'brainworm-generator', name: 'Brainworm Phrase Generator', icon: '🧠', color: '#8B5CF6' },
+                  { id: 'sugar-daddy-messages', name: 'Sugar Daddy Message Generator', icon: '💼', color: '#10B981' },
+                  { id: 'music-generator', name: 'Music Generator', icon: '🎵', color: '#F59E0B' },
+                  { id: 'voiceover-generator', name: 'Script & Voiceover Generator', icon: '🎙️', color: '#EC4899' },
+                  { id: 'sora-prompt', name: 'Sora Prompt Generator', icon: '🎬', color: '#6366F1' },
+                  { id: 'digital-products', name: 'Premium Collection', icon: '💎', color: '#DAA520' },
                 ].map((tool, idx) => (
                   <Link
                     key={tool.id}
@@ -4664,19 +4866,19 @@ function HomeContent() {
                     <div
                       className="rounded-lg p-3 transition-all duration-300 hover:scale-[1.02]"
                       style={{
-                        backgroundColor: hoveredFunnyGenerators ? 'rgba(236, 72, 153, 0.05)' : 'transparent',
+                        backgroundColor: hoveredPostReadyTools ? 'rgba(41, 121, 255, 0.05)' : 'transparent',
                         border: '1px solid transparent',
-                        borderColor: hoveredFunnyGenerators ? 'rgba(236, 72, 153, 0.1)' : 'transparent',
+                        borderColor: hoveredPostReadyTools ? 'rgba(41, 121, 255, 0.1)' : 'transparent',
                         transitionDelay: `${idx * 50}ms`,
                       }}
                       onMouseEnter={(e) => {
-                        e.currentTarget.style.backgroundColor = 'rgba(236, 72, 153, 0.1)';
+                        e.currentTarget.style.backgroundColor = 'rgba(41, 121, 255, 0.1)';
                         e.currentTarget.style.borderColor = tool.color;
                         e.currentTarget.style.transform = 'translateX(5px)';
                       }}
                       onMouseLeave={(e) => {
-                        e.currentTarget.style.backgroundColor = hoveredFunnyGenerators ? 'rgba(236, 72, 153, 0.05)' : 'transparent';
-                        e.currentTarget.style.borderColor = hoveredFunnyGenerators ? 'rgba(236, 72, 153, 0.1)' : 'transparent';
+                        e.currentTarget.style.backgroundColor = hoveredPostReadyTools ? 'rgba(41, 121, 255, 0.05)' : 'transparent';
+                        e.currentTarget.style.borderColor = hoveredPostReadyTools ? 'rgba(41, 121, 255, 0.1)' : 'transparent';
                         e.currentTarget.style.transform = 'translateX(0)';
                       }}
                     >
@@ -4686,7 +4888,7 @@ function HomeContent() {
                           <h4 
                             className="text-sm font-semibold transition-colors duration-300"
                             style={{ 
-                              color: hoveredFunnyGenerators ? tool.color : 'var(--secondary)'
+                              color: hoveredPostReadyTools ? tool.color : 'var(--secondary)'
                             }}
                           >
                             {tool.name}
@@ -4713,543 +4915,162 @@ function HomeContent() {
           </div>
         )}
 
-        {/* KidSafe URL Checker - Debug */}
-        {console.log('🔍 KidSafe render check:', { currentStep, moduleOrderLength: moduleOrder.length, hasKidsafe: moduleOrder.includes('kidsafe-url-checker'), kidsafeIndex: moduleOrder.indexOf('kidsafe-url-checker') }) || null}
-
-        {/* KidSafe URL Checker */}
+        {/* Social Media Tools Hub */}
         {currentStep === "form" && (
           <div 
-            draggable={!!(isReorderMode && user)}
-            onDragStart={() => handleDragStart('kidsafe-url-checker')}
-            onDragEnd={handleDragEnd}
-            onDragOver={(e) => handleDragOver(e, 'kidsafe-url-checker')}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, 'kidsafe-url-checker')}
-            onClick={(e) => {
-              if (!isReorderMode) {
-                e.preventDefault();
-                router.push(getModuleUrl('kidsafe-url-checker'));
-              }
-            }}
-            onMouseEnter={() => !isReorderMode && setHoveredTool('kidsafe-url-checker')}
-            onMouseLeave={() => setHoveredTool(null)}
+            onMouseEnter={() => setHoveredSocialMediaTools(true)}
+            onMouseLeave={() => setHoveredSocialMediaTools(false)}
             className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
             style={{
               marginBottom: '1rem',
               backgroundColor: 'var(--card-bg)',
-              borderColor: hoveredTool === 'kidsafe-url-checker' 
-                ? '#10B981'
-                : dragOverModule === 'kidsafe-url-checker'
-                  ? '#2979FF'
-                  : 'var(--card-border)',
-              boxShadow: hoveredTool === 'kidsafe-url-checker'
-                ? '0 20px 60px rgba(16, 185, 129, 0.3), 0 0 0 1px rgba(16, 185, 129, 0.4)'
-                : dragOverModule === 'kidsafe-url-checker'
-                  ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
-                  : theme === 'dark'
-                    ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                    : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
-              order: moduleOrder.indexOf('kidsafe-url-checker') === -1 ? 1 : moduleOrder.indexOf('kidsafe-url-checker'),
-              cursor: (isReorderMode && user) ? 'move' : 'pointer',
-              opacity: draggedModule === 'kidsafe-url-checker' ? 0.5 : 1,
-              transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.03)' : dragOverModule === 'kidsafe-url-checker' ? 'scale(1.02)' : 'scale(1)',
-              padding: hoveredTool === 'kidsafe-url-checker' ? '1.5rem' : '1rem',
+              borderColor: hoveredSocialMediaTools 
+                ? '#06B6D4'
+                : 'var(--card-border)',
+              borderWidth: hoveredSocialMediaTools ? '2px' : '1px',
+              boxShadow: hoveredSocialMediaTools
+                ? '0 2px 8px rgba(6, 182, 212, 0.02), 0 0 0 1px rgba(6, 182, 212, 0.08)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(6, 182, 212, 0.15), 0 0 0 1px rgba(6, 182, 212, 0.1)'
+                  : '0 4px 20px rgba(6, 182, 212, 0.12), 0 0 0 1px rgba(6, 182, 212, 0.08)',
+              filter: hoveredSocialMediaTools
+                ? 'drop-shadow(0 0 4px rgba(6, 182, 212, 0.015))'
+                : 'drop-shadow(0 0 25px rgba(6, 182, 212, 0.12))',
+              backdropFilter: 'blur(8px)',
+              order: moduleOrder.indexOf('trend-radar') === -1 ? 999 : moduleOrder.indexOf('trend-radar'),
+              cursor: 'pointer',
+              padding: hoveredSocialMediaTools ? '1.5rem' : '1rem',
               transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
-            {/* Glow effect */}
-            {hoveredTool === 'kidsafe-url-checker' && (
+            {/* Gradient glow effect */}
+            {hoveredSocialMediaTools && (
               <div
-                className="absolute inset-0 opacity-20 pointer-events-none"
+                className="absolute inset-0 pointer-events-none"
                 style={{
-                  background: 'radial-gradient(circle at center, #10B981, transparent 70%)',
+                  background: 'radial-gradient(circle at center, #06B6D4, #14B8A6, transparent 70%)',
                   animation: 'pulse-glow 2s ease-in-out infinite',
+                  opacity: 0.005,
                 }}
               />
             )}
 
-            <Link 
-              href={getModuleUrl('kidsafe-url-checker')}
-              onClick={(e) => {
-                if (isReorderMode && user) {
-                  e.preventDefault();
-                }
-              }}
-              className="block"
-            >
-              {/* Header - Always visible */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <span 
-                    className="text-3xl transition-transform duration-500" 
+            {/* Main Header */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <span 
+                  className="text-3xl transition-transform duration-500" 
+                  style={{ 
+                    transform: hoveredSocialMediaTools ? 'scale(1.15) rotate(10deg)' : 'scale(1) rotate(0deg)'
+                  }}
+                >
+                  📱
+                </span>
+                <div>
+                  <h3 
+                    className="text-base sm:text-lg font-bold transition-all duration-500"
                     style={{ 
-                      transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
+                      color: hoveredSocialMediaTools ? '#06B6D4' : 'var(--secondary)',
+                      fontSize: hoveredSocialMediaTools ? '1.25rem' : '1rem'
                     }}
                   >
-                    🛡️
-                  </span>
-                  <div>
-                    <h3 
-                      className="text-base sm:text-lg font-bold transition-all duration-500"
-                      style={{ 
-                        color: hoveredTool === 'kidsafe-url-checker' ? '#10B981' : 'var(--secondary)',
-                        fontSize: hoveredTool === 'kidsafe-url-checker' ? '1.25rem' : '1rem'
-                      }}
-                    >
-                      KidSafe URL Checker
-                    </h3>
-                    <p 
-                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      {toolData['kidsafe-url-checker']?.description || 'Check if a website is safe for children under 13'}
-                    </p>
-                  </div>
+                    Social Media Tools
+                  </h3>
+                  <p 
+                    className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    {hoveredSocialMediaTools ? 'Choose a tool below ↓' : 'Tools for social media growth and engagement'}
+                  </p>
                 </div>
-                <span 
-                  className="text-sm opacity-60 transition-all duration-500"
-                  style={{ 
-                    color: 'var(--text-secondary)',
-                    opacity: hoveredTool === 'kidsafe-url-checker' ? 0 : 0.6
-                  }}
-                >
-                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
-                </span>
               </div>
-
-              {/* Expanded Content - Fades in on hover */}
-              {toolData['kidsafe-url-checker'] && (
-                <div
-                  className="overflow-hidden transition-all duration-500"
-                  style={{
-                    maxHeight: hoveredTool === 'kidsafe-url-checker' ? '500px' : '0px',
-                    opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                    transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-10px)',
-                  }}
-                >
-                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }}>
-                    {/* Full Description */}
-                    <p 
-                      className="text-sm leading-relaxed transition-all duration-500 delay-100"
-                      style={{ 
-                        color: 'var(--text-secondary)',
-                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
-                      }}
-                    >
-                      {toolData['kidsafe-url-checker'].fullDescription}
-                    </p>
-
-                    {/* Features List */}
-                    <div 
-                      className="space-y-2 transition-all duration-500 delay-200"
-                      style={{
-                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
-                      }}
-                    >
-                      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#10B981' }}>
-                        Key Features
-                      </p>
-                      <ul className="space-y-1.5">
-                        {toolData['kidsafe-url-checker'].features.map((feature, idx) => (
-                          <li 
-                            key={idx} 
-                            className="flex items-center gap-2 text-sm"
-                            style={{
-                              transitionDelay: `${300 + idx * 50}ms`,
-                              opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                              transform: hoveredTool === 'kidsafe-url-checker' ? 'translateX(0)' : 'translateX(-10px)',
-                            }}
-                          >
-                            <span className="text-xs font-bold" style={{ color: '#10B981' }}>✓</span>
-                            <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* CTA Button */}
-                    <div 
-                      className="pt-2 transition-all duration-500 delay-300"
-                      style={{
-                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
-                      }}
-                    >
-                      <Button
-                        className="w-full font-semibold transition-all duration-300 hover:scale-105"
-                        style={{
-                          backgroundColor: '#10B981',
-                          color: 'white',
-                          border: 'none',
-                        }}
-                      >
-                        Explore KidSafe URL Checker →
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Link>
-          </div>
-        )}
-
-        {/* KidSafe URL Checker */}
-        {currentStep === "form" && (
-          <div 
-            draggable={!!(isReorderMode && user)}
-            onDragStart={() => handleDragStart('kidsafe-url-checker')}
-            onDragEnd={handleDragEnd}
-            onDragOver={(e) => handleDragOver(e, 'kidsafe-url-checker')}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, 'kidsafe-url-checker')}
-            onClick={(e) => {
-              if (!isReorderMode) {
-                e.preventDefault();
-                router.push(getModuleUrl('kidsafe-url-checker'));
-              }
-            }}
-            onMouseEnter={() => !isReorderMode && setHoveredTool('kidsafe-url-checker')}
-            onMouseLeave={() => setHoveredTool(null)}
-            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
-            style={{
-              marginBottom: '1rem',
-              backgroundColor: 'var(--card-bg)',
-              borderColor: hoveredTool === 'kidsafe-url-checker' 
-                ? '#10B981'
-                : dragOverModule === 'kidsafe-url-checker'
-                  ? '#2979FF'
-                  : 'var(--card-border)',
-              boxShadow: hoveredTool === 'kidsafe-url-checker'
-                ? '0 20px 60px rgba(16, 185, 129, 0.3), 0 0 0 1px rgba(16, 185, 129, 0.4)'
-                : dragOverModule === 'kidsafe-url-checker'
-                  ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
-                  : theme === 'dark'
-                    ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                    : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
-              order: moduleOrder.indexOf('kidsafe-url-checker') === -1 ? 1 : moduleOrder.indexOf('kidsafe-url-checker'),
-              cursor: (isReorderMode && user) ? 'move' : 'pointer',
-              opacity: draggedModule === 'kidsafe-url-checker' ? 0.5 : 1,
-              transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.03)' : dragOverModule === 'kidsafe-url-checker' ? 'scale(1.02)' : 'scale(1)',
-              padding: hoveredTool === 'kidsafe-url-checker' ? '1.5rem' : '1rem',
-              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-          >
-            {/* Glow effect */}
-            {hoveredTool === 'kidsafe-url-checker' && (
-              <div
-                className="absolute inset-0 opacity-20 pointer-events-none"
-                style={{
-                  background: 'radial-gradient(circle at center, #10B981, transparent 70%)',
-                  animation: 'pulse-glow 2s ease-in-out infinite',
+              <span 
+                className="text-sm opacity-60 transition-all duration-500"
+                style={{ 
+                  color: 'var(--text-secondary)',
+                  opacity: hoveredSocialMediaTools ? 0 : 0.6
                 }}
-              />
-            )}
+              >
+                Hover to explore →
+              </span>
+            </div>
 
-            <Link 
-              href={getModuleUrl('kidsafe-url-checker')}
-              onClick={(e) => {
-                if (isReorderMode && user) {
-                  e.preventDefault();
-                }
+            {/* Submenu - Reveals on hover */}
+            <div
+              className="overflow-hidden transition-all duration-500"
+              style={{
+                maxHeight: hoveredSocialMediaTools ? '800px' : '0px',
+                opacity: hoveredSocialMediaTools ? 1 : 0,
+                transform: hoveredSocialMediaTools ? 'translateY(0)' : 'translateY(-10px)',
               }}
-              className="block"
             >
-              {/* Header - Always visible */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <span 
-                    className="text-3xl transition-transform duration-500" 
-                    style={{ 
-                      transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
+              <div className="pt-4 space-y-2 border-t" style={{ borderColor: 'rgba(6, 182, 212, 0.2)' }}>
+                {/* Tool List */}
+                {[
+                  { id: 'collab-engine', name: 'TikTok Collab Engine', icon: '🤝', color: '#FF4F78' },
+                  { id: 'trend-radar', name: 'Trend Radar', icon: '📡', color: '#06B6D4' },
+                  { id: 'idea-generator', name: 'Viral Video Idea Generator', icon: '💡', color: '#F97316' },
+                  { id: 'hashtag-research', name: 'Hashtag Deep Research', icon: '#️⃣', color: '#14B8A6' },
+                  { id: 'comment-bait', name: 'Comment Bait Generator', icon: '🎣', color: '#2979FF' },
+                  { id: 'page-analyzer', name: 'Page Analyzer', icon: '📊', color: '#8B5CF6' },
+                ].map((tool, idx) => (
+                  <Link
+                    key={tool.id}
+                    href={getModuleUrl(tool.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
                     }}
+                    className="block"
                   >
-                    🛡️
-                  </span>
-                  <div>
-                    <h3 
-                      className="text-base sm:text-lg font-bold transition-all duration-500"
-                      style={{ 
-                        color: hoveredTool === 'kidsafe-url-checker' ? '#10B981' : 'var(--secondary)',
-                        fontSize: hoveredTool === 'kidsafe-url-checker' ? '1.25rem' : '1rem'
-                      }}
-                    >
-                      KidSafe URL Checker
-                    </h3>
-                    <p 
-                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      {toolData['kidsafe-url-checker']?.description || 'Check if a website is safe for children under 13'}
-                    </p>
-                  </div>
-                </div>
-                <span 
-                  className="text-sm opacity-60 transition-all duration-500"
-                  style={{ 
-                    color: 'var(--text-secondary)',
-                    opacity: hoveredTool === 'kidsafe-url-checker' ? 0 : 0.6
-                  }}
-                >
-                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
-                </span>
-              </div>
-
-              {/* Expanded Content - Fades in on hover */}
-              {toolData['kidsafe-url-checker'] && (
-                <div
-                  className="overflow-hidden transition-all duration-500"
-                  style={{
-                    maxHeight: hoveredTool === 'kidsafe-url-checker' ? '500px' : '0px',
-                    opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                    transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-10px)',
-                  }}
-                >
-                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }}>
-                    {/* Full Description */}
-                    <p 
-                      className="text-sm leading-relaxed transition-all duration-500 delay-100"
-                      style={{ 
-                        color: 'var(--text-secondary)',
-                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
-                      }}
-                    >
-                      {toolData['kidsafe-url-checker'].fullDescription}
-                    </p>
-
-                    {/* Features List */}
-                    <div 
-                      className="space-y-2 transition-all duration-500 delay-200"
+                    <div
+                      className="rounded-lg p-3 transition-all duration-300 hover:scale-[1.02]"
                       style={{
-                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
+                        backgroundColor: hoveredSocialMediaTools ? 'rgba(6, 182, 212, 0.05)' : 'transparent',
+                        border: '1px solid transparent',
+                        borderColor: hoveredSocialMediaTools ? 'rgba(6, 182, 212, 0.1)' : 'transparent',
+                        transitionDelay: `${idx * 50}ms`,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(6, 182, 212, 0.1)';
+                        e.currentTarget.style.borderColor = tool.color;
+                        e.currentTarget.style.transform = 'translateX(5px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = hoveredSocialMediaTools ? 'rgba(6, 182, 212, 0.05)' : 'transparent';
+                        e.currentTarget.style.borderColor = hoveredSocialMediaTools ? 'rgba(6, 182, 212, 0.1)' : 'transparent';
+                        e.currentTarget.style.transform = 'translateX(0)';
                       }}
                     >
-                      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#10B981' }}>
-                        Key Features
-                      </p>
-                      <ul className="space-y-1.5">
-                        {toolData['kidsafe-url-checker'].features.map((feature, idx) => (
-                          <li 
-                            key={idx} 
-                            className="flex items-center gap-2 text-sm"
-                            style={{
-                              transitionDelay: `${300 + idx * 50}ms`,
-                              opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                              transform: hoveredTool === 'kidsafe-url-checker' ? 'translateX(0)' : 'translateX(-10px)',
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{tool.icon}</span>
+                        <div className="flex-1">
+                          <h4 
+                            className="text-sm font-semibold transition-colors duration-300"
+                            style={{ 
+                              color: hoveredSocialMediaTools ? tool.color : 'var(--secondary)'
                             }}
                           >
-                            <span className="text-xs font-bold" style={{ color: '#10B981' }}>✓</span>
-                            <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-
-                    {/* CTA Button */}
-                    <div 
-                      className="pt-2 transition-all duration-500 delay-300"
-                      style={{
-                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
-                      }}
-                    >
-                      <Button
-                        className="w-full font-semibold transition-all duration-300 hover:scale-105"
-                        style={{
-                          backgroundColor: '#10B981',
-                          color: 'white',
-                          border: 'none',
-                        }}
-                      >
-                        Explore KidSafe URL Checker →
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Link>
-          </div>
-        )}
-
-        {/* KidSafe URL Checker */}
-        {currentStep === "form" && (
-          <div 
-            draggable={!!(isReorderMode && user)}
-            onDragStart={() => handleDragStart('kidsafe-url-checker')}
-            onDragEnd={handleDragEnd}
-            onDragOver={(e) => handleDragOver(e, 'kidsafe-url-checker')}
-            onDragLeave={handleDragLeave}
-            onDrop={(e) => handleDrop(e, 'kidsafe-url-checker')}
-            onClick={(e) => {
-              if (!isReorderMode) {
-                e.preventDefault();
-                router.push(getModuleUrl('kidsafe-url-checker'));
-              }
-            }}
-            onMouseEnter={() => !isReorderMode && setHoveredTool('kidsafe-url-checker')}
-            onMouseLeave={() => setHoveredTool(null)}
-            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
-            style={{
-              marginBottom: '1rem',
-              backgroundColor: 'var(--card-bg)',
-              borderColor: hoveredTool === 'kidsafe-url-checker' 
-                ? '#10B981'
-                : dragOverModule === 'kidsafe-url-checker'
-                  ? '#2979FF'
-                  : 'var(--card-border)',
-              boxShadow: hoveredTool === 'kidsafe-url-checker'
-                ? '0 20px 60px rgba(16, 185, 129, 0.3), 0 0 0 1px rgba(16, 185, 129, 0.4)'
-                : dragOverModule === 'kidsafe-url-checker'
-                  ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
-                  : theme === 'dark'
-                    ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                    : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
-              order: moduleOrder.indexOf('kidsafe-url-checker') === -1 ? 1 : moduleOrder.indexOf('kidsafe-url-checker'),
-              cursor: (isReorderMode && user) ? 'move' : 'pointer',
-              opacity: draggedModule === 'kidsafe-url-checker' ? 0.5 : 1,
-              transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.03)' : dragOverModule === 'kidsafe-url-checker' ? 'scale(1.02)' : 'scale(1)',
-              padding: hoveredTool === 'kidsafe-url-checker' ? '1.5rem' : '1rem',
-              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
-            }}
-          >
-            {/* Glow effect */}
-            {hoveredTool === 'kidsafe-url-checker' && (
-              <div
-                className="absolute inset-0 opacity-20 pointer-events-none"
-                style={{
-                  background: 'radial-gradient(circle at center, #10B981, transparent 70%)',
-                  animation: 'pulse-glow 2s ease-in-out infinite',
-                }}
-              />
-            )}
-
-            <Link 
-              href={getModuleUrl('kidsafe-url-checker')}
-              onClick={(e) => {
-                if (isReorderMode && user) {
-                  e.preventDefault();
-                }
-              }}
-              className="block"
-            >
-              {/* Header - Always visible */}
-              <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
-                  <span 
-                    className="text-3xl transition-transform duration-500" 
-                    style={{ 
-                      transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
-                    }}
-                  >
-                    🛡️
-                  </span>
-                  <div>
-                    <h3 
-                      className="text-base sm:text-lg font-bold transition-all duration-500"
-                      style={{ 
-                        color: hoveredTool === 'kidsafe-url-checker' ? '#10B981' : 'var(--secondary)',
-                        fontSize: hoveredTool === 'kidsafe-url-checker' ? '1.25rem' : '1rem'
-                      }}
-                    >
-                      KidSafe URL Checker
-                    </h3>
-                    <p 
-                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
-                      style={{ color: 'var(--text-secondary)' }}
-                    >
-                      {toolData['kidsafe-url-checker']?.description || 'Check if a website is safe for children under 13'}
-                    </p>
-                  </div>
-                </div>
-                <span 
-                  className="text-sm opacity-60 transition-all duration-500"
-                  style={{ 
-                    color: 'var(--text-secondary)',
-                    opacity: hoveredTool === 'kidsafe-url-checker' ? 0 : 0.6
-                  }}
-                >
-                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
-                </span>
-              </div>
-
-              {/* Expanded Content - Fades in on hover */}
-              {toolData['kidsafe-url-checker'] && (
-                <div
-                  className="overflow-hidden transition-all duration-500"
-                  style={{
-                    maxHeight: hoveredTool === 'kidsafe-url-checker' ? '500px' : '0px',
-                    opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                    transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-10px)',
-                  }}
-                >
-                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }}>
-                    {/* Full Description */}
-                    <p 
-                      className="text-sm leading-relaxed transition-all duration-500 delay-100"
-                      style={{ 
-                        color: 'var(--text-secondary)',
-                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
-                      }}
-                    >
-                      {toolData['kidsafe-url-checker'].fullDescription}
-                    </p>
-
-                    {/* Features List */}
-                    <div 
-                      className="space-y-2 transition-all duration-500 delay-200"
-                      style={{
-                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
-                      }}
-                    >
-                      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#10B981' }}>
-                        Key Features
-                      </p>
-                      <ul className="space-y-1.5">
-                        {toolData['kidsafe-url-checker'].features.map((feature, idx) => (
-                          <li 
-                            key={idx} 
-                            className="flex items-center gap-2 text-sm"
-                            style={{
-                              transitionDelay: `${300 + idx * 50}ms`,
-                              opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                              transform: hoveredTool === 'kidsafe-url-checker' ? 'translateX(0)' : 'translateX(-10px)',
-                            }}
+                            {tool.name}
+                          </h4>
+                          <p 
+                            className="text-xs mt-0.5 opacity-70"
+                            style={{ color: 'var(--text-secondary)' }}
                           >
-                            <span className="text-xs font-bold" style={{ color: '#10B981' }}>✓</span>
-                            <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
+                            {toolData[tool.id]?.description || 'Click to use'}
+                          </p>
+                        </div>
+                        <span 
+                          className="text-xs opacity-50 transition-opacity duration-300"
+                          style={{ color: tool.color }}
+                        >
+                          →
+                        </span>
+                      </div>
                     </div>
-
-                    {/* CTA Button */}
-                    <div 
-                      className="pt-2 transition-all duration-500 delay-300"
-                      style={{
-                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
-                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
-                      }}
-                    >
-                      <Button
-                        className="w-full font-semibold transition-all duration-300 hover:scale-105"
-                        style={{
-                          backgroundColor: '#10B981',
-                          color: 'white',
-                          border: 'none',
-                        }}
-                      >
-                        Explore KidSafe URL Checker →
-                      </Button>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </Link>
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
         )}
 
@@ -5267,11 +5088,15 @@ function HomeContent() {
                 : 'var(--card-border)',
               borderWidth: hoveredFunnyGenerators ? '2px' : '1px',
               boxShadow: hoveredFunnyGenerators
-                ? '0 20px 60px rgba(236, 72, 153, 0.3), 0 0 0 1px rgba(236, 72, 153, 0.4)'
+                ? '0 2px 8px rgba(236, 72, 153, 0.02), 0 0 0 1px rgba(236, 72, 153, 0.08)'
                 : theme === 'dark'
                   ? '0 8px 32px rgba(236, 72, 153, 0.15), 0 0 0 1px rgba(236, 72, 153, 0.1)'
                   : '0 4px 20px rgba(236, 72, 153, 0.12), 0 0 0 1px rgba(236, 72, 153, 0.08)',
-              order: moduleOrder.indexOf('red-flag-detector') === -1 ? 999 : moduleOrder.indexOf('red-flag-detector'),
+              filter: hoveredFunnyGenerators
+                ? 'drop-shadow(0 0 4px rgba(236, 72, 153, 0.015))'
+                : 'drop-shadow(0 0 25px rgba(236, 72, 153, 0.12))',
+              backdropFilter: 'blur(8px)',
+              order: 9999,
               cursor: 'pointer',
               padding: hoveredFunnyGenerators ? '1.5rem' : '1rem',
               transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
@@ -5280,10 +5105,11 @@ function HomeContent() {
             {/* Playful gradient glow effect */}
             {hoveredFunnyGenerators && (
               <div
-                className="absolute inset-0 opacity-20 pointer-events-none"
+                className="absolute inset-0 pointer-events-none"
                 style={{
                   background: 'radial-gradient(circle at center, #EC4899, #F59E0B, transparent 70%)',
                   animation: 'pulse-glow 2s ease-in-out infinite',
+                  opacity: 0.005,
                 }}
               />
             )}
@@ -5844,7 +5670,7 @@ function HomeContent() {
         )}
 
         {/* Digital Products Module */}
-        {currentStep === "form" && (
+        {false && currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
             onDragStart={() => handleDragStart('digital-products')}
@@ -5916,7 +5742,7 @@ function HomeContent() {
         )}
 
         {/* Comment Bait Generator Module - Now navigates to dedicated page */}
-        {currentStep === "form" && (
+        {false && currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
             onDragStart={(e) => {
@@ -5993,7 +5819,7 @@ function HomeContent() {
         )}
 
         {/* Brainworm Generator Module */}
-        {currentStep === "form" && (
+        {false && currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
             onDragStart={(e) => {
@@ -6068,7 +5894,7 @@ function HomeContent() {
         )}
 
         {/* Sugar Daddy Message Generator Module - Now navigates to dedicated page */}
-        {currentStep === "form" && (
+        {false && currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
             onDragStart={(e) => {
@@ -6143,7 +5969,7 @@ function HomeContent() {
         )}
 
         {/* Music Generator */}
-        {currentStep === "form" && (
+        {false && currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
             onDragStart={() => handleDragStart('music-generator')}
@@ -6210,7 +6036,7 @@ function HomeContent() {
         )}
 
         {/* Script & Voiceover Generator Module */}
-        {currentStep === "form" && (
+        {false && currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
             onDragStart={() => handleDragStart('voiceover-generator')}
@@ -6277,7 +6103,7 @@ function HomeContent() {
         )}
 
         {/* Sora Prompt Generator Module */}
-        {currentStep === "form" && (
+        {false && currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
             onDragStart={(e) => {
