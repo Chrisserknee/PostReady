@@ -27,9 +27,16 @@ export async function GET(request: NextRequest) {
       .from('user_module_order')
       .select('module_order')
       .eq('user_id', user.id)
-      .single();
+      .maybeSingle();
 
-    if (error && error.code !== 'PGRST116') {
+    // If table doesn't exist or no data, return null (not an error)
+    if (error) {
+      // PGRST116 = no rows found, PGRST205 = table doesn't exist
+      if (error.code === 'PGRST116' || error.code === 'PGRST205') {
+        return NextResponse.json({ 
+          moduleOrder: null 
+        }, { status: 200 });
+      }
       console.error('Error loading module order:', error);
       return NextResponse.json({ error: error.message }, { status: 500 });
     }
@@ -91,6 +98,13 @@ export async function POST(request: NextRequest) {
       success: true,
       moduleOrder: data.module_order
     }, { status: 200 });
+
+  } catch (error: any) {
+    console.error('POST module order error:', error);
+    return NextResponse.json({ error: error.message }, { status: 500 });
+  }
+}
+
 
   } catch (error: any) {
     console.error('POST module order error:', error);

@@ -16,11 +16,19 @@ PostHog has been installed and integrated into PostReady for product analytics a
 2. Find your **Project API Key** (it looks like `phc_xxxxxxxxxxxxxxxxxxxx`)
 3. Copy this key
 
-### 3. Get Your PostHog Host URL
+### 3. Determine Your PostHog Host URL
 
-- **US Cloud**: `https://us.i.posthog.com` (default)
-- **EU Cloud**: `https://eu.i.posthog.com`
-- **Self-hosted**: Your custom PostHog instance URL
+The host URL is **not found in the dashboard** - it's determined by which PostHog instance you're using:
+
+**To find out which one you're using:**
+- Look at your PostHog dashboard URL in your browser
+- If it's `app.posthog.com` → Use **US Cloud**: `https://us.i.posthog.com`
+- If it's `eu.posthog.com` → Use **EU Cloud**: `https://eu.i.posthog.com`
+- If it's a custom domain → Use your custom PostHog instance URL
+
+**Most users (default):**
+- **US Cloud**: `https://us.i.posthog.com` ← Use this if unsure
+- **EU Cloud**: `https://eu.i.posthog.com` (only if your dashboard URL contains "eu")
 
 ### 4. Add Environment Variables
 
@@ -91,6 +99,14 @@ PostHog respects user privacy:
 - Check that environment variables are set correctly
 - Verify the API key is valid
 - Check browser console for any errors
+- Ensure `NEXT_PUBLIC_` prefix is used for environment variables
+
+**Events not showing up?**
+- Wait a few minutes for events to process
+- Check PostHog dashboard filters
+- Verify you're looking at the correct project
+
+
 - Ensure `NEXT_PUBLIC_` prefix is used for environment variables
 
 **Events not showing up?**

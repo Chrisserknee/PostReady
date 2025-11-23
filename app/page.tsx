@@ -141,6 +141,7 @@ function LoadingProgress() {
 }
 
 function HomeContent() {
+  console.log('🏠 HomeContent rendering...');
   const { user, isPro, signOut, upgradeToPro, loading: authLoading } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const searchParams = useSearchParams();
@@ -160,6 +161,7 @@ function HomeContent() {
     'sora-prompt': 'sora-prompt',
     'hashtag-research': 'hashtag-research',
     'page-analyzer': 'page-analyzer',
+    'kidsafe-url-checker': 'kidsafe-url-checker',
     'red-flag-detector': 'red-flag-detector',
     'cringe-couple-caption': 'cringe-couple-caption-generator',
     'comment-fight-starter': 'comment-fight-starter-generator',
@@ -255,6 +257,7 @@ function HomeContent() {
   const [isReorderMode, setIsReorderMode] = useState<boolean>(false);
   const [moduleOrder, setModuleOrder] = useState<string[]>([
     'digital-products',
+    'kidsafe-url-checker',
     'red-flag-detector',
     'comment-bait',
     'brainworm-generator',
@@ -274,10 +277,160 @@ function HomeContent() {
   const [draggedModule, setDraggedModule] = useState<string | null>(null);
   const [dragOverModule, setDragOverModule] = useState<string | null>(null);
   const [dropPosition, setDropPosition] = useState<'before' | 'after' | null>(null);
+  const [hoveredTool, setHoveredTool] = useState<string | null>(null);
+  const [hoveredFunnyGenerators, setHoveredFunnyGenerators] = useState<boolean>(false);
+
+  // Tool data for expanding cards
+  const toolData: Record<string, { title: string; description: string; fullDescription: string; features: string[]; icon: string; color: string }> = {
+    'kidsafe-url-checker': {
+      title: 'KidSafe URL Checker',
+      description: 'Check if a website is safe for children under 13',
+      fullDescription: 'Check if any website is safe for children under 13. Get instant safety ratings with clear explanations. Perfect for parents who want to verify website content safety before allowing their kids to visit.',
+      features: ['Instant safety ratings', 'AI-powered content analysis', 'Color-coded results', 'Parent-friendly design'],
+      icon: '🛡️',
+      color: '#10B981'
+    },
+    'red-flag-detector': {
+      title: 'Red Flag Detector',
+      description: 'Detect hidden meanings and identify red flags in text messages and conversations',
+      fullDescription: 'Detect hidden meanings and identify red flags in text messages, social media posts, and conversations. Understand what people REALLY mean when they say things that seem innocent but are actually warning signs.',
+      features: ['Decode hidden meanings', 'Identify warning signs', 'Beautiful animated analysis', 'Context-aware detection'],
+      icon: '🚩',
+      color: '#ef4444'
+    },
+    'digital-products': {
+      title: 'Premium Collection',
+      description: 'Browse and access premium digital products and resources',
+      fullDescription: 'Browse and access premium digital products and resources. Get exclusive content, templates, and tools to level up your social media game.',
+      features: ['Curated digital products', 'Premium resources', 'Exclusive content', 'Regular updates'],
+      icon: '💎',
+      color: '#DAA520'
+    },
+    'collab-engine': {
+      title: 'TikTok Collab Engine',
+      description: 'Find perfect collaboration partners based on your niche, audience, and goals',
+      fullDescription: 'Find perfect collaboration partners based on your niche, audience, and goals. Connect with creators who align with your brand and can help you grow.',
+      features: ['Smart matching', 'Niche filtering', 'Audience analysis', 'Real user verification'],
+      icon: '🤝',
+      color: '#FF4F78'
+    },
+    'trend-radar': {
+      title: 'Trend Radar',
+      description: 'Discover trending topics and analyze what\'s hot in your industry',
+      fullDescription: 'Discover trending topics and analyze what\'s hot in your industry. Get real-time insights, platform metrics, and actionable strategies to capitalize on trends.',
+      features: ['Real-time trends', 'In-depth analysis', 'Platform metrics', 'Actionable insights'],
+      icon: '📡',
+      color: '#06B6D4'
+    },
+    'idea-generator': {
+      title: 'Viral Video Idea Generator',
+      description: 'Generate viral video ideas that are proven to engage and convert',
+      fullDescription: 'Generate viral video ideas that are proven to engage and convert. Get multiple angles, engagement scores, and trending topics to create content that performs.',
+      features: ['Viral concepts', 'Multiple angles', 'Engagement scores', 'Trending topics'],
+      icon: '💡',
+      color: '#F97316'
+    },
+    'hashtag-research': {
+      title: 'Hashtag Research',
+      description: 'Research and find the best hashtags for your content to maximize reach',
+      fullDescription: 'Research and find the best hashtags for your content to maximize reach. Get trending hashtags, engagement metrics, competitor analysis, and optimal combinations.',
+      features: ['Trending hashtags', 'Engagement metrics', 'Competitor analysis', 'Optimal combinations'],
+      icon: '#️⃣',
+      color: '#14B8A6'
+    },
+    'cringe-couple-caption': {
+      title: 'Cringe Couple Caption Generator',
+      description: 'Generate hilariously cringeworthy couple captions perfect for memes and parodies',
+      fullDescription: 'Generate hilariously cringeworthy couple captions perfect for memes and parodies. Create entertainment content that gets laughs and engagement.',
+      features: ['Cringe-worthy content', 'Multiple styles', 'Meme-ready', 'Entertainment value'],
+      icon: '💑',
+      color: '#EC4899'
+    },
+    'comment-fight-starter': {
+      title: 'Comment Fight Starter Generator',
+      description: 'Generate controversial, debate-provoking comments designed to spark engagement',
+      fullDescription: 'Generate controversial, debate-provoking comments designed to spark engagement. Create comments that get people talking and boost your post visibility.',
+      features: ['Debate starters', 'Controversial topics', 'Engagement-focused', 'Multiple tones'],
+      icon: '💥',
+      color: '#EF4444'
+    },
+    'poor-life-choices-advisor': {
+      title: 'Poor Life Choices Advisor',
+      description: 'Get humorous, sarcastic advice about poor life choices. Perfect for entertainment',
+      fullDescription: 'Get humorous, sarcastic advice about poor life choices. Perfect for entertainment. Generate relatable, funny content that resonates with your audience.',
+      features: ['Humorous advice', 'Sarcastic tone', 'Entertainment', 'Relatable content'],
+      icon: '🤦',
+      color: '#F59E0B'
+    },
+    'random-excuse': {
+      title: 'Random Excuse Generator',
+      description: 'Generate creative excuses for any situation - believable or hilariously unbelievable',
+      fullDescription: 'Generate creative excuses for any situation - believable or hilariously unbelievable. Perfect for entertainment content and relatable humor.',
+      features: ['Creative excuses', 'Believability levels', 'Situation-specific', 'Entertainment value'],
+      icon: '🎭',
+      color: '#F59E0B'
+    },
+    'comment-bait': {
+      title: 'Comment Bait Generator',
+      description: 'Generate engaging comments designed to spark conversations and increase engagement',
+      fullDescription: 'Generate engaging comments designed to spark conversations and increase engagement on your posts. Create comments that drive visibility and interaction.',
+      features: ['Engagement-focused comments', 'Multiple styles', 'Platform-specific', 'Viral potential'],
+      icon: '🎣',
+      color: '#2979FF'
+    },
+    'brainworm-generator': {
+      title: 'Brainworm Phrase Generator',
+      description: 'Create catchy, memorable phrases that stick in people\'s minds',
+      fullDescription: 'Create catchy, memorable phrases that stick in people\'s minds. Generate viral hooks and memorable content that people can\'t forget.',
+      features: ['Memorable phrases', 'Catchy hooks', 'Viral potential', 'Multiple variations'],
+      icon: '🧠',
+      color: '#8B5CF6'
+    },
+    'sugar-daddy-messages': {
+      title: 'Sugar Daddy Message Generator',
+      description: 'Generate professional and engaging messages for business communications',
+      fullDescription: 'Generate professional and engaging messages for business communications. Create templates that are context-aware and customizable for your needs.',
+      features: ['Professional tone', 'Multiple templates', 'Context-aware', 'Customizable'],
+      icon: '💼',
+      color: '#10B981'
+    },
+    'music-generator': {
+      title: 'Music Generator',
+      description: 'Generate music ideas, beats, and sound concepts for your content',
+      fullDescription: 'Generate music ideas, beats, and sound concepts for your content. Get genre-specific inspiration and creative concepts for your videos.',
+      features: ['Music ideas', 'Beat concepts', 'Genre-specific', 'Creative inspiration'],
+      icon: '🎵',
+      color: '#F59E0B'
+    },
+    'voiceover-generator': {
+      title: 'Script & Voiceover Generator',
+      description: 'Create scripts and generate voiceovers using AI-powered voices',
+      fullDescription: 'Create scripts and generate voiceovers using AI-powered voices. Get professional quality audio with ElevenLabs integration and multiple voice options.',
+      features: ['AI-generated scripts', 'Multiple voice options', 'ElevenLabs integration', 'Professional quality'],
+      icon: '🎙️',
+      color: '#EC4899'
+    },
+    'sora-prompt': {
+      title: 'Sora Prompt Generator',
+      description: 'Create detailed prompts for AI video generation using Sora',
+      fullDescription: 'Create detailed prompts for AI video generation using Sora. Generate optimized prompts with scene descriptions and style options.',
+      features: ['Detailed prompts', 'Scene descriptions', 'Style options', 'Optimized for AI'],
+      icon: '🎬',
+      color: '#6366F1'
+    },
+    'page-analyzer': {
+      title: 'Page Analyzer',
+      description: 'Analyze social media profiles and pages to understand performance and strategy',
+      fullDescription: 'Analyze social media profiles and pages to understand performance and strategy. Get profile insights, performance metrics, and strategy recommendations.',
+      features: ['Profile insights', 'Performance metrics', 'Content analysis', 'Strategy recommendations'],
+      icon: '📊',
+      color: '#8B5CF6'
+    }
+  };
 
   // Module Collapse State
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(
-    new Set(['digital-products', 'red-flag-detector', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'])
+    new Set(['digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'])
   );
 
   const toggleModuleCollapse = (moduleId: string) => {
@@ -293,7 +446,7 @@ function HomeContent() {
   };
 
   const collapseAllModules = () => {
-    const allModules = ['digital-products', 'red-flag-detector', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
+    const allModules = ['digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
     setCollapsedModules(new Set(allModules));
   };
 
@@ -302,7 +455,7 @@ function HomeContent() {
   };
 
   const areAllModulesCollapsed = () => {
-    const allModules = ['digital-products', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator'];
+    const allModules = ['digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
     return allModules.every(module => collapsedModules.has(module));
   };
 
@@ -1781,27 +1934,78 @@ function HomeContent() {
 
   // Module Reorder Handlers
   const loadModuleOrder = async () => {
-    if (!user) return;
+    console.log('🔄 loadModuleOrder called. User:', user ? 'exists' : 'null');
+    
+    // Always use default order if no user
+    const defaultOrder = ['digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'music-generator', 'voiceover-generator', 'collab-engine', 'trend-radar', 'idea-generator', 'sora-prompt', 'hashtag-research', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
+    
+    if (!user) {
+      console.log('⚠️ No user, using default order:', defaultOrder);
+      setModuleOrder(defaultOrder);
+      return;
+    }
     
     try {
       const { data: { session } } = await supabase.auth.getSession();
-      if (!session) return;
+      if (!session) {
+        console.log('⚠️ No session, using default order:', defaultOrder);
+        setModuleOrder(defaultOrder);
+        return;
+      }
 
+      console.log('📡 Fetching module order from API...');
       const response = await fetch('/api/module-order', {
         headers: {
           'Authorization': `Bearer ${session.access_token}`
         }
       });
 
+      console.log('📡 API response status:', response.status);
+
       if (response.ok) {
         const data = await response.json();
+        console.log('📦 API response data:', data);
+        
         if (data.moduleOrder && Array.isArray(data.moduleOrder)) {
-          setModuleOrder(data.moduleOrder);
-          console.log('✅ Loaded module order:', data.moduleOrder);
+          const savedOrder = data.moduleOrder;
+          console.log('🔄 Merging module order. Saved:', savedOrder);
+
+          // Add any new modules from defaultOrder that aren't in savedOrder
+          const mergedOrder = [...savedOrder];
+          let hasChanges = false;
+
+          defaultOrder.forEach(module => {
+            if (!mergedOrder.includes(module)) {
+              // Insert new modules in their default positions
+              const defaultIndex = defaultOrder.indexOf(module);
+              // Ensure we don't go out of bounds if savedOrder is shorter/different
+              const insertIndex = Math.min(defaultIndex, mergedOrder.length);
+              mergedOrder.splice(insertIndex, 0, module);
+              hasChanges = true;
+              console.log(`➕ Added missing module: ${module} at index ${insertIndex}`);
+            }
+          });
+          
+          setModuleOrder(mergedOrder);
+          console.log('✅ Final merged module order:', mergedOrder);
+          
+          // If we added missing modules, save the new order
+          if (hasChanges) {
+             console.log('💾 Saving updated module order...');
+             saveModuleOrder(mergedOrder);
+          }
+        } else {
+          console.log('⚠️ Invalid moduleOrder in response, using default:', defaultOrder);
+          setModuleOrder(defaultOrder);
         }
+      } else {
+        console.log('⚠️ API response not OK, using default order:', defaultOrder);
+        setModuleOrder(defaultOrder);
       }
     } catch (error) {
-      console.error('Error loading module order:', error);
+      console.error('❌ Error loading module order:', error);
+      console.log('⚠️ Using default order due to error:', defaultOrder);
+      setModuleOrder(defaultOrder);
     }
   };
 
@@ -1848,6 +2052,97 @@ function HomeContent() {
     setModuleOrder(newOrder);
     saveModuleOrder(newOrder);
   };
+
+  // Load module order when user logs in OR on initial mount
+  useEffect(() => {
+    console.log('🔄 useEffect for loadModuleOrder TRIGGERED. User:', user ? 'exists' : 'null', 'authLoading:', authLoading);
+    if (!authLoading) {
+      console.log('✅ authLoading is false, proceeding to load module order...');
+      // Call loadModuleOrder directly - it's defined in the component scope
+      const loadOrder = async () => {
+        console.log('🔄 loadOrder function called. User:', user ? 'exists' : 'null');
+        const defaultOrder = ['digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'music-generator', 'voiceover-generator', 'collab-engine', 'trend-radar', 'idea-generator', 'sora-prompt', 'hashtag-research', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
+        console.log('📋 Default order includes kidsafe-url-checker:', defaultOrder.includes('kidsafe-url-checker'), 'at index:', defaultOrder.indexOf('kidsafe-url-checker'));
+        
+        if (!user) {
+          console.log('⚠️ No user, using default order:', defaultOrder);
+          console.log('✅ Setting moduleOrder state with kidsafe-url-checker at index:', defaultOrder.indexOf('kidsafe-url-checker'));
+          setModuleOrder(defaultOrder);
+          console.log('✅ moduleOrder state should now be set');
+          return;
+        }
+        
+        try {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (!session) {
+            console.log('⚠️ No session, using default order:', defaultOrder);
+            setModuleOrder(defaultOrder);
+            return;
+          }
+
+          console.log('📡 Fetching module order from API...');
+          const response = await fetch('/api/module-order', {
+            headers: {
+              'Authorization': `Bearer ${session.access_token}`
+            }
+          });
+
+          console.log('📡 API response status:', response.status);
+
+          if (response.ok) {
+            const data = await response.json();
+            console.log('📦 API response data:', data);
+            
+            if (data.moduleOrder && Array.isArray(data.moduleOrder)) {
+              const savedOrder = data.moduleOrder;
+              console.log('🔄 Merging module order. Saved:', savedOrder);
+
+              const mergedOrder = [...savedOrder];
+              let hasChanges = false;
+
+              defaultOrder.forEach(module => {
+                if (!mergedOrder.includes(module)) {
+                  const defaultIndex = defaultOrder.indexOf(module);
+                  const insertIndex = Math.min(defaultIndex, mergedOrder.length);
+                  mergedOrder.splice(insertIndex, 0, module);
+                  hasChanges = true;
+                  console.log(`➕ Added missing module: ${module} at index ${insertIndex}`);
+                }
+              });
+              
+              setModuleOrder(mergedOrder);
+              console.log('✅ Final merged module order:', mergedOrder);
+              
+              if (hasChanges) {
+                 console.log('💾 Would save updated module order (skipping for now):', mergedOrder);
+                 // Note: saveModuleOrder is defined later, but we'll call it via the API directly if needed
+              }
+            } else {
+              console.log('⚠️ Invalid moduleOrder in response, using default:', defaultOrder);
+              setModuleOrder(defaultOrder);
+            }
+          } else {
+            console.log('⚠️ API response not OK, using default order:', defaultOrder);
+            setModuleOrder(defaultOrder);
+          }
+        } catch (error) {
+          console.error('❌ Error loading module order:', error);
+          console.log('⚠️ Using default order due to error:', defaultOrder);
+          setModuleOrder(defaultOrder);
+        }
+      };
+      loadOrder();
+    } else {
+      console.log('⏳ Waiting for auth to finish loading...');
+    }
+  }, [user, authLoading]);
+
+  // Debug: Log moduleOrder changes
+  useEffect(() => {
+    console.log('📊 moduleOrder state changed:', moduleOrder);
+    console.log('📊 kidsafe-url-checker index:', moduleOrder.indexOf('kidsafe-url-checker'));
+    console.log('📊 Total modules:', moduleOrder.length);
+  }, [moduleOrder]);
 
   // Drag and Drop Handlers
   const handleDragStart = (moduleId: string) => {
@@ -1918,9 +2213,10 @@ function HomeContent() {
     setDropPosition(null);
   };
 
-  // Load module order when user logs in
+  // Load module order when user logs in OR on initial mount
   useEffect(() => {
-    if (user && !authLoading) {
+    console.log('🔄 useEffect for loadModuleOrder. User:', user ? 'exists' : 'null', 'authLoading:', authLoading);
+    if (!authLoading) {
       loadModuleOrder();
     }
   }, [user, authLoading]);
@@ -3269,6 +3565,22 @@ function HomeContent() {
                 Home
               </Button>
               <Button
+                onClick={() => {
+                  if (confirm('Reset module order?')) {
+                    // Reset local state
+                    const defaultOrder = ['digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'music-generator', 'voiceover-generator', 'collab-engine', 'trend-radar', 'idea-generator', 'sora-prompt', 'hashtag-research', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
+                    setModuleOrder(defaultOrder);
+                    // Save to DB
+                    saveModuleOrder(defaultOrder);
+                    alert('Order reset! Check for KidSafe card.');
+                  }
+                }}
+                variant="outline"
+                className="px-4 py-2 h-auto rounded-lg text-sm font-semibold shadow-md hover:scale-105 active:scale-95 cursor-pointer bg-card text-card-foreground border-input border-red-500 text-red-500"
+              >
+                Fix Order
+              </Button>
+              <Button
                 onClick={(e) => {
                   e.preventDefault();
                   e.stopPropagation();
@@ -3389,10 +3701,10 @@ function HomeContent() {
           </div>
         )}
 
-        <div className={`text-center mb-16 ${currentStep !== "form" ? "hidden md:block" : ""}`}>
+        <div className={`flex flex-col items-center justify-center mb-16 ${currentStep !== "form" ? "hidden md:flex" : "flex"}`}>
           <div 
             onClick={navigateHome}
-            className="cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 mb-6 flex justify-center"
+            className="cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 mb-6"
             style={{ 
               opacity: isNavigating ? 0.5 : 1
             }}
@@ -3400,17 +3712,117 @@ function HomeContent() {
             <img 
               src="/postready-logo.svg" 
               alt="PostReady Logo" 
-              className="h-24 w-auto logo-glow"
+              className="h-24 w-auto logo-glow block"
             />
           </div>
-          <p className="text-2xl font-medium tracking-wide" style={{ color: 'var(--primary)' }}>
-            Your all-in-one toolkit for social media growth.
+          <p 
+            className="text-3xl sm:text-4xl font-bold tracking-tight whitespace-nowrap text-center relative"
+            style={{
+              background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 50%, #2979FF 100%)',
+              backgroundSize: '200% 200%',
+              WebkitBackgroundClip: 'text',
+              WebkitTextFillColor: 'transparent',
+              backgroundClip: 'text',
+              animation: 'gradient-shift 3s ease infinite',
+              letterSpacing: '-0.02em',
+              filter: 'drop-shadow(0 0 20px rgba(41, 121, 255, 0.4))',
+            }}
+          >
+            Your Digital Multitool
           </p>
-{/* All Tools Button Removed */}
         </div>
 
         {/* Modules Container - uses flex to enable reordering */}
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+
+        {/* KidSafe URL Checker - FORCED RENDER */}
+        {currentStep === "form" && (
+          <div 
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('kidsafe-url-checker'));
+              }
+            }}
+            onMouseEnter={() => !isReorderMode && setHoveredTool('kidsafe-url-checker')}
+            onMouseLeave={() => setHoveredTool(null)}
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: hoveredTool === 'kidsafe-url-checker' ? '#10B981' : 'var(--card-border)',
+              order: -1, // Force to top
+              cursor: 'pointer',
+              padding: hoveredTool === 'kidsafe-url-checker' ? '1.5rem' : '1rem',
+            }}
+          >
+             {/* Glow effect */}
+            {hoveredTool === 'kidsafe-url-checker' && (
+              <div
+                className="absolute inset-0 opacity-20 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, #10B981, transparent 70%)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                }}
+              />
+            )}
+
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span className="text-3xl">🛡️</span>
+                  <div>
+                    <h3 
+                      className="text-base sm:text-lg font-bold transition-all duration-500"
+                      style={{ 
+                        color: hoveredTool === 'kidsafe-url-checker' ? '#10B981' : 'var(--secondary)',
+                        fontSize: hoveredTool === 'kidsafe-url-checker' ? '1.25rem' : '1rem'
+                      }}
+                    >
+                      KidSafe URL Checker
+                    </h3>
+                    <p 
+                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {toolData['kidsafe-url-checker']?.description || 'Check if a website is safe for children under 13'}
+                    </p>
+                  </div>
+                </div>
+                <span 
+                  className="text-sm opacity-60 transition-all duration-500"
+                  style={{ 
+                    color: 'var(--text-secondary)',
+                    opacity: hoveredTool === 'kidsafe-url-checker' ? 0 : 0.6
+                  }}
+                >
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+            </div>
+
+            {/* Expanded Content */}
+             {toolData['kidsafe-url-checker'] && (
+                <div
+                  className="overflow-hidden transition-all duration-500"
+                  style={{
+                    maxHeight: hoveredTool === 'kidsafe-url-checker' ? '500px' : '0px',
+                    opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                  }}
+                >
+                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                    <p className="text-sm leading-relaxed" style={{ color: 'var(--text-secondary)' }}>
+                      {toolData['kidsafe-url-checker'].fullDescription}
+                    </p>
+                    <Button
+                        className="w-full font-semibold transition-all duration-300 hover:scale-105"
+                        style={{ backgroundColor: '#10B981', color: 'white', border: 'none' }}
+                      >
+                        Check URL Safety →
+                      </Button>
+                  </div>
+                </div>
+             )}
+          </div>
+        )}
 
         {/* Collab Engine - Top of Homepage */}
         {currentStep === "form" && (
@@ -3440,27 +3852,45 @@ function HomeContent() {
                 e.preventDefault();
               }
             }}
-            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
+            onMouseEnter={() => !isReorderMode && setHoveredTool('collab-engine')}
+            onMouseLeave={() => setHoveredTool(null)}
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
             style={{
               marginBottom: '1rem',
               backgroundColor: 'var(--card-bg)',
-              borderColor: dragOverModule === 'collab-engine' 
-                ? '#2979FF'
-                : theme === 'dark'
-                  ? 'rgba(255, 79, 120, 0.3)'
-                  : 'rgba(255, 79, 120, 0.25)',
-              boxShadow: dragOverModule === 'collab-engine'
-                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
-                : theme === 'dark'
-                  ? '0 8px 32px rgba(255, 79, 120, 0.2), 0 0 0 1px rgba(255, 79, 120, 0.15)'
-                  : '0 4px 20px rgba(255, 79, 120, 0.15), 0 0 0 1px rgba(255, 79, 120, 0.1)',
+              borderColor: hoveredTool === 'collab-engine' 
+                ? '#FF4F78'
+                : dragOverModule === 'collab-engine' 
+                  ? '#2979FF'
+                  : theme === 'dark'
+                    ? 'rgba(255, 79, 120, 0.3)'
+                    : 'rgba(255, 79, 120, 0.25)',
+              boxShadow: hoveredTool === 'collab-engine'
+                ? '0 20px 60px rgba(255, 79, 120, 0.3), 0 0 0 1px rgba(255, 79, 120, 0.4)'
+                : dragOverModule === 'collab-engine'
+                  ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                  : theme === 'dark'
+                    ? '0 8px 32px rgba(255, 79, 120, 0.2), 0 0 0 1px rgba(255, 79, 120, 0.15)'
+                    : '0 4px 20px rgba(255, 79, 120, 0.15), 0 0 0 1px rgba(255, 79, 120, 0.1)',
               order: moduleOrder.indexOf('collab-engine'),
               cursor: (isReorderMode && user) ? 'move' : 'pointer',
               opacity: draggedModule === 'collab-engine' ? 0.5 : 1,
-              transform: dragOverModule === 'collab-engine' ? 'scale(1.02)' : 'scale(1)',
-              padding: '1rem 1.5rem',
+              transform: hoveredTool === 'collab-engine' ? 'scale(1.03)' : dragOverModule === 'collab-engine' ? 'scale(1.02)' : 'scale(1)',
+              padding: hoveredTool === 'collab-engine' ? '1.5rem' : '1rem 1.5rem',
+              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
+            {/* Glow effect */}
+            {hoveredTool === 'collab-engine' && (
+              <div
+                className="absolute inset-0 opacity-20 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, #FF4F78, transparent 70%)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                }}
+              />
+            )}
+
             <Link 
               href={getModuleUrl('collab-engine')}
               onClick={(e) => {
@@ -3470,21 +3900,124 @@ function HomeContent() {
               }}
               className="block"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <svg className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" viewBox="0 0 448 512" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 2px rgba(0, 242, 234, 0.3))' }}>
-                    <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#00f2ea" transform="translate(-3, -3)"/>
-                    <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#ff0050" transform="translate(3, 3)"/>
-                    <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#000000"/>
-                  </svg>
-                  <h3 className="text-lg sm:text-xl font-bold" style={{ color: 'var(--secondary)' }}>
-                    TikTok Collab Engine 🤝
-                  </h3>
+              {/* Header - Always visible */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <div
+                    className="transition-transform duration-500"
+                    style={{ 
+                      transform: hoveredTool === 'collab-engine' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
+                    }}
+                  >
+                    <svg className="w-6 h-6 sm:w-8 sm:h-8 flex-shrink-0" viewBox="0 0 448 512" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ filter: 'drop-shadow(0 0 2px rgba(0, 242, 234, 0.3))' }}>
+                      <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#00f2ea" transform="translate(-3, -3)"/>
+                      <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#ff0050" transform="translate(3, 3)"/>
+                      <path d="M448,209.91a210.06,210.06,0,0,1-122.77-39.25V349.38A162.55,162.55,0,1,1,185,188.31V278.2a74.62,74.62,0,1,0,52.23,71.18V0l88,0a121.18,121.18,0,0,0,1.86,22.17h0A122.18,122.18,0,0,0,381,102.39a121.43,121.43,0,0,0,67,20.14Z" fill="#000000"/>
+                    </svg>
+                  </div>
+                  <div>
+                    <h3 
+                      className="text-lg sm:text-xl font-bold transition-all duration-500"
+                      style={{ 
+                        color: hoveredTool === 'collab-engine' ? '#FF4F78' : 'var(--secondary)',
+                        fontSize: hoveredTool === 'collab-engine' ? '1.5rem' : '1.25rem'
+                      }}
+                    >
+                      TikTok Collab Engine 🤝
+                    </h3>
+                    <p 
+                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {toolData['collab-engine']?.description || 'Find perfect collaboration partners'}
+                    </p>
+                  </div>
                 </div>
-                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                <span 
+                  className="text-sm opacity-60 transition-all duration-500"
+                  style={{ 
+                    color: 'var(--text-secondary)',
+                    opacity: hoveredTool === 'collab-engine' ? 0 : 0.6
+                  }}
+                >
                   {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
                 </span>
               </div>
+
+              {/* Expanded Content - Fades in on hover */}
+              {toolData['collab-engine'] && (
+                <div
+                  className="overflow-hidden transition-all duration-500"
+                  style={{
+                    maxHeight: hoveredTool === 'collab-engine' ? '500px' : '0px',
+                    opacity: hoveredTool === 'collab-engine' ? 1 : 0,
+                    transform: hoveredTool === 'collab-engine' ? 'translateY(0)' : 'translateY(-10px)',
+                  }}
+                >
+                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(255, 79, 120, 0.2)' }}>
+                    {/* Full Description */}
+                    <p 
+                      className="text-sm leading-relaxed transition-all duration-500 delay-100"
+                      style={{ 
+                        color: 'var(--text-secondary)',
+                        opacity: hoveredTool === 'collab-engine' ? 1 : 0,
+                        transform: hoveredTool === 'collab-engine' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      {toolData['collab-engine'].fullDescription}
+                    </p>
+
+                    {/* Features List */}
+                    <div 
+                      className="space-y-2 transition-all duration-500 delay-200"
+                      style={{
+                        opacity: hoveredTool === 'collab-engine' ? 1 : 0,
+                        transform: hoveredTool === 'collab-engine' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#FF4F78' }}>
+                        Key Features
+                      </p>
+                      <ul className="space-y-1.5">
+                        {toolData['collab-engine'].features.map((feature, idx) => (
+                          <li 
+                            key={idx} 
+                            className="flex items-center gap-2 text-sm"
+                            style={{
+                              transitionDelay: `${300 + idx * 50}ms`,
+                              opacity: hoveredTool === 'collab-engine' ? 1 : 0,
+                              transform: hoveredTool === 'collab-engine' ? 'translateX(0)' : 'translateX(-10px)',
+                            }}
+                          >
+                            <span className="text-xs font-bold" style={{ color: '#FF4F78' }}>✓</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div 
+                      className="pt-2 transition-all duration-500 delay-300"
+                      style={{
+                        opacity: hoveredTool === 'collab-engine' ? 1 : 0,
+                        transform: hoveredTool === 'collab-engine' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <Button
+                        className="w-full font-semibold transition-all duration-300 hover:scale-105"
+                        style={{
+                          backgroundColor: '#FF4F78',
+                          color: 'white',
+                          border: 'none',
+                        }}
+                      >
+                        Explore Collab Engine →
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </Link>
           </div>
         )}
@@ -3504,25 +4037,43 @@ function HomeContent() {
                 router.push(getModuleUrl('trend-radar'));
               }
             }}
-            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
+            onMouseEnter={() => !isReorderMode && setHoveredTool('trend-radar')}
+            onMouseLeave={() => setHoveredTool(null)}
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
             style={{
               marginBottom: '1rem',
               backgroundColor: 'var(--card-bg)',
-              borderColor: dragOverModule === 'trend-radar'
-                ? '#2979FF'
-                : 'var(--card-border)',
-              boxShadow: dragOverModule === 'trend-radar'
-                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
-                : theme === 'dark'
-                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              borderColor: hoveredTool === 'trend-radar' 
+                ? '#06B6D4'
+                : dragOverModule === 'trend-radar'
+                  ? '#2979FF'
+                  : 'var(--card-border)',
+              boxShadow: hoveredTool === 'trend-radar'
+                ? '0 20px 60px rgba(6, 182, 212, 0.3), 0 0 0 1px rgba(6, 182, 212, 0.4)'
+                : dragOverModule === 'trend-radar'
+                  ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                  : theme === 'dark'
+                    ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                    : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
               order: moduleOrder.indexOf('trend-radar'),
               cursor: (isReorderMode && user) ? 'move' : 'pointer',
               opacity: draggedModule === 'trend-radar' ? 0.5 : 1,
-              transform: dragOverModule === 'trend-radar' ? 'scale(1.02)' : 'scale(1)',
-              padding: '1rem',
+              transform: hoveredTool === 'trend-radar' ? 'scale(1.03)' : dragOverModule === 'trend-radar' ? 'scale(1.02)' : 'scale(1)',
+              padding: hoveredTool === 'trend-radar' ? '1.5rem' : '1rem',
+              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
+            {/* Glow effect */}
+            {hoveredTool === 'trend-radar' && (
+              <div
+                className="absolute inset-0 opacity-20 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, #06B6D4, transparent 70%)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                }}
+              />
+            )}
+
             <Link 
               href={getModuleUrl('trend-radar')}
               onClick={(e) => {
@@ -3532,22 +4083,120 @@ function HomeContent() {
               }}
               className="block"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">📡</span>
+              {/* Header - Always visible */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span 
+                    className="text-3xl transition-transform duration-500" 
+                    style={{ 
+                      transform: hoveredTool === 'trend-radar' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
+                    }}
+                  >
+                    📡
+                  </span>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                    <h3 
+                      className="text-base sm:text-lg font-bold transition-all duration-500"
+                      style={{ 
+                        color: hoveredTool === 'trend-radar' ? '#06B6D4' : 'var(--secondary)',
+                        fontSize: hoveredTool === 'trend-radar' ? '1.25rem' : '1rem'
+                      }}
+                    >
                       Trend Radar
                     </h3>
-                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
-                      Discover trending topics and hashtags across social media platforms
+                    <p 
+                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {toolData['trend-radar']?.description || 'Discover trending topics and analyze what\'s hot'}
                     </p>
                   </div>
                 </div>
-                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                <span 
+                  className="text-sm opacity-60 transition-all duration-500"
+                  style={{ 
+                    color: 'var(--text-secondary)',
+                    opacity: hoveredTool === 'trend-radar' ? 0 : 0.6
+                  }}
+                >
                   {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
                 </span>
               </div>
+
+              {/* Expanded Content - Fades in on hover */}
+              {toolData['trend-radar'] && (
+                <div
+                  className="overflow-hidden transition-all duration-500"
+                  style={{
+                    maxHeight: hoveredTool === 'trend-radar' ? '500px' : '0px',
+                    opacity: hoveredTool === 'trend-radar' ? 1 : 0,
+                    transform: hoveredTool === 'trend-radar' ? 'translateY(0)' : 'translateY(-10px)',
+                  }}
+                >
+                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(6, 182, 212, 0.2)' }}>
+                    {/* Full Description */}
+                    <p 
+                      className="text-sm leading-relaxed transition-all duration-500 delay-100"
+                      style={{ 
+                        color: 'var(--text-secondary)',
+                        opacity: hoveredTool === 'trend-radar' ? 1 : 0,
+                        transform: hoveredTool === 'trend-radar' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      {toolData['trend-radar'].fullDescription}
+                    </p>
+
+                    {/* Features List */}
+                    <div 
+                      className="space-y-2 transition-all duration-500 delay-200"
+                      style={{
+                        opacity: hoveredTool === 'trend-radar' ? 1 : 0,
+                        transform: hoveredTool === 'trend-radar' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#06B6D4' }}>
+                        Key Features
+                      </p>
+                      <ul className="space-y-1.5">
+                        {toolData['trend-radar'].features.map((feature, idx) => (
+                          <li 
+                            key={idx} 
+                            className="flex items-center gap-2 text-sm"
+                            style={{
+                              transitionDelay: `${300 + idx * 50}ms`,
+                              opacity: hoveredTool === 'trend-radar' ? 1 : 0,
+                              transform: hoveredTool === 'trend-radar' ? 'translateX(0)' : 'translateX(-10px)',
+                            }}
+                          >
+                            <span className="text-xs font-bold" style={{ color: '#06B6D4' }}>✓</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div 
+                      className="pt-2 transition-all duration-500 delay-300"
+                      style={{
+                        opacity: hoveredTool === 'trend-radar' ? 1 : 0,
+                        transform: hoveredTool === 'trend-radar' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <Button
+                        className="w-full font-semibold transition-all duration-300 hover:scale-105"
+                        style={{
+                          backgroundColor: '#06B6D4',
+                          color: 'white',
+                          border: 'none',
+                        }}
+                      >
+                        Explore Trend Radar →
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </Link>
           </div>
         )}
@@ -3567,25 +4216,43 @@ function HomeContent() {
                 router.push(getModuleUrl('idea-generator'));
               }
             }}
-            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
+            onMouseEnter={() => !isReorderMode && setHoveredTool('idea-generator')}
+            onMouseLeave={() => setHoveredTool(null)}
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
             style={{
               marginBottom: '1rem',
               backgroundColor: 'var(--card-bg)',
-              borderColor: dragOverModule === 'idea-generator'
-                ? '#2979FF'
-                : 'var(--card-border)',
-              boxShadow: dragOverModule === 'idea-generator'
-                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
-                : theme === 'dark'
-                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              borderColor: hoveredTool === 'idea-generator' 
+                ? '#F97316'
+                : dragOverModule === 'idea-generator'
+                  ? '#2979FF'
+                  : 'var(--card-border)',
+              boxShadow: hoveredTool === 'idea-generator'
+                ? '0 20px 60px rgba(249, 115, 22, 0.3), 0 0 0 1px rgba(249, 115, 22, 0.4)'
+                : dragOverModule === 'idea-generator'
+                  ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                  : theme === 'dark'
+                    ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                    : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
               order: moduleOrder.indexOf('idea-generator'),
               cursor: (isReorderMode && user) ? 'move' : 'pointer',
               opacity: draggedModule === 'idea-generator' ? 0.5 : 1,
-              transform: dragOverModule === 'idea-generator' ? 'scale(1.02)' : 'scale(1)',
-              padding: '1rem',
+              transform: hoveredTool === 'idea-generator' ? 'scale(1.03)' : dragOverModule === 'idea-generator' ? 'scale(1.02)' : 'scale(1)',
+              padding: hoveredTool === 'idea-generator' ? '1.5rem' : '1rem',
+              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
+            {/* Glow effect */}
+            {hoveredTool === 'idea-generator' && (
+              <div
+                className="absolute inset-0 opacity-20 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, #F97316, transparent 70%)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                }}
+              />
+            )}
+
             <Link 
               href={getModuleUrl('idea-generator')}
               onClick={(e) => {
@@ -3595,22 +4262,120 @@ function HomeContent() {
               }}
               className="block"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">💡</span>
+              {/* Header - Always visible */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span 
+                    className="text-3xl transition-transform duration-500" 
+                    style={{ 
+                      transform: hoveredTool === 'idea-generator' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
+                    }}
+                  >
+                    💡
+                  </span>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                    <h3 
+                      className="text-base sm:text-lg font-bold transition-all duration-500"
+                      style={{ 
+                        color: hoveredTool === 'idea-generator' ? '#F97316' : 'var(--secondary)',
+                        fontSize: hoveredTool === 'idea-generator' ? '1.25rem' : '1rem'
+                      }}
+                    >
                       Viral Video Idea Generator
                     </h3>
-                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
-                      Get AI-powered video ideas designed to go viral based on your niche and goals
+                    <p 
+                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {toolData['idea-generator']?.description || 'Generate viral video ideas that are proven to engage'}
                     </p>
                   </div>
                 </div>
-                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                <span 
+                  className="text-sm opacity-60 transition-all duration-500"
+                  style={{ 
+                    color: 'var(--text-secondary)',
+                    opacity: hoveredTool === 'idea-generator' ? 0 : 0.6
+                  }}
+                >
                   {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
                 </span>
               </div>
+
+              {/* Expanded Content - Fades in on hover */}
+              {toolData['idea-generator'] && (
+                <div
+                  className="overflow-hidden transition-all duration-500"
+                  style={{
+                    maxHeight: hoveredTool === 'idea-generator' ? '500px' : '0px',
+                    opacity: hoveredTool === 'idea-generator' ? 1 : 0,
+                    transform: hoveredTool === 'idea-generator' ? 'translateY(0)' : 'translateY(-10px)',
+                  }}
+                >
+                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(249, 115, 22, 0.2)' }}>
+                    {/* Full Description */}
+                    <p 
+                      className="text-sm leading-relaxed transition-all duration-500 delay-100"
+                      style={{ 
+                        color: 'var(--text-secondary)',
+                        opacity: hoveredTool === 'idea-generator' ? 1 : 0,
+                        transform: hoveredTool === 'idea-generator' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      {toolData['idea-generator'].fullDescription}
+                    </p>
+
+                    {/* Features List */}
+                    <div 
+                      className="space-y-2 transition-all duration-500 delay-200"
+                      style={{
+                        opacity: hoveredTool === 'idea-generator' ? 1 : 0,
+                        transform: hoveredTool === 'idea-generator' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#F97316' }}>
+                        Key Features
+                      </p>
+                      <ul className="space-y-1.5">
+                        {toolData['idea-generator'].features.map((feature, idx) => (
+                          <li 
+                            key={idx} 
+                            className="flex items-center gap-2 text-sm"
+                            style={{
+                              transitionDelay: `${300 + idx * 50}ms`,
+                              opacity: hoveredTool === 'idea-generator' ? 1 : 0,
+                              transform: hoveredTool === 'idea-generator' ? 'translateX(0)' : 'translateX(-10px)',
+                            }}
+                          >
+                            <span className="text-xs font-bold" style={{ color: '#F97316' }}>✓</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div 
+                      className="pt-2 transition-all duration-500 delay-300"
+                      style={{
+                        opacity: hoveredTool === 'idea-generator' ? 1 : 0,
+                        transform: hoveredTool === 'idea-generator' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <Button
+                        className="w-full font-semibold transition-all duration-300 hover:scale-105"
+                        style={{
+                          backgroundColor: '#F97316',
+                          color: 'white',
+                          border: 'none',
+                        }}
+                      >
+                        Explore Idea Generator →
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </Link>
           </div>
         )}
@@ -3631,25 +4396,43 @@ function HomeContent() {
                 router.push(getModuleUrl('hashtag-research'));
               }
             }}
-            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
+            onMouseEnter={() => !isReorderMode && setHoveredTool('hashtag-research')}
+            onMouseLeave={() => setHoveredTool(null)}
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
             style={{
               marginBottom: '1rem',
               backgroundColor: 'var(--card-bg)',
-              borderColor: dragOverModule === 'hashtag-research'
-                ? '#2979FF'
-                : 'var(--card-border)',
-              boxShadow: dragOverModule === 'hashtag-research'
-                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
-                : theme === 'dark'
-                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              borderColor: hoveredTool === 'hashtag-research' 
+                ? '#14B8A6'
+                : dragOverModule === 'hashtag-research'
+                  ? '#2979FF'
+                  : 'var(--card-border)',
+              boxShadow: hoveredTool === 'hashtag-research'
+                ? '0 20px 60px rgba(20, 184, 166, 0.3), 0 0 0 1px rgba(20, 184, 166, 0.4)'
+                : dragOverModule === 'hashtag-research'
+                  ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                  : theme === 'dark'
+                    ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                    : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
               order: moduleOrder.indexOf('hashtag-research'),
               cursor: (isReorderMode && user) ? 'move' : 'pointer',
               opacity: draggedModule === 'hashtag-research' ? 0.5 : 1,
-              transform: dragOverModule === 'hashtag-research' ? 'scale(1.02)' : 'scale(1)',
-              padding: '1rem',
+              transform: hoveredTool === 'hashtag-research' ? 'scale(1.03)' : dragOverModule === 'hashtag-research' ? 'scale(1.02)' : 'scale(1)',
+              padding: hoveredTool === 'hashtag-research' ? '1.5rem' : '1rem',
+              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
+            {/* Glow effect */}
+            {hoveredTool === 'hashtag-research' && (
+              <div
+                className="absolute inset-0 opacity-20 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, #14B8A6, transparent 70%)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                }}
+              />
+            )}
+
             <Link 
               href={getModuleUrl('hashtag-research')}
               onClick={(e) => {
@@ -3659,28 +4442,972 @@ function HomeContent() {
               }}
               className="block"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">#️⃣</span>
+              {/* Header - Always visible */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span 
+                    className="text-3xl transition-transform duration-500" 
+                    style={{ 
+                      transform: hoveredTool === 'hashtag-research' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
+                    }}
+                  >
+                    #️⃣
+                  </span>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                    <h3 
+                      className="text-base sm:text-lg font-bold transition-all duration-500"
+                      style={{ 
+                        color: hoveredTool === 'hashtag-research' ? '#14B8A6' : 'var(--secondary)',
+                        fontSize: hoveredTool === 'hashtag-research' ? '1.25rem' : '1rem'
+                      }}
+                    >
                       Hashtag Deep Research
                     </h3>
-                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
-                      Research and analyze hashtags to find the best ones for your content strategy
+                    <p 
+                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {toolData['hashtag-research']?.description || 'Research and find the best hashtags for your content'}
                     </p>
                   </div>
                 </div>
-                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                <span 
+                  className="text-sm opacity-60 transition-all duration-500"
+                  style={{ 
+                    color: 'var(--text-secondary)',
+                    opacity: hoveredTool === 'hashtag-research' ? 0 : 0.6
+                  }}
+                >
                   {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
                 </span>
               </div>
+
+              {/* Expanded Content - Fades in on hover */}
+              {toolData['hashtag-research'] && (
+                <div
+                  className="overflow-hidden transition-all duration-500"
+                  style={{
+                    maxHeight: hoveredTool === 'hashtag-research' ? '500px' : '0px',
+                    opacity: hoveredTool === 'hashtag-research' ? 1 : 0,
+                    transform: hoveredTool === 'hashtag-research' ? 'translateY(0)' : 'translateY(-10px)',
+                  }}
+                >
+                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(20, 184, 166, 0.2)' }}>
+                    {/* Full Description */}
+                    <p 
+                      className="text-sm leading-relaxed transition-all duration-500 delay-100"
+                      style={{ 
+                        color: 'var(--text-secondary)',
+                        opacity: hoveredTool === 'hashtag-research' ? 1 : 0,
+                        transform: hoveredTool === 'hashtag-research' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      {toolData['hashtag-research'].fullDescription}
+                    </p>
+
+                    {/* Features List */}
+                    <div 
+                      className="space-y-2 transition-all duration-500 delay-200"
+                      style={{
+                        opacity: hoveredTool === 'hashtag-research' ? 1 : 0,
+                        transform: hoveredTool === 'hashtag-research' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#14B8A6' }}>
+                        Key Features
+                      </p>
+                      <ul className="space-y-1.5">
+                        {toolData['hashtag-research'].features.map((feature, idx) => (
+                          <li 
+                            key={idx} 
+                            className="flex items-center gap-2 text-sm"
+                            style={{
+                              transitionDelay: `${300 + idx * 50}ms`,
+                              opacity: hoveredTool === 'hashtag-research' ? 1 : 0,
+                              transform: hoveredTool === 'hashtag-research' ? 'translateX(0)' : 'translateX(-10px)',
+                            }}
+                          >
+                            <span className="text-xs font-bold" style={{ color: '#14B8A6' }}>✓</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div 
+                      className="pt-2 transition-all duration-500 delay-300"
+                      style={{
+                        opacity: hoveredTool === 'hashtag-research' ? 1 : 0,
+                        transform: hoveredTool === 'hashtag-research' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <Button
+                        className="w-full font-semibold transition-all duration-300 hover:scale-105"
+                        style={{
+                          backgroundColor: '#14B8A6',
+                          color: 'white',
+                          border: 'none',
+                        }}
+                      >
+                        Explore Hashtag Research →
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
             </Link>
           </div>
         )}
 
-        {/* Red Flag Translator */}
+        {/* Funny Generators Hub */}
         {currentStep === "form" && (
+          <div 
+            onMouseEnter={() => setHoveredFunnyGenerators(true)}
+            onMouseLeave={() => setHoveredFunnyGenerators(false)}
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: hoveredFunnyGenerators 
+                ? '#EC4899'
+                : 'var(--card-border)',
+              borderWidth: hoveredFunnyGenerators ? '2px' : '1px',
+              boxShadow: hoveredFunnyGenerators
+                ? '0 20px 60px rgba(236, 72, 153, 0.3), 0 0 0 1px rgba(236, 72, 153, 0.4)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(236, 72, 153, 0.15), 0 0 0 1px rgba(236, 72, 153, 0.1)'
+                  : '0 4px 20px rgba(236, 72, 153, 0.12), 0 0 0 1px rgba(236, 72, 153, 0.08)',
+              order: moduleOrder.indexOf('red-flag-detector') === -1 ? 999 : moduleOrder.indexOf('red-flag-detector'),
+              cursor: 'pointer',
+              padding: hoveredFunnyGenerators ? '1.5rem' : '1rem',
+              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            {/* Playful gradient glow effect */}
+            {hoveredFunnyGenerators && (
+              <div
+                className="absolute inset-0 opacity-20 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, #EC4899, #F59E0B, transparent 70%)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                }}
+              />
+            )}
+
+            {/* Main Header */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <span 
+                  className="text-3xl transition-transform duration-500" 
+                  style={{ 
+                    transform: hoveredFunnyGenerators ? 'scale(1.15) rotate(10deg)' : 'scale(1) rotate(0deg)'
+                  }}
+                >
+                  😂
+                </span>
+                <div>
+                  <h3 
+                    className="text-base sm:text-lg font-bold transition-all duration-500"
+                    style={{ 
+                      color: hoveredFunnyGenerators ? '#EC4899' : 'var(--secondary)',
+                      fontSize: hoveredFunnyGenerators ? '1.25rem' : '1rem'
+                    }}
+                  >
+                    Funny Generators
+                  </h3>
+                  <p 
+                    className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    {hoveredFunnyGenerators ? 'Choose a generator below ↓' : 'Lighthearted tools for humor and entertainment'}
+                  </p>
+                </div>
+              </div>
+              <span 
+                className="text-sm opacity-60 transition-all duration-500"
+                style={{ 
+                  color: 'var(--text-secondary)',
+                  opacity: hoveredFunnyGenerators ? 0 : 0.6
+                }}
+              >
+                Hover to explore →
+              </span>
+            </div>
+
+            {/* Submenu - Reveals on hover */}
+            <div
+              className="overflow-hidden transition-all duration-500"
+              style={{
+                maxHeight: hoveredFunnyGenerators ? '600px' : '0px',
+                opacity: hoveredFunnyGenerators ? 1 : 0,
+                transform: hoveredFunnyGenerators ? 'translateY(0)' : 'translateY(-10px)',
+              }}
+            >
+              <div className="pt-4 space-y-2 border-t" style={{ borderColor: 'rgba(236, 72, 153, 0.2)' }}>
+                {/* Tool List */}
+                {[
+                  { id: 'red-flag-detector', name: 'Red Flag Detector', icon: '🚩', color: '#ef4444' },
+                  { id: 'cringe-couple-caption', name: 'Cringe Couple Caption Generator', icon: '💑', color: '#EC4899' },
+                  { id: 'comment-fight-starter', name: 'Comment Fight Starter', icon: '💥', color: '#EF4444' },
+                  { id: 'poor-life-choices-advisor', name: 'Poor Life Choices Generator', icon: '🤦', color: '#F59E0B' },
+                  { id: 'random-excuse', name: 'Random Excuse Generator', icon: '🎭', color: '#F59E0B' },
+                ].map((tool, idx) => (
+                  <Link
+                    key={tool.id}
+                    href={getModuleUrl(tool.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    className="block"
+                  >
+                    <div
+                      className="rounded-lg p-3 transition-all duration-300 hover:scale-[1.02]"
+                      style={{
+                        backgroundColor: hoveredFunnyGenerators ? 'rgba(236, 72, 153, 0.05)' : 'transparent',
+                        border: '1px solid transparent',
+                        borderColor: hoveredFunnyGenerators ? 'rgba(236, 72, 153, 0.1)' : 'transparent',
+                        transitionDelay: `${idx * 50}ms`,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(236, 72, 153, 0.1)';
+                        e.currentTarget.style.borderColor = tool.color;
+                        e.currentTarget.style.transform = 'translateX(5px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = hoveredFunnyGenerators ? 'rgba(236, 72, 153, 0.05)' : 'transparent';
+                        e.currentTarget.style.borderColor = hoveredFunnyGenerators ? 'rgba(236, 72, 153, 0.1)' : 'transparent';
+                        e.currentTarget.style.transform = 'translateX(0)';
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{tool.icon}</span>
+                        <div className="flex-1">
+                          <h4 
+                            className="text-sm font-semibold transition-colors duration-300"
+                            style={{ 
+                              color: hoveredFunnyGenerators ? tool.color : 'var(--secondary)'
+                            }}
+                          >
+                            {tool.name}
+                          </h4>
+                          <p 
+                            className="text-xs mt-0.5 opacity-70"
+                            style={{ color: 'var(--text-secondary)' }}
+                          >
+                            {toolData[tool.id]?.description || 'Click to use'}
+                          </p>
+                        </div>
+                        <span 
+                          className="text-xs opacity-50 transition-opacity duration-300"
+                          style={{ color: tool.color }}
+                        >
+                          →
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* KidSafe URL Checker - Debug */}
+        {console.log('🔍 KidSafe render check:', { currentStep, moduleOrderLength: moduleOrder.length, hasKidsafe: moduleOrder.includes('kidsafe-url-checker'), kidsafeIndex: moduleOrder.indexOf('kidsafe-url-checker') }) || null}
+
+        {/* KidSafe URL Checker */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('kidsafe-url-checker')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'kidsafe-url-checker')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'kidsafe-url-checker')}
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('kidsafe-url-checker'));
+              }
+            }}
+            onMouseEnter={() => !isReorderMode && setHoveredTool('kidsafe-url-checker')}
+            onMouseLeave={() => setHoveredTool(null)}
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: hoveredTool === 'kidsafe-url-checker' 
+                ? '#10B981'
+                : dragOverModule === 'kidsafe-url-checker'
+                  ? '#2979FF'
+                  : 'var(--card-border)',
+              boxShadow: hoveredTool === 'kidsafe-url-checker'
+                ? '0 20px 60px rgba(16, 185, 129, 0.3), 0 0 0 1px rgba(16, 185, 129, 0.4)'
+                : dragOverModule === 'kidsafe-url-checker'
+                  ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                  : theme === 'dark'
+                    ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                    : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('kidsafe-url-checker') === -1 ? 1 : moduleOrder.indexOf('kidsafe-url-checker'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'kidsafe-url-checker' ? 0.5 : 1,
+              transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.03)' : dragOverModule === 'kidsafe-url-checker' ? 'scale(1.02)' : 'scale(1)',
+              padding: hoveredTool === 'kidsafe-url-checker' ? '1.5rem' : '1rem',
+              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            {/* Glow effect */}
+            {hoveredTool === 'kidsafe-url-checker' && (
+              <div
+                className="absolute inset-0 opacity-20 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, #10B981, transparent 70%)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                }}
+              />
+            )}
+
+            <Link 
+              href={getModuleUrl('kidsafe-url-checker')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
+              }}
+              className="block"
+            >
+              {/* Header - Always visible */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span 
+                    className="text-3xl transition-transform duration-500" 
+                    style={{ 
+                      transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
+                    }}
+                  >
+                    🛡️
+                  </span>
+                  <div>
+                    <h3 
+                      className="text-base sm:text-lg font-bold transition-all duration-500"
+                      style={{ 
+                        color: hoveredTool === 'kidsafe-url-checker' ? '#10B981' : 'var(--secondary)',
+                        fontSize: hoveredTool === 'kidsafe-url-checker' ? '1.25rem' : '1rem'
+                      }}
+                    >
+                      KidSafe URL Checker
+                    </h3>
+                    <p 
+                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {toolData['kidsafe-url-checker']?.description || 'Check if a website is safe for children under 13'}
+                    </p>
+                  </div>
+                </div>
+                <span 
+                  className="text-sm opacity-60 transition-all duration-500"
+                  style={{ 
+                    color: 'var(--text-secondary)',
+                    opacity: hoveredTool === 'kidsafe-url-checker' ? 0 : 0.6
+                  }}
+                >
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+
+              {/* Expanded Content - Fades in on hover */}
+              {toolData['kidsafe-url-checker'] && (
+                <div
+                  className="overflow-hidden transition-all duration-500"
+                  style={{
+                    maxHeight: hoveredTool === 'kidsafe-url-checker' ? '500px' : '0px',
+                    opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                    transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-10px)',
+                  }}
+                >
+                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                    {/* Full Description */}
+                    <p 
+                      className="text-sm leading-relaxed transition-all duration-500 delay-100"
+                      style={{ 
+                        color: 'var(--text-secondary)',
+                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      {toolData['kidsafe-url-checker'].fullDescription}
+                    </p>
+
+                    {/* Features List */}
+                    <div 
+                      className="space-y-2 transition-all duration-500 delay-200"
+                      style={{
+                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#10B981' }}>
+                        Key Features
+                      </p>
+                      <ul className="space-y-1.5">
+                        {toolData['kidsafe-url-checker'].features.map((feature, idx) => (
+                          <li 
+                            key={idx} 
+                            className="flex items-center gap-2 text-sm"
+                            style={{
+                              transitionDelay: `${300 + idx * 50}ms`,
+                              opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                              transform: hoveredTool === 'kidsafe-url-checker' ? 'translateX(0)' : 'translateX(-10px)',
+                            }}
+                          >
+                            <span className="text-xs font-bold" style={{ color: '#10B981' }}>✓</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div 
+                      className="pt-2 transition-all duration-500 delay-300"
+                      style={{
+                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <Button
+                        className="w-full font-semibold transition-all duration-300 hover:scale-105"
+                        style={{
+                          backgroundColor: '#10B981',
+                          color: 'white',
+                          border: 'none',
+                        }}
+                      >
+                        Explore KidSafe URL Checker →
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Link>
+          </div>
+        )}
+
+        {/* KidSafe URL Checker */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('kidsafe-url-checker')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'kidsafe-url-checker')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'kidsafe-url-checker')}
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('kidsafe-url-checker'));
+              }
+            }}
+            onMouseEnter={() => !isReorderMode && setHoveredTool('kidsafe-url-checker')}
+            onMouseLeave={() => setHoveredTool(null)}
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: hoveredTool === 'kidsafe-url-checker' 
+                ? '#10B981'
+                : dragOverModule === 'kidsafe-url-checker'
+                  ? '#2979FF'
+                  : 'var(--card-border)',
+              boxShadow: hoveredTool === 'kidsafe-url-checker'
+                ? '0 20px 60px rgba(16, 185, 129, 0.3), 0 0 0 1px rgba(16, 185, 129, 0.4)'
+                : dragOverModule === 'kidsafe-url-checker'
+                  ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                  : theme === 'dark'
+                    ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                    : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('kidsafe-url-checker') === -1 ? 1 : moduleOrder.indexOf('kidsafe-url-checker'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'kidsafe-url-checker' ? 0.5 : 1,
+              transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.03)' : dragOverModule === 'kidsafe-url-checker' ? 'scale(1.02)' : 'scale(1)',
+              padding: hoveredTool === 'kidsafe-url-checker' ? '1.5rem' : '1rem',
+              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            {/* Glow effect */}
+            {hoveredTool === 'kidsafe-url-checker' && (
+              <div
+                className="absolute inset-0 opacity-20 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, #10B981, transparent 70%)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                }}
+              />
+            )}
+
+            <Link 
+              href={getModuleUrl('kidsafe-url-checker')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
+              }}
+              className="block"
+            >
+              {/* Header - Always visible */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span 
+                    className="text-3xl transition-transform duration-500" 
+                    style={{ 
+                      transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
+                    }}
+                  >
+                    🛡️
+                  </span>
+                  <div>
+                    <h3 
+                      className="text-base sm:text-lg font-bold transition-all duration-500"
+                      style={{ 
+                        color: hoveredTool === 'kidsafe-url-checker' ? '#10B981' : 'var(--secondary)',
+                        fontSize: hoveredTool === 'kidsafe-url-checker' ? '1.25rem' : '1rem'
+                      }}
+                    >
+                      KidSafe URL Checker
+                    </h3>
+                    <p 
+                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {toolData['kidsafe-url-checker']?.description || 'Check if a website is safe for children under 13'}
+                    </p>
+                  </div>
+                </div>
+                <span 
+                  className="text-sm opacity-60 transition-all duration-500"
+                  style={{ 
+                    color: 'var(--text-secondary)',
+                    opacity: hoveredTool === 'kidsafe-url-checker' ? 0 : 0.6
+                  }}
+                >
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+
+              {/* Expanded Content - Fades in on hover */}
+              {toolData['kidsafe-url-checker'] && (
+                <div
+                  className="overflow-hidden transition-all duration-500"
+                  style={{
+                    maxHeight: hoveredTool === 'kidsafe-url-checker' ? '500px' : '0px',
+                    opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                    transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-10px)',
+                  }}
+                >
+                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                    {/* Full Description */}
+                    <p 
+                      className="text-sm leading-relaxed transition-all duration-500 delay-100"
+                      style={{ 
+                        color: 'var(--text-secondary)',
+                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      {toolData['kidsafe-url-checker'].fullDescription}
+                    </p>
+
+                    {/* Features List */}
+                    <div 
+                      className="space-y-2 transition-all duration-500 delay-200"
+                      style={{
+                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#10B981' }}>
+                        Key Features
+                      </p>
+                      <ul className="space-y-1.5">
+                        {toolData['kidsafe-url-checker'].features.map((feature, idx) => (
+                          <li 
+                            key={idx} 
+                            className="flex items-center gap-2 text-sm"
+                            style={{
+                              transitionDelay: `${300 + idx * 50}ms`,
+                              opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                              transform: hoveredTool === 'kidsafe-url-checker' ? 'translateX(0)' : 'translateX(-10px)',
+                            }}
+                          >
+                            <span className="text-xs font-bold" style={{ color: '#10B981' }}>✓</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div 
+                      className="pt-2 transition-all duration-500 delay-300"
+                      style={{
+                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <Button
+                        className="w-full font-semibold transition-all duration-300 hover:scale-105"
+                        style={{
+                          backgroundColor: '#10B981',
+                          color: 'white',
+                          border: 'none',
+                        }}
+                      >
+                        Explore KidSafe URL Checker →
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Link>
+          </div>
+        )}
+
+        {/* KidSafe URL Checker */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('kidsafe-url-checker')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'kidsafe-url-checker')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'kidsafe-url-checker')}
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                router.push(getModuleUrl('kidsafe-url-checker'));
+              }
+            }}
+            onMouseEnter={() => !isReorderMode && setHoveredTool('kidsafe-url-checker')}
+            onMouseLeave={() => setHoveredTool(null)}
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: hoveredTool === 'kidsafe-url-checker' 
+                ? '#10B981'
+                : dragOverModule === 'kidsafe-url-checker'
+                  ? '#2979FF'
+                  : 'var(--card-border)',
+              boxShadow: hoveredTool === 'kidsafe-url-checker'
+                ? '0 20px 60px rgba(16, 185, 129, 0.3), 0 0 0 1px rgba(16, 185, 129, 0.4)'
+                : dragOverModule === 'kidsafe-url-checker'
+                  ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                  : theme === 'dark'
+                    ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                    : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('kidsafe-url-checker') === -1 ? 1 : moduleOrder.indexOf('kidsafe-url-checker'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'kidsafe-url-checker' ? 0.5 : 1,
+              transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.03)' : dragOverModule === 'kidsafe-url-checker' ? 'scale(1.02)' : 'scale(1)',
+              padding: hoveredTool === 'kidsafe-url-checker' ? '1.5rem' : '1rem',
+              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            {/* Glow effect */}
+            {hoveredTool === 'kidsafe-url-checker' && (
+              <div
+                className="absolute inset-0 opacity-20 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, #10B981, transparent 70%)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                }}
+              />
+            )}
+
+            <Link 
+              href={getModuleUrl('kidsafe-url-checker')}
+              onClick={(e) => {
+                if (isReorderMode && user) {
+                  e.preventDefault();
+                }
+              }}
+              className="block"
+            >
+              {/* Header - Always visible */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span 
+                    className="text-3xl transition-transform duration-500" 
+                    style={{ 
+                      transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
+                    }}
+                  >
+                    🛡️
+                  </span>
+                  <div>
+                    <h3 
+                      className="text-base sm:text-lg font-bold transition-all duration-500"
+                      style={{ 
+                        color: hoveredTool === 'kidsafe-url-checker' ? '#10B981' : 'var(--secondary)',
+                        fontSize: hoveredTool === 'kidsafe-url-checker' ? '1.25rem' : '1rem'
+                      }}
+                    >
+                      KidSafe URL Checker
+                    </h3>
+                    <p 
+                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {toolData['kidsafe-url-checker']?.description || 'Check if a website is safe for children under 13'}
+                    </p>
+                  </div>
+                </div>
+                <span 
+                  className="text-sm opacity-60 transition-all duration-500"
+                  style={{ 
+                    color: 'var(--text-secondary)',
+                    opacity: hoveredTool === 'kidsafe-url-checker' ? 0 : 0.6
+                  }}
+                >
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+
+              {/* Expanded Content - Fades in on hover */}
+              {toolData['kidsafe-url-checker'] && (
+                <div
+                  className="overflow-hidden transition-all duration-500"
+                  style={{
+                    maxHeight: hoveredTool === 'kidsafe-url-checker' ? '500px' : '0px',
+                    opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                    transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-10px)',
+                  }}
+                >
+                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }}>
+                    {/* Full Description */}
+                    <p 
+                      className="text-sm leading-relaxed transition-all duration-500 delay-100"
+                      style={{ 
+                        color: 'var(--text-secondary)',
+                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      {toolData['kidsafe-url-checker'].fullDescription}
+                    </p>
+
+                    {/* Features List */}
+                    <div 
+                      className="space-y-2 transition-all duration-500 delay-200"
+                      style={{
+                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#10B981' }}>
+                        Key Features
+                      </p>
+                      <ul className="space-y-1.5">
+                        {toolData['kidsafe-url-checker'].features.map((feature, idx) => (
+                          <li 
+                            key={idx} 
+                            className="flex items-center gap-2 text-sm"
+                            style={{
+                              transitionDelay: `${300 + idx * 50}ms`,
+                              opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                              transform: hoveredTool === 'kidsafe-url-checker' ? 'translateX(0)' : 'translateX(-10px)',
+                            }}
+                          >
+                            <span className="text-xs font-bold" style={{ color: '#10B981' }}>✓</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div 
+                      className="pt-2 transition-all duration-500 delay-300"
+                      style={{
+                        opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
+                        transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <Button
+                        className="w-full font-semibold transition-all duration-300 hover:scale-105"
+                        style={{
+                          backgroundColor: '#10B981',
+                          color: 'white',
+                          border: 'none',
+                        }}
+                      >
+                        Explore KidSafe URL Checker →
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </Link>
+          </div>
+        )}
+
+        {/* Funny Generators Hub */}
+        {currentStep === "form" && (
+          <div 
+            onMouseEnter={() => setHoveredFunnyGenerators(true)}
+            onMouseLeave={() => setHoveredFunnyGenerators(false)}
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            style={{
+              marginBottom: '1rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: hoveredFunnyGenerators 
+                ? '#EC4899'
+                : 'var(--card-border)',
+              borderWidth: hoveredFunnyGenerators ? '2px' : '1px',
+              boxShadow: hoveredFunnyGenerators
+                ? '0 20px 60px rgba(236, 72, 153, 0.3), 0 0 0 1px rgba(236, 72, 153, 0.4)'
+                : theme === 'dark'
+                  ? '0 8px 32px rgba(236, 72, 153, 0.15), 0 0 0 1px rgba(236, 72, 153, 0.1)'
+                  : '0 4px 20px rgba(236, 72, 153, 0.12), 0 0 0 1px rgba(236, 72, 153, 0.08)',
+              order: moduleOrder.indexOf('red-flag-detector') === -1 ? 999 : moduleOrder.indexOf('red-flag-detector'),
+              cursor: 'pointer',
+              padding: hoveredFunnyGenerators ? '1.5rem' : '1rem',
+              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            {/* Playful gradient glow effect */}
+            {hoveredFunnyGenerators && (
+              <div
+                className="absolute inset-0 opacity-20 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, #EC4899, #F59E0B, transparent 70%)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                }}
+              />
+            )}
+
+            {/* Main Header */}
+            <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center gap-3">
+                <span 
+                  className="text-3xl transition-transform duration-500" 
+                  style={{ 
+                    transform: hoveredFunnyGenerators ? 'scale(1.15) rotate(10deg)' : 'scale(1) rotate(0deg)'
+                  }}
+                >
+                  😂
+                </span>
+                <div>
+                  <h3 
+                    className="text-base sm:text-lg font-bold transition-all duration-500"
+                    style={{ 
+                      color: hoveredFunnyGenerators ? '#EC4899' : 'var(--secondary)',
+                      fontSize: hoveredFunnyGenerators ? '1.25rem' : '1rem'
+                    }}
+                  >
+                    Funny Generators
+                  </h3>
+                  <p 
+                    className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                    style={{ color: 'var(--text-secondary)' }}
+                  >
+                    {hoveredFunnyGenerators ? 'Choose a generator below ↓' : 'Lighthearted tools for humor and entertainment'}
+                  </p>
+                </div>
+              </div>
+              <span 
+                className="text-sm opacity-60 transition-all duration-500"
+                style={{ 
+                  color: 'var(--text-secondary)',
+                  opacity: hoveredFunnyGenerators ? 0 : 0.6
+                }}
+              >
+                Hover to explore →
+              </span>
+            </div>
+
+            {/* Submenu - Reveals on hover */}
+            <div
+              className="overflow-hidden transition-all duration-500"
+              style={{
+                maxHeight: hoveredFunnyGenerators ? '600px' : '0px',
+                opacity: hoveredFunnyGenerators ? 1 : 0,
+                transform: hoveredFunnyGenerators ? 'translateY(0)' : 'translateY(-10px)',
+              }}
+            >
+              <div className="pt-4 space-y-2 border-t" style={{ borderColor: 'rgba(236, 72, 153, 0.2)' }}>
+                {/* Tool List */}
+                {[
+                  { id: 'red-flag-detector', name: 'Red Flag Detector', icon: '🚩', color: '#ef4444' },
+                  { id: 'cringe-couple-caption', name: 'Cringe Couple Caption Generator', icon: '💑', color: '#EC4899' },
+                  { id: 'comment-fight-starter', name: 'Comment Fight Starter', icon: '💥', color: '#EF4444' },
+                  { id: 'poor-life-choices-advisor', name: 'Poor Life Choices Generator', icon: '🤦', color: '#F59E0B' },
+                  { id: 'random-excuse', name: 'Random Excuse Generator', icon: '🎭', color: '#F59E0B' },
+                ].map((tool, idx) => (
+                  <Link
+                    key={tool.id}
+                    href={getModuleUrl(tool.id)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                    }}
+                    className="block"
+                  >
+                    <div
+                      className="rounded-lg p-3 transition-all duration-300 hover:scale-[1.02]"
+                      style={{
+                        backgroundColor: hoveredFunnyGenerators ? 'rgba(236, 72, 153, 0.05)' : 'transparent',
+                        border: '1px solid transparent',
+                        borderColor: hoveredFunnyGenerators ? 'rgba(236, 72, 153, 0.1)' : 'transparent',
+                        transitionDelay: `${idx * 50}ms`,
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = 'rgba(236, 72, 153, 0.1)';
+                        e.currentTarget.style.borderColor = tool.color;
+                        e.currentTarget.style.transform = 'translateX(5px)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = hoveredFunnyGenerators ? 'rgba(236, 72, 153, 0.05)' : 'transparent';
+                        e.currentTarget.style.borderColor = hoveredFunnyGenerators ? 'rgba(236, 72, 153, 0.1)' : 'transparent';
+                        e.currentTarget.style.transform = 'translateX(0)';
+                      }}
+                    >
+                      <div className="flex items-center gap-3">
+                        <span className="text-2xl">{tool.icon}</span>
+                        <div className="flex-1">
+                          <h4 
+                            className="text-sm font-semibold transition-colors duration-300"
+                            style={{ 
+                              color: hoveredFunnyGenerators ? tool.color : 'var(--secondary)'
+                            }}
+                          >
+                            {tool.name}
+                          </h4>
+                          <p 
+                            className="text-xs mt-0.5 opacity-70"
+                            style={{ color: 'var(--text-secondary)' }}
+                          >
+                            {toolData[tool.id]?.description || 'Click to use'}
+                          </p>
+                        </div>
+                        <span 
+                          className="text-xs opacity-50 transition-opacity duration-300"
+                          style={{ color: tool.color }}
+                        >
+                          →
+                        </span>
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Red Flag Detector - REMOVED (now in Funny Generators hub) */}
+        {false && currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
             onDragStart={() => handleDragStart('red-flag-detector')}
@@ -3694,25 +5421,43 @@ function HomeContent() {
                 router.push(getModuleUrl('red-flag-detector'));
               }
             }}
-            className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
+            onMouseEnter={() => !isReorderMode && setHoveredTool('red-flag-detector')}
+            onMouseLeave={() => setHoveredTool(null)}
+            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
             style={{
               marginBottom: '1rem',
               backgroundColor: 'var(--card-bg)',
-              borderColor: dragOverModule === 'red-flag-detector'
-                ? '#2979FF'
-                : 'var(--card-border)',
-              boxShadow: dragOverModule === 'red-flag-detector'
-                ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
-                : theme === 'dark'
-                  ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
-                  : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              borderColor: hoveredTool === 'red-flag-detector' 
+                ? '#ef4444'
+                : dragOverModule === 'red-flag-detector'
+                  ? '#2979FF'
+                  : 'var(--card-border)',
+              boxShadow: hoveredTool === 'red-flag-detector'
+                ? '0 20px 60px rgba(239, 68, 68, 0.3), 0 0 0 1px rgba(239, 68, 68, 0.4)'
+                : dragOverModule === 'red-flag-detector'
+                  ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                  : theme === 'dark'
+                    ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                    : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
               order: moduleOrder.indexOf('red-flag-detector'),
               cursor: (isReorderMode && user) ? 'move' : 'pointer',
               opacity: draggedModule === 'red-flag-detector' ? 0.5 : 1,
-              transform: dragOverModule === 'red-flag-detector' ? 'scale(1.02)' : 'scale(1)',
-              padding: '1rem',
+              transform: hoveredTool === 'red-flag-detector' ? 'scale(1.03)' : dragOverModule === 'red-flag-detector' ? 'scale(1.02)' : 'scale(1)',
+              padding: hoveredTool === 'red-flag-detector' ? '1.5rem' : '1rem',
+              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
+            {/* Glow effect */}
+            {hoveredTool === 'red-flag-detector' && (
+              <div
+                className="absolute inset-0 opacity-20 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, #ef4444, transparent 70%)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                }}
+              />
+            )}
+
             <Link 
               href={getModuleUrl('red-flag-detector')}
               onClick={(e) => {
@@ -3722,28 +5467,124 @@ function HomeContent() {
               }}
               className="block"
             >
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-2xl">🚩</span>
+              {/* Header - Always visible */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-3">
+                  <span 
+                    className="text-3xl transition-transform duration-500" 
+                    style={{ 
+                      transform: hoveredTool === 'red-flag-detector' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
+                    }}
+                  >
+                    🚩
+                  </span>
                   <div>
-                    <h3 className="text-base sm:text-lg font-bold" style={{ color: 'var(--secondary)' }}>
+                    <h3 
+                      className="text-base sm:text-lg font-bold transition-all duration-500"
+                      style={{ 
+                        color: hoveredTool === 'red-flag-detector' ? '#ef4444' : 'var(--secondary)',
+                        fontSize: hoveredTool === 'red-flag-detector' ? '1.25rem' : '1rem'
+                      }}
+                    >
                       Red Flag Detector
                     </h3>
-                    <p className="text-xs mt-0.5 opacity-70" style={{ color: 'var(--text-secondary)' }}>
+                    <p 
+                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
                       Detect hidden meanings and identify red flags in text messages and conversations
                     </p>
                   </div>
                 </div>
-                <span className="text-sm opacity-60" style={{ color: 'var(--text-secondary)' }}>
+                <span 
+                  className="text-sm opacity-60 transition-all duration-500"
+                  style={{ 
+                    color: 'var(--text-secondary)',
+                    opacity: hoveredTool === 'red-flag-detector' ? 0 : 0.6
+                  }}
+                >
                   {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
                 </span>
+              </div>
+
+              {/* Expanded Content - Fades in on hover */}
+              <div
+                className="overflow-hidden transition-all duration-500"
+                style={{
+                  maxHeight: hoveredTool === 'red-flag-detector' ? '500px' : '0px',
+                  opacity: hoveredTool === 'red-flag-detector' ? 1 : 0,
+                  transform: hoveredTool === 'red-flag-detector' ? 'translateY(0)' : 'translateY(-10px)',
+                }}
+              >
+                <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(239, 68, 68, 0.2)' }}>
+                  {/* Full Description */}
+                  <p 
+                    className="text-sm leading-relaxed transition-all duration-500 delay-100"
+                    style={{ 
+                      color: 'var(--text-secondary)',
+                      opacity: hoveredTool === 'red-flag-detector' ? 1 : 0,
+                      transform: hoveredTool === 'red-flag-detector' ? 'translateY(0)' : 'translateY(-5px)',
+                    }}
+                  >
+                    Detect hidden meanings and identify red flags in text messages, social media posts, and conversations. Understand what people REALLY mean when they say things that seem innocent but are actually warning signs.
+                  </p>
+
+                  {/* Features List */}
+                  <div 
+                    className="space-y-2 transition-all duration-500 delay-200"
+                    style={{
+                      opacity: hoveredTool === 'red-flag-detector' ? 1 : 0,
+                      transform: hoveredTool === 'red-flag-detector' ? 'translateY(0)' : 'translateY(-5px)',
+                    }}
+                  >
+                    <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#ef4444' }}>
+                      Key Features
+                    </p>
+                    <ul className="space-y-1.5">
+                      {['Decode hidden meanings', 'Identify warning signs', 'Beautiful animated analysis', 'Context-aware detection'].map((feature, idx) => (
+                        <li 
+                          key={idx} 
+                          className="flex items-center gap-2 text-sm"
+                          style={{
+                            transitionDelay: `${300 + idx * 50}ms`,
+                            opacity: hoveredTool === 'red-flag-detector' ? 1 : 0,
+                            transform: hoveredTool === 'red-flag-detector' ? 'translateX(0)' : 'translateX(-10px)',
+                          }}
+                        >
+                          <span className="text-xs font-bold" style={{ color: '#ef4444' }}>✓</span>
+                          <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* CTA Button */}
+                  <div 
+                    className="pt-2 transition-all duration-500 delay-300"
+                    style={{
+                      opacity: hoveredTool === 'red-flag-detector' ? 1 : 0,
+                      transform: hoveredTool === 'red-flag-detector' ? 'translateY(0)' : 'translateY(-5px)',
+                    }}
+                  >
+                    <Button
+                      className="w-full font-semibold transition-all duration-300 hover:scale-105"
+                      style={{
+                        backgroundColor: '#ef4444',
+                        color: 'white',
+                        border: 'none',
+                      }}
+                    >
+                      Explore Red Flag Detector →
+                    </Button>
+                  </div>
+                </div>
               </div>
             </Link>
           </div>
         )}
 
-        {/* Cringe Couple Caption Generator */}
-        {currentStep === "form" && (
+        {/* Cringe Couple Caption Generator - REMOVED (now in Funny Generators hub) */}
+        {false && currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
             onDragStart={() => handleDragStart('cringe-couple-caption')}
@@ -3757,6 +5598,8 @@ function HomeContent() {
                 router.push(getModuleUrl('cringe-couple-caption'));
               }
             }}
+            onMouseEnter={() => !isReorderMode && setHoveredTool('cringe-couple-caption')}
+            onMouseLeave={() => setHoveredTool(null)}
             className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
             style={{
               marginBottom: '1rem',
@@ -3805,8 +5648,8 @@ function HomeContent() {
           </div>
         )}
 
-        {/* Comment Fight Starter Generator */}
-        {currentStep === "form" && (
+        {/* Comment Fight Starter Generator - REMOVED (now in Funny Generators hub) */}
+        {false && currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
             onDragStart={() => handleDragStart('comment-fight-starter')}
@@ -3820,6 +5663,8 @@ function HomeContent() {
                 router.push(getModuleUrl('comment-fight-starter'));
               }
             }}
+            onMouseEnter={() => !isReorderMode && setHoveredTool('comment-fight-starter')}
+            onMouseLeave={() => setHoveredTool(null)}
             className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
             style={{
               marginBottom: '1rem',
@@ -3868,8 +5713,8 @@ function HomeContent() {
           </div>
         )}
 
-        {/* Poor Life Choices Advisor */}
-        {currentStep === "form" && (
+        {/* Poor Life Choices Advisor - REMOVED (now in Funny Generators hub) */}
+        {false && currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
             onDragStart={() => handleDragStart('poor-life-choices-advisor')}
@@ -3883,6 +5728,8 @@ function HomeContent() {
                 router.push(getModuleUrl('poor-life-choices-advisor'));
               }
             }}
+            onMouseEnter={() => !isReorderMode && setHoveredTool('poor-life-choices-advisor')}
+            onMouseLeave={() => setHoveredTool(null)}
             className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
             style={{
               marginBottom: '1rem',
@@ -3931,8 +5778,8 @@ function HomeContent() {
           </div>
         )}
 
-        {/* Random Excuse Generator */}
-        {currentStep === "form" && (
+        {/* Random Excuse Generator - REMOVED (now in Funny Generators hub) */}
+        {false && currentStep === "form" && (
           <div 
             draggable={!!(isReorderMode && user)}
             onDragStart={() => handleDragStart('random-excuse')}
@@ -3946,6 +5793,8 @@ function HomeContent() {
                 router.push(getModuleUrl('random-excuse'));
               }
             }}
+            onMouseEnter={() => !isReorderMode && setHoveredTool('random-excuse')}
+            onMouseLeave={() => setHoveredTool(null)}
             className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
             style={{
               marginBottom: '1rem',
@@ -4093,6 +5942,8 @@ function HomeContent() {
                 e.preventDefault();
               }
             }}
+            onMouseEnter={() => !isReorderMode && setHoveredTool('comment-bait')}
+            onMouseLeave={() => setHoveredTool(null)}
             className="rounded-2xl shadow-lg border transition-all duration-300 relative hover:scale-[1.02]"
             style={{
               marginBottom: '1rem',
