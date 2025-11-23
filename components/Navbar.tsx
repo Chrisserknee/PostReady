@@ -77,23 +77,23 @@ export function Navbar() {
         borderColor: 'var(--card-border)',
         backgroundColor: 'var(--background)'
       }}>
-        <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 py-3 sm:py-4">
+          <div className="flex items-center justify-between gap-2">
             {/* Logo/Home Link */}
-            <Link href="/" className="flex items-center gap-2">
-              <span className="text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
+            <Link href="/" className="flex items-center gap-2 flex-shrink-0">
+              <span className="text-lg sm:text-xl md:text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent">
                 PostReady
               </span>
             </Link>
 
             {/* Right side - Auth buttons */}
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3 flex-wrap justify-end">
               {user ? (
                 <>
                   {/* Pro Badge */}
                   {isPro && (
                     <span 
-                      className="text-white px-3 py-1 rounded-full text-xs font-bold"
+                      className="text-white px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold flex-shrink-0"
                       style={{ 
                         background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
                         boxShadow: '0 0 20px rgba(41, 121, 255, 0.4)'
@@ -107,30 +107,33 @@ export function Navbar() {
                   <Button
                     onClick={() => router.push('/')}
                     variant="outline"
-                    className="px-4 py-2 h-auto rounded-lg text-sm font-semibold"
+                    className="px-2 sm:px-3 md:px-4 py-2 h-auto min-h-[44px] rounded-lg text-xs sm:text-sm font-semibold"
                   >
-                    Home
+                    <span className="hidden sm:inline">Home</span>
+                    <span className="sm:hidden">🏠</span>
                   </Button>
 
                   {/* Account Button */}
                   <Button
                     onClick={navigateToPortal}
                     variant="outline"
-                    className="px-4 py-2 h-auto rounded-lg text-sm font-semibold"
+                    className="px-2 sm:px-3 md:px-4 py-2 h-auto min-h-[44px] rounded-lg text-xs sm:text-sm font-semibold"
                   >
-                    Account
+                    <span className="hidden sm:inline">Account</span>
+                    <span className="sm:hidden">👤</span>
                   </Button>
 
                   {/* Get Pro Button (if not Pro) */}
                   {!isPro && (
                     <Button
                       onClick={scrollToPremium}
-                      className="px-4 py-2 h-auto rounded-lg text-sm font-bold text-white border-none"
+                      className="px-2 sm:px-3 md:px-4 py-2 h-auto min-h-[44px] rounded-lg text-xs sm:text-sm font-bold text-white border-none"
                       style={{
                         background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)'
                       }}
                     >
-                      ★ Get Pro
+                      <span className="hidden sm:inline">★ Get Pro</span>
+                      <span className="sm:hidden">★</span>
                     </Button>
                   )}
 
@@ -139,9 +142,10 @@ export function Navbar() {
                     onClick={handleSignOut}
                     disabled={isSigningOut}
                     variant="outline"
-                    className="px-4 py-2 h-auto rounded-lg text-sm font-semibold text-destructive border-destructive hover:bg-destructive/10"
+                    className="px-2 sm:px-3 md:px-4 py-2 h-auto min-h-[44px] rounded-lg text-xs sm:text-sm font-semibold text-destructive border-destructive hover:bg-destructive/10"
                   >
-                    {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+                    <span className="hidden sm:inline">{isSigningOut ? 'Signing Out...' : 'Sign Out'}</span>
+                    <span className="sm:hidden">{isSigningOut ? '...' : '🚪'}</span>
                   </Button>
                 </>
               ) : (
@@ -149,34 +153,38 @@ export function Navbar() {
                   <Button
                     onClick={() => router.push('/')}
                     variant="outline"
-                    className="px-4 py-2 h-auto rounded-lg text-sm font-semibold"
+                    className="px-2 sm:px-3 md:px-4 py-2 h-auto min-h-[44px] rounded-lg text-xs sm:text-sm font-semibold"
                   >
-                    Home
+                    <span className="hidden sm:inline">Home</span>
+                    <span className="sm:hidden">🏠</span>
                   </Button>
                   <Button
                     onClick={() => openAuthModal('signin')}
                     variant="outline"
-                    className="px-4 py-2 h-auto rounded-lg text-sm font-semibold"
+                    className="px-2 sm:px-3 md:px-4 py-2 h-auto min-h-[44px] rounded-lg text-xs sm:text-sm font-semibold"
                   >
-                    Sign In
+                    <span className="hidden sm:inline">Sign In</span>
+                    <span className="sm:hidden">🔑</span>
                   </Button>
                   <Button
                     onClick={() => openAuthModal('signup')}
-                    className="px-4 py-2 h-auto rounded-lg text-sm font-bold text-white border-none"
+                    className="px-2 sm:px-3 md:px-4 py-2 h-auto min-h-[44px] rounded-lg text-xs sm:text-sm font-bold text-white border-none"
                     style={{
                       background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)'
                     }}
                   >
-                    Sign Up
+                    <span className="hidden sm:inline">Sign Up</span>
+                    <span className="sm:hidden">+</span>
                   </Button>
                   <Button
                     onClick={() => router.push('/?premium=true')}
-                    className="px-4 py-2 h-auto rounded-lg text-sm font-bold text-white border-none"
+                    className="px-2 sm:px-3 md:px-4 py-2 h-auto min-h-[44px] rounded-lg text-xs sm:text-sm font-bold text-white border-none"
                     style={{
                       background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)'
                     }}
                   >
-                    ★ Get Pro
+                    <span className="hidden sm:inline">★ Get Pro</span>
+                    <span className="sm:hidden">★</span>
                   </Button>
                 </>
               )}

@@ -119,27 +119,27 @@ export function KidSafeUrlChecker() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6 px-3 sm:px-0">
       <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Shield className="w-5 h-5" style={{ color: '#10B981' }} />
-            KidSafe URL Checker
+        <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6">
+          <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <Shield className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" style={{ color: '#10B981' }} />
+            <span className="break-words">KidSafe URL Checker</span>
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="text-sm sm:text-base break-words">
             Check if a website is safe for children under 13. Get instant safety ratings with clear explanations.
           </CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className="space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
           {!isPro && usageRemaining !== null && (
-            <Badge variant="secondary">
+            <Badge variant="secondary" className="text-xs sm:text-sm">
               {usageRemaining > 0 ? `${usageRemaining} Free Use${usageRemaining !== 1 ? 's' : ''} Remaining` : 'Free Uses Exhausted'}
             </Badge>
           )}
 
           <div className="space-y-2">
-            <Label htmlFor="url">Website URL</Label>
-            <div className="flex gap-2">
+            <Label htmlFor="url" className="text-sm sm:text-base">Website URL</Label>
+            <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 id="url"
                 placeholder="e.g., example.com or https://example.com"
@@ -150,20 +150,25 @@ export function KidSafeUrlChecker() {
                     handleCheck();
                   }
                 }}
-                className="flex-1"
+                className="flex-1 text-base sm:text-sm min-h-[44px]"
               />
               <Button
                 onClick={handleCheck}
                 disabled={isLoading || !url.trim()}
+                className="min-h-[44px] text-sm sm:text-base whitespace-nowrap"
                 style={{ backgroundColor: '#10B981', color: 'white' }}
               >
                 {isLoading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Checking...
+                    <span className="hidden sm:inline">Checking...</span>
+                    <span className="sm:hidden">...</span>
                   </>
                 ) : (
-                  'Check Safety'
+                  <>
+                    <span className="hidden sm:inline">Check Safety</span>
+                    <span className="sm:hidden">Check</span>
+                  </>
                 )}
               </Button>
             </div>
@@ -177,28 +182,29 @@ export function KidSafeUrlChecker() {
           )}
 
           {result && (
-            <div className="space-y-4 mt-6">
+            <div className="space-y-4 mt-4 sm:mt-6">
               <Card style={{ 
                 borderColor: result.isSafe ? '#10B981' : '#EF4444',
                 borderWidth: '2px'
               }}>
-                <CardHeader>
-                  <div className="flex items-center justify-between">
-                    <CardTitle className="flex items-center gap-2">
+                <CardHeader className="px-4 sm:px-6 pt-4 sm:pt-6">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg">
                       {result.isSafe ? (
                         <>
-                          <CheckCircle className="w-6 h-6" style={{ color: '#10B981' }} />
-                          <span style={{ color: '#10B981' }}>Safe for Children</span>
+                          <CheckCircle className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" style={{ color: '#10B981' }} />
+                          <span style={{ color: '#10B981' }} className="break-words">Safe for Children</span>
                         </>
                       ) : (
                         <>
-                          <XCircle className="w-6 h-6" style={{ color: '#EF4444' }} />
-                          <span style={{ color: '#EF4444' }}>Not Safe for Children</span>
+                          <XCircle className="w-5 h-5 sm:w-6 sm:h-6 flex-shrink-0" style={{ color: '#EF4444' }} />
+                          <span style={{ color: '#EF4444' }} className="break-words">Not Safe for Children</span>
                         </>
                       )}
                     </CardTitle>
                     <Badge 
                       variant={result.isSafe ? "default" : "destructive"}
+                      className="text-xs sm:text-sm w-fit"
                       style={{ 
                         backgroundColor: result.isSafe ? '#10B981' : '#EF4444',
                         color: 'white'
@@ -207,23 +213,23 @@ export function KidSafeUrlChecker() {
                       Safety Score: {result.safetyScore}/100
                     </Badge>
                   </div>
-                  <CardDescription className="break-all">{result.url}</CardDescription>
+                  <CardDescription className="break-all text-xs sm:text-sm mt-2">{result.url}</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-4">
+                <CardContent className="space-y-4 px-4 sm:px-6 pb-4 sm:pb-6">
                   <div>
-                    <h4 className="font-semibold mb-2">Safety Analysis:</h4>
-                    <p className="text-sm text-muted-foreground">{result.explanation}</p>
+                    <h4 className="font-semibold mb-2 text-sm sm:text-base">Safety Analysis:</h4>
+                    <p className="text-xs sm:text-sm text-muted-foreground break-words">{result.explanation}</p>
                   </div>
 
                   {result.concerns && result.concerns.length > 0 && (
                     <div>
-                      <h4 className="font-semibold mb-2 flex items-center gap-2">
-                        <AlertTriangle className="w-4 h-4" style={{ color: '#EF4444' }} />
-                        Safety Concerns:
+                      <h4 className="font-semibold mb-2 flex items-center gap-2 text-sm sm:text-base">
+                        <AlertTriangle className="w-4 h-4 flex-shrink-0" style={{ color: '#EF4444' }} />
+                        <span>Safety Concerns:</span>
                       </h4>
-                      <ul className="list-disc pl-6 space-y-1">
+                      <ul className="list-disc pl-5 sm:pl-6 space-y-1">
                         {result.concerns.map((concern, idx) => (
-                          <li key={idx} className="text-sm text-muted-foreground">{concern}</li>
+                          <li key={idx} className="text-xs sm:text-sm text-muted-foreground break-words">{concern}</li>
                         ))}
                       </ul>
                     </div>
@@ -231,13 +237,13 @@ export function KidSafeUrlChecker() {
 
                   {result.recommendations && result.recommendations.length > 0 && (
                     <div>
-                      <h4 className="font-semibold mb-2 flex items-center gap-2">
-                        <Shield className="w-4 h-4" style={{ color: '#10B981' }} />
-                        Recommendations:
+                      <h4 className="font-semibold mb-2 flex items-center gap-2 text-sm sm:text-base">
+                        <Shield className="w-4 h-4 flex-shrink-0" style={{ color: '#10B981' }} />
+                        <span>Recommendations:</span>
                       </h4>
-                      <ul className="list-disc pl-6 space-y-1">
+                      <ul className="list-disc pl-5 sm:pl-6 space-y-1">
                         {result.recommendations.map((rec, idx) => (
-                          <li key={idx} className="text-sm text-muted-foreground">{rec}</li>
+                          <li key={idx} className="text-xs sm:text-sm text-muted-foreground break-words">{rec}</li>
                         ))}
                       </ul>
                     </div>

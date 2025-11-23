@@ -3426,7 +3426,7 @@ function HomeContent() {
       {/* Purple Gradient Glow - Homepage Only, Dark Mode Only */}
       <div className="homepage-purple-glow" />
       
-      <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>
+      <div className="max-w-5xl mx-auto px-3 sm:px-4 py-6 sm:py-8 md:py-10 relative" style={{ zIndex: 1 }}>
         {/* Header with Auth - Only for signed-in users */}
         {user && !authLoading && (
           <div className="mb-8">
@@ -3474,7 +3474,7 @@ function HomeContent() {
                   onClick={navigateHome}
                   disabled={isNavigating}
                   variant={currentStep === "form" ? "default" : "outline"}
-                  className={`w-full px-1.5 sm:px-4 py-2 sm:py-2.5 h-auto text-[10px] sm:text-sm font-semibold shadow-md hover:scale-105 active:scale-95 ${
+                  className={`w-full px-2 sm:px-4 py-2.5 sm:py-2.5 h-auto min-h-[44px] text-xs sm:text-sm font-semibold shadow-md hover:scale-105 active:scale-95 ${
                     currentStep === "form" 
                       ? "bg-primary text-primary-foreground hover:bg-primary/90" 
                       : "bg-card text-card-foreground border-input hover:bg-accent hover:text-accent-foreground"
@@ -3494,7 +3494,7 @@ function HomeContent() {
                   }}
                   type="button"
                   variant="outline"
-                  className="flex-1 px-1.5 sm:px-4 py-2 sm:py-2.5 h-auto rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold shadow-md hover:scale-105 active:scale-95 bg-card text-card-foreground border-input"
+                  className="flex-1 px-2 sm:px-4 py-2.5 sm:py-2.5 h-auto min-h-[44px] rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold shadow-md hover:scale-105 active:scale-95 bg-card text-card-foreground border-input"
                   title="Go to User Portal"
                 >
                   Account
@@ -3502,7 +3502,7 @@ function HomeContent() {
                 {!isPro && (
                   <Button
                     onClick={scrollToPremium}
-                    className="flex-1 px-1.5 sm:px-4 py-2 sm:py-2.5 h-auto rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-bold shadow-lg hover:scale-105 active:scale-95 text-white border-none bg-[linear-gradient(135deg,#2979FF_0%,#6FFFD2_100%)] hover:opacity-90"
+                    className="flex-1 px-2 sm:px-4 py-2.5 sm:py-2.5 h-auto min-h-[44px] rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold shadow-lg hover:scale-105 active:scale-95 text-white border-none bg-[linear-gradient(135deg,#2979FF_0%,#6FFFD2_100%)] hover:opacity-90"
                   >
                     ★ Get Pro
                   </Button>
@@ -3511,7 +3511,7 @@ function HomeContent() {
                   onClick={handleSignOut}
                   disabled={isSigningOut}
                   variant="outline"
-                  className="flex-1 px-1.5 sm:px-4 py-2 sm:py-2.5 h-auto rounded-lg sm:rounded-xl text-[10px] sm:text-sm font-semibold shadow-md hover:scale-105 active:scale-95 text-destructive border-destructive hover:bg-destructive/10 bg-card"
+                  className="flex-1 px-2 sm:px-4 py-2.5 sm:py-2.5 h-auto min-h-[44px] rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold shadow-md hover:scale-105 active:scale-95 text-destructive border-destructive hover:bg-destructive/10 bg-card"
                 >
                   {isSigningOut ? 'Signing Out...' : 'Sign Out'}
                 </Button>
@@ -3797,7 +3797,7 @@ function HomeContent() {
           </div>
         )}
 
-        <div className={`flex flex-col items-center justify-center mb-16 w-full ${currentStep !== "form" ? "hidden md:flex" : "flex"}`}>
+        <div className={`flex flex-col items-center justify-center mb-8 sm:mb-12 md:mb-16 w-full ${currentStep !== "form" ? "hidden md:flex" : "flex"}`}>
           <div 
             onClick={navigateHome}
             className="cursor-pointer transition-all duration-300 hover:scale-105 active:scale-95 mb-6 flex justify-center"
@@ -3809,11 +3809,11 @@ function HomeContent() {
             <img 
               src="/postready-logo.svg" 
               alt="PostReady Logo" 
-              className="h-24 w-auto logo-glow block"
+              className="h-16 sm:h-20 md:h-24 w-auto logo-glow block"
             />
           </div>
           <p 
-            className="text-3xl sm:text-4xl font-bold tracking-tight whitespace-nowrap text-center"
+            className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-center px-4"
             style={{
               background: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 20%, #8B5CF6 40%, #EC4899 50%, #F59E0B 60%, #06B6D4 80%, #3B82F6 100%)',
               backgroundSize: '400% 400%',
@@ -3822,6 +3822,7 @@ function HomeContent() {
               backgroundClip: 'text',
               animation: 'gradient-shift 7s ease-in-out infinite',
               letterSpacing: '-0.02em',
+              lineHeight: '1.2',
               display: 'block',
               width: '100%',
               margin: '0 auto 0 -20px',
@@ -4590,9 +4591,9 @@ function HomeContent() {
             }}
             onMouseEnter={() => !isReorderMode && setHoveredTool('kidsafe-url-checker')}
             onMouseLeave={() => setHoveredTool(null)}
-            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
             style={{
-              marginBottom: '1rem',
+              marginBottom: '0.75rem',
               backgroundColor: 'var(--card-bg)',
               borderColor: hoveredTool === 'kidsafe-url-checker' 
                 ? '#10B981'
@@ -4613,8 +4614,8 @@ function HomeContent() {
               order: moduleOrder.indexOf('kidsafe-url-checker') === -1 ? 1 : moduleOrder.indexOf('kidsafe-url-checker'),
               cursor: (isReorderMode && user) ? 'move' : 'pointer',
               opacity: draggedModule === 'kidsafe-url-checker' ? 0.5 : 1,
-              transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.03)' : dragOverModule === 'kidsafe-url-checker' ? 'scale(1.02)' : 'scale(1)',
-              padding: hoveredTool === 'kidsafe-url-checker' ? '1.5rem' : '1rem',
+              transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.02)' : dragOverModule === 'kidsafe-url-checker' ? 'scale(1.01)' : 'scale(1)',
+              padding: hoveredTool === 'kidsafe-url-checker' ? '1rem' : '0.75rem',
               transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
@@ -4640,27 +4641,27 @@ function HomeContent() {
             >
               {/* Header - Always visible */}
               <div className="flex items-center justify-between mb-3">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                   <span 
-                    className="text-3xl transition-transform duration-500" 
+                    className="text-2xl sm:text-3xl transition-transform duration-500 flex-shrink-0" 
                     style={{ 
                       transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
                     }}
                   >
                     🛡️
                   </span>
-                  <div>
+                  <div className="flex-1 min-w-0">
                     <h3 
-                      className="text-base sm:text-lg font-bold transition-all duration-500"
+                      className="text-sm sm:text-base md:text-lg font-bold transition-all duration-500 break-words"
                       style={{ 
                         color: hoveredTool === 'kidsafe-url-checker' ? '#10B981' : 'var(--secondary)',
-                        fontSize: hoveredTool === 'kidsafe-url-checker' ? '1.25rem' : '1rem'
+                        fontSize: hoveredTool === 'kidsafe-url-checker' ? 'clamp(0.875rem, 1.25rem, 1.25rem)' : 'clamp(0.875rem, 1rem, 1rem)'
                       }}
                     >
                       KidSafe URL Checker
                     </h3>
                     <p 
-                      className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                      className="text-xs sm:text-sm mt-0.5 opacity-70 transition-opacity duration-500 break-words"
                       style={{ color: 'var(--text-secondary)' }}
                     >
                       {toolData['kidsafe-url-checker']?.description || 'Check if a website is safe for children under 13'}
@@ -4761,9 +4762,9 @@ function HomeContent() {
           <div 
             onMouseEnter={() => setHoveredPostReadyTools(true)}
             onMouseLeave={() => setHoveredPostReadyTools(false)}
-            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
             style={{
-              marginBottom: '1rem',
+              marginBottom: '0.75rem',
               backgroundColor: 'var(--card-bg)',
               borderColor: hoveredPostReadyTools 
                 ? '#2979FF'
@@ -4780,7 +4781,7 @@ function HomeContent() {
               backdropFilter: 'blur(8px)',
               order: moduleOrder.indexOf('trend-radar') === -1 ? 999 : moduleOrder.indexOf('trend-radar'),
               cursor: 'pointer',
-              padding: hoveredPostReadyTools ? '1.5rem' : '1rem',
+              padding: hoveredPostReadyTools ? '1rem' : '0.75rem',
               transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
@@ -4797,28 +4798,28 @@ function HomeContent() {
             )}
 
             {/* Main Header */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between mb-3 gap-2">
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <span 
-                  className="text-3xl transition-transform duration-500" 
+                  className="text-2xl sm:text-3xl transition-transform duration-500 flex-shrink-0" 
                   style={{ 
                     transform: hoveredPostReadyTools ? 'scale(1.15) rotate(10deg)' : 'scale(1) rotate(0deg)'
                   }}
                 >
                   🚀
                 </span>
-                <div>
+                <div className="flex-1 min-w-0">
                   <h3 
-                    className="text-base sm:text-lg font-bold transition-all duration-500"
+                    className="text-sm sm:text-base md:text-lg font-bold transition-all duration-500 break-words"
                     style={{ 
                       color: hoveredPostReadyTools ? '#2979FF' : 'var(--secondary)',
-                      fontSize: hoveredPostReadyTools ? '1.25rem' : '1rem'
+                      fontSize: hoveredPostReadyTools ? 'clamp(0.875rem, 1.25rem, 1.25rem)' : 'clamp(0.875rem, 1rem, 1rem)'
                     }}
                   >
                     PostReady Tools
                   </h3>
                   <p 
-                    className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                    className="text-xs sm:text-sm mt-0.5 opacity-70 transition-opacity duration-500 break-words"
                     style={{ color: 'var(--text-secondary)' }}
                   >
                     {hoveredPostReadyTools ? 'Choose a tool below ↓' : 'Professional tools for content creation and growth'}
@@ -4864,12 +4865,13 @@ function HomeContent() {
                     className="block"
                   >
                     <div
-                      className="rounded-lg p-3 transition-all duration-300 hover:scale-[1.02]"
+                      className="rounded-lg p-2 sm:p-3 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                       style={{
                         backgroundColor: hoveredPostReadyTools ? 'rgba(41, 121, 255, 0.05)' : 'transparent',
                         border: '1px solid transparent',
                         borderColor: hoveredPostReadyTools ? 'rgba(41, 121, 255, 0.1)' : 'transparent',
                         transitionDelay: `${idx * 50}ms`,
+                        minHeight: '44px',
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = 'rgba(41, 121, 255, 0.1)';
@@ -4882,11 +4884,11 @@ function HomeContent() {
                         e.currentTarget.style.transform = 'translateX(0)';
                       }}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{tool.icon}</span>
-                        <div className="flex-1">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <span className="text-xl sm:text-2xl flex-shrink-0">{tool.icon}</span>
+                        <div className="flex-1 min-w-0">
                           <h4 
-                            className="text-sm font-semibold transition-colors duration-300"
+                            className="text-xs sm:text-sm font-semibold transition-colors duration-300 break-words"
                             style={{ 
                               color: hoveredPostReadyTools ? tool.color : 'var(--secondary)'
                             }}
@@ -4894,14 +4896,14 @@ function HomeContent() {
                             {tool.name}
                           </h4>
                           <p 
-                            className="text-xs mt-0.5 opacity-70"
+                            className="text-xs mt-0.5 opacity-70 break-words line-clamp-1"
                             style={{ color: 'var(--text-secondary)' }}
                           >
                             {toolData[tool.id]?.description || 'Click to use'}
                           </p>
                         </div>
                         <span 
-                          className="text-xs opacity-50 transition-opacity duration-300"
+                          className="text-xs opacity-50 transition-opacity duration-300 flex-shrink-0"
                           style={{ color: tool.color }}
                         >
                           →
@@ -4920,9 +4922,9 @@ function HomeContent() {
           <div 
             onMouseEnter={() => setHoveredSocialMediaTools(true)}
             onMouseLeave={() => setHoveredSocialMediaTools(false)}
-            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
             style={{
-              marginBottom: '1rem',
+              marginBottom: '0.75rem',
               backgroundColor: 'var(--card-bg)',
               borderColor: hoveredSocialMediaTools 
                 ? '#06B6D4'
@@ -4939,7 +4941,7 @@ function HomeContent() {
               backdropFilter: 'blur(8px)',
               order: moduleOrder.indexOf('trend-radar') === -1 ? 999 : moduleOrder.indexOf('trend-radar'),
               cursor: 'pointer',
-              padding: hoveredSocialMediaTools ? '1.5rem' : '1rem',
+              padding: hoveredSocialMediaTools ? '1rem' : '0.75rem',
               transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
@@ -4956,28 +4958,28 @@ function HomeContent() {
             )}
 
             {/* Main Header */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between mb-3 gap-2">
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <span 
-                  className="text-3xl transition-transform duration-500" 
+                  className="text-2xl sm:text-3xl transition-transform duration-500 flex-shrink-0" 
                   style={{ 
                     transform: hoveredSocialMediaTools ? 'scale(1.15) rotate(10deg)' : 'scale(1) rotate(0deg)'
                   }}
                 >
                   📱
                 </span>
-                <div>
+                <div className="flex-1 min-w-0">
                   <h3 
-                    className="text-base sm:text-lg font-bold transition-all duration-500"
+                    className="text-sm sm:text-base md:text-lg font-bold transition-all duration-500 break-words"
                     style={{ 
                       color: hoveredSocialMediaTools ? '#06B6D4' : 'var(--secondary)',
-                      fontSize: hoveredSocialMediaTools ? '1.25rem' : '1rem'
+                      fontSize: hoveredSocialMediaTools ? 'clamp(0.875rem, 1.25rem, 1.25rem)' : 'clamp(0.875rem, 1rem, 1rem)'
                     }}
                   >
                     Social Media Tools
                   </h3>
                   <p 
-                    className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                    className="text-xs sm:text-sm mt-0.5 opacity-70 transition-opacity duration-500 break-words"
                     style={{ color: 'var(--text-secondary)' }}
                   >
                     {hoveredSocialMediaTools ? 'Choose a tool below ↓' : 'Tools for social media growth and engagement'}
@@ -5023,12 +5025,13 @@ function HomeContent() {
                     className="block"
                   >
                     <div
-                      className="rounded-lg p-3 transition-all duration-300 hover:scale-[1.02]"
+                      className="rounded-lg p-2 sm:p-3 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                       style={{
                         backgroundColor: hoveredSocialMediaTools ? 'rgba(6, 182, 212, 0.05)' : 'transparent',
                         border: '1px solid transparent',
                         borderColor: hoveredSocialMediaTools ? 'rgba(6, 182, 212, 0.1)' : 'transparent',
                         transitionDelay: `${idx * 50}ms`,
+                        minHeight: '44px',
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = 'rgba(6, 182, 212, 0.1)';
@@ -5041,11 +5044,11 @@ function HomeContent() {
                         e.currentTarget.style.transform = 'translateX(0)';
                       }}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{tool.icon}</span>
-                        <div className="flex-1">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <span className="text-xl sm:text-2xl flex-shrink-0">{tool.icon}</span>
+                        <div className="flex-1 min-w-0">
                           <h4 
-                            className="text-sm font-semibold transition-colors duration-300"
+                            className="text-xs sm:text-sm font-semibold transition-colors duration-300 break-words"
                             style={{ 
                               color: hoveredSocialMediaTools ? tool.color : 'var(--secondary)'
                             }}
@@ -5053,14 +5056,14 @@ function HomeContent() {
                             {tool.name}
                           </h4>
                           <p 
-                            className="text-xs mt-0.5 opacity-70"
+                            className="text-xs mt-0.5 opacity-70 break-words line-clamp-1"
                             style={{ color: 'var(--text-secondary)' }}
                           >
                             {toolData[tool.id]?.description || 'Click to use'}
                           </p>
                         </div>
                         <span 
-                          className="text-xs opacity-50 transition-opacity duration-300"
+                          className="text-xs opacity-50 transition-opacity duration-300 flex-shrink-0"
                           style={{ color: tool.color }}
                         >
                           →
@@ -5079,9 +5082,9 @@ function HomeContent() {
           <div 
             onMouseEnter={() => setHoveredFunnyGenerators(true)}
             onMouseLeave={() => setHoveredFunnyGenerators(false)}
-            className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
             style={{
-              marginBottom: '1rem',
+              marginBottom: '0.75rem',
               backgroundColor: 'var(--card-bg)',
               borderColor: hoveredFunnyGenerators 
                 ? '#EC4899'
@@ -5098,7 +5101,7 @@ function HomeContent() {
               backdropFilter: 'blur(8px)',
               order: 9999,
               cursor: 'pointer',
-              padding: hoveredFunnyGenerators ? '1.5rem' : '1rem',
+              padding: hoveredFunnyGenerators ? '1rem' : '0.75rem',
               transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
@@ -5115,28 +5118,28 @@ function HomeContent() {
             )}
 
             {/* Main Header */}
-            <div className="flex items-center justify-between mb-3">
-              <div className="flex items-center gap-3">
+            <div className="flex items-center justify-between mb-3 gap-2">
+              <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
                 <span 
-                  className="text-3xl transition-transform duration-500" 
+                  className="text-2xl sm:text-3xl transition-transform duration-500 flex-shrink-0" 
                   style={{ 
                     transform: hoveredFunnyGenerators ? 'scale(1.15) rotate(10deg)' : 'scale(1) rotate(0deg)'
                   }}
                 >
                   😂
                 </span>
-                <div>
+                <div className="flex-1 min-w-0">
                   <h3 
-                    className="text-base sm:text-lg font-bold transition-all duration-500"
+                    className="text-sm sm:text-base md:text-lg font-bold transition-all duration-500 break-words"
                     style={{ 
                       color: hoveredFunnyGenerators ? '#EC4899' : 'var(--secondary)',
-                      fontSize: hoveredFunnyGenerators ? '1.25rem' : '1rem'
+                      fontSize: hoveredFunnyGenerators ? 'clamp(0.875rem, 1.25rem, 1.25rem)' : 'clamp(0.875rem, 1rem, 1rem)'
                     }}
                   >
                     Funny Generators
                   </h3>
                   <p 
-                    className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
+                    className="text-xs sm:text-sm mt-0.5 opacity-70 transition-opacity duration-500 break-words"
                     style={{ color: 'var(--text-secondary)' }}
                   >
                     {hoveredFunnyGenerators ? 'Choose a generator below ↓' : 'Lighthearted tools for humor and entertainment'}
@@ -5181,12 +5184,13 @@ function HomeContent() {
                     className="block"
                   >
                     <div
-                      className="rounded-lg p-3 transition-all duration-300 hover:scale-[1.02]"
+                      className="rounded-lg p-2 sm:p-3 transition-all duration-300 hover:scale-[1.02] active:scale-[0.98]"
                       style={{
                         backgroundColor: hoveredFunnyGenerators ? 'rgba(236, 72, 153, 0.05)' : 'transparent',
                         border: '1px solid transparent',
                         borderColor: hoveredFunnyGenerators ? 'rgba(236, 72, 153, 0.1)' : 'transparent',
                         transitionDelay: `${idx * 50}ms`,
+                        minHeight: '44px',
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = 'rgba(236, 72, 153, 0.1)';
@@ -5199,11 +5203,11 @@ function HomeContent() {
                         e.currentTarget.style.transform = 'translateX(0)';
                       }}
                     >
-                      <div className="flex items-center gap-3">
-                        <span className="text-2xl">{tool.icon}</span>
-                        <div className="flex-1">
+                      <div className="flex items-center gap-2 sm:gap-3">
+                        <span className="text-xl sm:text-2xl flex-shrink-0">{tool.icon}</span>
+                        <div className="flex-1 min-w-0">
                           <h4 
-                            className="text-sm font-semibold transition-colors duration-300"
+                            className="text-xs sm:text-sm font-semibold transition-colors duration-300 break-words"
                             style={{ 
                               color: hoveredFunnyGenerators ? tool.color : 'var(--secondary)'
                             }}
@@ -5211,14 +5215,14 @@ function HomeContent() {
                             {tool.name}
                           </h4>
                           <p 
-                            className="text-xs mt-0.5 opacity-70"
+                            className="text-xs mt-0.5 opacity-70 break-words line-clamp-1"
                             style={{ color: 'var(--text-secondary)' }}
                           >
                             {toolData[tool.id]?.description || 'Click to use'}
                           </p>
                         </div>
                         <span 
-                          className="text-xs opacity-50 transition-opacity duration-300"
+                          className="text-xs opacity-50 transition-opacity duration-300 flex-shrink-0"
                           style={{ color: tool.color }}
                         >
                           →

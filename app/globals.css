@@ -515,11 +515,12 @@ textarea::placeholder {
     -webkit-overflow-scrolling: touch;
   }
   
-    /* Prevent horizontal scroll */
+  /* Prevent horizontal scroll */
   body {
     overflow-x: hidden;
     width: 100%;
     max-width: 100vw;
+    position: relative;
   }
   
   /* Ensure all containers respect viewport width */
@@ -552,6 +553,28 @@ textarea::placeholder {
   /* Fix viewport issues on mobile */
   * {
     -webkit-tap-highlight-color: transparent;
+  }
+  
+  /* Ensure text doesn't overflow */
+  p, h1, h2, h3, h4, h5, h6, span, div {
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+  }
+  
+  /* Prevent images from overflowing */
+  img {
+    max-width: 100%;
+    height: auto;
+  }
+  
+  /* Better spacing on mobile */
+  .space-y-4 > * + * {
+    margin-top: 0.75rem;
+  }
+  
+  .space-y-6 > * + * {
+    margin-top: 1rem;
   }
 }
 
