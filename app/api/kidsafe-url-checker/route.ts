@@ -199,7 +199,26 @@ Respond in JSON format:
     if (user && !isPro) {
       const { data: userProgress } = await loadUserProgress(user.id);
       await saveUserProgress(user.id, {
-        ...userProgress,
+        businessInfo: userProgress?.businessInfo ?? null,
+        strategy: userProgress?.strategy ?? null,
+        selectedIdea: userProgress?.selectedIdea ?? null,
+        postDetails: userProgress?.postDetails ?? null,
+        currentStep: userProgress?.currentStep ?? 'form',
+        generateIdeasCount: userProgress?.generateIdeasCount ?? 0,
+        rewriteCount: userProgress?.rewriteCount ?? 0,
+        regenerateCount: userProgress?.regenerateCount ?? 0,
+        rewordTitleCount: userProgress?.rewordTitleCount ?? 0,
+        hashtagCount: userProgress?.hashtagCount ?? 0,
+        guideAICount: userProgress?.guideAICount ?? 0,
+        sugarDaddyCount: userProgress?.sugarDaddyCount ?? 0,
+        brainwormCount: userProgress?.brainwormCount ?? 0,
+        commentBaitCount: userProgress?.commentBaitCount ?? 0,
+        trendRadarCount: userProgress?.trendRadarCount ?? 0,
+        redFlagTranslatorCount: userProgress?.redFlagTranslatorCount ?? 0,
+        cringeCoupleCaptionCount: userProgress?.cringeCoupleCaptionCount ?? 0,
+        commentFightStarterCount: userProgress?.commentFightStarterCount ?? 0,
+        poorLifeChoicesAdvisorCount: userProgress?.poorLifeChoicesAdvisorCount ?? 0,
+        randomExcuseCount: userProgress?.randomExcuseCount ?? 0,
         kidsafeUrlCheckerCount: (userProgress?.kidsafeUrlCheckerCount ?? 0) + 1
       });
     } else if (!user) {
