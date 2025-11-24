@@ -51,9 +51,9 @@ export function ToolPageLayout({
         <Navbar />
       </div>
 
-      <div className="max-w-5xl mx-auto px-4 py-10 relative" style={{ zIndex: 1 }}>
+      <div className="max-w-5xl mx-auto px-0 sm:px-4 py-4 sm:py-10 relative" style={{ zIndex: 1 }}>
         {/* Back Button */}
-        <Link href={backTo}>
+        <Link href={backTo} className="px-4 sm:px-0 inline-block">
           <Button
             variant="ghost"
             className="mb-6 text-muted-foreground hover:text-foreground"
@@ -64,20 +64,20 @@ export function ToolPageLayout({
         </Link>
 
         {/* Header */}
-        <div className="mb-8">
-          <div className="flex items-center gap-3 mb-4">
-            {icon && <span className="text-4xl">{icon}</span>}
-            <h1 className="text-4xl font-bold" style={{ color: 'var(--text-primary)' }}>
+        <div className="mb-6 sm:mb-8 px-4 sm:px-0">
+          <div className="flex items-center gap-3 mb-3 sm:mb-4">
+            {icon && <span className="text-3xl sm:text-4xl">{icon}</span>}
+            <h1 className="text-2xl sm:text-4xl font-bold" style={{ color: 'var(--text-primary)' }}>
               {title}
             </h1>
           </div>
-          <p className="text-lg text-muted-foreground">
+          <p className="text-base sm:text-lg text-muted-foreground">
             {description}
           </p>
         </div>
 
         {/* Tool Content */}
-        <Card className="border-2 shadow-lg">
+        <Card className="border-0 sm:border-2 shadow-none sm:shadow-lg rounded-none sm:rounded-xl">
           {children}
         </Card>
       </div>

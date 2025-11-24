@@ -440,10 +440,16 @@ body {
 }
 
 :root[data-theme="dark"] .logo-glow {
-  filter: drop-shadow(0 0 8px rgba(41, 121, 255, 0.4))
-          drop-shadow(0 0 16px rgba(41, 121, 255, 0.2))
-          drop-shadow(0 0 24px rgba(41, 121, 255, 0.1));
-  animation: logoGlowBlue 4s ease-in-out infinite;
+  /* Glow only on desktop */
+}
+
+@media (min-width: 768px) {
+  :root[data-theme="dark"] .logo-glow {
+    filter: drop-shadow(0 0 8px rgba(41, 121, 255, 0.4))
+            drop-shadow(0 0 16px rgba(41, 121, 255, 0.2))
+            drop-shadow(0 0 24px rgba(41, 121, 255, 0.1));
+    animation: logoGlowBlue 4s ease-in-out infinite;
+  }
 }
 
 @keyframes logoGlowBlue {
@@ -509,6 +515,12 @@ textarea::placeholder {
 
 /* Mobile Optimizations */
 @media (max-width: 768px) {
+  /* Remove glow effects on mobile for modules */
+  .mobile-no-glow {
+    box-shadow: none !important;
+    filter: none !important;
+  }
+
   /* Ensure smooth scrolling on mobile */
   html {
     scroll-behavior: smooth;

@@ -3468,13 +3468,13 @@ function HomeContent() {
                   )}
                 </div>
               )}
-              {/* Navigation buttons */}
-              <div className="grid grid-cols-4 gap-1 sm:gap-2 w-full">
+              {/* Navigation buttons - Better mobile layout */}
+              <div className="flex gap-2 w-full">
                 <Button
                   onClick={navigateHome}
                   disabled={isNavigating}
                   variant={currentStep === "form" ? "default" : "outline"}
-                  className={`w-full px-2 sm:px-4 py-2.5 sm:py-2.5 h-auto min-h-[44px] text-xs sm:text-sm font-semibold shadow-md hover:scale-105 active:scale-95 ${
+                  className={`flex-1 px-3 sm:px-4 py-2.5 h-auto min-h-[44px] text-sm font-semibold shadow-md hover:scale-105 active:scale-95 ${
                     currentStep === "form" 
                       ? "bg-primary text-primary-foreground hover:bg-primary/90" 
                       : "bg-card text-card-foreground border-input hover:bg-accent hover:text-accent-foreground"
@@ -3482,9 +3482,6 @@ function HomeContent() {
                 >
                   Home
                 </Button>
-              </div>
-              {/* User actions */}
-              <div className="flex gap-1 sm:gap-2 w-full">
                 <Button
                   onClick={(e) => {
                     e.preventDefault();
@@ -3494,7 +3491,7 @@ function HomeContent() {
                   }}
                   type="button"
                   variant="outline"
-                  className="flex-1 px-2 sm:px-4 py-2.5 sm:py-2.5 h-auto min-h-[44px] rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold shadow-md hover:scale-105 active:scale-95 bg-card text-card-foreground border-input"
+                  className="flex-1 px-3 sm:px-4 py-2.5 h-auto min-h-[44px] rounded-lg text-sm font-semibold shadow-md hover:scale-105 active:scale-95 bg-card text-card-foreground border-input"
                   title="Go to User Portal"
                 >
                   Account
@@ -3502,18 +3499,18 @@ function HomeContent() {
                 {!isPro && (
                   <Button
                     onClick={scrollToPremium}
-                    className="flex-1 px-2 sm:px-4 py-2.5 sm:py-2.5 h-auto min-h-[44px] rounded-lg sm:rounded-xl text-xs sm:text-sm font-bold shadow-lg hover:scale-105 active:scale-95 text-white border-none bg-[linear-gradient(135deg,#2979FF_0%,#6FFFD2_100%)] hover:opacity-90"
+                    className="flex-1 px-3 sm:px-4 py-2.5 h-auto min-h-[44px] rounded-lg text-sm font-bold shadow-lg hover:scale-105 active:scale-95 text-white border-none bg-[linear-gradient(135deg,#2979FF_0%,#6FFFD2_100%)] hover:opacity-90"
                   >
-                    ★ Get Pro
+                    Get Pro
                   </Button>
                 )}
                 <Button
                   onClick={handleSignOut}
                   disabled={isSigningOut}
                   variant="outline"
-                  className="flex-1 px-2 sm:px-4 py-2.5 sm:py-2.5 h-auto min-h-[44px] rounded-lg sm:rounded-xl text-xs sm:text-sm font-semibold shadow-md hover:scale-105 active:scale-95 text-destructive border-destructive hover:bg-destructive/10 bg-card"
+                  className="flex-1 px-3 sm:px-4 py-2.5 h-auto min-h-[44px] rounded-lg text-sm font-semibold shadow-md hover:scale-105 active:scale-95 text-destructive border-destructive hover:bg-destructive/10 bg-card"
                 >
-                  {isSigningOut ? 'Signing Out...' : 'Sign Out'}
+                  {isSigningOut ? '...' : 'Sign Out'}
                 </Button>
               </div>
             </div>
@@ -3657,7 +3654,7 @@ function HomeContent() {
         {/* Sign Up CTA Banner for Non-Signed-Up Users */}
         {!user && (
           <div className="mb-8">
-            <div className="rounded-xl p-5 border-2 shadow-sm" style={{
+            <div className="rounded-xl p-5 border-2 shadow-sm overflow-visible" style={{
               background: 'linear-gradient(135deg, rgba(41, 121, 255, 0.04) 0%, rgba(111, 255, 210, 0.04) 100%)',
               borderColor: 'rgba(41, 121, 255, 0.15)'
             }}>
@@ -3713,11 +3710,11 @@ function HomeContent() {
                     </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-1 sm:gap-2 w-full sm:w-auto justify-center sm:justify-start">
                   <Button 
                     onClick={() => openAuthModal('signin')}
                     variant="outline"
-                    className="px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 whitespace-nowrap transition-all duration-300"
+                    className="flex-1 sm:flex-none px-2 sm:px-5 py-2 sm:py-2.5 h-auto rounded-lg font-semibold text-xs sm:text-sm hover:scale-105 whitespace-nowrap transition-all duration-300"
                     style={{
                       background: 'var(--card-bg)',
                       color: 'var(--card-foreground)',
@@ -3746,25 +3743,16 @@ function HomeContent() {
                   </Button>
                   <Button
                     onClick={() => openAuthModal('signup')}
-                    className="px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 text-white whitespace-nowrap border-none hover:opacity-90"
-                    style={{
-                      background: '#06B6D4',
-                      boxShadow: '0 4px 20px rgba(6, 182, 212, 0.4), 0 0 30px rgba(6, 182, 212, 0.3)',
-                      filter: 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.5))',
-                    }}
+                    className="flex-1 sm:flex-none px-2 sm:px-5 py-2 sm:py-2.5 h-auto rounded-lg font-semibold text-xs sm:text-sm hover:scale-105 text-white whitespace-nowrap border-none hover:opacity-90 relative z-10 bg-[#06B6D4] m-1 shadow-none sm:shadow-[0_0_15px_rgba(6,182,212,0.6),0_0_25px_rgba(6,182,212,0.4)] drop-shadow-none sm:drop-shadow-[0_0_5px_rgba(6,182,212,0.5)]"
                   >
-                    Sign Up Now
+                    <span className="hidden sm:inline">Sign Up Now</span>
+                    <span className="sm:hidden">Sign Up</span>
                   </Button>
                   <Button 
                     onClick={() => setCurrentStep('premium')}
-                    className="px-5 py-2.5 h-auto rounded-lg font-semibold text-sm hover:scale-105 whitespace-nowrap flex items-center gap-2 text-white border-none hover:opacity-90"
-                    style={{
-                      background: '#06B6D4',
-                      boxShadow: '0 4px 20px rgba(6, 182, 212, 0.4), 0 0 30px rgba(6, 182, 212, 0.3)',
-                      filter: 'drop-shadow(0 0 10px rgba(6, 182, 212, 0.5))',
-                    }}
+                    className="flex-1 sm:flex-none px-2 sm:px-5 py-2 sm:py-2.5 h-auto rounded-lg font-semibold text-xs sm:text-sm hover:scale-105 whitespace-nowrap flex items-center justify-center gap-1 sm:gap-2 text-white border-none hover:opacity-90 relative z-10 bg-[#06B6D4] m-1 shadow-none sm:shadow-[0_0_15px_rgba(6,182,212,0.6),0_0_25px_rgba(6,182,212,0.4)] drop-shadow-none sm:drop-shadow-[0_0_5px_rgba(6,182,212,0.5)]"
                   >
-                    <span>★</span>
+                    <span className="hidden sm:inline">★</span>
                     Get Pro
                   </Button>
                 </div>
@@ -3813,7 +3801,7 @@ function HomeContent() {
             />
           </div>
           <p 
-            className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-center px-4"
+            className="text-2xl sm:text-3xl md:text-4xl font-bold tracking-tight text-center px-4 sm:drop-shadow-[0_0_15px_rgba(59,130,246,0.4)]"
             style={{
               background: 'linear-gradient(135deg, #3B82F6 0%, #06B6D4 20%, #8B5CF6 40%, #EC4899 50%, #F59E0B 60%, #06B6D4 80%, #3B82F6 100%)',
               backgroundSize: '400% 400%',
@@ -3825,8 +3813,9 @@ function HomeContent() {
               lineHeight: '1.2',
               display: 'block',
               width: '100%',
-              margin: '0 auto 0 -20px',
-              filter: 'drop-shadow(0 0 15px rgba(59, 130, 246, 0.4))',
+              margin: '0 auto',
+              transform: 'translateX(-10px)',
+              // filter: 'drop-shadow(0 0 15px rgba(59, 130, 246, 0.4))', // Removed outward glow
               WebkitFontSmoothing: 'antialiased',
               MozOsxFontSmoothing: 'grayscale',
             }}
@@ -4586,12 +4575,13 @@ function HomeContent() {
             onClick={(e) => {
               if (!isReorderMode) {
                 e.preventDefault();
-                router.push(getModuleUrl('kidsafe-url-checker'));
+                // Toggle expansion instead of navigating immediately
+                setHoveredTool(hoveredTool === 'kidsafe-url-checker' ? null : 'kidsafe-url-checker');
               }
             }}
             onMouseEnter={() => !isReorderMode && setHoveredTool('kidsafe-url-checker')}
             onMouseLeave={() => setHoveredTool(null)}
-            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative group mobile-no-glow"
             style={{
               marginBottom: '0.75rem',
               backgroundColor: 'var(--card-bg)',
@@ -4630,14 +4620,15 @@ function HomeContent() {
               />
             )}
 
-            <Link 
-              href={getModuleUrl('kidsafe-url-checker')}
+            <div 
               onClick={(e) => {
-                if (isReorderMode && user) {
+                if (!isReorderMode) {
                   e.preventDefault();
+                  // Toggle expansion instead of navigating immediately
+                  setHoveredTool(hoveredTool === 'kidsafe-url-checker' ? null : 'kidsafe-url-checker');
                 }
               }}
-              className="block"
+              className="block cursor-pointer"
             >
               {/* Header - Always visible */}
               <div className="flex items-center justify-between mb-3">
@@ -4682,7 +4673,7 @@ function HomeContent() {
               {/* Expanded Content - Fades in on hover */}
               {toolData['kidsafe-url-checker'] && (
                 <div
-                  className="overflow-hidden transition-all duration-500"
+                  className="overflow-hidden transition-all duration-300 ease-out will-change-[max-height,opacity] transform-gpu"
                   style={{
                     maxHeight: hoveredTool === 'kidsafe-url-checker' ? '500px' : '0px',
                     opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
@@ -4692,7 +4683,7 @@ function HomeContent() {
                   <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }}>
                     {/* Full Description */}
                     <p 
-                      className="text-sm leading-relaxed transition-all duration-500 delay-100"
+                      className="text-sm leading-relaxed transition-all duration-300 delay-100"
                       style={{ 
                         color: 'var(--text-secondary)',
                         opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
@@ -4704,7 +4695,7 @@ function HomeContent() {
 
                     {/* Features List */}
                     <div 
-                      className="space-y-2 transition-all duration-500 delay-200"
+                      className="space-y-2 transition-all duration-300 delay-200"
                       style={{
                         opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
                         transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
@@ -4733,27 +4724,42 @@ function HomeContent() {
 
                     {/* CTA Button */}
                     <div 
-                      className="pt-2 transition-all duration-500 delay-300"
+                      className="pt-2 transition-all duration-300 delay-300"
                       style={{
                         opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
                         transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-5px)',
                       }}
                     >
-                      <Button
-                        className="w-full font-semibold transition-all duration-300 hover:scale-105"
-                        style={{
-                          backgroundColor: '#10B981',
-                          color: 'white',
-                          border: 'none',
+                      <Link href={getModuleUrl('kidsafe-url-checker')} className="block w-full">
+                        <Button
+                          className="w-full font-semibold transition-all duration-300 hover:scale-105"
+                          style={{
+                            backgroundColor: '#10B981',
+                            color: 'white',
+                            border: 'none',
+                          }}
+                        >
+                          Explore KidSafe URL Checker →
+                        </Button>
+                      </Link>
+                    </div>
+                    
+                    {/* Mobile Minimize Button */}
+                    <div className="sm:hidden pt-2 flex justify-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setHoveredTool(null);
                         }}
+                        className="text-xs font-medium text-gray-500 hover:text-gray-700 py-2 flex items-center gap-1 transition-colors"
                       >
-                        Explore KidSafe URL Checker →
-                      </Button>
+                        <span className="transform rotate-180">↓</span> Close
+                      </button>
                     </div>
                   </div>
                 </div>
               )}
-            </Link>
+            </div>
           </div>
         )}
 
@@ -4762,7 +4768,8 @@ function HomeContent() {
           <div 
             onMouseEnter={() => setHoveredPostReadyTools(true)}
             onMouseLeave={() => setHoveredPostReadyTools(false)}
-            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            onClick={() => setHoveredPostReadyTools(prev => !prev)}
+            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group mobile-no-glow"
             style={{
               marginBottom: '0.75rem',
               backgroundColor: 'var(--card-bg)',
@@ -4839,7 +4846,7 @@ function HomeContent() {
 
             {/* Submenu - Reveals on hover */}
             <div
-              className="overflow-hidden transition-all duration-500"
+              className="overflow-hidden transition-all duration-300 ease-out will-change-[max-height,opacity] transform-gpu"
               style={{
                 maxHeight: hoveredPostReadyTools ? '800px' : '0px',
                 opacity: hoveredPostReadyTools ? 1 : 0,
@@ -4912,6 +4919,19 @@ function HomeContent() {
                     </div>
                   </Link>
                 ))}
+                
+                {/* Mobile Minimize Button */}
+                <div className="sm:hidden pt-2 flex justify-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setHoveredPostReadyTools(false);
+                    }}
+                    className="text-xs font-medium text-gray-500 hover:text-gray-700 py-2 flex items-center gap-1 transition-colors"
+                  >
+                    <span className="transform rotate-180">↓</span> Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -4922,7 +4942,8 @@ function HomeContent() {
           <div 
             onMouseEnter={() => setHoveredSocialMediaTools(true)}
             onMouseLeave={() => setHoveredSocialMediaTools(false)}
-            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            onClick={() => setHoveredSocialMediaTools(prev => !prev)}
+            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group mobile-no-glow"
             style={{
               marginBottom: '0.75rem',
               backgroundColor: 'var(--card-bg)',
@@ -4999,7 +5020,7 @@ function HomeContent() {
 
             {/* Submenu - Reveals on hover */}
             <div
-              className="overflow-hidden transition-all duration-500"
+              className="overflow-hidden transition-all duration-300 ease-out will-change-[max-height,opacity] transform-gpu"
               style={{
                 maxHeight: hoveredSocialMediaTools ? '800px' : '0px',
                 opacity: hoveredSocialMediaTools ? 1 : 0,
@@ -5072,6 +5093,19 @@ function HomeContent() {
                     </div>
                   </Link>
                 ))}
+                
+                {/* Mobile Minimize Button */}
+                <div className="sm:hidden pt-2 flex justify-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setHoveredSocialMediaTools(false);
+                    }}
+                    className="text-xs font-medium text-gray-500 hover:text-gray-700 py-2 flex items-center gap-1 transition-colors"
+                  >
+                    <span className="transform rotate-180">↓</span> Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>
@@ -5082,7 +5116,8 @@ function HomeContent() {
           <div 
             onMouseEnter={() => setHoveredFunnyGenerators(true)}
             onMouseLeave={() => setHoveredFunnyGenerators(false)}
-            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+            onClick={() => setHoveredFunnyGenerators(prev => !prev)}
+            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group mobile-no-glow"
             style={{
               marginBottom: '0.75rem',
               backgroundColor: 'var(--card-bg)',
@@ -5159,7 +5194,7 @@ function HomeContent() {
 
             {/* Submenu - Reveals on hover */}
             <div
-              className="overflow-hidden transition-all duration-500"
+              className="overflow-hidden transition-all duration-300 ease-out will-change-[max-height,opacity] transform-gpu"
               style={{
                 maxHeight: hoveredFunnyGenerators ? '600px' : '0px',
                 opacity: hoveredFunnyGenerators ? 1 : 0,
@@ -5231,6 +5266,19 @@ function HomeContent() {
                     </div>
                   </Link>
                 ))}
+                
+                {/* Mobile Minimize Button */}
+                <div className="sm:hidden pt-2 flex justify-center">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setHoveredFunnyGenerators(false);
+                    }}
+                    className="text-xs font-medium text-gray-500 hover:text-gray-700 py-2 flex items-center gap-1 transition-colors"
+                  >
+                    <span className="transform rotate-180">↓</span> Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>
