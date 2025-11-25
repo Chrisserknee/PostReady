@@ -279,11 +279,11 @@ function calculateNicheMatch(formData: any, niche: any): number {
   });
   
   // Check interest matches
-  const interestWords = interestsLower.split(/[,\s]+/).filter(w => w.length > 2);
+  const interestWords = interestsLower.split(/[,\s]+/).filter((w: string) => w.length > 2);
   const nicheLower = niche.niche.toLowerCase();
   const descLower = niche.description.toLowerCase();
   
-  interestWords.forEach(interest => {
+  interestWords.forEach((interest: string) => {
     if (nicheLower.includes(interest) || descLower.includes(interest)) {
       score += 8;
     }

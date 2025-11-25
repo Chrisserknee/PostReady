@@ -7,6 +7,7 @@ interface ModalProps {
   isOpen: boolean;
   onClose: () => void;
   onConfirm?: () => void;
+  onCancel?: () => void;
   title: string;
   message?: string;
   type?: 'info' | 'confirm' | 'success' | 'error';
@@ -20,6 +21,7 @@ export const Modal = ({
   isOpen,
   onClose,
   onConfirm,
+  onCancel,
   title,
   message,
   type = 'info',
@@ -128,9 +130,14 @@ export const Modal = ({
             borderTop: '1px solid rgba(255, 255, 255, 0.05)'
           }}
         >
-          {type === 'confirm' && (
+          {(type === 'confirm' || onCancel) && (
             <button
-              onClick={onClose}
+              onClick={() => {
+                if (onCancel) {
+                  onCancel();
+                }
+                onClose();
+              }}
               className="px-4 py-2 rounded-xl font-medium transition-all hover:opacity-80"
               style={{ 
                 color: 'var(--text-secondary, #9CA3AF)',
