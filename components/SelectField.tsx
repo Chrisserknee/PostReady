@@ -25,17 +25,21 @@ export function SelectField({
 }: SelectFieldProps) {
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium text-muted-foreground">
+      <Label className="text-sm font-medium text-[var(--foreground-muted)]">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="text-cyan-400 ml-1">*</span>}
       </Label>
       <Select value={value} onValueChange={onChange} required={required}>
-        <SelectTrigger className="w-full bg-card text-foreground border-input">
+        <SelectTrigger className="w-full h-11 rounded-xl bg-[var(--background-secondary)] text-[var(--foreground)] border-[var(--card-border)] focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-muted)]">
           <SelectValue placeholder="Select an option" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent className="bg-[var(--card-bg)] border-[var(--card-border)] rounded-xl">
           {options.map((option) => (
-            <SelectItem key={option} value={option}>
+            <SelectItem 
+              key={option} 
+              value={option}
+              className="rounded-lg focus:bg-[var(--hover-bg)] focus:text-[var(--foreground)]"
+            >
               {option}
             </SelectItem>
           ))}
@@ -44,4 +48,3 @@ export function SelectField({
     </div>
   );
 }
-

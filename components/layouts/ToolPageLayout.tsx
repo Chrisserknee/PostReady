@@ -3,7 +3,6 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
 import { ArrowLeft } from 'lucide-react';
 import { Navbar } from '@/components/Navbar';
 
@@ -25,20 +24,23 @@ export function ToolPageLayout({
   backLabel = 'Back to Home'
 }: ToolPageLayoutProps) {
   return (
-    <div className="min-h-screen relative overflow-x-hidden max-w-full" style={{ backgroundColor: 'var(--background)' }}>
-      {/* Tiny Glowing Stars Effect */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
-        {Array.from({ length: 50 }).map((_, i) => (
+    <div className="min-h-screen relative overflow-x-hidden" style={{ backgroundColor: 'var(--background)' }}>
+      {/* Subtle Glow Overlay */}
+      <div className="glow-overlay" />
+      
+      {/* Floating Particles/Stars */}
+      <div className="particles-bg">
+        {Array.from({ length: 40 }).map((_, i) => (
           <div
             key={i}
             className="absolute rounded-full"
             style={{
-              width: `${Math.random() * 3 + 1}px`,
-              height: `${Math.random() * 3 + 1}px`,
+              width: `${Math.random() * 2 + 1}px`,
+              height: `${Math.random() * 2 + 1}px`,
               top: `${Math.random() * 100}%`,
               left: `${Math.random() * 100}%`,
-              backgroundColor: `rgba(255, 255, 255, ${Math.random() * 0.6 + 0.3})`,
-              boxShadow: `0 0 ${Math.random() * 6 + 3}px rgba(255, 255, 255, ${Math.random() * 0.2 + 0.2})`,
+              backgroundColor: `rgba(6, 182, 212, ${Math.random() * 0.4 + 0.2})`,
+              boxShadow: `0 0 ${Math.random() * 4 + 2}px rgba(6, 182, 212, ${Math.random() * 0.3 + 0.1})`,
               animation: `twinkle ${Math.random() * 4 + 3}s ease-in-out infinite`,
               animationDelay: `${Math.random() * 2}s`
             }}
@@ -47,43 +49,44 @@ export function ToolPageLayout({
       </div>
 
       {/* Navbar */}
-      <div className="relative" style={{ zIndex: 10 }}>
+      <div className="relative z-50">
         <Navbar />
       </div>
 
-      <div className="max-w-5xl mx-auto px-0 sm:px-4 py-4 sm:py-10 relative" style={{ zIndex: 1 }}>
+      <div className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 relative z-10">
         {/* Back Button */}
-        <Link href={backTo} className="px-4 sm:px-0 inline-block">
+        <Link href={backTo} className="inline-block">
           <Button
             variant="ghost"
-            className="mb-6 text-muted-foreground hover:text-white bg-transparent backdrop-blur-md border border-transparent hover:border-[#06B6D4]/30 hover:bg-[#06B6D4]/10 shadow-none drop-shadow-none transition-[background-color,border-color,opacity,color] duration-300 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/20 before:via-transparent before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300 rounded-2xl"
+            className="mb-6 text-[var(--foreground-muted)] hover:text-[var(--foreground)] bg-transparent hover:bg-[var(--hover-bg)] border border-transparent hover:border-[var(--card-border)] transition-all duration-200 rounded-xl group"
           >
-            <span className="relative z-10 flex items-center">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              {backLabel}
-            </span>
+            <ArrowLeft className="mr-2 h-4 w-4 group-hover:-translate-x-1 transition-transform" />
+            {backLabel}
           </Button>
         </Link>
 
         {/* Header */}
-        <div className="mb-6 sm:mb-8 px-4 sm:px-0">
-          <div className="flex items-center gap-3 mb-3 sm:mb-4">
-            {icon && <span className="text-3xl sm:text-4xl">{icon}</span>}
-            <h1 className="text-2xl sm:text-4xl font-bold" style={{ color: 'var(--text-primary)' }}>
+        <div className="mb-8">
+          <div className="flex items-center gap-4 mb-4">
+            {icon && (
+              <div className="icon-circle">
+                <span className="text-2xl">{icon}</span>
+              </div>
+            )}
+            <h1 className="text-3xl sm:text-4xl font-bold text-gradient">
               {title}
             </h1>
           </div>
-          <p className="text-base sm:text-lg text-muted-foreground">
+          <p className="text-lg text-[var(--foreground-muted)] max-w-2xl">
             {description}
           </p>
         </div>
 
-        {/* Tool Content */}
-        <Card className="border-0 sm:border-2 shadow-none sm:shadow-lg rounded-none sm:rounded-xl">
+        {/* Tool Content Card */}
+        <div className="card-premium p-6 sm:p-8">
           {children}
-        </Card>
+        </div>
       </div>
     </div>
   );
 }
-

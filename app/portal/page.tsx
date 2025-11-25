@@ -428,7 +428,12 @@ export default function UserPortal() {
       {/* Modals */}
       {showSupportModal && (
         <div 
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
+          style={{
+            backgroundColor: 'rgba(10, 15, 26, 0.9)',
+            backdropFilter: 'blur(12px)',
+            WebkitBackdropFilter: 'blur(12px)'
+          }}
           onClick={(e) => {
             if (e.target === e.currentTarget && !isSubmittingSupport) {
               setShowSupportModal(false);
@@ -438,44 +443,88 @@ export default function UserPortal() {
           }}
         >
           <div 
-            className="rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-in fade-in zoom-in duration-200"
+            className="rounded-2xl max-w-md w-full overflow-hidden animate-scale-in relative"
             style={{
               backgroundColor: 'var(--card-bg)',
-              border: '1px solid var(--card-border)'
+              border: '1px solid var(--card-border)',
+              boxShadow: '0 25px 80px rgba(0, 0, 0, 0.4)'
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="p-6 border-b" style={{ borderColor: 'var(--card-border)' }}>
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold" style={{ color: 'var(--text-primary)' }}>Contact Support</h3>
-                <button onClick={() => setShowSupportModal(false)} className="text-gray-400 hover:text-gray-500">✕</button>
+            {/* Header */}
+            <div className="p-6 pb-4">
+              <div className="flex items-center gap-4">
+                <div className="icon-circle-sm flex-shrink-0">
+                  <span className="text-lg">💬</span>
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-bold text-gradient">Contact Support</h3>
+                  <p className="text-sm text-[var(--foreground-muted)]">We typically respond within 24 hours</p>
+                </div>
+                <button 
+                  onClick={() => setShowSupportModal(false)} 
+                  className="p-2 rounded-lg text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover-bg)] transition-all"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
               </div>
             </div>
-            <div className="p-6 space-y-4">
+
+            {/* Form */}
+            <div className="px-6 pb-6 space-y-4">
               <div>
-                <label className="block text-xs font-bold uppercase mb-2" style={{ color: 'var(--text-secondary)' }}>Subject</label>
+                <label className="block text-sm font-medium mb-2 text-[var(--foreground-muted)]">Subject</label>
                 <input
                   type="text"
                   value={supportSubject}
                   onChange={(e) => setSupportSubject(e.target.value)}
-                  className="w-full px-4 py-2 rounded-lg border bg-transparent outline-none focus:ring-2 focus:ring-blue-500/20"
-                  style={{ borderColor: 'var(--card-border)', color: 'var(--text-primary)' }}
+                  placeholder="What can we help with?"
+                  className="input-premium"
                 />
               </div>
               <div>
-                <label className="block text-xs font-bold uppercase mb-2" style={{ color: 'var(--text-secondary)' }}>Message</label>
+                <label className="block text-sm font-medium mb-2 text-[var(--foreground-muted)]">Message</label>
                 <textarea
                   value={supportMessage}
                   onChange={(e) => setSupportMessage(e.target.value)}
                   rows={4}
-                  className="w-full px-4 py-2 rounded-lg border bg-transparent outline-none focus:ring-2 focus:ring-blue-500/20 resize-none"
-                  style={{ borderColor: 'var(--card-border)', color: 'var(--text-primary)' }}
+                  placeholder="Describe your issue or question..."
+                  className="w-full px-4 py-3 rounded-xl bg-[var(--background-secondary)] border border-[var(--card-border)] text-[var(--foreground)] placeholder:text-[var(--foreground-subtle)] focus:outline-none focus:border-[var(--primary)] focus:ring-2 focus:ring-[var(--primary-muted)] transition-all duration-200 resize-none"
                 />
               </div>
             </div>
-            <div className="p-6 pt-0 flex gap-3 justify-end">
-              <button onClick={() => setShowSupportModal(false)} className="px-4 py-2 rounded-lg text-sm font-medium text-gray-500 hover:bg-gray-100">Cancel</button>
-              <button onClick={handleSupportSubmit} className="px-6 py-2 rounded-lg text-sm font-bold text-white bg-blue-600 hover:bg-blue-700">Send</button>
+
+            {/* Footer */}
+            <div 
+              className="px-6 py-4 flex gap-3 justify-end"
+              style={{ 
+                backgroundColor: 'rgba(0, 0, 0, 0.2)',
+                borderTop: '1px solid var(--card-border)'
+              }}
+            >
+              <button 
+                onClick={() => {
+                  setShowSupportModal(false);
+                  setSupportSubject('');
+                  setSupportMessage('');
+                }} 
+                className="px-5 py-2.5 rounded-xl font-semibold text-sm text-[var(--foreground-muted)] bg-[var(--background-tertiary)] border border-[var(--card-border)] hover:bg-[var(--hover-bg)] transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={handleSupportSubmit}
+                disabled={isSubmittingSupport}
+                className="px-6 py-2.5 rounded-xl font-bold text-sm text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{
+                  background: 'linear-gradient(135deg, #06B6D4, #3B82F6)',
+                  boxShadow: '0 2px 12px rgba(6, 182, 212, 0.3)'
+                }}
+              >
+                {isSubmittingSupport ? 'Sending...' : 'Send Message'}
+              </button>
             </div>
           </div>
         </div>

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
+import { verifyProAccess } from '@/lib/auth-utils';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
@@ -18,6 +19,16 @@ export async function OPTIONS(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
+    // Verify Pro access
+    const { isPro, error: proError } = await verifyProAccess(request);
+    
+    if (!isPro) {
+      return NextResponse.json(
+        { error: proError || 'This feature requires a Pro subscription. Please upgrade to continue.' },
+        { status: 403 }
+      );
+    }
+
     const body = await request.json();
     const { step, ...stepData } = body;
 

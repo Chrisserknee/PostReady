@@ -24,8 +24,11 @@ export function SecondaryButton({
       disabled={disabled}
       variant="outline"
       className={cn(
-        "border-2 rounded-xl px-6 py-3 font-bold transition-all shadow-sm hover:shadow-md hover:scale-105 h-auto",
-        "bg-background border-[#2979FF] text-[#2979FF] hover:bg-[rgba(41,121,255,0.05)] hover:text-[#2979FF]",
+        "rounded-xl px-6 py-3 h-auto font-bold transition-all duration-200",
+        "bg-[var(--background-secondary)] text-[var(--foreground)]",
+        "border border-[var(--card-border)]",
+        "hover:border-[var(--primary)] hover:bg-[var(--hover-bg)]",
+        "hover:scale-[1.02] active:scale-[0.98]",
         className
       )}
     >
@@ -33,4 +36,3 @@ export function SecondaryButton({
     </Button>
   );
 }
-

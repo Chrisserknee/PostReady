@@ -21,9 +21,9 @@ export function InputField({
 }: InputFieldProps) {
   return (
     <div className="space-y-2">
-      <Label className="text-sm font-medium text-muted-foreground">
+      <Label className="text-sm font-medium text-[var(--foreground-muted)]">
         {label}
-        {required && <span className="text-red-500 ml-1">*</span>}
+        {required && <span className="text-cyan-400 ml-1">*</span>}
       </Label>
       <Input
         type={type}
@@ -31,9 +31,7 @@ export function InputField({
         onChange={(e) => onChange(e.target.value)}
         placeholder={placeholder}
         required={required}
-        className="w-full bg-card text-foreground border-input focus-visible:ring-2 focus-visible:ring-primary"
       />
     </div>
   );
 }
-

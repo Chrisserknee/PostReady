@@ -1,7 +1,7 @@
 "use client";
 
 import React from 'react';
-import { Crown, CheckCircle2, AlertTriangle, Zap, Sparkles, MessageSquare } from 'lucide-react';
+import { Crown, CheckCircle2, AlertTriangle, Zap, Sparkles, X } from 'lucide-react';
 
 interface ModalProps {
   isOpen: boolean;
@@ -53,68 +53,50 @@ export const Modal = ({
     onClose();
   };
 
-  // Check if this is a Pro upgrade modal
   const isProModal = title.toLowerCase().includes('pro') || title.toLowerCase().includes('upgrade');
 
   return (
     <div 
       className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
       style={{
-        backgroundColor: 'rgba(0, 0, 0, 0.7)',
-        backdropFilter: 'blur(8px)',
-        WebkitBackdropFilter: 'blur(8px)'
+        backgroundColor: 'rgba(10, 15, 26, 0.85)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)'
       }}
       onClick={onClose}
     >
       <div 
-        className="rounded-2xl shadow-2xl max-w-md w-full overflow-hidden animate-scale-in"
+        className="rounded-2xl max-w-md w-full overflow-hidden animate-scale-in relative"
         style={{
-          backgroundColor: 'var(--card-bg, #1a1a2e)',
-          border: isProModal 
-            ? '1px solid rgba(6, 182, 212, 0.3)' 
-            : isCreator && type === 'confirm' 
-              ? '1px solid rgba(218, 165, 32, 0.3)' 
-              : '1px solid rgba(255, 255, 255, 0.1)',
+          backgroundColor: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
           boxShadow: isProModal
-            ? '0 20px 60px rgba(6, 182, 212, 0.2), 0 0 0 1px rgba(6, 182, 212, 0.1)'
-            : isCreator && type === 'confirm' 
-              ? '0 20px 60px rgba(218, 165, 32, 0.2), 0 0 0 1px rgba(218, 165, 32, 0.1)'
-              : '0 20px 60px rgba(0, 0, 0, 0.5)'
+            ? '0 25px 80px rgba(6, 182, 212, 0.25), 0 0 60px rgba(6, 182, 212, 0.1)'
+            : '0 25px 80px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(255, 255, 255, 0.05)'
         }}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="p-6">
+        {/* Close Button */}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 p-2 rounded-lg text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover-bg)] transition-all"
+        >
+          <X className="w-4 h-4" />
+        </button>
+
+        <div className="p-6 pt-8">
           <div className="flex items-start gap-4">
-            <div 
-              className="p-3 rounded-xl flex-shrink-0"
-              style={{
-                background: isProModal 
-                  ? 'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(8, 145, 178, 0.2))'
-                  : isCreator 
-                    ? 'linear-gradient(135deg, rgba(218, 165, 32, 0.2), rgba(244, 208, 63, 0.2))'
-                    : 'linear-gradient(135deg, rgba(6, 182, 212, 0.2), rgba(59, 130, 246, 0.2))'
-              }}
-            >
+            {/* Icon */}
+            <div className="icon-circle-sm flex-shrink-0">
               {getIcon()}
             </div>
-            <div className="flex-1 min-w-0">
-              <h3 
-                className="text-xl font-bold mb-2"
-                style={{ 
-                  color: isProModal 
-                    ? '#06B6D4' 
-                    : isCreator && type === 'confirm' 
-                      ? '#DAA520' 
-                      : 'var(--text-primary, #E7E9EA)' 
-                }}
-              >
+            
+            <div className="flex-1 min-w-0 pt-1">
+              <h3 className="text-xl font-bold mb-2 text-gradient">
                 {title}
               </h3>
               {message && (
-                <p 
-                  className="leading-relaxed whitespace-pre-line text-sm"
-                  style={{ color: 'var(--text-secondary, #9CA3AF)' }}
-                >
+                <p className="leading-relaxed whitespace-pre-line text-sm text-[var(--foreground-muted)]">
                   {message}
                 </p>
               )}
@@ -123,25 +105,25 @@ export const Modal = ({
           </div>
         </div>
 
+        {/* Footer */}
         <div 
           className="px-6 py-4 flex gap-3 justify-end"
           style={{ 
             backgroundColor: 'rgba(0, 0, 0, 0.2)',
-            borderTop: '1px solid rgba(255, 255, 255, 0.05)'
+            borderTop: '1px solid var(--card-border)'
           }}
         >
           {(type === 'confirm' || onCancel) && (
             <button
               onClick={() => {
-                if (onCancel) {
-                  onCancel();
-                }
+                if (onCancel) onCancel();
                 onClose();
               }}
-              className="px-4 py-2 rounded-xl font-medium transition-all hover:opacity-80"
+              className="px-5 py-2.5 rounded-xl font-semibold text-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
               style={{ 
-                color: 'var(--text-secondary, #9CA3AF)',
-                backgroundColor: 'rgba(255, 255, 255, 0.05)'
+                color: 'var(--foreground-muted)',
+                backgroundColor: 'var(--background-tertiary)',
+                border: '1px solid var(--card-border)'
               }}
             >
               {cancelText}
@@ -149,26 +131,12 @@ export const Modal = ({
           )}
           <button
             onClick={handleConfirm}
-            className="px-6 py-2 rounded-xl font-bold transition-all hover:opacity-90 hover:scale-[1.02]"
-            style={
-              isProModal
-                ? {
-                    background: '#06B6D4',
-                    color: 'white',
-                    boxShadow: '0 4px 20px rgba(6, 182, 212, 0.4)'
-                  }
-                : type === 'confirm' && isCreator
-                  ? {
-                      background: 'linear-gradient(to right, #DAA520, #F4D03F)',
-                      color: 'white',
-                      boxShadow: '0 4px 20px rgba(218, 165, 32, 0.4)'
-                    }
-                  : {
-                      background: 'linear-gradient(135deg, #3B82F6, #06B6D4)',
-                      color: 'white',
-                      boxShadow: '0 4px 20px rgba(59, 130, 246, 0.3)'
-                    }
-            }
+            className="px-6 py-2.5 rounded-xl font-bold text-sm transition-all hover:scale-[1.02] active:scale-[0.98]"
+            style={{
+              background: 'linear-gradient(135deg, #06B6D4, #3B82F6)',
+              color: 'white',
+              boxShadow: '0 4px 20px rgba(6, 182, 212, 0.4)'
+            }}
           >
             {confirmText}
           </button>
@@ -177,5 +145,3 @@ export const Modal = ({
     </div>
   );
 };
-
-

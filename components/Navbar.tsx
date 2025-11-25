@@ -8,6 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { supabase } from '@/lib/supabase';
 import { Modal } from '@/components/Modal';
 import { AuthModal } from '@/components/AuthModal';
+import { Crown, Home, User, LogOut } from 'lucide-react';
 
 export function Navbar() {
   const { user, isPro, loading: authLoading } = useAuth();
@@ -30,164 +31,115 @@ export function Navbar() {
   }, []);
 
   const confirmSignOut = useCallback(async () => {
-    if (signingOutRef.current) {
-      console.log('⚠️ Sign out already in progress, ignoring click');
-      return;
-    }
+    if (signingOutRef.current) return;
     
     signingOutRef.current = true;
     setIsSigningOut(true);
-    console.log('🚪 Signing out...');
     
-    // Add smooth fade-out effect
     if (typeof document !== 'undefined') {
       document.body.style.transition = 'opacity 0.3s ease-out';
       document.body.style.opacity = '0';
     }
     
-    // Wait for fade animation
     await new Promise(resolve => setTimeout(resolve, 300));
-    
-    // Sign out from Supabase
     await supabase.auth.signOut();
-    console.log('✅ Signed out successfully');
     
-    // Clear all local storage
     if (typeof window !== 'undefined') {
       localStorage.clear();
     }
     
-    // Redirect
     window.location.href = '/';
   }, []);
 
-  const navigateToPortal = () => {
-    router.push('/portal');
-  };
+  const navigateToPortal = () => router.push('/portal');
+  const scrollToPremium = () => router.push('/?premium=true');
+  const navigateHome = () => router.push('/');
 
-  const scrollToPremium = () => {
-    router.push('/?premium=true');
-  };
+  if (authLoading) return null;
 
-  if (authLoading) {
-    return null;
-  }
+  // Consistent button base styles
+  const btnBase = "px-4 py-2 h-auto min-h-[44px] rounded-xl text-sm font-semibold transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]";
+  const btnOutline = `${btnBase} bg-[var(--background-secondary)] text-[var(--foreground)] border border-[var(--card-border)] hover:border-[var(--primary)] hover:bg-[var(--hover-bg)]`;
+  const btnPrimary = `${btnBase} bg-gradient-to-r from-cyan-500 to-blue-500 text-white border-none shadow-[0_4px_20px_rgba(6,182,212,0.3)] hover:shadow-[0_6px_30px_rgba(6,182,212,0.4)]`;
+  const btnGhost = `${btnBase} bg-transparent text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover-bg)] border border-transparent hover:border-[var(--card-border)]`;
+  const btnDanger = `${btnBase} bg-[var(--background-secondary)] text-red-400 border border-red-500/30 hover:border-red-500/60 hover:bg-red-500/10`;
 
   return (
     <>
-      <nav className="w-full border-b mb-6 overflow-x-hidden" style={{ 
+      <nav className="w-full border-b overflow-x-hidden sticky top-0 z-50 backdrop-blur-md" style={{ 
         borderColor: 'var(--card-border)',
-        backgroundColor: 'var(--background)'
+        backgroundColor: 'rgba(10, 15, 26, 0.9)'
       }}>
-        <div className="max-w-7xl mx-auto px-1 sm:px-3 md:px-4 py-2 sm:py-4">
-          <div className="flex items-center justify-between gap-0.5 sm:gap-2 min-w-0">
-            {/* Logo/Home Link */}
-            <Link href="/" className="hidden sm:flex items-center gap-1 sm:gap-2 flex-shrink-0 min-w-0">
-              <span className="text-xs sm:text-base md:text-lg lg:text-xl xl:text-2xl font-bold bg-gradient-to-r from-blue-500 to-cyan-400 bg-clip-text text-transparent whitespace-nowrap">
+        <div className="max-w-7xl mx-auto px-4 py-3">
+          <div className="flex items-center justify-between gap-3">
+            {/* Logo */}
+            <Link href="/" className="flex items-center gap-2 flex-shrink-0 group">
+              <span className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent group-hover:from-cyan-300 group-hover:to-blue-400 transition-all duration-300">
                 PostReady
               </span>
             </Link>
 
             {/* Right side - Auth buttons */}
-            <div className="flex items-center gap-0.5 sm:gap-1.5 md:gap-2 lg:gap-3 flex-nowrap justify-end flex-shrink-0">
+            <div className="flex items-center gap-2 sm:gap-3">
               {user ? (
                 <>
                   {/* Pro Badge */}
                   {isPro && (
-                    <span 
-                      className="text-white px-2 sm:px-3 py-1 rounded-full text-[10px] sm:text-xs font-bold flex-shrink-0 hidden sm:inline-flex"
-                      style={{ 
-                        background: 'linear-gradient(to right, #2979FF, #6FFFD2)',
-                        boxShadow: '0 0 20px rgba(41, 121, 255, 0.4)'
-                      }}
-                    >
+                    <span className="badge-pro hidden sm:inline-flex">
+                      <Crown className="w-3 h-3" />
                       PRO
                     </span>
                   )}
                   
                   {/* Home Button */}
-                  <Button
-                    onClick={() => router.push('/')}
-                    variant={isToolPage ? undefined : "outline"}
-                    className={`${isToolPage ? 'px-3 sm:px-4' : 'px-2 sm:px-3 md:px-4'} py-2 h-auto min-h-[44px] ${isToolPage ? 'rounded-2xl' : 'rounded-lg'} ${isToolPage ? 'text-sm' : 'text-xs sm:text-sm'} font-semibold ${isToolPage ? 'bg-[#06B6D4]/20 backdrop-blur-md text-white border border-[#06B6D4]/30 shadow-none sm:hover:bg-[#06B6D4] sm:hover:border-[#06B6D4] drop-shadow-none hover:opacity-90 transition-[background-color,border-color,opacity] duration-300 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/20 before:via-transparent before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300' : ''}`}
-                  >
-                    <span className="relative z-10">Home</span>
+                  <Button onClick={navigateHome} className={btnOutline}>
+                    <Home className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Home</span>
                   </Button>
 
                   {/* Account Button */}
-                  <Button
-                    onClick={navigateToPortal}
-                    variant={isToolPage ? undefined : "outline"}
-                    className={`${isToolPage ? 'px-3 sm:px-4' : 'px-2 sm:px-3 md:px-4'} py-2 h-auto min-h-[44px] ${isToolPage ? 'rounded-2xl' : 'rounded-lg'} ${isToolPage ? 'text-sm' : 'text-xs sm:text-sm'} font-semibold ${isToolPage ? 'bg-[#06B6D4] text-white border-none shadow-none drop-shadow-none hover:opacity-90 transition-[background-color,opacity] duration-300 relative overflow-hidden backdrop-blur-md before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/30 before:via-white/10 before:to-transparent before:pointer-events-none' : ''}`}
-                  >
-                    <span className="relative z-10">{isToolPage ? 'Account' : <><span className="hidden sm:inline">Account</span><span className="sm:hidden">Acct</span></>}</span>
+                  <Button onClick={navigateToPortal} className={btnOutline}>
+                    <User className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Account</span>
                   </Button>
 
-                  {/* Get Pro Button (if not Pro) */}
+                  {/* Get Pro Button */}
                   {!isPro && (
-                    <Button
-                      onClick={scrollToPremium}
-                      className={`${isToolPage ? 'px-3 sm:px-4' : 'px-2 sm:px-3 md:px-4'} py-2 h-auto min-h-[44px] ${isToolPage ? 'rounded-2xl' : 'rounded-lg'} ${isToolPage ? 'text-sm' : 'text-xs sm:text-sm'} font-bold text-white border-none ${isToolPage ? 'bg-[#06B6D4] shadow-none drop-shadow-none hover:opacity-90 transition-[background-color,opacity] duration-300 relative overflow-hidden backdrop-blur-md before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/30 before:via-white/10 before:to-transparent before:pointer-events-none' : ''}`}
-                      style={isToolPage ? {
-                        background: '#06B6D4'
-                      } : {
-                        background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)'
-                      }}
-                    >
-                      <span className="relative z-10">{isToolPage ? 'Get Pro' : <><span className="hidden sm:inline">Get Pro</span><span className="sm:hidden">Pro</span></>}</span>
+                    <Button onClick={scrollToPremium} className={btnPrimary}>
+                      <Crown className="w-4 h-4 mr-2" />
+                      <span className="hidden sm:inline">Get Pro</span>
+                      <span className="sm:hidden">Pro</span>
                     </Button>
                   )}
 
                   {/* Sign Out Button */}
-                  <Button
-                    onClick={handleSignOut}
-                    disabled={isSigningOut}
-                    variant={isToolPage ? undefined : "outline"}
-                    className={`${isToolPage ? 'px-3 sm:px-4' : 'px-2 sm:px-3 md:px-4'} py-2 h-auto min-h-[44px] rounded-lg ${isToolPage ? 'text-sm' : 'text-xs sm:text-sm'} font-semibold ${isToolPage ? 'bg-[#06B6D4] text-white border-none shadow-none drop-shadow-none hover:opacity-90 transition-[background-color,opacity] duration-300 relative overflow-hidden backdrop-blur-md before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/30 before:via-white/10 before:to-transparent before:pointer-events-none' : 'text-destructive border-destructive hover:bg-destructive/10'}`}
-                  >
-                    <span className="relative z-10">{isSigningOut ? '...' : (isToolPage ? 'Sign Out' : <><span className="hidden sm:inline">Sign Out</span><span className="sm:hidden">Out</span></>)}</span>
+                  <Button onClick={handleSignOut} disabled={isSigningOut} className={btnDanger}>
+                    <LogOut className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">{isSigningOut ? '...' : 'Sign Out'}</span>
                   </Button>
                 </>
               ) : (
                 <>
-                  <Button
-                    onClick={() => router.push('/')}
-                    variant={isToolPage ? undefined : "outline"}
-                    className={`${isToolPage ? 'px-3 sm:px-4' : 'px-1 sm:px-2 md:px-3 lg:px-4'} py-1 sm:py-2 h-auto min-h-[32px] sm:min-h-[44px] ${isToolPage ? 'rounded-2xl' : 'rounded-lg'} ${isToolPage ? 'text-sm' : 'text-[9px] sm:text-xs md:text-sm'} font-semibold flex-shrink-0 ${isToolPage ? 'bg-[#06B6D4]/20 backdrop-blur-md text-white border border-[#06B6D4]/30 shadow-none sm:hover:bg-[#06B6D4] sm:hover:shadow-[0_0_15px_rgba(6,182,212,0.6),0_0_25px_rgba(6,182,212,0.4)] sm:hover:border-[#06B6D4] drop-shadow-none sm:hover:drop-shadow-[0_0_5px_rgba(6,182,212,0.5)] hover:opacity-90 transition-[background-color,border-color,opacity] duration-300 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/20 before:via-transparent before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300' : ''}`}
-                  >
-                    <span className="relative z-10">
-                      <span className="hidden sm:inline">Home</span>
-                      <span className="sm:hidden">🏠</span>
-                    </span>
+                  {/* Home Button */}
+                  <Button onClick={navigateHome} className={btnGhost}>
+                    <Home className="w-4 h-4 sm:mr-2" />
+                    <span className="hidden sm:inline">Home</span>
                   </Button>
-                  <Button
-                    onClick={() => openAuthModal('signin')}
-                    variant={isToolPage ? undefined : "outline"}
-                    className={`${isToolPage ? 'px-3 sm:px-4' : 'px-1 sm:px-2 md:px-3 lg:px-4'} py-1 sm:py-2 h-auto min-h-[32px] sm:min-h-[44px] ${isToolPage ? 'rounded-2xl' : 'rounded-lg'} ${isToolPage ? 'text-sm' : 'text-[9px] sm:text-xs md:text-sm'} font-semibold flex-shrink-0 ${isToolPage ? 'bg-[#06B6D4] text-white border-none shadow-none drop-shadow-none hover:opacity-90 transition-[background-color,opacity] duration-300 relative overflow-hidden backdrop-blur-md before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/30 before:via-white/10 before:to-transparent before:pointer-events-none' : ''}`}
-                  >
-                    <span className="relative z-10">{isToolPage ? 'Sign In' : <><span className="hidden sm:inline">Sign In</span><span className="sm:hidden">In</span></>}</span>
+
+                  {/* Sign In Button */}
+                  <Button onClick={() => openAuthModal('signin')} className={btnOutline}>
+                    <span>Sign In</span>
                   </Button>
-                  <Button
-                    onClick={() => openAuthModal('signup')}
-                    className={`${isToolPage ? 'px-3 sm:px-4' : 'px-1 sm:px-2 md:px-3 lg:px-4'} py-1 sm:py-2 h-auto min-h-[32px] sm:min-h-[44px] ${isToolPage ? 'rounded-2xl' : 'rounded-lg'} ${isToolPage ? 'text-sm' : 'text-[9px] sm:text-xs md:text-sm'} font-bold text-white border-none flex-shrink-0 ${isToolPage ? 'bg-[#06B6D4] shadow-none drop-shadow-none hover:opacity-90 relative overflow-hidden backdrop-blur-md before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/30 before:via-white/10 before:to-transparent before:pointer-events-none' : ''}`}
-                    style={isToolPage ? {
-                      background: '#06B6D4'
-                    } : {
-                      background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)'
-                    }}
-                  >
-                    <span className="relative z-10">{isToolPage ? 'Sign Up' : <><span className="hidden sm:inline">Sign Up</span><span className="sm:hidden">Up</span></>}</span>
+
+                  {/* Sign Up Button */}
+                  <Button onClick={() => openAuthModal('signup')} className={btnPrimary}>
+                    <span>Sign Up</span>
                   </Button>
-                  <Button
-                    onClick={() => router.push('/?premium=true')}
-                    className={`${isToolPage ? 'px-3 sm:px-4' : 'px-1 sm:px-2 md:px-3 lg:px-4'} py-1 sm:py-2 h-auto min-h-[32px] sm:min-h-[44px] ${isToolPage ? 'rounded-2xl' : 'rounded-lg'} ${isToolPage ? 'text-sm' : 'text-[9px] sm:text-xs md:text-sm'} font-bold text-white border-none flex-shrink-0 ${isToolPage ? 'bg-[#06B6D4] shadow-none drop-shadow-none hover:opacity-90 relative overflow-hidden backdrop-blur-md before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/30 before:via-white/10 before:to-transparent before:pointer-events-none' : ''}`}
-                    style={isToolPage ? {
-                      background: '#06B6D4'
-                    } : {
-                      background: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)'
-                    }}
-                  >
-                    <span className="relative z-10">{isToolPage ? 'Get Pro' : <><span className="hidden sm:inline">Get Pro</span><span className="sm:hidden">Pro</span></>}</span>
+
+                  {/* Get Pro Button */}
+                  <Button onClick={scrollToPremium} className={`${btnPrimary} hidden sm:flex`}>
+                    <Crown className="w-4 h-4 mr-2" />
+                    Get Pro
                   </Button>
                 </>
               )}
@@ -220,4 +172,3 @@ export function Navbar() {
     </>
   );
 }
-

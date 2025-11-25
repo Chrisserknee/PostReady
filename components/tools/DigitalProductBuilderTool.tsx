@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { InputField } from "@/components/InputField";
@@ -50,7 +51,9 @@ import {
   Briefcase,
   Code,
   Palette,
-  MessageSquare
+  MessageSquare,
+  Lock,
+  Crown
 } from "lucide-react";
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
@@ -262,7 +265,8 @@ const QUICK_START_TEMPLATES: Array<{
 ];
 
 export function DigitalProductBuilderTool() {
-  const { user } = useAuth();
+  const { user, isPro } = useAuth();
+  const router = useRouter();
   const [currentStep, setCurrentStep] = useState<Step>(1);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -887,6 +891,74 @@ export function DigitalProductBuilderTool() {
     setEditValue("");
   };
 
+
+  // Pro-only paywall
+  if (!isPro) {
+    return (
+      <div ref={containerRef} className="space-y-8">
+        <Card className="relative overflow-hidden border-2 border-cyan-500/30">
+          <div className="absolute inset-0 bg-gradient-to-br from-cyan-500/5 via-transparent to-blue-500/5" />
+          <CardContent className="relative p-8 md:p-12">
+            <div className="text-center max-w-2xl mx-auto">
+              {/* Lock Icon */}
+              <div className="relative w-16 h-16 mx-auto mb-6">
+                <div className="absolute inset-0 rounded-full bg-gradient-to-br from-cyan-400 to-blue-500 opacity-15" />
+                <div className="absolute inset-0.5 rounded-full bg-gradient-to-br from-cyan-500 to-blue-600 flex items-center justify-center shadow-md">
+                  <Lock className="w-8 h-8 text-white" />
+                </div>
+              </div>
+
+              {/* Title */}
+              <h2 className="text-2xl md:text-3xl font-bold mb-3 bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent">
+                Pro Feature
+              </h2>
+              
+              {/* Description */}
+              <p className="text-muted-foreground mb-6 text-lg">
+                The Digital Product Builder is a premium feature that helps you create, price, and launch your digital product from start to finish.
+              </p>
+
+              {/* Features List */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-8 text-left max-w-lg mx-auto">
+                {[
+                  "7-step guided product creation",
+                  "AI-powered product ideas",
+                  "Pricing strategy generator",
+                  "Sales copy & launch plan",
+                  "Platform recommendations",
+                  "Email sequence builder",
+                  "Export to PDF",
+                  "Save & resume progress"
+                ].map((feature, i) => (
+                  <div key={i} className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <CheckCircle2 className="w-4 h-4 text-cyan-500 flex-shrink-0" />
+                    <span>{feature}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTA Button */}
+              <Button
+                onClick={() => router.push('/?premium=true')}
+                className="px-8 py-3 h-auto rounded-xl text-base font-bold text-white border-none hover:scale-[1.02] active:scale-[0.98] transition-all duration-200 shadow-md hover:shadow-lg"
+                style={{
+                  background: 'linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%)',
+                }}
+              >
+                <Crown className="w-5 h-5 mr-2" />
+                Upgrade to Pro
+              </Button>
+
+              {/* Price hint */}
+              <p className="text-xs text-muted-foreground mt-4">
+                Get unlimited access to all Pro tools
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div ref={containerRef} className="space-y-8">

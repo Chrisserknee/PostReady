@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useRef } from 'react';
+import { CheckCircle2, AlertTriangle, Info, Zap, X } from 'lucide-react';
 
 interface NotificationProps {
   isOpen: boolean;
@@ -22,21 +23,17 @@ export const Notification = ({
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const onCloseRef = useRef(onClose);
 
-  // Keep onClose reference up to date without triggering effect
   useEffect(() => {
     onCloseRef.current = onClose;
   }, [onClose]);
 
   useEffect(() => {
-    // Clear any existing timer
     if (timerRef.current) {
       clearTimeout(timerRef.current);
       timerRef.current = null;
     }
 
     if (isOpen && duration > 0) {
-      // Use requestAnimationFrame to ensure timer starts after render
-      // This helps with iOS Safari timing issues
       requestAnimationFrame(() => {
         timerRef.current = setTimeout(() => {
           onCloseRef.current();
@@ -55,83 +52,99 @@ export const Notification = ({
   if (!isOpen) return null;
 
   const getIcon = () => {
+    const iconClass = "w-5 h-5";
     switch (type) {
       case 'success':
-        return '✨';
+        return <CheckCircle2 className={`${iconClass} text-emerald-400`} />;
       case 'error':
-        return '⚠️';
+        return <AlertTriangle className={`${iconClass} text-red-400`} />;
       case 'warning':
-        return '⚡';
+        return <Zap className={`${iconClass} text-amber-400`} />;
       case 'info':
-        return '💡';
+        return <Info className={`${iconClass} text-cyan-400`} />;
       default:
-        return '✨';
+        return <CheckCircle2 className={`${iconClass} text-cyan-400`} />;
     }
   };
 
-  const getColors = () => {
+  const getStyles = () => {
     switch (type) {
       case 'success':
         return {
-          bg: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)',
-          border: '#6FFFD2',
+          bg: 'var(--card-bg)',
+          border: 'rgba(16, 185, 129, 0.4)',
+          iconBg: 'rgba(16, 185, 129, 0.15)',
         };
       case 'error':
         return {
-          bg: 'linear-gradient(135deg, #EF4444 0%, #F87171 100%)',
-          border: '#F87171',
+          bg: 'var(--card-bg)',
+          border: 'rgba(239, 68, 68, 0.4)',
+          iconBg: 'rgba(239, 68, 68, 0.15)',
         };
       case 'warning':
         return {
-          bg: 'linear-gradient(135deg, #F59E0B 0%, #FCD34D 100%)',
-          border: '#FCD34D',
+          bg: 'var(--card-bg)',
+          border: 'rgba(245, 158, 11, 0.4)',
+          iconBg: 'rgba(245, 158, 11, 0.15)',
         };
       case 'info':
         return {
-          bg: 'linear-gradient(135deg, #3B82F6 0%, #60A5FA 100%)',
-          border: '#60A5FA',
+          bg: 'var(--card-bg)',
+          border: 'rgba(6, 182, 212, 0.4)',
+          iconBg: 'rgba(6, 182, 212, 0.15)',
         };
       default:
         return {
-          bg: 'linear-gradient(135deg, #2979FF 0%, #6FFFD2 100%)',
-          border: '#6FFFD2',
+          bg: 'var(--card-bg)',
+          border: 'rgba(6, 182, 212, 0.4)',
+          iconBg: 'rgba(6, 182, 212, 0.15)',
         };
     }
   };
 
-  const colors = getColors();
+  const styles = getStyles();
 
   return (
     <div className="fixed top-4 right-4 z-50 animate-slide-in-right">
       <div
-        className="rounded-xl shadow-lg overflow-hidden max-w-xs"
+        className="rounded-xl overflow-hidden max-w-sm backdrop-blur-md"
         style={{
-          background: colors.bg,
-          border: `1px solid ${colors.border}`,
-          animation: 'slideInRight 0.3s ease-out',
+          background: styles.bg,
+          border: `1px solid ${styles.border}`,
+          boxShadow: '0 10px 40px rgba(0, 0, 0, 0.3), 0 0 20px rgba(6, 182, 212, 0.1)',
         }}
       >
-        <div className="px-3 py-2.5 flex items-center gap-2.5">
-          <span className="text-lg flex-shrink-0">{getIcon()}</span>
-          <div className="flex-1 min-w-0">
-            {title && (
-              <h3 className="font-semibold text-white text-xs mb-0.5 leading-tight">{title}</h3>
-            )}
-            <p className="text-white text-xs leading-snug">{message}</p>
+        <div className="px-4 py-3 flex items-start gap-3">
+          {/* Icon */}
+          <div 
+            className="p-2 rounded-lg flex-shrink-0"
+            style={{ background: styles.iconBg }}
+          >
+            {getIcon()}
           </div>
+          
+          {/* Content */}
+          <div className="flex-1 min-w-0 pt-0.5">
+            {title && (
+              <h3 className="font-semibold text-[var(--foreground)] text-sm mb-0.5">{title}</h3>
+            )}
+            <p className="text-[var(--foreground-muted)] text-sm leading-relaxed">{message}</p>
+          </div>
+          
+          {/* Close Button */}
           <button
             onClick={onClose}
-            className="text-white/80 hover:text-white hover:bg-white/20 rounded-full w-5 h-5 flex items-center justify-center transition-all flex-shrink-0 text-xs"
-            style={{ fontSize: '14px' }}
+            className="p-1.5 rounded-lg text-[var(--foreground-subtle)] hover:text-[var(--foreground)] hover:bg-[var(--hover-bg)] transition-all flex-shrink-0"
           >
-            ✕
+            <X className="w-4 h-4" />
           </button>
         </div>
+        
         {/* Progress bar */}
         {duration > 0 && (
-          <div className="h-0.5 bg-white/20">
+          <div className="h-1 bg-[var(--background-tertiary)]">
             <div
-              className="h-full bg-white/60 transition-all"
+              className="h-full bg-gradient-to-r from-cyan-500 to-blue-500"
               style={{
                 animation: `shrink ${duration}ms linear`,
               }}
@@ -142,7 +155,3 @@ export const Notification = ({
     </div>
   );
 };
-
-// Add these animations to your globals.css
-
-

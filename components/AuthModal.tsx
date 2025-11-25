@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { useTheme } from '@/contexts/ThemeContext';
+import { X, Eye, EyeOff, Mail, Lock, Sparkles } from 'lucide-react';
 
 type AuthModalProps = {
   isOpen: boolean;
@@ -21,13 +21,10 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   const { signIn, signUp, resetPassword } = useAuth();
-  const { theme } = useTheme();
 
-  // Update internal mode state when modal opens or initialMode changes
   useEffect(() => {
     if (isOpen) {
       setMode(initialMode);
-      // Reset form when modal opens
       setError(null);
       setSuccess(null);
       setShowForgotPassword(false);
@@ -46,12 +43,10 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
       if (mode === 'signup') {
         const { error } = await signUp(email, password);
         if (error) {
-          // Check if this is a duplicate account error
           if (error.code === 'user_already_exists' || 
               error.message?.includes('already exists') ||
               error.message?.includes('already registered')) {
             setError(error.message + ' Switching to sign in...');
-            // Switch to sign in mode after a brief delay
             setTimeout(() => {
               setMode('signin');
               setError(null);
@@ -117,237 +112,209 @@ export function AuthModal({ isOpen, onClose, mode: initialMode }: AuthModalProps
   };
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="rounded-2xl max-w-md w-full p-8 relative shadow-2xl" style={{ backgroundColor: 'var(--card-bg)' }}>
+    <div 
+      className="fixed inset-0 z-50 flex items-center justify-center p-4 animate-fade-in"
+      style={{
+        backgroundColor: 'rgba(10, 15, 26, 0.9)',
+        backdropFilter: 'blur(12px)',
+        WebkitBackdropFilter: 'blur(12px)'
+      }}
+      onClick={onClose}
+    >
+      <div 
+        className="rounded-2xl max-w-md w-full overflow-hidden animate-scale-in relative"
+        style={{
+          backgroundColor: 'var(--card-bg)',
+          border: '1px solid var(--card-border)',
+          boxShadow: '0 25px 80px rgba(6, 182, 212, 0.15), 0 0 60px rgba(6, 182, 212, 0.05)'
+        }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 text-2xl transition-colors"
-          style={{ color: 'var(--text-secondary)' }}
-          onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
-          onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
+          className="absolute top-4 right-4 p-2 rounded-lg text-[var(--foreground-muted)] hover:text-[var(--foreground)] hover:bg-[var(--hover-bg)] transition-all z-10"
         >
-          ×
+          <X className="w-5 h-5" />
         </button>
 
-        <div className="text-center mb-6">
-          <h2 className="text-3xl font-bold mb-2" style={{ color: 'var(--text-primary)' }}>
-            {showForgotPassword ? 'Reset Password' : mode === 'signup' ? 'Create Account' : 'Welcome Back'}
-          </h2>
-          <p style={{ color: 'var(--text-secondary)' }}>
-            {showForgotPassword
-              ? 'Enter your email to receive a password reset link'
-              : mode === 'signup'
-              ? 'Sign up to save your progress'
-              : 'Sign in to continue where you left off'}
-          </p>
-        </div>
-
-        {error && (
-          <div className="mb-4 p-3 rounded-lg text-sm" style={{
-            backgroundColor: 'rgba(239, 68, 68, 0.1)',
-            borderWidth: '1px',
-            borderStyle: 'solid',
-            borderColor: 'rgba(239, 68, 68, 0.3)',
-            color: '#ef4444'
-          }}>
-            {error}
+        <div className="p-8">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="icon-circle mx-auto mb-4">
+              <Sparkles className="w-6 h-6 text-white" />
+            </div>
+            <h2 className="text-2xl font-bold mb-2 text-gradient">
+              {showForgotPassword ? 'Reset Password' : mode === 'signup' ? 'Create Account' : 'Welcome Back'}
+            </h2>
+            <p className="text-[var(--foreground-muted)] text-sm">
+              {showForgotPassword
+                ? 'Enter your email to receive a reset link'
+                : mode === 'signup'
+                ? 'Sign up to unlock all features'
+                : 'Sign in to continue where you left off'}
+            </p>
           </div>
-        )}
 
-        {success && (
-          <div className="mb-4 p-3 rounded-lg text-sm" style={{
-            backgroundColor: 'rgba(34, 197, 94, 0.1)',
-            borderWidth: '1px',
-            borderStyle: 'solid',
-            borderColor: 'rgba(34, 197, 94, 0.3)',
-            color: '#22c55e'
-          }}>
-            {success}
-          </div>
-        )}
-
-        {showForgotPassword ? (
-          <form onSubmit={handleForgotPassword} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full border-2 rounded-lg px-4 py-2 focus:outline-none transition-all"
-                style={{
-                  backgroundColor: 'var(--input-bg)',
-                  borderColor: 'var(--card-border)',
-                  color: 'var(--text-primary)'
-                }}
-                placeholder="you@example.com"
-              />
+          {/* Error Message */}
+          {error && (
+            <div className="mb-6 p-4 rounded-xl text-sm bg-red-500/10 border border-red-500/30 text-red-400">
+              {error}
             </div>
+          )}
 
-            <div className="p-3 rounded-lg text-sm" style={{
-              backgroundColor: 'rgba(41, 121, 255, 0.1)',
-              borderWidth: '1px',
-              borderStyle: 'solid',
-              borderColor: 'rgba(41, 121, 255, 0.2)',
-              color: 'var(--text-secondary)'
-            }}>
-              💡 Please check your inbox for an email from <strong style={{ color: 'var(--text-primary)' }}>Supabase Auth</strong> — it contains your secure password reset link.
+          {/* Success Message */}
+          {success && (
+            <div className="mb-6 p-4 rounded-xl text-sm bg-emerald-500/10 border border-emerald-500/30 text-emerald-400">
+              {success}
             </div>
+          )}
 
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full text-white rounded-lg px-4 py-3 font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ 
-                backgroundColor: loading ? '#94a3b8' : '#2979FF'
-              }}
-              onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = '#1e5dd9')}
-              onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = '#2979FF')}
-            >
-              {loading ? 'Sending...' : 'Send Reset Link'}
-            </button>
-
-            <button
-              type="button"
-              onClick={() => {
-                setShowForgotPassword(false);
-                setError(null);
-                setSuccess(null);
-              }}
-              className="w-full text-sm font-medium transition-colors"
-              style={{ color: 'var(--text-secondary)' }}
-              onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
-              onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
-            >
-              ← Back to Sign In
-            </button>
-          </form>
-        ) : (
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-                Email
-              </label>
-              <input
-                id="email"
-                type="email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                className="w-full border-2 rounded-lg px-4 py-2 focus:outline-none transition-all"
-                style={{
-                  backgroundColor: 'var(--input-bg)',
-                  borderColor: 'var(--card-border)',
-                  color: 'var(--text-primary)'
-                }}
-                placeholder="you@example.com"
-              />
-            </div>
-
-            <div>
-              <label htmlFor="password" className="block text-sm font-medium mb-1" style={{ color: 'var(--text-primary)' }}>
-                Password
-              </label>
-              <div className="relative">
-                <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                  minLength={6}
-                  className="w-full border-2 rounded-lg px-4 py-2 pr-12 focus:outline-none transition-all"
-                  style={{
-                    backgroundColor: 'var(--input-bg)',
-                    borderColor: 'var(--card-border)',
-                    color: 'var(--text-primary)'
-                  }}
-                  placeholder="••••••••"
-                />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 transition-colors"
-                  style={{ color: 'var(--text-secondary)' }}
-                  onMouseEnter={(e) => e.currentTarget.style.color = 'var(--text-primary)'}
-                  onMouseLeave={(e) => e.currentTarget.style.color = 'var(--text-secondary)'}
-                  aria-label={showPassword ? "Hide password" : "Show password"}
-                >
-                  {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M3.98 8.223A10.477 10.477 0 001.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.45 10.45 0 0112 4.5c4.756 0 8.773 3.162 10.065 7.498a10.523 10.523 0 01-4.293 5.774M6.228 6.228L3 3m3.228 3.228l3.65 3.65m7.894 7.894L21 21m-3.228-3.228l-3.65-3.65m0 0a3 3 0 10-4.243-4.243m4.242 4.242L9.88 9.88" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor" className="w-5 h-5">
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M2.036 12.322a1.012 1.012 0 010-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178z" />
-                      <path strokeLinecap="round" strokeLinejoin="round" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    </svg>
-                  )}
-                </button>
+          {showForgotPassword ? (
+            <form onSubmit={handleForgotPassword} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium mb-2 text-[var(--foreground-muted)]">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--foreground-subtle)]" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="input-premium pl-11"
+                    placeholder="you@example.com"
+                  />
+                </div>
               </div>
-              {mode === 'signup' && (
-                <p className="text-xs mt-1" style={{ color: 'var(--text-secondary)' }}>Must be at least 6 characters</p>
-              )}
-              {mode === 'signin' && (
-                <div className="mt-2 text-right">
+
+              <div className="p-4 rounded-xl text-sm bg-[var(--primary-muted)] border border-[var(--card-border)]">
+                <p className="text-[var(--foreground-muted)]">
+                  💡 Check your inbox for an email from <strong className="text-[var(--foreground)]">Supabase Auth</strong>
+                </p>
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 rounded-xl font-bold text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ 
+                  background: 'linear-gradient(135deg, #06B6D4, #3B82F6)',
+                  boxShadow: '0 4px 20px rgba(6, 182, 212, 0.4)'
+                }}
+              >
+                {loading ? 'Sending...' : 'Send Reset Link'}
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  setShowForgotPassword(false);
+                  setError(null);
+                  setSuccess(null);
+                }}
+                className="w-full text-sm font-medium text-[var(--foreground-muted)] hover:text-[var(--foreground)] transition-colors"
+              >
+                ← Back to Sign In
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={handleSubmit} className="space-y-5">
+              <div>
+                <label className="block text-sm font-medium mb-2 text-[var(--foreground-muted)]">
+                  Email
+                </label>
+                <div className="relative">
+                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--foreground-subtle)]" />
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                    className="input-premium pl-11"
+                    placeholder="you@example.com"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium mb-2 text-[var(--foreground-muted)]">
+                  Password
+                </label>
+                <div className="relative">
+                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--foreground-subtle)]" />
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                    className="input-premium pl-11 pr-12"
+                    placeholder="••••••••"
+                  />
                   <button
                     type="button"
-                    onClick={() => {
-                      setShowForgotPassword(true);
-                      setError(null);
-                      setSuccess(null);
-                    }}
-                    className="text-sm font-medium"
-                    style={{ color: '#2979FF' }}
-                    onMouseEnter={(e) => e.currentTarget.style.color = '#1e5dd9'}
-                    onMouseLeave={(e) => e.currentTarget.style.color = '#2979FF'}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-4 top-1/2 -translate-y-1/2 text-[var(--foreground-subtle)] hover:text-[var(--foreground)] transition-colors"
                   >
-                    Forgot password?
+                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
                 </div>
-              )}
+                {mode === 'signup' && (
+                  <p className="text-xs mt-2 text-[var(--foreground-subtle)]">Must be at least 6 characters</p>
+                )}
+                {mode === 'signin' && (
+                  <div className="mt-2 text-right">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowForgotPassword(true);
+                        setError(null);
+                        setSuccess(null);
+                      }}
+                      className="text-sm font-medium text-cyan-400 hover:text-cyan-300 transition-colors"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full py-3 rounded-xl font-bold text-white transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
+                style={{ 
+                  background: 'linear-gradient(135deg, #06B6D4, #3B82F6)',
+                  boxShadow: '0 4px 20px rgba(6, 182, 212, 0.4)'
+                }}
+              >
+                {loading ? 'Please wait...' : mode === 'signup' ? 'Create Account' : 'Sign In'}
+              </button>
+            </form>
+          )}
+
+          {/* Toggle Mode */}
+          {!showForgotPassword && (
+            <div className="mt-6 pt-6 border-t border-[var(--card-border)] text-center">
+              <p className="text-sm text-[var(--foreground-muted)] mb-2">
+                {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}
+              </p>
+              <button
+                onClick={() => {
+                  setMode(mode === 'signup' ? 'signin' : 'signup');
+                  setError(null);
+                  setSuccess(null);
+                }}
+                className="text-sm font-semibold text-cyan-400 hover:text-cyan-300 transition-colors"
+              >
+                {mode === 'signup' ? 'Sign in' : 'Sign up'}
+              </button>
             </div>
-
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full text-white rounded-lg px-4 py-3 font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed"
-              style={{ 
-                backgroundColor: loading ? '#94a3b8' : '#2979FF'
-              }}
-              onMouseEnter={(e) => !loading && (e.currentTarget.style.backgroundColor = '#1e5dd9')}
-              onMouseLeave={(e) => !loading && (e.currentTarget.style.backgroundColor = '#2979FF')}
-            >
-              {loading ? 'Please wait...' : mode === 'signup' ? 'Create Account' : 'Sign In'}
-            </button>
-          </form>
-        )}
-
-        <div className="mt-6 text-center">
-          <p style={{ color: 'var(--text-secondary)' }} className="text-sm mb-2">
-            {mode === 'signup' ? 'Already have an account?' : "Don't have an account?"}
-          </p>
-          <button
-            onClick={() => {
-              setMode(mode === 'signup' ? 'signin' : 'signup');
-              setError(null);
-              setSuccess(null);
-            }}
-            className="text-sm font-medium"
-            style={{ color: '#2979FF' }}
-            onMouseEnter={(e) => e.currentTarget.style.color = '#1e5dd9'}
-            onMouseLeave={(e) => e.currentTarget.style.color = '#2979FF'}
-          >
-            {mode === 'signup'? 'Sign in' : 'Sign up'}
-          </button>
+          )}
         </div>
       </div>
     </div>
   );
 }
-
-

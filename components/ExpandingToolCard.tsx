@@ -3,6 +3,7 @@
 import React from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { ChevronRight, CheckCircle2 } from 'lucide-react';
 
 interface ExpandingToolCardProps {
   toolId: string;
@@ -45,162 +46,120 @@ export function ExpandingToolCard({
       onMouseEnter={onMouseEnter}
       onMouseLeave={onMouseLeave}
       onClick={onClick}
-      className="rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group"
+      className="rounded-2xl transition-all duration-400 relative group"
       style={{
-        marginBottom: '1rem',
+        marginBottom: '0.75rem',
         backgroundColor: 'var(--card-bg)',
-        borderColor: isHovered ? color : 'var(--card-border)',
+        border: `1px solid ${isHovered ? 'rgba(6, 182, 212, 0.4)' : 'var(--card-border)'}`,
+        // Subtle, refined glow - much more subtle than before
         boxShadow: isHovered
-          ? `0 20px 60px ${color}30, 0 0 0 1px ${color}40`
-          : '0 4px 20px rgba(0, 0, 0, 0.1)',
-        transform: isHovered ? 'scale(1.03)' : 'scale(1)',
+          ? '0 8px 32px rgba(0, 0, 0, 0.2), 0 0 0 1px rgba(6, 182, 212, 0.1)'
+          : '0 2px 8px rgba(0, 0, 0, 0.1)',
+        transform: isHovered ? 'translateY(-2px)' : 'translateY(0)',
         order,
         cursor: isReorderMode ? 'move' : 'pointer',
-        padding: isHovered ? '1.5rem' : '1rem',
-        transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+        padding: isHovered ? '1.5rem' : '1.25rem',
       }}
     >
-      {/* Glow effect */}
-      {isHovered && (
-        <div
-          className="absolute inset-0 opacity-20 pointer-events-none"
-          style={{
-            background: `radial-gradient(circle at center, ${color}, transparent 70%)`,
-            animation: 'pulse-glow 2s ease-in-out infinite',
-          }}
-        />
-      )}
+      {/* Very subtle gradient overlay on hover */}
+      <div
+        className="absolute inset-0 pointer-events-none transition-opacity duration-400 rounded-2xl"
+        style={{
+          background: `linear-gradient(135deg, rgba(6, 182, 212, 0.03) 0%, transparent 60%)`,
+          opacity: isHovered ? 1 : 0,
+        }}
+      />
 
-      <Link href={href} className="block" onClick={onClick}>
-        {/* Header - Always visible */}
-        <div className="flex items-center justify-between mb-3">
+      <Link href={href} className="block relative z-10" onClick={onClick}>
+        {/* Header */}
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <span className="text-3xl transition-transform duration-500" style={{ 
-              transform: isHovered ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
-            }}>
-              {icon}
-            </span>
-            <div>
+            {/* Icon Container - Rounded with subtle styling */}
+            <div 
+              className="w-11 h-11 rounded-xl flex items-center justify-center transition-all duration-400 flex-shrink-0"
+              style={{
+                background: isHovered 
+                  ? 'linear-gradient(135deg, var(--primary), var(--secondary))' 
+                  : 'var(--background-tertiary)',
+                boxShadow: isHovered ? '0 4px 12px rgba(6, 182, 212, 0.2)' : 'none',
+                transform: isHovered ? 'scale(1.05)' : 'scale(1)',
+              }}
+            >
+              <span className="text-xl">{icon}</span>
+            </div>
+            
+            <div className="min-w-0">
               <h3 
-                className="text-base sm:text-lg font-bold transition-all duration-500"
+                className="text-base font-semibold transition-colors duration-300 truncate"
                 style={{ 
-                  color: isHovered ? color : 'var(--secondary)',
-                  fontSize: isHovered ? '1.25rem' : '1rem'
+                  color: isHovered ? 'var(--primary)' : 'var(--foreground)',
                 }}
               >
                 {title}
               </h3>
-              <p 
-                className="text-xs mt-0.5 opacity-70 transition-opacity duration-500"
-                style={{ color: 'var(--text-secondary)' }}
-              >
+              <p className="text-sm text-[var(--foreground-muted)] truncate">
                 {shortDescription}
               </p>
             </div>
           </div>
-          <span 
-            className="text-sm opacity-60 transition-all duration-500"
-            style={{ 
-              color: 'var(--text-secondary)',
-              opacity: isHovered ? 0 : 0.6
+          
+          <ChevronRight 
+            className="w-5 h-5 text-[var(--foreground-subtle)] transition-all duration-300 flex-shrink-0 ml-2"
+            style={{
+              transform: isHovered ? 'translateX(4px)' : 'translateX(0)',
+              opacity: isHovered ? 0 : 0.4,
             }}
-          >
-            {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
-          </span>
+          />
         </div>
 
-        {/* Expanded Content - Fades in on hover */}
+        {/* Expanded Content */}
         <div
-          className="overflow-hidden transition-all duration-500"
+          className="overflow-hidden transition-all duration-400"
           style={{
-            maxHeight: isHovered ? '500px' : '0px',
+            maxHeight: isHovered ? '320px' : '0px',
             opacity: isHovered ? 1 : 0,
-            transform: isHovered ? 'translateY(0)' : 'translateY(-10px)',
+            marginTop: isHovered ? '1rem' : '0',
           }}
         >
-          <div className="pt-4 space-y-4 border-t" style={{ borderColor: `${color}20` }}>
-            {/* Full Description */}
-            <p 
-              className="text-sm leading-relaxed transition-all duration-500 delay-100"
-              style={{ 
-                color: 'var(--text-secondary)',
-                opacity: isHovered ? 1 : 0,
-                transform: isHovered ? 'translateY(0)' : 'translateY(-5px)',
-              }}
-            >
+          <div className="pt-4 space-y-4 border-t border-[var(--card-border)]">
+            {/* Description */}
+            <p className="text-sm leading-relaxed text-[var(--foreground-muted)]">
               {fullDescription}
             </p>
 
-            {/* Features List */}
-            <div 
-              className="space-y-2 transition-all duration-500 delay-200"
-              style={{
-                opacity: isHovered ? 1 : 0,
-                transform: isHovered ? 'translateY(0)' : 'translateY(-5px)',
-              }}
-            >
-              <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: color }}>
-                Key Features
+            {/* Features */}
+            <div className="space-y-2">
+              <p className="text-xs font-semibold uppercase tracking-wider text-[var(--primary)]">
+                Features
               </p>
-              <ul className="space-y-1.5">
-                {features.map((feature, idx) => (
+              <ul className="grid grid-cols-2 gap-x-3 gap-y-1.5">
+                {features.slice(0, 4).map((feature, idx) => (
                   <li 
                     key={idx} 
-                    className="flex items-center gap-2 text-sm"
+                    className="flex items-center gap-2 text-sm text-[var(--foreground-muted)] transition-all duration-300"
                     style={{
-                      transitionDelay: `${300 + idx * 50}ms`,
+                      transitionDelay: `${50 + idx * 30}ms`,
                       opacity: isHovered ? 1 : 0,
-                      transform: isHovered ? 'translateX(0)' : 'translateX(-10px)',
+                      transform: isHovered ? 'translateX(0)' : 'translateX(-8px)',
                     }}
                   >
-                    <span 
-                      className="text-xs font-bold"
-                      style={{ color: color }}
-                    >
-                      ✓
-                    </span>
-                    <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+                    <CheckCircle2 className="w-3.5 h-3.5 text-cyan-400 flex-shrink-0" />
+                    <span className="truncate text-xs">{feature}</span>
                   </li>
                 ))}
               </ul>
             </div>
 
-            {/* CTA Button */}
-            <div 
-              className="pt-2 transition-all duration-500 delay-300"
-              style={{
-                opacity: isHovered ? 1 : 0,
-                transform: isHovered ? 'translateY(0)' : 'translateY(-5px)',
-              }}
+            {/* CTA Button - Subtle styling */}
+            <Button
+              className="w-full mt-3 bg-gradient-to-r from-cyan-500 to-blue-500 text-white font-semibold rounded-xl shadow-sm hover:shadow-md transition-all duration-200 hover:scale-[1.01]"
             >
-              <Button
-                className="w-full font-semibold transition-all duration-300 hover:scale-105"
-                style={{
-                  backgroundColor: color,
-                  color: 'white',
-                  border: 'none',
-                }}
-              >
-                Explore {title} →
-              </Button>
-            </div>
+              Open {title}
+              <ChevronRight className="w-4 h-4 ml-1" />
+            </Button>
           </div>
         </div>
       </Link>
-
-      <style jsx>{`
-        @keyframes pulse-glow {
-          0%, 100% {
-            opacity: 0.15;
-          }
-          50% {
-            opacity: 0.25;
-          }
-        }
-      `}</style>
     </div>
   );
 }
-
-
-
