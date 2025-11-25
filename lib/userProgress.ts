@@ -23,6 +23,7 @@ export type UserProgressData = {
   poorLifeChoicesAdvisorCount?: number;
   randomExcuseCount?: number;
   kidsafeUrlCheckerCount?: number;
+  digitalProductBuilderCount?: number;
 };
 
 export async function saveUserProgress(
@@ -54,6 +55,7 @@ export async function saveUserProgress(
         poor_life_choices_advisor_count: progress.poorLifeChoicesAdvisorCount ?? 0,
         random_excuse_count: progress.randomExcuseCount ?? 0,
         kidsafe_url_checker_count: progress.kidsafeUrlCheckerCount ?? 0,
+        digital_product_builder_count: progress.digitalProductBuilderCount ?? 0,
         updated_at: new Date().toISOString(),
       },
       {
@@ -109,6 +111,7 @@ export async function loadUserProgress(userId: string): Promise<{
       poorLifeChoicesAdvisorCount: data.poor_life_choices_advisor_count ?? 0,
       randomExcuseCount: data.random_excuse_count ?? 0,
       kidsafeUrlCheckerCount: data.kidsafe_url_checker_count ?? 0,
+      digitalProductBuilderCount: data.digital_product_builder_count ?? 0,
     };
 
     return { data: progress, error: null };

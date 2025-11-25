@@ -149,6 +149,8 @@ function HomeContent() {
 
   // Module ID to URL slug mapping for SEO-friendly URLs
   const moduleUrlMap: Record<string, string> = {
+    'digital-product-builder': 'digital-product-builder',
+    'opportunity-radar': 'opportunity-radar',
     'digital-products': 'digital-products',
     'comment-bait': 'comment-bait-generator',
     'brainworm-generator': 'brainworm-phrase-generator',
@@ -256,6 +258,8 @@ function HomeContent() {
   // Module Reorder State
   const [isReorderMode, setIsReorderMode] = useState<boolean>(false);
   const [moduleOrder, setModuleOrder] = useState<string[]>([
+    'digital-product-builder',
+    'opportunity-radar',
     'digital-products',
     'kidsafe-url-checker',
     'red-flag-detector',
@@ -284,6 +288,22 @@ function HomeContent() {
 
   // Tool data for expanding cards
   const toolData: Record<string, { title: string; description: string; fullDescription: string; features: string[]; icon: string; color: string }> = {
+    'digital-product-builder': {
+      title: 'Digital Product Builder',
+      description: 'Build your digital product from idea to launch. A complete 7-step guided pathway.',
+      fullDescription: 'Create your digital product from start to finish. This guided pathway takes you through product discovery, blueprint creation, content building, pricing strategy, sales copy, launch planning, and platform recommendations. Each step builds on the previous one, creating a complete product ready to launch.',
+      features: ['7-step guided pathway', 'Product discovery & blueprint', 'Content generation', 'Pricing strategy', 'Sales copy', 'Launch plan', 'Platform recommendations'],
+      icon: '📦',
+      color: '#8B5CF6'
+    },
+    'opportunity-radar': {
+      title: 'Niche Radar',
+      description: 'Find low-competition, high-value niches. Discover untapped opportunities for maximum success.',
+      fullDescription: 'Discover profitable niches with low competition but high value. See a live graph showing where competition is low and value is high - the perfect sweet spot for success. Most people compete in crowded markets - this tool helps you find underserved niches where you can stand out.',
+      features: ['Live competition vs value graph', 'Sweet spot identification', 'Low competition analysis', 'Entry barrier insights'],
+      icon: '🎯',
+      color: '#2979FF'
+    },
     'kidsafe-url-checker': {
       title: 'KidSafe URL Checker',
       description: 'Check if a website is safe for children under 13',
@@ -432,7 +452,7 @@ function HomeContent() {
 
   // Module Collapse State
   const [collapsedModules, setCollapsedModules] = useState<Set<string>>(
-    new Set(['digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'])
+    new Set(['digital-product-builder', 'digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'])
   );
 
   const toggleModuleCollapse = (moduleId: string) => {
@@ -448,7 +468,7 @@ function HomeContent() {
   };
 
   const collapseAllModules = () => {
-    const allModules = ['digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
+    const allModules = ['digital-product-builder', 'digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'collab-engine', 'trend-radar', 'idea-generator', 'hashtag-research', 'sora-prompt', 'music-generator', 'voiceover-generator', 'page-analyzer', 'comment-bait', 'brainworm-generator', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
     setCollapsedModules(new Set(allModules));
   };
 
@@ -1939,7 +1959,7 @@ function HomeContent() {
     console.log('🔄 loadModuleOrder called. User:', user ? 'exists' : 'null');
     
     // Always use default order if no user
-    const defaultOrder = ['digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'music-generator', 'voiceover-generator', 'collab-engine', 'trend-radar', 'idea-generator', 'sora-prompt', 'hashtag-research', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
+    const defaultOrder = ['digital-product-builder', 'digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'music-generator', 'voiceover-generator', 'collab-engine', 'trend-radar', 'idea-generator', 'sora-prompt', 'hashtag-research', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
     
     if (!user) {
       console.log('⚠️ No user, using default order:', defaultOrder);
@@ -2063,7 +2083,7 @@ function HomeContent() {
       // Call loadModuleOrder directly - it's defined in the component scope
       const loadOrder = async () => {
         console.log('🔄 loadOrder function called. User:', user ? 'exists' : 'null');
-        const defaultOrder = ['digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'music-generator', 'voiceover-generator', 'collab-engine', 'trend-radar', 'idea-generator', 'sora-prompt', 'hashtag-research', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
+        const defaultOrder = ['digital-product-builder', 'digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'music-generator', 'voiceover-generator', 'collab-engine', 'trend-radar', 'idea-generator', 'sora-prompt', 'hashtag-research', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
         console.log('📋 Default order includes kidsafe-url-checker:', defaultOrder.includes('kidsafe-url-checker'), 'at index:', defaultOrder.indexOf('kidsafe-url-checker'));
         
         if (!user) {
@@ -3600,7 +3620,7 @@ function HomeContent() {
                 onClick={() => {
                   if (confirm('Reset module order?')) {
                     // Reset local state
-                    const defaultOrder = ['digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'music-generator', 'voiceover-generator', 'collab-engine', 'trend-radar', 'idea-generator', 'sora-prompt', 'hashtag-research', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
+                    const defaultOrder = ['digital-product-builder', 'digital-products', 'kidsafe-url-checker', 'red-flag-detector', 'comment-bait', 'brainworm-generator', 'sugar-daddy-messages', 'music-generator', 'voiceover-generator', 'collab-engine', 'trend-radar', 'idea-generator', 'sora-prompt', 'hashtag-research', 'cringe-couple-caption', 'comment-fight-starter', 'poor-life-choices-advisor', 'random-excuse'];
                     setModuleOrder(defaultOrder);
                     // Save to DB
                     saveModuleOrder(defaultOrder);
@@ -4563,6 +4583,406 @@ function HomeContent() {
           </div>
         )}
 
+        {/* Digital Product Builder */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('digital-product-builder')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'digital-product-builder')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'digital-product-builder')}
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                setHoveredTool(hoveredTool === 'digital-product-builder' ? null : 'digital-product-builder');
+              }
+            }}
+            onMouseEnter={() => !isReorderMode && setHoveredTool('digital-product-builder')}
+            onMouseLeave={() => setHoveredTool(null)}
+            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-[1148ms] relative group mobile-no-glow"
+            style={{
+              marginBottom: '0.75rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: hoveredTool === 'digital-product-builder' 
+                ? '#8B5CF6'
+                : dragOverModule === 'digital-product-builder'
+                  ? '#8B5CF6'
+                  : 'var(--card-border)',
+              filter: hoveredTool === 'digital-product-builder' 
+                ? 'drop-shadow(0 0 10px rgba(139, 92, 246, 0.015))'
+                : 'drop-shadow(0 0 25px rgba(139, 92, 246, 0.12))',
+              backdropFilter: 'blur(8px)',
+              boxShadow: hoveredTool === 'digital-product-builder'
+                ? '0 8px 20px rgba(139, 92, 246, 0.024), 0 0 0 1px rgba(139, 92, 246, 0.045)'
+                : dragOverModule === 'digital-product-builder'
+                  ? '0 0 0 3px rgba(139, 92, 246, 0.4)'
+                  : theme === 'dark'
+                    ? '0 8px 32px rgba(139, 92, 246, 0.15), 0 0 0 1px rgba(139, 92, 246, 0.1)'
+                    : '0 4px 20px rgba(139, 92, 246, 0.12), 0 0 0 1px rgba(139, 92, 246, 0.08)',
+              order: moduleOrder.indexOf('digital-product-builder') === -1 ? 0 : moduleOrder.indexOf('digital-product-builder'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'digital-product-builder' ? 0.5 : 1,
+              transform: hoveredTool === 'digital-product-builder' ? 'scale(1.02)' : dragOverModule === 'digital-product-builder' ? 'scale(1.01)' : 'scale(1)',
+              padding: hoveredTool === 'digital-product-builder' ? '1rem' : '0.75rem',
+              transition: 'all 1.148s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            {/* Glow effect */}
+            {hoveredTool === 'digital-product-builder' && (
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, #8B5CF6, transparent 70%)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                  opacity: 0.06,
+                }}
+              />
+            )}
+
+            <div 
+              onClick={(e) => {
+                if (!isReorderMode) {
+                  e.preventDefault();
+                  setHoveredTool(hoveredTool === 'digital-product-builder' ? null : 'digital-product-builder');
+                }
+              }}
+              className="block cursor-pointer"
+            >
+              {/* Header - Always visible */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                  <span 
+                    className="text-2xl sm:text-3xl transition-transform duration-500 flex-shrink-0" 
+                    style={{ 
+                      transform: hoveredTool === 'digital-product-builder' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
+                    }}
+                  >
+                    📦
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <h3 
+                      className="text-sm sm:text-base md:text-lg font-bold transition-all duration-500 break-words"
+                      style={{ 
+                        color: hoveredTool === 'digital-product-builder' ? '#8B5CF6' : 'var(--secondary)',
+                        fontSize: hoveredTool === 'digital-product-builder' ? 'clamp(0.875rem, 1.25rem, 1.25rem)' : 'clamp(0.875rem, 1rem, 1rem)'
+                      }}
+                    >
+                      Digital Product Builder
+                    </h3>
+                    <p 
+                      className="text-xs sm:text-sm mt-0.5 opacity-70 transition-opacity duration-500 break-words"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {toolData['digital-product-builder']?.description || 'Build your digital product from idea to launch'}
+                    </p>
+                  </div>
+                </div>
+                <span 
+                  className="text-sm opacity-60 transition-all duration-500"
+                  style={{ 
+                    color: 'var(--text-secondary)',
+                    opacity: hoveredTool === 'digital-product-builder' ? 0 : 0.6
+                  }}
+                >
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+
+              {/* Expanded Content - Fades in on hover */}
+              {toolData['digital-product-builder'] && (
+                <div
+                  className="overflow-hidden transition-all duration-[1148ms] ease-out will-change-[max-height,opacity] transform-gpu"
+                  style={{
+                    maxHeight: hoveredTool === 'digital-product-builder' ? '500px' : '0px',
+                    opacity: hoveredTool === 'digital-product-builder' ? 1 : 0,
+                    transform: hoveredTool === 'digital-product-builder' ? 'translateY(0)' : 'translateY(-10px)',
+                    transition: 'max-height 1.148s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.148s cubic-bezier(0.4, 0, 0.2, 1), transform 1.148s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(139, 92, 246, 0.2)' }}>
+                    {/* Full Description */}
+                    <p 
+                      className="text-sm leading-relaxed transition-all duration-300 delay-100"
+                      style={{ 
+                        color: 'var(--text-secondary)',
+                        opacity: hoveredTool === 'digital-product-builder' ? 1 : 0,
+                        transform: hoveredTool === 'digital-product-builder' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      {toolData['digital-product-builder'].fullDescription}
+                    </p>
+
+                    {/* Features List */}
+                    <div 
+                      className="space-y-2 transition-all duration-300 delay-200"
+                      style={{
+                        opacity: hoveredTool === 'digital-product-builder' ? 1 : 0,
+                        transform: hoveredTool === 'digital-product-builder' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#8B5CF6' }}>
+                        Key Features
+                      </p>
+                      <ul className="space-y-1.5">
+                        {toolData['digital-product-builder'].features.map((feature, idx) => (
+                          <li 
+                            key={idx} 
+                            className="flex items-center gap-2 text-sm"
+                            style={{
+                              transitionDelay: `${300 + idx * 50}ms`,
+                              opacity: hoveredTool === 'digital-product-builder' ? 1 : 0,
+                              transform: hoveredTool === 'digital-product-builder' ? 'translateX(0)' : 'translateX(-10px)',
+                            }}
+                          >
+                            <span className="text-xs font-bold" style={{ color: '#8B5CF6' }}>✓</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div 
+                      className="pt-2 transition-all duration-300 delay-300"
+                      style={{
+                        opacity: hoveredTool === 'digital-product-builder' ? 1 : 0,
+                        transform: hoveredTool === 'digital-product-builder' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <Link href={getModuleUrl('digital-product-builder')} className="block w-full">
+                        <Button
+                          className="w-full font-semibold transition-all duration-300 hover:scale-105"
+                          style={{
+                            backgroundColor: '#8B5CF6',
+                            color: 'white',
+                            border: 'none',
+                          }}
+                        >
+                          Explore Digital Product Builder →
+                        </Button>
+                      </Link>
+                    </div>
+                    
+                    {/* Mobile Minimize Button */}
+                    <div className="sm:hidden pt-2 flex justify-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setHoveredTool(null);
+                        }}
+                        className="text-xs text-muted-foreground hover:text-foreground"
+                      >
+                        Minimize ↑
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
+        {/* Niche Radar */}
+        {currentStep === "form" && (
+          <div 
+            draggable={!!(isReorderMode && user)}
+            onDragStart={() => handleDragStart('opportunity-radar')}
+            onDragEnd={handleDragEnd}
+            onDragOver={(e) => handleDragOver(e, 'opportunity-radar')}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, 'opportunity-radar')}
+            onClick={(e) => {
+              if (!isReorderMode) {
+                e.preventDefault();
+                setHoveredTool(hoveredTool === 'opportunity-radar' ? null : 'opportunity-radar');
+              }
+            }}
+            onMouseEnter={() => !isReorderMode && setHoveredTool('opportunity-radar')}
+            onMouseLeave={() => setHoveredTool(null)}
+            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-[1148ms] relative group mobile-no-glow"
+            style={{
+              marginBottom: '0.75rem',
+              backgroundColor: 'var(--card-bg)',
+              borderColor: hoveredTool === 'opportunity-radar' 
+                ? '#2979FF'
+                : dragOverModule === 'opportunity-radar'
+                  ? '#2979FF'
+                  : 'var(--card-border)',
+              filter: hoveredTool === 'opportunity-radar' 
+                ? 'drop-shadow(0 0 10px rgba(41, 121, 255, 0.015))'
+                : 'drop-shadow(0 0 25px rgba(41, 121, 255, 0.12))',
+              backdropFilter: 'blur(8px)',
+              boxShadow: hoveredTool === 'opportunity-radar'
+                ? '0 8px 20px rgba(41, 121, 255, 0.024), 0 0 0 1px rgba(41, 121, 255, 0.045)'
+                : dragOverModule === 'opportunity-radar'
+                  ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
+                  : theme === 'dark'
+                    ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
+                    : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
+              order: moduleOrder.indexOf('opportunity-radar') === -1 ? 0 : moduleOrder.indexOf('opportunity-radar'),
+              cursor: (isReorderMode && user) ? 'move' : 'pointer',
+              opacity: draggedModule === 'opportunity-radar' ? 0.5 : 1,
+              transform: hoveredTool === 'opportunity-radar' ? 'scale(1.02)' : dragOverModule === 'opportunity-radar' ? 'scale(1.01)' : 'scale(1)',
+              padding: hoveredTool === 'opportunity-radar' ? '1rem' : '0.75rem',
+              transition: 'all 1.148s cubic-bezier(0.4, 0, 0.2, 1)',
+            }}
+          >
+            {/* Glow effect */}
+            {hoveredTool === 'opportunity-radar' && (
+              <div
+                className="absolute inset-0 pointer-events-none"
+                style={{
+                  background: 'radial-gradient(circle at center, #2979FF, transparent 70%)',
+                  animation: 'pulse-glow 2s ease-in-out infinite',
+                  opacity: 0.06,
+                }}
+              />
+            )}
+
+            <div 
+              onClick={(e) => {
+                if (!isReorderMode) {
+                  e.preventDefault();
+                  setHoveredTool(hoveredTool === 'opportunity-radar' ? null : 'opportunity-radar');
+                }
+              }}
+              className="block cursor-pointer"
+            >
+              {/* Header - Always visible */}
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2 sm:gap-3 flex-1 min-w-0">
+                  <span 
+                    className="text-2xl sm:text-3xl transition-transform duration-500 flex-shrink-0" 
+                    style={{ 
+                      transform: hoveredTool === 'opportunity-radar' ? 'scale(1.1) rotate(5deg)' : 'scale(1) rotate(0deg)'
+                    }}
+                  >
+                    🎯
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <h3 
+                      className="text-sm sm:text-base md:text-lg font-bold transition-all duration-500 break-words"
+                      style={{ 
+                        color: hoveredTool === 'opportunity-radar' ? '#2979FF' : 'var(--secondary)',
+                        fontSize: hoveredTool === 'opportunity-radar' ? 'clamp(0.875rem, 1.25rem, 1.25rem)' : 'clamp(0.875rem, 1rem, 1rem)'
+                      }}
+                    >
+                      Niche Radar
+                    </h3>
+                    <p 
+                      className="text-xs sm:text-sm mt-0.5 opacity-70 transition-opacity duration-500 break-words"
+                      style={{ color: 'var(--text-secondary)' }}
+                    >
+                      {toolData['opportunity-radar']?.description || 'Find where your skills meet real demand'}
+                    </p>
+                  </div>
+                </div>
+                <span 
+                  className="text-sm opacity-60 transition-all duration-500"
+                  style={{ 
+                    color: 'var(--text-secondary)',
+                    opacity: hoveredTool === 'opportunity-radar' ? 0 : 0.6
+                  }}
+                >
+                  {isReorderMode ? 'Drag to reorder' : 'Click to use →'}
+                </span>
+              </div>
+
+              {/* Expanded Content - Fades in on hover */}
+              {toolData['opportunity-radar'] && (
+                <div
+                  className="overflow-hidden transition-all duration-[1148ms] ease-out will-change-[max-height,opacity] transform-gpu"
+                  style={{
+                    maxHeight: hoveredTool === 'opportunity-radar' ? '500px' : '0px',
+                    opacity: hoveredTool === 'opportunity-radar' ? 1 : 0,
+                    transform: hoveredTool === 'opportunity-radar' ? 'translateY(0)' : 'translateY(-10px)',
+                    transition: 'max-height 1.148s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.148s cubic-bezier(0.4, 0, 0.2, 1), transform 1.148s cubic-bezier(0.4, 0, 0.2, 1)',
+                  }}
+                >
+                  <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(41, 121, 255, 0.2)' }}>
+                    {/* Full Description */}
+                    <p 
+                      className="text-sm leading-relaxed transition-all duration-300 delay-100"
+                      style={{ 
+                        color: 'var(--text-secondary)',
+                        opacity: hoveredTool === 'opportunity-radar' ? 1 : 0,
+                        transform: hoveredTool === 'opportunity-radar' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      {toolData['opportunity-radar'].fullDescription}
+                    </p>
+
+                    {/* Features List */}
+                    <div 
+                      className="space-y-2 transition-all duration-300 delay-200"
+                      style={{
+                        opacity: hoveredTool === 'opportunity-radar' ? 1 : 0,
+                        transform: hoveredTool === 'opportunity-radar' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: '#2979FF' }}>
+                        Key Features
+                      </p>
+                      <ul className="space-y-1.5">
+                        {toolData['opportunity-radar'].features.map((feature, idx) => (
+                          <li 
+                            key={idx} 
+                            className="flex items-center gap-2 text-sm"
+                            style={{
+                              transitionDelay: `${300 + idx * 50}ms`,
+                              opacity: hoveredTool === 'opportunity-radar' ? 1 : 0,
+                              transform: hoveredTool === 'opportunity-radar' ? 'translateX(0)' : 'translateX(-10px)',
+                            }}
+                          >
+                            <span className="text-xs font-bold" style={{ color: '#2979FF' }}>✓</span>
+                            <span style={{ color: 'var(--text-secondary)' }}>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    {/* CTA Button */}
+                    <div 
+                      className="pt-2 transition-all duration-300 delay-300"
+                      style={{
+                        opacity: hoveredTool === 'opportunity-radar' ? 1 : 0,
+                        transform: hoveredTool === 'opportunity-radar' ? 'translateY(0)' : 'translateY(-5px)',
+                      }}
+                    >
+                      <Link href={getModuleUrl('opportunity-radar')} className="block w-full">
+                        <Button
+                          className="w-full font-semibold transition-all duration-300 hover:scale-105"
+                          style={{
+                            backgroundColor: '#2979FF',
+                            color: 'white',
+                            border: 'none',
+                          }}
+                        >
+                          Explore Niche Radar →
+                        </Button>
+                      </Link>
+                    </div>
+                    
+                    {/* Mobile Minimize Button */}
+                    <div className="sm:hidden pt-2 flex justify-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setHoveredTool(null);
+                        }}
+                        className="text-xs font-medium text-gray-500 hover:text-gray-700 py-2 flex items-center gap-1 transition-colors"
+                      >
+                        <span className="transform rotate-180">↓</span> Close
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
+
         {/* KidSafe URL Checker */}
         {currentStep === "form" && (
           <div 
@@ -4581,7 +5001,7 @@ function HomeContent() {
             }}
             onMouseEnter={() => !isReorderMode && setHoveredTool('kidsafe-url-checker')}
             onMouseLeave={() => setHoveredTool(null)}
-            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative group mobile-no-glow"
+            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-[1148ms] relative group mobile-no-glow"
             style={{
               marginBottom: '0.75rem',
               backgroundColor: 'var(--card-bg)',
@@ -4591,11 +5011,11 @@ function HomeContent() {
                   ? '#2979FF'
                   : 'var(--card-border)',
               filter: hoveredTool === 'kidsafe-url-checker' 
-                ? 'drop-shadow(0 0 10px rgba(16, 185, 129, 0.05))'
+                ? 'drop-shadow(0 0 10px rgba(16, 185, 129, 0.015))'
                 : 'drop-shadow(0 0 25px rgba(16, 185, 129, 0.12))',
               backdropFilter: 'blur(8px)',
               boxShadow: hoveredTool === 'kidsafe-url-checker'
-                ? '0 8px 20px rgba(16, 185, 129, 0.08), 0 0 0 1px rgba(16, 185, 129, 0.15)'
+                ? '0 8px 20px rgba(16, 185, 129, 0.024), 0 0 0 1px rgba(16, 185, 129, 0.045)'
                 : dragOverModule === 'kidsafe-url-checker'
                   ? '0 0 0 3px rgba(41, 121, 255, 0.4)'
                   : theme === 'dark'
@@ -4606,16 +5026,17 @@ function HomeContent() {
               opacity: draggedModule === 'kidsafe-url-checker' ? 0.5 : 1,
               transform: hoveredTool === 'kidsafe-url-checker' ? 'scale(1.02)' : dragOverModule === 'kidsafe-url-checker' ? 'scale(1.01)' : 'scale(1)',
               padding: hoveredTool === 'kidsafe-url-checker' ? '1rem' : '0.75rem',
-              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'all 1.148s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
             {/* Glow effect */}
             {hoveredTool === 'kidsafe-url-checker' && (
               <div
-                className="absolute inset-0 opacity-20 pointer-events-none"
+                className="absolute inset-0 pointer-events-none"
                 style={{
                   background: 'radial-gradient(circle at center, #10B981, transparent 70%)',
                   animation: 'pulse-glow 2s ease-in-out infinite',
+                  opacity: 0.06,
                 }}
               />
             )}
@@ -4673,11 +5094,12 @@ function HomeContent() {
               {/* Expanded Content - Fades in on hover */}
               {toolData['kidsafe-url-checker'] && (
                 <div
-                  className="overflow-hidden transition-all duration-300 ease-out will-change-[max-height,opacity] transform-gpu"
+                  className="overflow-hidden transition-all duration-[1148ms] ease-out will-change-[max-height,opacity] transform-gpu"
                   style={{
                     maxHeight: hoveredTool === 'kidsafe-url-checker' ? '500px' : '0px',
                     opacity: hoveredTool === 'kidsafe-url-checker' ? 1 : 0,
                     transform: hoveredTool === 'kidsafe-url-checker' ? 'translateY(0)' : 'translateY(-10px)',
+                    transition: 'max-height 1.148s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.148s cubic-bezier(0.4, 0, 0.2, 1), transform 1.148s cubic-bezier(0.4, 0, 0.2, 1)',
                   }}
                 >
                   <div className="pt-4 space-y-4 border-t" style={{ borderColor: 'rgba(16, 185, 129, 0.2)' }}>
@@ -4769,7 +5191,7 @@ function HomeContent() {
             onMouseEnter={() => setHoveredPostReadyTools(true)}
             onMouseLeave={() => setHoveredPostReadyTools(false)}
             onClick={() => setHoveredPostReadyTools(prev => !prev)}
-            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group mobile-no-glow"
+            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-[1148ms] relative overflow-hidden group mobile-no-glow"
             style={{
               marginBottom: '0.75rem',
               backgroundColor: 'var(--card-bg)',
@@ -4778,18 +5200,18 @@ function HomeContent() {
                 : 'var(--card-border)',
               borderWidth: hoveredPostReadyTools ? '2px' : '1px',
               boxShadow: hoveredPostReadyTools
-                ? '0 2px 8px rgba(41, 121, 255, 0.02), 0 0 0 1px rgba(41, 121, 255, 0.08)'
+                ? '0 2px 8px rgba(41, 121, 255, 0.006), 0 0 0 1px rgba(41, 121, 255, 0.024)'
                 : theme === 'dark'
                   ? '0 8px 32px rgba(41, 121, 255, 0.15), 0 0 0 1px rgba(41, 121, 255, 0.1)'
                   : '0 4px 20px rgba(41, 121, 255, 0.12), 0 0 0 1px rgba(41, 121, 255, 0.08)',
               filter: hoveredPostReadyTools
-                ? 'drop-shadow(0 0 4px rgba(41, 121, 255, 0.015))'
+                ? 'drop-shadow(0 0 4px rgba(41, 121, 255, 0.0045))'
                 : 'drop-shadow(0 0 25px rgba(41, 121, 255, 0.12))',
               backdropFilter: 'blur(8px)',
               order: moduleOrder.indexOf('trend-radar') === -1 ? 999 : moduleOrder.indexOf('trend-radar'),
               cursor: 'pointer',
               padding: hoveredPostReadyTools ? '1rem' : '0.75rem',
-              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'all 1.148s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
             {/* Gradient glow effect */}
@@ -4799,7 +5221,7 @@ function HomeContent() {
                 style={{
                   background: 'radial-gradient(circle at center, #2979FF, #06B6D4, transparent 70%)',
                   animation: 'pulse-glow 2s ease-in-out infinite',
-                  opacity: 0.005,
+                  opacity: 0.0015,
                 }}
               />
             )}
@@ -4846,11 +5268,12 @@ function HomeContent() {
 
             {/* Submenu - Reveals on hover */}
             <div
-              className="overflow-hidden transition-all duration-300 ease-out will-change-[max-height,opacity] transform-gpu"
+              className="overflow-hidden transition-all duration-[1148ms] ease-out will-change-[max-height,opacity] transform-gpu"
               style={{
                 maxHeight: hoveredPostReadyTools ? '800px' : '0px',
                 opacity: hoveredPostReadyTools ? 1 : 0,
                 transform: hoveredPostReadyTools ? 'translateY(0)' : 'translateY(-10px)',
+                transition: 'max-height 1.148s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.148s cubic-bezier(0.4, 0, 0.2, 1), transform 1.148s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
               <div className="pt-4 space-y-2 border-t" style={{ borderColor: 'rgba(41, 121, 255, 0.2)' }}>
@@ -4943,7 +5366,7 @@ function HomeContent() {
             onMouseEnter={() => setHoveredSocialMediaTools(true)}
             onMouseLeave={() => setHoveredSocialMediaTools(false)}
             onClick={() => setHoveredSocialMediaTools(prev => !prev)}
-            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group mobile-no-glow"
+            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-[1148ms] relative overflow-hidden group mobile-no-glow"
             style={{
               marginBottom: '0.75rem',
               backgroundColor: 'var(--card-bg)',
@@ -4952,18 +5375,18 @@ function HomeContent() {
                 : 'var(--card-border)',
               borderWidth: hoveredSocialMediaTools ? '2px' : '1px',
               boxShadow: hoveredSocialMediaTools
-                ? '0 2px 8px rgba(6, 182, 212, 0.02), 0 0 0 1px rgba(6, 182, 212, 0.08)'
+                ? '0 2px 8px rgba(6, 182, 212, 0.006), 0 0 0 1px rgba(6, 182, 212, 0.024)'
                 : theme === 'dark'
                   ? '0 8px 32px rgba(6, 182, 212, 0.15), 0 0 0 1px rgba(6, 182, 212, 0.1)'
                   : '0 4px 20px rgba(6, 182, 212, 0.12), 0 0 0 1px rgba(6, 182, 212, 0.08)',
               filter: hoveredSocialMediaTools
-                ? 'drop-shadow(0 0 4px rgba(6, 182, 212, 0.015))'
+                ? 'drop-shadow(0 0 4px rgba(6, 182, 212, 0.0045))'
                 : 'drop-shadow(0 0 25px rgba(6, 182, 212, 0.12))',
               backdropFilter: 'blur(8px)',
               order: moduleOrder.indexOf('trend-radar') === -1 ? 999 : moduleOrder.indexOf('trend-radar'),
               cursor: 'pointer',
               padding: hoveredSocialMediaTools ? '1rem' : '0.75rem',
-              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'all 1.148s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
             {/* Gradient glow effect */}
@@ -4973,7 +5396,7 @@ function HomeContent() {
                 style={{
                   background: 'radial-gradient(circle at center, #06B6D4, #14B8A6, transparent 70%)',
                   animation: 'pulse-glow 2s ease-in-out infinite',
-                  opacity: 0.005,
+                  opacity: 0.0015,
                 }}
               />
             )}
@@ -5020,11 +5443,12 @@ function HomeContent() {
 
             {/* Submenu - Reveals on hover */}
             <div
-              className="overflow-hidden transition-all duration-300 ease-out will-change-[max-height,opacity] transform-gpu"
+              className="overflow-hidden transition-all duration-[1148ms] ease-out will-change-[max-height,opacity] transform-gpu"
               style={{
                 maxHeight: hoveredSocialMediaTools ? '800px' : '0px',
                 opacity: hoveredSocialMediaTools ? 1 : 0,
                 transform: hoveredSocialMediaTools ? 'translateY(0)' : 'translateY(-10px)',
+                transition: 'max-height 1.148s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.148s cubic-bezier(0.4, 0, 0.2, 1), transform 1.148s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
               <div className="pt-4 space-y-2 border-t" style={{ borderColor: 'rgba(6, 182, 212, 0.2)' }}>
@@ -5117,7 +5541,7 @@ function HomeContent() {
             onMouseEnter={() => setHoveredFunnyGenerators(true)}
             onMouseLeave={() => setHoveredFunnyGenerators(false)}
             onClick={() => setHoveredFunnyGenerators(prev => !prev)}
-            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-500 relative overflow-hidden group mobile-no-glow"
+            className="rounded-xl sm:rounded-2xl shadow-lg border transition-all duration-[1148ms] relative overflow-hidden group mobile-no-glow"
             style={{
               marginBottom: '0.75rem',
               backgroundColor: 'var(--card-bg)',
@@ -5126,18 +5550,18 @@ function HomeContent() {
                 : 'var(--card-border)',
               borderWidth: hoveredFunnyGenerators ? '2px' : '1px',
               boxShadow: hoveredFunnyGenerators
-                ? '0 2px 8px rgba(236, 72, 153, 0.02), 0 0 0 1px rgba(236, 72, 153, 0.08)'
+                ? '0 2px 8px rgba(236, 72, 153, 0.006), 0 0 0 1px rgba(236, 72, 153, 0.024)'
                 : theme === 'dark'
                   ? '0 8px 32px rgba(236, 72, 153, 0.15), 0 0 0 1px rgba(236, 72, 153, 0.1)'
                   : '0 4px 20px rgba(236, 72, 153, 0.12), 0 0 0 1px rgba(236, 72, 153, 0.08)',
               filter: hoveredFunnyGenerators
-                ? 'drop-shadow(0 0 4px rgba(236, 72, 153, 0.015))'
+                ? 'drop-shadow(0 0 4px rgba(236, 72, 153, 0.0045))'
                 : 'drop-shadow(0 0 25px rgba(236, 72, 153, 0.12))',
               backdropFilter: 'blur(8px)',
               order: 9999,
               cursor: 'pointer',
               padding: hoveredFunnyGenerators ? '1rem' : '0.75rem',
-              transition: 'all 0.5s cubic-bezier(0.4, 0, 0.2, 1)',
+              transition: 'all 1.148s cubic-bezier(0.4, 0, 0.2, 1)',
             }}
           >
             {/* Playful gradient glow effect */}
@@ -5147,7 +5571,7 @@ function HomeContent() {
                 style={{
                   background: 'radial-gradient(circle at center, #EC4899, #F59E0B, transparent 70%)',
                   animation: 'pulse-glow 2s ease-in-out infinite',
-                  opacity: 0.005,
+                  opacity: 0.0015,
                 }}
               />
             )}
@@ -5194,11 +5618,12 @@ function HomeContent() {
 
             {/* Submenu - Reveals on hover */}
             <div
-              className="overflow-hidden transition-all duration-300 ease-out will-change-[max-height,opacity] transform-gpu"
+              className="overflow-hidden transition-all duration-[1148ms] ease-out will-change-[max-height,opacity] transform-gpu"
               style={{
                 maxHeight: hoveredFunnyGenerators ? '600px' : '0px',
                 opacity: hoveredFunnyGenerators ? 1 : 0,
                 transform: hoveredFunnyGenerators ? 'translateY(0)' : 'translateY(-10px)',
+                transition: 'max-height 1.148s cubic-bezier(0.4, 0, 0.2, 1), opacity 1.148s cubic-bezier(0.4, 0, 0.2, 1), transform 1.148s cubic-bezier(0.4, 0, 0.2, 1)',
               }}
             >
               <div className="pt-4 space-y-2 border-t" style={{ borderColor: 'rgba(236, 72, 153, 0.2)' }}>

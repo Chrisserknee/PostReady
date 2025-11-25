@@ -482,13 +482,134 @@ select {
   transition: background-color 0.2s var(--ease-out-smooth), 
               color 0.2s var(--ease-out-smooth), 
               border-color 0.2s var(--ease-out-smooth),
-              box-shadow 0.25s var(--ease-out-smooth),
+              box-shadow 0.8s cubic-bezier(0.4, 0, 0.2, 1),
               transform 0.2s var(--ease-out-smooth),
-              opacity 0.2s var(--ease-out-smooth) !important;
+              opacity 0.2s var(--ease-out-smooth),
+              filter 0.8s cubic-bezier(0.4, 0, 0.2, 1) !important;
   /* Hardware acceleration */
-  will-change: transform;
+  will-change: transform, box-shadow, filter;
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
+}
+
+/* Global blue halation glow on button hover - but not for tool page buttons */
+button:hover:not(:disabled):not([class*="backdrop-blur-md"]) {
+  box-shadow: 0 0 8px rgba(41, 121, 255, 0.3), 0 0 16px rgba(41, 121, 255, 0.2) !important;
+  filter: drop-shadow(0 0 3px rgba(41, 121, 255, 0.3)) !important;
+}
+
+/* Enhanced glow for buttons that already have a glow - make it brighter on hover */
+@media (min-width: 640px) {
+  /* Navbar buttons on tool pages - very slow glow transition */
+  /* Target all navbar buttons that have tool page styling */
+  nav button[class*="backdrop-blur-md"],
+  nav a button[class*="backdrop-blur-md"] {
+    transition: background-color 0.3s var(--ease-out-smooth), 
+                color 0.3s var(--ease-out-smooth), 
+                border-color 0.3s var(--ease-out-smooth),
+                box-shadow 2.5s cubic-bezier(0.4, 0, 0.2, 1) !important,
+                transform 0.3s var(--ease-out-smooth),
+                opacity 0.3s var(--ease-out-smooth),
+                filter 2.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  
+  /* Default glow for solid cyan buttons (Sign In, Sign Up, Get Pro, Account, Sign Out) */
+  /* Home button has border, others have border-none */
+  nav button[class*="backdrop-blur-md"][class*="border-none"]:not(:disabled),
+  nav a button[class*="backdrop-blur-md"][class*="border-none"]:not(:disabled) {
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.6), 0 0 25px rgba(6, 182, 212, 0.4) !important;
+    filter: drop-shadow(0 0 5px rgba(6, 182, 212, 0.5)) !important;
+  }
+  
+  /* Home button - no glow by default, glow on hover */
+  nav button[class*="backdrop-blur-md"]:not([class*="border-none"]):not(:disabled),
+  nav a button[class*="backdrop-blur-md"]:not([class*="border-none"]):not(:disabled) {
+    box-shadow: none !important;
+    filter: none !important;
+  }
+  
+  /* Tool page navbar buttons - very slow transition on hover */
+  /* Home button - glow on hover */
+  nav button[class*="backdrop-blur-md"]:not([class*="border-none"]):hover:not(:disabled),
+  nav a button[class*="backdrop-blur-md"]:not([class*="border-none"]):hover:not(:disabled) {
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.7), 0 0 35px rgba(6, 182, 212, 0.5), 0 0 50px rgba(6, 182, 212, 0.3) !important;
+    filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.6)) !important;
+    transition: background-color 0.3s var(--ease-out-smooth),
+                border-color 0.3s var(--ease-out-smooth),
+                opacity 0.3s var(--ease-out-smooth),
+                box-shadow 2.5s cubic-bezier(0.4, 0, 0.2, 1) !important,
+                filter 2.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  
+  /* Solid buttons - brighter glow on hover */
+  nav button[class*="backdrop-blur-md"][class*="border-none"]:hover:not(:disabled),
+  nav a button[class*="backdrop-blur-md"][class*="border-none"]:hover:not(:disabled),
+  /* More specific selectors for Sign Up and Get Pro buttons */
+  nav button[class*="backdrop-blur-md"][class*="font-bold"]:hover:not(:disabled),
+  nav a button[class*="backdrop-blur-md"][class*="font-bold"]:hover:not(:disabled) {
+    box-shadow: 0 0 25px rgba(6, 182, 212, 0.8), 0 0 40px rgba(6, 182, 212, 0.6), 0 0 60px rgba(6, 182, 212, 0.4) !important;
+    filter: drop-shadow(0 0 10px rgba(6, 182, 212, 0.7)) !important;
+    transition: background-color 0.3s var(--ease-out-smooth),
+                opacity 0.3s var(--ease-out-smooth),
+                box-shadow 2.5s cubic-bezier(0.4, 0, 0.2, 1) !important,
+                filter 2.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  
+  /* Ensure default glow also applies to font-bold buttons */
+  nav button[class*="backdrop-blur-md"][class*="font-bold"]:not(:disabled),
+  nav a button[class*="backdrop-blur-md"][class*="font-bold"]:not(:disabled) {
+    box-shadow: 0 0 15px rgba(6, 182, 212, 0.6), 0 0 25px rgba(6, 182, 212, 0.4) !important;
+    filter: drop-shadow(0 0 5px rgba(6, 182, 212, 0.5)) !important;
+  }
+  
+  /* Back to Home button in ToolPageLayout - cyan glow on hover */
+  a[href] button[class*="backdrop-blur-md"],
+  button[class*="backdrop-blur-md"][class*="bg-transparent"] {
+    transition: background-color 0.3s var(--ease-out-smooth),
+                border-color 0.3s var(--ease-out-smooth),
+                opacity 0.3s var(--ease-out-smooth),
+                color 0.3s var(--ease-out-smooth),
+                box-shadow 2.5s cubic-bezier(0.4, 0, 0.2, 1) !important,
+                filter 2.5s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  }
+  
+  a[href] button[class*="backdrop-blur-md"]:hover:not(:disabled),
+  button[class*="backdrop-blur-md"][class*="bg-transparent"]:hover:not(:disabled) {
+    background-color: rgba(6, 182, 212, 0.1) !important;
+    color: white !important;
+    border-color: rgba(6, 182, 212, 0.3) !important;
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.7), 0 0 35px rgba(6, 182, 212, 0.5), 0 0 50px rgba(6, 182, 212, 0.3) !important;
+    filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.6)) !important;
+  }
+  
+  /* Tool page buttons with cyan glow - enhance on hover (non-navbar) */
+  button[class*="sm:shadow-"]:hover:not(:disabled):not(nav button):not(nav a button) {
+    box-shadow: 0 0 20px rgba(6, 182, 212, 0.7), 0 0 35px rgba(6, 182, 212, 0.5), 0 0 50px rgba(6, 182, 212, 0.3) !important;
+    filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.6)) !important;
+  }
+  
+  /* Buttons with pulse-glow animation - enhance on hover */
+  button[class*="animate-pulse-glow"]:hover:not(:disabled) {
+    box-shadow: 0 0 20px rgba(41, 121, 255, 0.6), 0 0 35px rgba(41, 121, 255, 0.4), 0 0 50px rgba(41, 121, 255, 0.3) !important;
+    filter: drop-shadow(0 0 8px rgba(41, 121, 255, 0.6)) !important;
+    animation: none !important; /* Stop pulsing on hover for consistent brighter glow */
+  }
+}
+
+/* Subtle pulsing glow animation for tool page buttons */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 8px rgba(41, 121, 255, 0.3), 0 0 16px rgba(41, 121, 255, 0.2);
+    filter: drop-shadow(0 0 3px rgba(41, 121, 255, 0.3));
+  }
+  50% {
+    box-shadow: 0 0 12px rgba(41, 121, 255, 0.4), 0 0 24px rgba(41, 121, 255, 0.25);
+    filter: drop-shadow(0 0 5px rgba(41, 121, 255, 0.4));
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
 }
 
 /* Prevent text selection on buttons */

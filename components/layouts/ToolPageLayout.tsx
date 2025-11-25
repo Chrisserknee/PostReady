@@ -56,10 +56,12 @@ export function ToolPageLayout({
         <Link href={backTo} className="px-4 sm:px-0 inline-block">
           <Button
             variant="ghost"
-            className="mb-6 text-muted-foreground hover:text-foreground"
+            className="mb-6 text-muted-foreground hover:text-white bg-transparent backdrop-blur-md border border-transparent hover:border-[#06B6D4]/30 hover:bg-[#06B6D4]/10 shadow-none drop-shadow-none transition-[background-color,border-color,opacity,color] duration-300 relative overflow-hidden before:absolute before:inset-0 before:bg-gradient-to-b before:from-white/20 before:via-transparent before:to-transparent before:opacity-0 hover:before:opacity-100 before:transition-opacity before:duration-300 rounded-2xl"
           >
-            <ArrowLeft className="mr-2 h-4 w-4" />
-            {backLabel}
+            <span className="relative z-10 flex items-center">
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              {backLabel}
+            </span>
           </Button>
         </Link>
 

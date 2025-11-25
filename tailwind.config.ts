@@ -139,6 +139,16 @@ const config = {
           "50%": {
             filter: "drop-shadow(0 0 12px rgba(41, 121, 255, 0.5)) drop-shadow(0 0 20px rgba(41, 121, 255, 0.3)) drop-shadow(0 0 32px rgba(41, 121, 255, 0.15))"
           }
+        },
+        "pulse-glow": {
+          "0%, 100%": {
+            boxShadow: "0 0 8px rgba(41, 121, 255, 0.3), 0 0 16px rgba(41, 121, 255, 0.2)",
+            filter: "drop-shadow(0 0 3px rgba(41, 121, 255, 0.3))"
+          },
+          "50%": {
+            boxShadow: "0 0 12px rgba(41, 121, 255, 0.4), 0 0 24px rgba(41, 121, 255, 0.25)",
+            filter: "drop-shadow(0 0 5px rgba(41, 121, 255, 0.4))"
+          }
         }
       },
       animation: {
@@ -151,6 +161,7 @@ const config = {
         "slide-in-left": "slideInLeft 0.4s cubic-bezier(0.0, 0, 0.2, 1) forwards",
         "typing": "typing 2s steps(40, end) forwards",
         "slide-in-right": "slideInRight 0.35s cubic-bezier(0.0, 0, 0.2, 1)",
+        "pulse-glow": "pulse-glow 3s ease-in-out infinite",
       },
     },
   },
